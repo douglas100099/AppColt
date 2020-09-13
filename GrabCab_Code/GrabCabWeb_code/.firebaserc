@@ -1,0 +1,18 @@
+{
+  "projects": {
+    "default": "app-bolt-e3395"
+  },
+  "targets": {
+    "app-bolt-e3395": {
+      "hosting": {
+        "admin": [
+          "app-bolt-e3395"
+        ]
+        ,
+        "website": [
+          "app-bolt"
+        ]
+      }
+    }
+  }
+}

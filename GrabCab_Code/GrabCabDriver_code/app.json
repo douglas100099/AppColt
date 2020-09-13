@@ -1,0 +1,81 @@
+{
+  "expo": {
+    "name": "GrabCab Driver",
+    "description": "Taxi Booking Driver App",
+    "slug": "GrabCabDriver",
+    "privacy": "public",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "notification": {
+      "icon": "./assets/images/push_notification.png"
+    },
+    "version": "1.3",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.myth.appboltmotorista",
+      "infoPlist": {
+        "NSLocationAlwaysUsageDescription": "This app uses the always location access in the background for improved pickups and dropoffs, customer support and safety purpose.",
+        "NSLocationWhenInUseUsageDescription": "This app uses the location for handling improved pickups and dropoffs, customer support and safety purpose.",
+        "NSCameraUsageDescription": "This app uses the camera to take your profile picture.",
+        "NSPhotoLibraryUsageDescription": "This app uses Photo Library to help upload your profile picture.",
+        "ITSAppUsesNonExemptEncryption":false,
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ]
+      },
+      "config": {
+        "googleMapsApiKey": "AIzaSyBAlxYhT0LIXiKtSY1TnOr-iAnEKFgj3aE"
+      },
+      "buildNumber": "1.3"
+    },
+    "android": {
+      "package": "com.myth.appboltmotorista",
+      "versionCode": 13,
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA_ROLL"
+      ],
+      "googleServicesFile": "./google-services.json",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBAlxYhT0LIXiKtSY1TnOr-iAnEKFgj3aE"
+        }
+      },
+      "useNextNotificationsApi": true
+    },
+    "extra":{
+      "firebaseConfig":{
+        "apiKey": "AIzaSyDJty-EsGLTBg1esYp0FDWV1bARFWE5DHQ",
+        "authDomain": "app-bolt-e3395.firebaseapp.com",
+        "databaseURL": "https://app-bolt-e3395.firebaseio.com",
+        "projectId": "app-bolt-e3395",
+        "storageBucket": "app-bolt-e3395.appspot.com",
+        "messagingSenderId": "481937108307",
+        "appId": "1:481937108307:web:4669f57ce4bdce2faac5a6",
+        "measurementId": "G-VF3C9V8B4V"
+      },
+      "googlemapkey":"AIzaSyBAlxYhT0LIXiKtSY1TnOr-iAnEKFgj3aE"
+    }
+  }
+}

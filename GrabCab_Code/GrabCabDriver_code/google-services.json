@@ -1,0 +1,69 @@
+{
+  "project_info": {
+    "project_number": "481937108307",
+    "firebase_url": "https://app-bolt-e3395.firebaseio.com",
+    "project_id": "app-bolt-e3395",
+    "storage_bucket": "app-bolt-e3395.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:481937108307:android:83671221144b14f6aac5a6",
+        "android_client_info": {
+          "package_name": "com.myth.appbolt"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "481937108307-s0e6op7filhffpqhptnclhjdg0ob7br1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBN92degTb_J8ochlHK9fwi44VdErihINI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "481937108307-s0e6op7filhffpqhptnclhjdg0ob7br1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:481937108307:android:6ae0957ea040c909aac5a6",
+        "android_client_info": {
+          "package_name": "com.myth.appboltmotorista"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "481937108307-s0e6op7filhffpqhptnclhjdg0ob7br1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBN92degTb_J8ochlHK9fwi44VdErihINI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "481937108307-s0e6op7filhffpqhptnclhjdg0ob7br1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

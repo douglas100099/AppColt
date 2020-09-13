@@ -1,0 +1,40 @@
+{
+  "hosting": [
+    {
+      "target":"admin",
+      "public": "admin/build",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    }
+    ,
+    {
+      "target":"website",
+      "public": "website/build",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    }
+  ],
+  "functions": {
+    "predeploy": [
+      "npm --prefix \"$RESOURCE_DIR\" run lint"
+    ]
+  }
+}

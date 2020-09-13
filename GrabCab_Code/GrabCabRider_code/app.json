@@ -1,0 +1,90 @@
+{
+  "expo": {
+    "name": "GrabCab",
+    "description": "Taxi Booking App",
+    "slug": "GrabCab",
+    "privacy": "public",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "notification": {
+      "icon": "./assets/images/push_notification.png"
+    },
+    "version": "1.3",
+    "orientation": "portrait",
+    "icon": "./assets/images/appIcon.png",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "usesAppleSignIn": true,
+      "bundleIdentifier": "com.myth.appbolt",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app uses the location to find the Cabs near you.",
+        "NSCameraUsageDescription": "This app uses the camera to take your profile picture.",
+        "NSPhotoLibraryUsageDescription": "This app uses Photo Library for uploading your profile picture.",
+        "ITSAppUsesNonExemptEncryption":false,
+        "UIBackgroundModes": [
+          "fetch"
+        ]
+      },
+      "config": {
+        "googleMapsApiKey": "AIzaSyBAlxYhT0LIXiKtSY1TnOr-iAnEKFgj3aE",
+        "googleSignIn": {
+          "reservedClientId": "com.googleusercontent.apps.481937108307-aojcr4pjufm6ha80dhhicfd3qq6nj7t5"
+        }
+      },
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "buildNumber": "1.3"
+    },
+    "android": {
+      "package": "com.myth.appbolt",
+      "versionCode": 13,
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA_ROLL"
+      ],
+      "googleServicesFile": "./google-services.json",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBAlxYhT0LIXiKtSY1TnOr-iAnEKFgj3aE"
+        }
+      },
+      "useNextNotificationsApi": true
+    },
+    "facebookScheme": "fbXXXXXXXXXXXXXXX",
+    "facebookAppId": "XXXXXXXXXXXXXX",
+    "facebookDisplayName": "GrabCab",
+    "extra":{
+      "firebaseConfig":{
+        "apiKey": "AIzaSyDJty-EsGLTBg1esYp0FDWV1bARFWE5DHQ",
+        "authDomain": "app-bolt-e3395.firebaseapp.com",
+        "databaseURL": "https://app-bolt-e3395.firebaseio.com",
+        "projectId": "app-bolt-e3395",
+        "storageBucket": "app-bolt-e3395.appspot.com",
+        "messagingSenderId": "481937108307",
+        "appId": "1:481937108307:web:4669f57ce4bdce2faac5a6",
+        "measurementId": "G-VF3C9V8B4V"
+      },
+      "googlemapkey":"AIzaSyBAlxYhT0LIXiKtSY1TnOr-iAnEKFgj3aE",
+      "cloud_function_server_url":"https://us-central1-app-bolt-e3395.cloudfunctions.net",
+      "iosStandaloneAppClientId": "481937108307-aojcr4pjufm6ha80dhhicfd3qq6nj7t5.apps.googleusercontent.com",
+      "androidStandaloneAppClientId": "481937108307-s0e6op7filhffpqhptnclhjdg0ob7br1.apps.googleusercontent.com"
+    }
+  }
+}

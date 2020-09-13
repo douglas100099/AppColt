@@ -1,7 +1,7 @@
 export const theme = {
-  FONT_ONE:'Roboto-Bold',
+  FONT_ONE:'Inter-Bold',
   FONT_SIZE_BUTTONS: 18,
-  BUTTON_BLUE:'#47668B',
+  BUTTON_BLUE:'#1152FD',
   BUTTON_SKY: 'rgba(57,137,233,1)',
   BUTTON_YELLOW:'#F9C667',
   BUTTON_PRIMARY:'#1E81D3',
@@ -11,7 +11,6 @@ export const theme = {
 export const colors = {
   TRANSPARENT: 'transparent',
   WHITE: '#fff',
-  BLACK: '#000',
   RED: 'red',
   SKY: '#1E81D3',
   DARK: "#070807",
@@ -19,9 +18,9 @@ export const colors = {
   LIGHT_RED:"#FF2121",
 
   GREY: {
-    default: '#243235',
-    primary:"#f5f1f1",
-    secondary: "#9b9b9b",
+    default: '#D5DDE0',
+    primary:"#97ADB6",
+    secondary: "#F7F8F9",
     btnPrimary:'#666666',
     btnSecondary: "#ababab",
     iconPrimary: "#c8c8c8",
@@ -35,7 +34,7 @@ export const colors = {
   },
   BLUE: {
     default: "blue",
-    primary: "rgba(111, 202, 186, 1)",
+    primary: "#1152FD",
     secondary: "#007aff",
     light: "#8ec4e6",
     dark: "#111b1e",
@@ -51,5 +50,30 @@ export const colors = {
     default: "green",
     background: "#2e342d",
     light: "#32db64",
+  },
+
+  DEEPBLUE: '#1152FD',
+
+  BLACK: '#3E4958',
+
+  GREY1: '#D5DDE0',
+
+  GREY2: '#97ADB6',
+
+  GREY3: '#F7F8F9',
+
+  H1: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 20,
+  },
+
+  H2: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 18,
+  },
+
+  H3: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 13,
   },
 }

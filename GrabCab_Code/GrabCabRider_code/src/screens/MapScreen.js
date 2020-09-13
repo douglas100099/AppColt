@@ -747,10 +747,10 @@ export default class MapScreen extends React.Component {
                             <View style={styles.iconsViewStyle}>
                                 <TouchableOpacity onPress={() => this.tapAddress('pickup')} style={styles.contentStyle}>
                                     <View style={styles.textIconStyle}>
-                                        <Text numberOfLines={1} style={[styles.textStyle, this.state.selected == 'pickup' ? { fontSize: 16 } : { fontSize: 11, color: colors.GREY.secondary  }]}>{this.state.whereText}</Text>
+                                        <Text numberOfLines={1} style={[styles.textStyle, this.state.selected == 'pickup' ? { fontSize: 16 } : { fontSize: 11, color: colors.GREY.primary  }]}>{this.state.whereText}</Text>
                                         <Icon
                                             name='gps-fixed'
-                                            color={this.state.selected == 'pickup' ? colors.BLACK : colors.GREY.secondary}
+                                            color={this.state.selected == 'pickup' ? colors.BLACK : colors.GREY.primary}
                                             size={this.state.selected == 'pickup' ? 20 : 10}
                                             containerStyle={{ flex: 1 }}
                                         />
@@ -758,11 +758,11 @@ export default class MapScreen extends React.Component {
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={() => this.tapAddress('drop')} style={styles.searchClickStyle}>
                                     <View style={styles.textIconStyle}>
-                                        <Text numberOfLines={1} style={[styles.textStyle, this.state.selected == 'drop' ? { fontSize: 16 } : { fontSize: 11, color: colors.GREY.secondary }]}>{this.state.dropText}</Text>
+                                        <Text numberOfLines={1} style={[styles.textStyle, this.state.selected == 'drop' ? { fontSize: 16 } : { fontSize: 11, color: colors.GREY.primary }]}>{this.state.dropText}</Text>
                                         <Icon
                                             name='search'
                                             type='feather'
-                                            color={this.state.selected == 'drop' ? colors.BLACK : colors.GREY.secondary}
+                                            color={this.state.selected == 'drop' ? colors.BLACK : colors.GREY.primary}
                                             size={this.state.selected == 'drop' ? 20 : 10}
                                             containerStyle={{ flex: 1 }}
                                         />
@@ -934,7 +934,7 @@ const styles = StyleSheet.create({
     },
     textStyle: {
         flex: 9,
-        fontFamily: 'Roboto-Regular',
+        fontFamily: 'Inter-Medium',
         fontSize: 14,
         fontWeight: '400',
         color: colors.BLACK,
@@ -958,7 +958,7 @@ const styles = StyleSheet.create({
     },
     sampleTextStyle: {
         flex: 0.2,
-        fontFamily: 'Roboto-Regular',
+        fontFamily: 'Inter-Medium',
         fontSize: 13,
         fontWeight: '300',
         color: colors.GREY.secondary
@@ -996,14 +996,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     text1: {
-
-        fontFamily: 'Roboto-Bold',
+        fontFamily: 'Inter-Medium',
         fontSize: 14,
         fontWeight: '900',
         color: colors.BLACK
     },
     text2: {
-        fontFamily: 'Roboto-Regular',
+        fontFamily: 'Inter-Medium',
         fontSize: 12,
         fontWeight: '900',
         color: colors.GREY.secondary
@@ -1042,7 +1041,7 @@ const styles = StyleSheet.create({
 
     buttonTitleText: {
         color: colors.GREY.default,
-        fontFamily: 'Roboto-Regular',
+        fontFamily: 'Inter-Medium',
         fontSize: 20,
         alignSelf: 'flex-end'
     },

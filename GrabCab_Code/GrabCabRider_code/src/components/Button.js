@@ -26,10 +26,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent:'center',
         padding: 10,
-        borderRadius:5
+        borderRadius:50
     },
     textStyle:{
-        color: colors.WHITE,
+        color: colors.DEEPBLUE,
         width:"100%",
         textAlign: "center"
     }

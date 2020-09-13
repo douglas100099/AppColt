@@ -48,7 +48,7 @@ export default class Registration extends React.Component {
     // mobile number validation
     validateMobile() {
         const { mobile } = this.state
-        const mobileValid = (mobile.length >0)
+        const mobileValid = (mobile.length > 0)
         LayoutAnimation.easeInEaseOut()
         this.setState({ mobileValid })
         mobileValid || this.mobileInput.shake();
@@ -239,6 +239,7 @@ export default class Registration extends React.Component {
                                     placeholderTextColor={colors.WHITE}
                                     value={this.state.mobile}
                                     keyboardType={'number-pad'}
+                                    maxLength={11}
                                     inputStyle={styles.inputTextStyle}
                                     onChangeText={(text)=>{this.setState({mobile: text})}}
                                     errorMessage={this.state.mobileValid ? null : languageJSON.mobile_no_blank_error}

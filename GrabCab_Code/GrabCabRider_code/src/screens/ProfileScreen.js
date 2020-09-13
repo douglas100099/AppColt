@@ -15,6 +15,7 @@ import {
 import { Icon, Header } from 'react-native-elements';
 import ActionSheet from 'react-native-actionsheet';
 import { colors } from '../common/theme';
+import { Button } from '../components/Button';
 import * as Permissions from 'expo-permissions';
 import * as ImagePicker from 'expo-image-picker';
 import  languageJSON  from '../common/language';
@@ -200,20 +201,39 @@ async uploadmultimedia(url){
     render() {
         let { image } = this.state;
 
-        return (        
+        return (     
+               
         <View style={styles.mainView}>
-            <Header 
-                backgroundColor={colors.GREY.default}
-                leftComponent={{icon:'md-menu', type:'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback,onPress: ()=>{this.props.navigation.toggleDrawer();} }}
-                centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.profile_page_title}</Text>}
-                containerStyle={styles.headerStyle}
-                innerContainerStyles={{marginLeft:10, marginRight: 10}}
-            />
             <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollStyle}>
                {
                    this.uploadImage()
                }
-                {this.state.settings.wallet?
+               <View style={styles.viewStyle}>
+                    <View style={styles.imageParentView}>
+                        <View style={styles.imageViewStyle} >
+                        {
+                             this.state.loader == true?this.loader():<TouchableOpacity onPress={this.showActionSheet}>
+                             <Image source={this.state.profile_image?{uri:this.state.profile_image}:require('../../assets/images/profilePic.png')} style={{borderRadius: 80/2, width: 80, height: 80}} />
+                             </TouchableOpacity>
+                        }
+                        </View>
+                    </View>
+                    <View style={styles.editarPerfil}>
+                            <Text style={styles.textPropStyle} >{this.state.firstName.toUpperCase() + " " + this.state.lastName.toUpperCase()}</Text>
+                            <View style={styles.iconBack}>
+                                <Icon
+                                    name='edit-2'
+                                    style={styles.iconImage}
+                                    size={18}
+                                    type='feather'
+                                    color={colors.WHITE}
+                                    onPress={this.editProfile}
+                                />
+                            </View>
+                    </View>
+                </View>
+                
+                {/* {this.state.settings.wallet?
                 <View style={styles.scrollViewStyle} >
                     <Text style={styles.profStyle}> {languageJSON.my_wallet_title} ( {this.state.settings.symbol} {this.state.walletBalance?parseFloat(this.state.walletBalance).toFixed(2):0.00})</Text>
                     <Icon
@@ -225,70 +245,50 @@ async uploadmultimedia(url){
                     onPress={() => this.goWallet()}
                   /> 
                 </View>
-                :null}
-                <View style={styles.scrollViewStyle2} >
-                    <Text style={styles.profStyle}>{languageJSON.profile_page_subtitle}</Text>
-                    <Icon
-                        name='page-edit'
-                        type='foundation'
-                        color={colors.GREY.btnPrimary}
-                        containerStyle={{ right: 20 }}
-                        onPress={this.editProfile}
-                    />
-                </View>
-
-                <View style={styles.viewStyle}>
-                    <View style={styles.imageParentView}>
-                        <View style={styles.imageViewStyle} >
-                        {
-                             this.state.loader == true?this.loader():<TouchableOpacity onPress={this.showActionSheet}>
-                             <Image source={this.state.profile_image?{uri:this.state.profile_image}:require('../../assets/images/profilePic.png')} style={{borderRadius: 130/2, width: 130, height: 130}} />
-                             </TouchableOpacity>
-                        }
-                        </View>
-                    </View>
-                    <Text style={styles.textPropStyle} >{this.state.firstName.toUpperCase()+" "+ this.state.lastName.toUpperCase()}</Text>
-                </View>
+                :null} */}
+                
 
                 <View style={styles.newViewStyle}>
                     <View style={styles.myViewStyle}>
                         <View style={styles.iconViewStyle}>
                             <Icon
-                                name='envelope-letter'
-                                type='simple-line-icon'
-                                color={colors.GREY.btnPrimary}
-                                size={30}
+                                name='mail-outline'
+                                type='ionicicon'
+                                color='#D5DDE0'
+                                size={25}
                             />
-                            <Text style={styles.emailStyle}>{languageJSON.email_placeholder}</Text>
-                        </View>
-                        <View style={styles.flexView1}>
-                            <Text style={styles.emailAdressStyle}>{this.state.email}</Text>
+                            <Text style={styles.emailStyle}>{this.state.email}</Text>
                         </View>
                     </View>
                     <View style={styles.myViewStyle}>
                         <View style={styles.iconViewStyle}>
                             <Icon
-                                name='globe'
-                                type='simple-line-icon'
-                                color={colors.GREY.btnPrimary}
-                            />
-                            <Text style={styles.text1}>{languageJSON.location_lebel}</Text>
-                        </View>
-                        <View style={{flex:1}}>
-                            <Text style={styles.text2}>{this.state.tempAddress}</Text>
-                        </View>
-                    </View>
-                    <View style={styles.myViewStyle}>
-                        <View style={styles.iconViewStyle}>
-                            <Icon
-                                name='phone-call'
+                                name='dollar-sign'
                                 type='feather'
-                                color={colors.GREY.btnPrimary}
+                                color='#D5DDE0'
+                                size={25}
                             />
-                            <Text style={styles.text1}>{languageJSON.mobile_no_placeholder}</Text>
+                            <Text onPress={() => this.goWallet()} style={styles.profStyle}>Meu saldo ( {this.state.settings.symbol} {this.state.walletBalance?parseFloat(this.state.walletBalance).toFixed(2):0.00})</Text>
                         </View>
-                        <View style={styles.flexView2}>
-                            <Text style={styles.text2}>{this.state.mobile}</Text>
+                    </View>
+                    <View style={styles.myViewStyle}>
+                        <View style={styles.iconViewStyle}>
+                            <Icon
+                                name='map-pin'
+                                type='feather'
+                                color='#D5DDE0'
+                            />
+                            <Text style={styles.text1}>{this.state.tempAddress}</Text>
+                        </View>
+                    </View>
+                    <View style={styles.myViewStyle}>
+                        <View style={styles.iconViewStyle}>
+                            <Icon
+                                name='phone'
+                                type='feather'
+                                color='#D5DDE0'
+                            />
+                            <Text style={styles.text1}>{this.state.mobile}</Text>
                         </View>
                     </View>
                     {this.state.refferalId?
@@ -297,54 +297,25 @@ async uploadmultimedia(url){
                             <Icon
                                 name='award'
                                 type='feather'
-                                color={colors.GREY.btnPrimary}
+                                color='#D5DDE0'
                             />
-                            <Text style={styles.emailStyle}>{languageJSON.referral_id_placeholder}</Text>
-                        </View>
-                        <View style={{flex:1}}>
-                            <Text style={styles.text2}>{this.state.refferalId}</Text>
+                            <Text style={styles.emailStyle}>{this.state.refferalId}</Text>
                         </View>
                     </View>
                     :null}
-                    <View style={styles.myViewStyle}>
-                        <View style={styles.iconViewStyle}>
-                            <Icon
-                                name='globe'
-                                type='simple-line-icon'
-                                color={colors.GREY.btnPrimary}
-                            />
-                            <Text style={styles.emailStyle}>{languageJSON.language_lebel}</Text>
-                        </View>
-                        <View style={{flex:1}}>
-                            <Text style={styles.text2}>{languageJSON.preffer_language}</Text>
-                        </View>
-                    </View>
                     
                 </View>
                 
                 <View style={styles.flexView3}>
+                
+                    <TouchableOpacity onPress={()=>{this.signOut()}} style={styles.textIconStyle}>
+                        <Text style={styles.textButton2}>Sair</Text>
+                    </TouchableOpacity> 
 
                     <TouchableOpacity style={styles.textIconStyle2} onPress={()=>{this.deleteAccount()}}>
-                        <Text style={styles.emailStyle}>{languageJSON.delete_account_lebel}</Text>
-                        <Icon
-                            name='ios-arrow-forward'
-                            type='ionicon'
-                            color={colors.GREY.iconPrimary}
-                            size={35}
-                            containerStyle={{ right: 20 }}
-                        />
+                        <Text style={styles.textButton}>Deletar conta</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={()=>{this.signOut()}} style={styles.textIconStyle2}>
-                        <Text style={styles.emailStyle}>{languageJSON.logout}</Text>
-                        <Icon
-                            name='ios-arrow-forward'
-                            type='ionicon'
-                            color={colors.GREY.iconPrimary}
-                            size={35}
-                            containerStyle={{ right: 20 }}
-                        />
-                    </TouchableOpacity> 
                 </View>
 
             </ScrollView>
@@ -356,11 +327,11 @@ async uploadmultimedia(url){
 
 const styles = StyleSheet.create({
     headerStyle: { 
-        backgroundColor: colors.GREY.default, 
+        backgroundColor: colors.BLACK, 
         borderBottomWidth: 0 
     },
     headerTitleStyle: { 
-        color: colors.WHITE,
+        color: colors.BLACK,
         fontFamily:'Roboto-Bold',
         fontSize: 20
     },
@@ -407,11 +378,13 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between'
     },
     profStyle:{
-        fontSize: 18, 
-        left: 20, 
-        fontWeight:'bold',
-        color:colors.GREY.btnPrimary, 
-        fontFamily:'Roboto-Bold'
+        fontSize: 15, 
+        left: 10, 
+        color:colors.BLACK, 
+        fontFamily:'Inter-Bold'
+    },
+    iconCarteira: {
+        marginLeft: 10
     },
     bonusAmount:{
       right:20,
@@ -424,40 +397,45 @@ const styles = StyleSheet.create({
         marginTop: 13 
     },
     imageParentView:{ 
-        borderRadius: 150/2, 
-        width: 150, 
-        height: 150, 
+        marginTop: 25,
+        borderRadius: 100/2, 
+        width: 100, 
+        height: 100, 
         backgroundColor: colors.GREY.secondary, 
         justifyContent: 'center', 
         alignItems: 'center' 
     },
     imageViewStyle:{ 
-        borderRadius: 140/2, 
-        width: 140, 
-        height: 140,
-        backgroundColor: colors.WHITE, 
+        borderRadius: 90/2, 
+        width: 90, 
+        height: 90,
+        backgroundColor: colors.BLACK, 
         justifyContent: 'center', 
         alignItems: 'center'
     },
     textPropStyle:{
-        fontSize: 21, 
-        fontWeight:'bold',
-        color: colors.GREY.iconSecondary, 
-        fontFamily:'Roboto-Bold', 
-        top: 8,
-        textTransform:'uppercase'
+        fontSize: 20, 
+        color: colors.BLACK, 
+        fontFamily:'Inter-Bold',
+        marginRight: 8,
+
     },
     newViewStyle:{
         flex: 1, 
-        height: 300, 
-        marginTop: 40
+        elevation: 6,
+        backgroundColor: colors.WHITE,
+        marginLeft: 15,
+        marginRight: 15,
+        height: 270, 
+        borderRadius: 15,
+        marginTop: 30
     },
     myViewStyle:{
         flex: 1,
         left: 20, 
         marginRight: 40, 
-        borderBottomColor: colors.GREY.btnSecondary, 
-        borderBottomWidth: 1
+        borderBottomColor: colors.GREY1, 
+        borderBottomWidth: 1,
     },
     iconViewStyle:{
         flex: 2, 
@@ -465,51 +443,60 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     emailStyle:{
-        fontSize: 17, 
+        fontSize: 15, 
         left: 10, 
-        color: colors.GREY.btnPrimary, 
-        fontFamily:'Roboto-Bold'
+        color: colors.BLACK, 
+        fontFamily:'Inter-Bold'
     },
     emailAdressStyle:{
         fontSize: 15, 
-        color: colors.GREY.secondary, 
-        fontFamily:'Roboto-Regular'
+        color: colors.BLACK, 
+        fontFamily:'Inter-Bold'
     },
     mainIconView:{
         flex: 1, 
         left: 20, 
         marginRight: 40, 
-        borderBottomColor: colors.GREY.iconSecondary,
+        borderBottomColor: colors.BLACK,
          borderBottomWidth: 1
         },
     text1:{
-         fontSize: 17, 
+         fontSize: 15, 
          left: 10, 
-         color:colors.GREY.btnPrimary, 
-         fontFamily:'Roboto-Bold'
+         color:colors.BLACK, 
+         fontFamily:'Inter-Bold'
         },
     text2:{
         fontSize: 15, 
         left: 10, 
-        color:colors.GREY.secondary, 
-        fontFamily:'Roboto-Regular'
+        color:colors.BLACK, 
+        fontFamily:'Inter-Bold'
     },
     textIconStyle:{
-        width: width, 
-        height: 50, 
-        backgroundColor: colors.GREY.primary, 
-        flexDirection: 'row', 
+        alignSelf: 'center',
         alignItems: 'center', 
-        justifyContent: 'space-between'
+        justifyContent: 'center',
+        marginBottom: 20,
     },
     textIconStyle2:{
-        width: width, 
-        height: 50, 
+        width: 333, 
+        height: 60, 
         marginTop:10,
-        backgroundColor: colors.GREY.primary, 
-        flexDirection: 'row', 
+        borderRadius: 15,
+        backgroundColor: colors.DEEPBLUE, 
+        alignSelf: 'center',
         alignItems: 'center', 
-        justifyContent: 'space-between'
+        justifyContent: 'center'
+    },
+    textButton: {
+        color: colors.WHITE,
+        fontFamily: 'Inter-Bold',
+        fontSize: 18,
+    },
+    textButton2: {
+        color: colors.RED,
+        fontFamily: 'Inter-Bold',
+        fontSize: 18,
     },
     mainView:{ 
         flex:1, 
@@ -533,5 +520,20 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         padding: 10
-      }
+      },
+
+    iconImage: {
+        alignSelf: 'center'
+    },
+    editarPerfil: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+    },
+    iconBack: {
+        width: 30,
+        height: 30,
+        backgroundColor: colors.GREY2,
+        borderRadius: 50,
+        justifyContent: 'center'
+    },
 });

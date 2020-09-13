@@ -185,6 +185,7 @@ export default class EditUser extends React.Component {
                                     placeholderTextColor={colors.GREY.secondary}
                                     value={this.state.mobile}
                                     keyboardType={'number-pad'}
+                                    maxLength={11}
                                     inputStyle={styles.inputTextStyle}
                                     onChangeText={(text)=>{this.setState({mobile: text})}}
                                     errorMessage={this.state.mobileValid ? null : languageJSON.mobile_no_blank_error}

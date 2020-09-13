@@ -208,6 +208,12 @@ async uploadmultimedia(url){
                {
                    this.uploadImage()
                }
+               <Header 
+                backgroundColor={colors.WHITE}
+                leftComponent={{icon:'chevron-left', type:'MaterialIcons', color:colors.BLACK, size: 35, component: TouchableWithoutFeedback,onPress: ()=>{this.props.navigation.goBack();} }}
+                containerStyle={styles.headerStyle}
+                innerContainerStyles={{marginLeft:10, marginRight: 10}}
+            />
                <View style={styles.viewStyle}>
                     <View style={styles.imageParentView}>
                         <View style={styles.imageViewStyle} >
@@ -299,7 +305,7 @@ async uploadmultimedia(url){
                                 type='feather'
                                 color='#D5DDE0'
                             />
-                            <Text style={styles.emailStyle}>{this.state.refferalId}</Text>
+                            <Text style={styles.emailStyle}>{this.state.refferalId + ' (Cod. Referência)'}</Text>
                         </View>
                     </View>
                     :null}
@@ -327,12 +333,12 @@ async uploadmultimedia(url){
 
 const styles = StyleSheet.create({
     headerStyle: { 
-        backgroundColor: colors.BLACK, 
+        backgroundColor: colors.TRANSPARENT, 
         borderBottomWidth: 0 
     },
     headerTitleStyle: { 
         color: colors.BLACK,
-        fontFamily:'Roboto-Bold',
+        fontFamily:'Inter-Bold',
         fontSize: 20
     },
     logo:{

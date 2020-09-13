@@ -13,7 +13,7 @@ export default class MapComponent extends Component {
     const { mapRegion, mapStyle,nearby,  onRegionChangeComplete } = this.props;
         return (
             <MapView
-                provider={PROVIDER_GOOGLE}
+                //provider={PROVIDER_GOOGLE}
                 showsUserLocation={true}
                 loadingEnabled
                 showsMyLocationButton={true}

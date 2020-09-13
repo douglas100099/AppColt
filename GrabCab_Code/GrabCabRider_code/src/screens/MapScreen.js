@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import {
     StyleSheet,
     View,
@@ -26,6 +26,7 @@ import languageJSON from '../common/language';
 import Geocoder from 'react-native-geocoding';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import distanceCalc from '../common/distanceCalc';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 export default class MapScreen extends React.Component {
 
@@ -694,47 +695,15 @@ export default class MapScreen extends React.Component {
     render() {
         return (
             <View style={styles.mainViewStyle}>
-                <Header
+                {/*<Header
                     backgroundColor={colors.GREY.default}
                     leftComponent={{ icon: 'md-menu', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.toggleDrawer(); } }}
                     centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.map_screen_title}</Text>}
                     containerStyle={styles.headerStyle}
                     innerContainerStyles={styles.inrContStyle}
-                />
+                />*/}
 
-                <View style={styles.myViewStyle}>
-                    <View style={styles.coverViewStyle}>
-                        <View style={styles.viewStyle1} />
-                        <View style={styles.viewStyle2} />
-                        <View style={styles.viewStyle3} />
-                    </View>
-                    <View style={styles.iconsViewStyle}>
-                        <TouchableOpacity onPress={() => this.tapAddress('pickup')} style={styles.contentStyle}>
-                            <View style={styles.textIconStyle}>
-                                <Text numberOfLines={1} style={[styles.textStyle, this.state.selected == 'pickup' ? { fontSize: 20 } : { fontSize: 14 }]}>{this.state.whereText}</Text>
-                                <Icon
-                                    name='gps-fixed'
-                                    color={colors.WHITE}
-                                    size={this.state.selected == 'pickup' ? 24 : 14}
-                                    containerStyle={{ flex: 1 }}
-                                />
-                            </View>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => this.tapAddress('drop')} style={styles.searchClickStyle}>
-                            <View style={styles.textIconStyle}>
-                                <Text numberOfLines={1} style={[styles.textStyle, this.state.selected == 'drop' ? { fontSize: 20 } : { fontSize: 14 }]}>{this.state.dropText}</Text>
-                                <Icon
-                                    name='search'
-                                    type='feather'
-                                    color={colors.WHITE}
-                                    size={this.state.selected == 'drop' ? 24 : 14}
-                                    containerStyle={{ flex: 1 }}
-                                />
-                            </View>
-                        </TouchableOpacity>
-
-                    </View>
-                </View>
+                
                 <View style={styles.mapcontainer}>
                     {this.state.geolocationFetchComplete ?
                         <MapComponent
@@ -743,7 +712,8 @@ export default class MapScreen extends React.Component {
                             mapRegion={this.state.region}
                             nearby={this.state.freeCars}
                             onRegionChangeComplete={this.onRegionChangeComplete}
-                        />
+                        >
+                        </MapComponent>
                         : null}
                     {this.state.selected == 'pickup' ?
                         <View pointerEvents="none" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }}>
@@ -754,14 +724,64 @@ export default class MapScreen extends React.Component {
                             <Image pointerEvents="none" style={{ marginBottom: 40, height: 40, resizeMode: "contain" }} source={require('../../assets/images/rsz_2red_pin.png')} />
                         </View>
                     }
+
+                    {/* ICONE MENU */}
+                    <View style={styles.viewStyleTop}>
+                        <Icon
+                            raised
+                            name='dehaze'
+                            type='material'
+                            color= {colors.BLACK}
+                            size={16}
+                            onPress={() => { this.props.navigation.toggleDrawer()}}
+                            containerStyle={styles.iconMenuStyle}
+                        />
+
+                        {/* INPUT */}
+                        <View style={styles.myViewStyle}>
+                            <View style={styles.coverViewStyle}>
+                                <View style={styles.viewStyle1} />
+                                <View style={styles.viewStyle2} />
+                                <View style={styles.viewStyle3} />
+                            </View>
+                            <View style={styles.iconsViewStyle}>
+                                <TouchableOpacity onPress={() => this.tapAddress('pickup')} style={styles.contentStyle}>
+                                    <View style={styles.textIconStyle}>
+                                        <Text numberOfLines={1} style={[styles.textStyle, this.state.selected == 'pickup' ? { fontSize: 16 } : { fontSize: 11, color: colors.GREY.secondary  }]}>{this.state.whereText}</Text>
+                                        <Icon
+                                            name='gps-fixed'
+                                            color={this.state.selected == 'pickup' ? colors.BLACK : colors.GREY.secondary}
+                                            size={this.state.selected == 'pickup' ? 20 : 10}
+                                            containerStyle={{ flex: 1 }}
+                                        />
+                                    </View>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => this.tapAddress('drop')} style={styles.searchClickStyle}>
+                                    <View style={styles.textIconStyle}>
+                                        <Text numberOfLines={1} style={[styles.textStyle, this.state.selected == 'drop' ? { fontSize: 16 } : { fontSize: 11, color: colors.GREY.secondary }]}>{this.state.dropText}</Text>
+                                        <Icon
+                                            name='search'
+                                            type='feather'
+                                            color={this.state.selected == 'drop' ? colors.BLACK : colors.GREY.secondary}
+                                            size={this.state.selected == 'drop' ? 20 : 10}
+                                            containerStyle={{ flex: 1 }}
+                                        />
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+
                 </View>
+                
+                {/*
                 <View style={styles.compViewStyle}>
                     <Text style={styles.pickCabStyle}>{languageJSON.cab_selection_title}</Text>
                     <Text style={styles.sampleTextStyle}>{languageJSON.cab_selection_subtitle}</Text>
                     <ScrollView horizontal={true} style={styles.adjustViewStyle} showsHorizontalScrollIndicator={false}>
                         {this.state.allCars.map((prop, key) => {
                             return (
-                                <TouchableOpacity key={key} style={styles.cabDivStyle} onPress={() => { this.selectCarType(prop, key) }} /*disabled={prop.minTime == ''}*/ >
+                                <TouchableOpacity key={key} style={styles.cabDivStyle} onPress={() => { this.selectCarType(prop, key) }} >
                                     <View style={[styles.imageStyle, {
                                         backgroundColor: prop.active == true ? colors.YELLOW.secondary : colors.WHITE
                                     }]
@@ -797,7 +817,7 @@ export default class MapScreen extends React.Component {
 
                     </View>
 
-                </View>
+                </View>*/}
 
                 {
 
@@ -831,7 +851,7 @@ const styles = StyleSheet.create({
         fontSize: 18
     },
     mapcontainer: {
-        flex: 6,
+        flex: 10,
         width: width,
         justifyContent: 'center',
         alignItems: 'center',
@@ -844,37 +864,57 @@ const styles = StyleSheet.create({
         marginLeft: 10,
         marginRight: 10
     },
+    //VIEW PRINCIPAL
     mainViewStyle: {
         flex: 1,
         backgroundColor: colors.WHITE,
     },
+    iconMenuStyle:{
+        marginLeft: 6,
+        marginBottom: 5, 
+    },
+    viewStyleTop:{
+        position: 'absolute',
+        top: Platform.select({ ios: 60, android: 40 }),
+        marginHorizontal: 12,
+        width: width,
+    },
     myViewStyle: {
-        flex: 1.5,
+        flex: 1,
         flexDirection: 'row',
         borderTopWidth: 0,
         alignItems: 'center',
-        backgroundColor: colors.GREY.default,
-        paddingEnd: 20
+        backgroundColor: colors.WHITE,
+        paddingEnd: 10,
+        paddingBottom: 3,
+        paddingTop: 3,
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
+        shadowOffset: { x: 0, y: 0 },
+        shadowRadius: 15,
+        borderRadius: 20,
+        marginHorizontal: 12,
+        elevation: 20,
     },
     coverViewStyle: {
         flex: 1.5,
         alignItems: 'center'
     },
     viewStyle1: {
-        height: 12,
-        width: 12,
+        height: 10,
+        width: 10,
         borderRadius: 15 / 2,
-        backgroundColor: colors.YELLOW.light
+        backgroundColor: colors.BLACK
     },
     viewStyle2: {
-        height: height / 25,
-        width: 1,
-        backgroundColor: colors.YELLOW.light
+        height: height / 23,
+        width: 0.5,
+        backgroundColor: colors.BLACK
     },
     viewStyle3: {
-        height: 14,
-        width: 14,
-        backgroundColor: colors.GREY.iconPrimary
+        height: 13,
+        width: 13,
+        backgroundColor: colors.BLUE.light
     },
     iconsViewStyle: {
         flex: 9.5,
@@ -883,7 +923,7 @@ const styles = StyleSheet.create({
     contentStyle: {
         //flex: 1, 
         justifyContent: 'center',
-        borderBottomColor: colors.WHITE,
+        borderBottomColor: colors.BLACK,
         borderBottomWidth: 1
     },
     textIconStyle: {
@@ -897,7 +937,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Roboto-Regular',
         fontSize: 14,
         fontWeight: '400',
-        color: colors.WHITE,
+        color: colors.BLACK,
         marginTop: 10,
         marginBottom: 10
     },

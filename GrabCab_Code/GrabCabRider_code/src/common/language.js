@@ -93,7 +93,7 @@ export default {
     book_now_button:'Chamar',
     contact_details:'Contact Details',
     phone:'Phone',
-    my_wallet_tile:'My Wallet',
+    my_wallet_tile:'Minha carteira',
     wallet_ballance:'Wallet Balance',
     add_money:'Add Money',
     transaction_history_title:'Wallet Transaction History',

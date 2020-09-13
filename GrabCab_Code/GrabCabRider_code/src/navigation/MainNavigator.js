@@ -23,6 +23,8 @@ import {
     IntroScreen
 } from '../screens';
 import SideMenu from '../components/SideMenu';
+import { Dimensions } from 'react-native';
+var { width } = Dimensions.get('window');
 
 //app stack for user end
     export const AppStack = {
@@ -204,7 +206,7 @@ import SideMenu from '../components/SideMenu';
     export const RootNavigator = createDrawerNavigator(
         DrawerRoutes,
         {
-        drawerWidth: 180,
+        drawerWidth: width/1.53,
         initialRouteName:'Map',
         contentComponent: SideMenu,
       });

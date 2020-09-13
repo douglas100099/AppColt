@@ -119,7 +119,7 @@ export default class SideMenu extends React.Component {
     render() {
         return (
             <View style={styles.mainViewStyle}>
-                <SideMenuHeader headerStyle={styles.myHeader} userPhoto={this.state.profile_image} userEmail={this.state.email} userName={this.state.firstName + ' ' + this.state.lastName} ></SideMenuHeader>
+                <SideMenuHeader headerStyle={styles.myHeader} userPhoto={this.state.profile_image} userEmail={this.state.email} userPhone={this.state.mobile} userName={this.state.firstName + ' ' + this.state.lastName} ></SideMenuHeader>
 
                 <View style={styles.compViewStyle}>
                     <View style={[styles.vertialLine, { height: (width <= 320) ? width / 1.53 : width / 1.68 }]}></View>
@@ -145,24 +145,18 @@ export default class SideMenu extends React.Component {
                                         <Icon
                                             name={item.icon}
                                             type={item.type}
-                                            color={colors.WHITE}
-                                            size={16}
+                                            color={colors.BLACK}
+                                            size={18}
                                             containerStyle={styles.iconStyle}
                                         />
                                     </View>
-                                    <Text style={styles.menuName}>{item.name}</Text>
+                                    <Text style={styles.menuName}>{item.name.toUpperCase()}</Text>
                                 </TouchableOpacity>
                                 )
                             
                             }
                         }
                         } />
-                </View>
-                <View style={{ opacity: 0.6 }}>
-                    <Image
-                        source={require('../../assets/images/logo.png')}
-                        style={{ width: '100%' }}
-                    />
                 </View>
 
             </View>
@@ -175,37 +169,41 @@ const styles = StyleSheet.create({
     },
     vertialLine: {
         width: 1,
-        backgroundColor: colors.GREY.btnPrimary,
+        backgroundColor: colors.GREY2,
         position: 'absolute',
-        left: 22,
+        left: 25,
         top: 24
     },
     menuItemView: {
         flexDirection: 'row',
         justifyContent: 'flex-start',
         alignItems: 'center',
-        marginBottom: 18,
+        marginBottom: 25,
         flex: 1,
         paddingLeft: 10,
         paddingRight: 10,
     },
     viewIcon: {
-        width: 24,
-        height: 24,
+        width: 30,
+        height: 30,
         borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: colors.GREY.btnPrimary,
+        backgroundColor: colors.WHITE,
+        shadowColor:colors.BLACK,
+        shadowOffset:{width:0,height:3},
+        shadowOpacity:0.3,
+        elevation: 3,
         left: 1
     },
     menuName: {
-        color: colors.WHITE,
+        color: colors.BLACK,
         fontWeight: 'bold',
-        marginLeft: 8,
+        marginLeft: 12,
         width: "100%"
     },
     mainViewStyle: {
-        backgroundColor: colors.BLUE.dark,
+        backgroundColor: colors.WHITE,
         height: '100%',
     },
     compViewStyle: {

@@ -3,7 +3,7 @@ import { Text, View, Image,TouchableOpacity, Platform, StatusBar } from 'react-n
 import { Icon } from 'react-native-elements'
 import { colors } from '../common/theme';
 //make a compontent
-const SideMenuHeader = ({headerStyle,userPhoto,userName,userEmail}) =>{
+const SideMenuHeader = ({headerStyle,userPhoto,userName,userEmail,userPhone}) =>{
    return (
         <View style={[styles.viewStyle,headerStyle]}>
             <TouchableOpacity style={styles.userImageView} >
@@ -17,12 +17,12 @@ const SideMenuHeader = ({headerStyle,userPhoto,userName,userEmail}) =>{
             </View>
             <View style={styles.iconViewStyle}>
                 <Icon 
-                    name='mail-read'
-                    type='octicon'
+                    name='call'
+                    type='material'
                     color={colors.WHITE}
                     size={16}
                 />
-                <Text style={styles.emailStyle}>{userEmail?userEmail.toLowerCase():""}</Text>
+                <Text style={styles.emailStyle}>{userPhone}</Text>
             </View>
         </View>
    );
@@ -31,17 +31,18 @@ const SideMenuHeader = ({headerStyle,userPhoto,userName,userEmail}) =>{
 
 const styles = {
     viewStyle:{
-        backgroundColor:colors.BLUE.dark,
-        justifyContent:'center',
-        alignItems:'center',
-        height:180,
+        backgroundColor:colors.DEEPBLUE,
+        justifyContent:'flex-end',
+        alignItems:'flex-start',
+        height:200,
         paddingTop:Platform.OS=='ios'?20:StatusBar.currentHeight,
         shadowColor:colors.BLACK,
         shadowOffset:{width:0,height:2},
         shadowOpacity:0.2,
         elevation:2,
         position:'relative',
-        flexDirection:'column'
+        flexDirection:'column',
+        padding: 10,
     },
     textStyle:{
         fontSize:20,
@@ -60,6 +61,7 @@ const styles = {
         height: 84,
         borderRadius: 50,
         overflow: 'hidden',
+        marginLeft: 10,
         borderWidth: 2,
         borderColor: colors.WHITE,
         justifyContent: 'center',
@@ -67,22 +69,28 @@ const styles = {
         padding: 20
     },
     ProfileNameStyle:{
-        fontWeight: 'bold', 
+        fontFamily: 'Inter-Bold',
         color: colors.WHITE, 
+        marginLeft: 10,
         fontSize: 15
+        
     },
     iconViewStyle:{
         width:150,
-        justifyContent: 'center', 
         flexDirection: 'row', 
         alignItems: 'center', 
-        marginTop: 4
+        marginLeft: 10,
+        marginTop: 4,
+
     },
     emailStyle:{
+        fontFamily: 'Inter-Regular',
         color: colors.WHITE, 
         fontSize: 13,
         marginLeft: 4,
-        textAlign:'center'
+        justifyContent: 'center',
+        alignItems: 'center',
+        textAlign:'center',
     },
     imageStyle:{
         width: 80, 

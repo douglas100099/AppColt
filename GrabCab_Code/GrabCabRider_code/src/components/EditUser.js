@@ -104,6 +104,7 @@ export default class EditUser extends React.Component {
                     backgroundColor={colors.TRANSPARENT}
                     leftComponent={{icon:'md-close', type:'ionicon', color:colors.BLACK, size: 35, component: TouchableWithoutFeedback,onPress: onPressBack }}
                     containerStyle={styles.headerContainerStyle}
+                    centerComponent={<Text style={styles.headerTitleStyle}>Atualizar perfil</Text>}
                     innerContainerStyles={styles.headerInnerContainer}
                 />
                 <ScrollView style={styles.scrollViewStyle}>
@@ -112,22 +113,15 @@ export default class EditUser extends React.Component {
                     </View> */}
                     <KeyboardAvoidingView behavior={Platform.OS=='ios'?"padding":"padding"} style={styles.form}> 
                         <View style={styles.containerStyle}>
-                            <Text style={styles.headerStyle}>{languageJSON.update_profile_title}</Text>
 
                             <View style={styles.textInputContainerStyle}> 
-                                <Icon
-                                    name='user'
-                                    type='font-awesome'
-                                    color={colors.GREY.secondary}
-                                    size={30}
-                                    containerStyle={styles.iconContainer}
-                                />
+                                <Text style={styles.textInput}>NOME</Text>
                                 <Input
                                     ref={input => (this.fnameInput = input)}
                                     editable={true}
                                     underlineColorAndroid={colors.TRANSPARENT}
                                     placeholder={languageJSON.first_name_placeholder}
-                                    placeholderTextColor={colors.GREY.secondary}
+                                    placeholderTextColor={colors.BLACK}
                                     value={this.state.fname}
                                     keyboardType={'email-address'}
                                     inputStyle={styles.inputTextStyle}
@@ -143,13 +137,7 @@ export default class EditUser extends React.Component {
                             </View>  
 
                             <View style={styles.textInputContainerStyle}>
-                                <Icon
-                                    name='user'
-                                    type='font-awesome'
-                                    color={colors.GREY.secondary}
-                                    size={30}
-                                    containerStyle={styles.iconContainer}
-                                />
+                                <Text style={styles.textInput}>SOBRENOME</Text>
                                 <Input
                                     ref={input => (this.lnameInput = input)}
                                     editable={true}
@@ -169,14 +157,8 @@ export default class EditUser extends React.Component {
                                     containerStyle={styles.textInputStyle}
                                 />
                             </View>
-                            <View style={styles.textInputContainerStyle}>
-                                <Icon
-                                    name='mobile-phone'
-                                    type='font-awesome'
-                                    color={colors.GREY.secondary}
-                                    size={40}
-                                    containerStyle={styles.iconContainer}
-                                />
+                            {/*<View style={styles.textInputContainerStyle}>
+                                <Text>Celular</Text>
                                 <Input
                                     ref={input => (this.mobileInput = input)}
                                     editable={this.state.loginType=='email'?true:false}
@@ -196,16 +178,10 @@ export default class EditUser extends React.Component {
                                     inputContainerStyle={styles.inputContainerStyle}
                                     containerStyle={styles.textInputStyle}
                                 />
-                            </View>
+                            </View>   */}
 
                             <View style={styles.textInputContainerStyle}>
-                                <Icon
-                                    name='envelope'
-                                    type='font-awesome'
-                                    color={colors.GREY.secondary}
-                                    size={25}
-                                    containerStyle={styles.iconContainer}
-                                />
+                                <Text style={styles.textInput}>E-MAIL</Text>
                                 <Input
                                     ref={input => (this.emailInput = input)}
                                     editable={this.state.loginType!='email'?true:false}
@@ -229,7 +205,7 @@ export default class EditUser extends React.Component {
                             <View style={styles.buttonContainer}>
                                 <Button
                                     onPress={()=>{this.onPressRegister()}}
-                                    title={languageJSON.update_button}
+                                    title='Atualizar'
                                     titleStyle={styles.buttonTitle}
                                     buttonStyle={styles.registerButton}
                                 />
@@ -256,18 +232,25 @@ const styles={
         marginRight: 10
     },
     inputContainerStyle: {
-        borderBottomWidth:1,
-        borderBottomColor: colors.BLACK
+        borderWidth:1,
+        borderColor: colors.GREY1,
+        borderRadius: 15,
+        backgroundColor: colors.GREY3,
+        elevation: 2,
+        marginTop: 10,
+
     },
     textInputStyle:{
-        marginLeft:10,
-    },
-    iconContainer: {
-        paddingTop:8
+        marginLeft:0,
     },
     gapView: {
         height:40,
         width:'100%'
+    },
+    headerTitleStyle: { 
+        color: colors.BLACK,
+        fontFamily:'Inter-Bold',
+        fontSize: 20
     },
     buttonContainer: { 
         flexDirection:'row',
@@ -275,7 +258,7 @@ const styles={
         borderRadius:40
     },
     registerButton: {
-        backgroundColor: colors.YELLOW.primary,
+        backgroundColor: colors.DEEPBLUE,
         width: 180,
         height: 45,
         borderColor: colors.TRANSPARENT,
@@ -285,13 +268,13 @@ const styles={
         elevation:0
     },
     buttonTitle: { 
-        fontSize:16 
+        fontSize:18 
     },
     inputTextStyle: {
         color:colors.BLACK,
         fontSize:13,
-        marginLeft:0,
-        height:32
+        marginLeft:7,
+        height:32,
     },
     errorMessageStyle: { 
         fontSize: 12, 
@@ -305,27 +288,27 @@ const styles={
     form: {
         flex: 1,
     },
-    logo:{
-        width:'90%',
-        justifyContent:"flex-start",
-        marginTop:10,
-        alignItems:'center', 
-    },
     scrollViewStyle:{
         height: height
     },
     textInputContainerStyle:{
-        flexDirection:'row', 
-        alignItems: "center",  
+        flexDirection:'column',  
         marginLeft:20,
         marginRight:20,
-        padding: 15,
+
     },
     headerStyle:{
-        fontSize:18,
+        fontSize:13,
         color:colors.BLACK,
         textAlign:'center',
         flexDirection:'row',
         marginTop:0
+    },
+
+    textInput: {
+        fontSize: 13,
+        fontFamily: 'Inter-Bold',
+        marginLeft: 10,
+        marginTop: 15,
     },
 }

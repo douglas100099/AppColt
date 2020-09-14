@@ -72,7 +72,7 @@ export default {
     old_password_validation_error:'Please enter a old password',
     new_password_validation_error:'Please enter a new password',
     update_button:'Update Now',
-    update_profile_title:'Upadate Profile',
+    update_profile_title:'Atualizar perfil',
     map_screen_where_input_text:'De onde ?',
     map_screen_drop_input_text:'Para onde ?',
     driver_finding_alert:'Finding Drivers for you',

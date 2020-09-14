@@ -33,8 +33,8 @@ export default class AboutPage extends React.Component {
         
             <View style={styles.mainView}>
                 <Header 
-                    backgroundColor={colors.GREY.default}
-                    leftComponent={{icon:'md-menu', type:'ionicon', color:colors.WHITE, size: 30, component: TouchableWithoutFeedback,onPress: ()=>{this.props.navigation.toggleDrawer();} }}
+                    backgroundColor={colors.WHITE}
+                    leftComponent={{icon:'chevron-left', type:'MaterialIcons', color:colors.BLACK, size: 35, component: TouchableWithoutFeedback,onPress: ()=>{this.props.navigation.goBack();} }}
                     centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.about_us_menu}</Text>}
                     containerStyle={styles.headerStyle}
                     innerContainerStyles={{marginLeft:10, marginRight: 10}}
@@ -43,10 +43,6 @@ export default class AboutPage extends React.Component {
                 <ScrollView styles={{marginTop:10}}>
                     <Text style={styles.aboutTitleStyle}>{this.state.heading?this.state.heading:null}</Text>
                     <View style={styles.aboutcontentmainStyle}>
-                    <Image
-                      style={{width: '100%', height: 150}}
-                      source={require('../../assets/images/about_us.png')}
-                    />
                     
                     <Text style={styles.aboutcontentStyle}>
                        
@@ -79,17 +75,17 @@ const styles = StyleSheet.create({
         //marginTop: StatusBar.currentHeight,
     } ,
     headerStyle: { 
-        backgroundColor: colors.GREY.default, 
+        backgroundColor: colors.WHITE, 
         borderBottomWidth: 0 
     },
     headerTitleStyle: { 
-        color: colors.WHITE,
-        fontFamily:'Roboto-Bold',
+        color: colors.BLACK,
+        fontFamily:'Inter-Bold',
         fontSize: 20
     },
     aboutTitleStyle:{
         color: colors.BLACK,
-        fontFamily:'Roboto-Bold',
+        fontFamily:'Inter-Bold',
         fontSize: 20,
         marginLeft:8,
         marginTop:8
@@ -99,8 +95,8 @@ const styles = StyleSheet.create({
         marginBottom:60
     },
     aboutcontentStyle:{
-        color: colors.GREY.secondary,
-        fontFamily:'Roboto-Regular',
+        color: colors.BLACK,
+        fontFamily:'Inter-Regular',
         fontSize: 15,
         textAlign: "justify",
         alignSelf:'center',
@@ -117,15 +113,15 @@ const styles = StyleSheet.create({
     },
     contacttype1:{
         textAlign:'left',
-        color: colors.GREY.secondary,
-        fontFamily:'Roboto-Bold',
+        color: colors.BLACK,
+        fontFamily:'Inter-Bold',
         fontSize: 15,
     },
     contacttype2:{
         textAlign:'left',
         marginTop:4,
         color: colors.GREY.secondary,
-        fontFamily:'Roboto-Bold',
+        fontFamily:'Inter-Bold',
         fontSize: 15,
     }
 })

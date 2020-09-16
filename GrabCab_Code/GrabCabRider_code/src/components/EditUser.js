@@ -59,13 +59,12 @@ export default class EditUser extends React.Component {
 
     // mobile number validation
     validateMobile() {
-        /*const { mobile } = this.state;
-        const mobileValid = (mobile.length == 10)
+        const { mobile } = this.state;
+        const mobileValid = (mobile.length == 11)
         LayoutAnimation.easeInEaseOut()
         this.setState({ mobileValid })
         mobileValid || this.mobileInput.shake();
-        return mobileValid;*/
-        return true;
+        return mobileValid;
     }
 
     // email validation

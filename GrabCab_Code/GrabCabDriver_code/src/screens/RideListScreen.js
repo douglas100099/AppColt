@@ -55,13 +55,12 @@ export default class RideListPage extends React.Component {
     render() {
         return (
             <View style={styles.mainView}>
-                <Header 
-                    backgroundColor={colors.GREY.default}
-                    leftComponent={{icon:'md-menu', type:'ionicon', color:colors.WHITE, size: 30, component: TouchableWithoutFeedback,onPress: ()=>{this.props.navigation.toggleDrawer();} }}
-                    centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.my_booking}</Text>}
-                    // rightComponent={{icon:'ios-notifications', type:'ionicon', color:colors.WHITE, size: 30, component: TouchableWithoutFeedback,onPress: ()=>{this.props.navigation.navigate('Notifications');} }}
+                <Header
+                    backgroundColor={colors.WHITE}
+                    leftComponent={{ icon: 'chevron-left', type: 'MaterialIcons', color: colors.BLACK, size: 35, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.goBack(); } }}
+                    centerComponent={<Text style={styles.headerTitleStyle}>Histórico de corridas</Text>}
                     containerStyle={styles.headerStyle}
-                    innerContainerStyles={{marginLeft:10, marginRight: 10}}
+                    innerContainerStyles={{ marginLeft: 10, marginRight: 10 }}
                 />
                 <RideList data={this.state.allBookings} onPressButton={(item, index) => {this.goDetails(item, index)}}></RideList>
             </View>
@@ -72,18 +71,19 @@ export default class RideListPage extends React.Component {
 //Screen Styling
 const styles = StyleSheet.create({
     headerStyle: { 
-        backgroundColor: colors.GREY.default, 
+        backgroundColor: colors.WHITE, 
         borderBottomWidth: 0 
     },
     headerTitleStyle: { 
-        color: colors.WHITE,
-        fontFamily:'Roboto-Bold',
+        color: colors.BLACK,
+        fontFamily:'Inter-Bold',
         fontSize: 20
     },
     containerView:{ flex:1 },
-    textContainer:{textAlign:"center"},
+    textContainer:{textAlign:"center", backgroundColor: colors.TRANSPARENT},
     mainView:{ 
         flex:1, 
         backgroundColor: colors.WHITE, 
+        //marginTop: StatusBar.currentHeight 
     } 
 });

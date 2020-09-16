@@ -498,6 +498,7 @@ const styles = StyleSheet.create({
     },
     textButton: {
         color: colors.RED,
+        marginBottom: 15,
         fontFamily: 'Inter-Bold',
         fontSize: 18,
     },

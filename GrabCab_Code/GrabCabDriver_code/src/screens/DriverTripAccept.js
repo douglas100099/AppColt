@@ -1,8 +1,8 @@
 import React from 'react';
-import { Text, View, StyleSheet, Dimensions, FlatList, Modal, TouchableHighlight, TouchableWithoutFeedback } from 'react-native';
-import { Button, Header } from 'react-native-elements';
+import { Text, View, StyleSheet, Dimensions, FlatList, Modal, TouchableHighlight, TouchableOpacity, StatusBar, Image } from 'react-native';
+import { Button, Header, Icon } from 'react-native-elements';
 import Polyline from '@mapbox/polyline';
-import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
+import MapView, { PROVIDER_GOOGLE, Marker, UrlTile } from 'react-native-maps';
 import { colors } from '../common/theme';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
@@ -14,6 +14,7 @@ import { RequestPushMsg } from '../common/RequestPushMsg';
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import dateStyle from '../common/dateStyle';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 export default class DriverTripAccept extends React.Component {
 
@@ -50,7 +51,8 @@ export default class DriverTripAccept extends React.Component {
             driverDetails: null,
             curUid: '',
             id: 0,
-            gotAddress: false
+            gotAddress: false,
+
         }
         this._getLocationAsync();
     }
@@ -71,8 +73,53 @@ export default class DriverTripAccept extends React.Component {
     }
 
 
-    componentDidMount() {
-        this.getRiders();
+    // ESSE .ON AI PEGA E LER O VALOR DO BANCO QUANDO CHAMADO, E FICA ATUALIZANDO.
+    getStatusDetails() {
+        let ref = firebase.database().ref('users/' + this.state.curUid + '/driverActiveStatus/');
+        ref.on('value', (snapshot) => {
+            this.setState({
+                statusDetails: snapshot.val()
+            })
+        })
+    }
+
+    onChangeFunction(){
+        if(this.state.statusDetails == true){
+            firebase.database().ref(`/users/`+this.state.curUid+'/').update({
+                driverActiveStatus:false
+            }).then(()=>{
+                this.setState({driverActiveStatus:false});
+            })
+        }else if(this.state.statusDetails == false){
+            firebase.database().ref(`/users/`+this.state.curUid+'/').update({
+                driverActiveStatus:true
+            }).then(()=>{
+                this.setState({driverActiveStatus:true});
+            })
+        }
+    }
+
+    photoPerfil=() => {
+        this.props.navigation.push('Profile');
+    }
+
+    carteira=() => {
+        this.props.navigation.push('MyEarning');
+    }
+    getPhotoDriver() {
+        let ref = firebase.database().ref('users/' + this.state.curUid + '/profile_image/');
+        ref.on('value', (snapshot) => {
+            this.setState({
+                photoDriver: snapshot.val()
+            })
+        })
+    }
+
+
+    async componentDidMount() {
+       await this.getRiders();
+       await this.getPhotoDriver();
+       await this.getStatusDetails();
     }
 
     // find your origin and destination point coordinates and pass it to our method.
@@ -109,7 +156,7 @@ export default class DriverTripAccept extends React.Component {
                 .then((response) => response.json())
                 .then((responseJson) => {
                     if (responseJson.results[0] && responseJson.results[0].formatted_address) {
-                        let address  = responseJson.results[0].formatted_address;
+                        let address = responseJson.results[0].formatted_address;
                         firebase.database().ref('users/' + uid + '/location').update({
                             add: address,
                             lat: location.coords.latitude,
@@ -142,7 +189,7 @@ export default class DriverTripAccept extends React.Component {
             }
             this.setState({ tasklist: jobs.reverse() });
             this.jobs = jobs;
-            // console.log(this.jobs);
+            console.log(this.jobs);
         });
     }
 
@@ -241,6 +288,7 @@ export default class DriverTripAccept extends React.Component {
 
     //ignore button press function
     onPressIgnore(item) {
+        var arr = [];
         console.log(item.bookingId)
         firebase.database().ref('bookings/' + item.bookingId + '/').once('value', data => {
             if (data.val()) {
@@ -248,17 +296,23 @@ export default class DriverTripAccept extends React.Component {
                 console.log(mainBookingData)
                 if (mainBookingData.requestedDriver) {
                     if (mainBookingData.requestedDriver.length == 1) {
-                        firebase.database().ref('bookings/' + item.bookingId + '/').update({
-                            status: "CANCELLED",
-                            requestedDriver: []
+                        alert("FOI REJEITADO")
+                        arr.push(this.state.curUid)
+                        firebase.database().ref(`bookings/` + item.bookingId + '/').update({
+                            rejectedDrivers: arr,
+                            status: "REJECTED",
+                            //requestDriver: [],
                         })
+
                             .then(() => {
                                 let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/');
                                 userDbRef.update({
-                                    status: "CANCELLED",
+                                    status: "REJECTED",
                                 });
                                 this.sendPushNotification(item.customer, item.bookingId, languageJSON.booking_request_rejected)
                             })
+
+                        firebase.database().ref('bookings/' + item.bookingId + '/requestedDriver/').remove();
                     }
                     else {
                         let arr = mainBookingData.requestedDriver.filter((item) => {
@@ -291,17 +345,44 @@ export default class DriverTripAccept extends React.Component {
     render() {
         return (
             <View style={styles.mainViewStyle}>
-                <Header
-                    backgroundColor={colors.GREY.default}
-                    leftComponent={{ icon: 'md-menu', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.toggleDrawer(); } }}
-                    centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.task_list}</Text>}
-                    containerStyle={styles.headerStyle}
-                    innerContainerStyles={styles.headerInnerStyle}
-                />
-                <FlatList
+                {/* AQUI ENTRA TODOS OS BOTÕES FLUTUANTES DO MENU */}
+
+                {/* BOTÃO MENU VOLTAR */}
+                <View>
+                    <TouchableOpacity style={styles.touchaVoltar} onPress={() => { this.props.navigation.toggleDrawer(); }}>
+                        <Icon
+                            name='md-menu'
+                            type='ionicon'
+                            size={25}
+                            color={colors.BLACK}
+                        />
+                    </TouchableOpacity>
+                </View>
+
+                {/* BOTÃO GANHOS CENTRO */}
+                <View style={{alignItems: 'center'}}>
+                    <TouchableOpacity style={[styles.touchaGanhos, { borderColor: this.state.statusDetails ? colors.GREEN.light : colors.RED}]} onPress={() => { this.carteira() }}>
+                        <Text styles={{color: '#fff'}}>R$ 250,00</Text>
+                        <Text styles={styles.touchaCorrida}>11</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* BOTÃO FOTOS */}
+                <View>
+                    <TouchableOpacity style={styles.touchaFoto} onPress={() => { this.photoPerfil() }}>
+                        <Image source={this.state.photoDriver?{uri:this.state.photoDriver}:require('../../assets/images/profilePic.png')} style={styles.imagemPerfil} />
+                    </TouchableOpacity>
+                </View>
+
+                <View style={{alignItems: 'center', flex: 1}}>
+                    <TouchableOpacity style={[styles.btnOnOff, { backgroundColor: this.state.statusDetails ? colors.RED : colors.GREEN.light}]} onPress={() => { this.onChangeFunction(this.state.driverActiveStatus); }}>
+                        <Text style={styles.textConectar}>{this.state.statusDetails ? 'DESCONECTAR' : 'CONECTAR'}</Text>
+                    </TouchableOpacity>
+                </View>
+                {/*<FlatList
                     data={this.state.tasklist}
                     keyExtractor={(item, index) => index.toString()}
-                    ListEmptyComponent={<View style={{ flex: 1, justifyContent: "center", alignItems: "center", height: height }}><Text style={styles.addressViewTextStyle}>{languageJSON.rider_not_here}</Text></View>}
+                    ListEmptyComponent={<View style={{ flex: 1, justifyContent: "center", alignItems: "center", height: height}}><Text style={styles.addressViewTextStyle}>{languageJSON.rider_not_here}</Text></View>}
                     renderItem={({ item, index }) => {
                         return (
                             <View style={styles.listItemView}>
@@ -336,7 +417,6 @@ export default class DriverTripAccept extends React.Component {
 
                                     </MapView>
                                 </View>
-
                                 <View style={styles.mapDetails}>
                                     <View style={styles.dateView}>
                                         <Text style={styles.listDate}>{new Date(item.tripdate).toLocaleString(dateStyle)}</Text>
@@ -433,7 +513,7 @@ export default class DriverTripAccept extends React.Component {
                             </View>
                         </View>
                     </Modal>
-                </View>
+                </View>*/}
             </View>
 
         )
@@ -446,12 +526,96 @@ export default class DriverTripAccept extends React.Component {
 //Screen Styling
 const styles = StyleSheet.create({
     headerStyle: {
-        backgroundColor: colors.GREY.default,
+        backgroundColor: colors.WHITE,
         borderBottomWidth: 0
     },
+
+    // AQUI ENTRA O NOVO CSS // -----
+    touchaVoltar: {
+        position: 'absolute',
+        width: 48,
+        height: 48,
+        borderRadius: 50,
+        backgroundColor: colors.WHITE,
+        elevation: 5,
+        justifyContent:'center',
+        top: StatusBar.currentHeight,
+        left: 12,
+
+    },
+
+    touchaGanhos: {
+        position: 'absolute',
+        borderWidth: 2,
+        justifyContent: 'center',
+        alignItems:'center',
+        width: width/3.5,
+        height: 48,
+        borderRadius: 50,
+        backgroundColor: colors.WHITE,
+        elevation: 5,
+        top: StatusBar.currentHeight,
+    },
+    touchaValor:{
+        fontFamily: 'Inter-Bold',
+        fontSize: 14,
+        color: colors.WHITE
+    },
+
+    touchaCorrida: {
+        color: colors.WHITE
+    },
+
+    touchaFoto: {
+        position: 'absolute',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: 50,
+        height: 50,
+        borderRadius: 50,
+        backgroundColor: colors.WHITE,
+        elevation: 5,
+        top: StatusBar.currentHeight,
+        right: 12,
+    },
+
+    imagemPerfil: {
+        width: 48,
+        height: 48,
+        borderRadius: 50,
+    },
+
+    btnOnOff: {
+        flex: 1,
+        position: 'absolute',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 1,
+        borderRadius: 20,
+        height: 60,
+        width: width/1.53,
+        bottom: 45,
+    },
+
+    textConectar: {
+        fontFamily: 'Inter-Bold',
+        fontSize: 20,
+        color: colors.WHITE,
+    },
+
+
+    // FIM DO NOVO CSS // -------
+
     headerInnerStyle: {
         marginLeft: 10,
         marginRight: 10
+    },
+    btnMenu: {
+        position: 'absolute',
+        left: 20,
+        top: 20,
+        width: 50,
+        height: 50
     },
     headerTitleStyle: {
         color: colors.WHITE,
@@ -493,7 +657,7 @@ const styles = StyleSheet.create({
         ]
     },
     signInTextStyle: {
-        fontFamily: 'Roboto-Bold',
+        fontFamily: 'Inter-Bold',
         fontWeight: "700",
         color: colors.WHITE
     },

@@ -1,4 +1,4 @@
-export default 'en-US';
+export default 'pt-BR';
 
 /*
 ar-SA Arabic (Saudi Arabia)

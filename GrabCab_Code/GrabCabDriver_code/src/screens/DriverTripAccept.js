@@ -362,8 +362,8 @@ export default class DriverTripAccept extends React.Component {
                 {/* BOTÃO GANHOS CENTRO */}
                 <View style={{alignItems: 'center'}}>
                     <TouchableOpacity style={[styles.touchaGanhos, { borderColor: this.state.statusDetails ? colors.GREEN.light : colors.RED}]} onPress={() => { this.carteira() }}>
-                        <Text styles={{color: '#fff'}}>R$ 250,00</Text>
-                        <Text styles={styles.touchaCorrida}>11</Text>
+                        <Text style={styles.touchaValor}>R$250,43</Text>
+                        <Text style={styles.touchaCorrida}>20 CORRIDAS</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -379,7 +379,7 @@ export default class DriverTripAccept extends React.Component {
                         <Text style={styles.textConectar}>{this.state.statusDetails ? 'DESCONECTAR' : 'CONECTAR'}</Text>
                     </TouchableOpacity>
                 </View>
-                {/*<FlatList
+                <FlatList
                     data={this.state.tasklist}
                     keyExtractor={(item, index) => index.toString()}
                     ListEmptyComponent={<View style={{ flex: 1, justifyContent: "center", alignItems: "center", height: height}}><Text style={styles.addressViewTextStyle}>{languageJSON.rider_not_here}</Text></View>}
@@ -513,7 +513,7 @@ export default class DriverTripAccept extends React.Component {
                             </View>
                         </View>
                     </Modal>
-                </View>*/}
+                </View>
             </View>
 
         )
@@ -549,8 +549,8 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         justifyContent: 'center',
         alignItems:'center',
-        width: width/3.5,
-        height: 48,
+        width: width/3,
+        height: 52,
         borderRadius: 50,
         backgroundColor: colors.WHITE,
         elevation: 5,
@@ -558,12 +558,14 @@ const styles = StyleSheet.create({
     },
     touchaValor:{
         fontFamily: 'Inter-Bold',
-        fontSize: 14,
-        color: colors.WHITE
+        fontSize: 18,
+        color: colors.BLACK
     },
 
     touchaCorrida: {
-        color: colors.WHITE
+        fontFamily: 'Inter-Bold',
+        fontSize: 13,
+        color: colors.GREY2,
     },
 
     touchaFoto: {

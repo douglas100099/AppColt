@@ -34,17 +34,19 @@ export default class MapScreen extends React.Component {
     //   allCabs = '';
     constructor(props) {
         super(props);
+        this._isMounted = false;
         Geocoder.init(google_map_key);
         this.state = {
             loadingModal: false,
             giftModal: false,
             location: null,
             errorMessage: null,
+            openModal: false,
             region: {
                 latitude: 0,
                 longitude: 0,
-                latitudeDelta: 0.9922,
-                longitudeDelta: 0.9421,
+                latitudeDelta: 0.0143,
+                longitudeDelta: 0.0134,
             },
             whereText: languageJSON.map_screen_where_input_text,
             dropText: languageJSON.map_screen_drop_input_text,
@@ -73,9 +75,11 @@ export default class MapScreen extends React.Component {
             },
             selected: 'drop',
             geolocationFetchComplete: false,
+            dropComplete: false,
             selectedDateTime: new Date(),
             dateModalOpen: false,
-            dateMode: 'date'
+            dateMode: 'date',
+            openSelectModal: false
         }
 
     }
@@ -99,7 +103,8 @@ export default class MapScreen extends React.Component {
     }
 
 
-    async componentWillMount() {
+    async UNSAFE_componentWillMount() {
+        this._isMounted = true;
         if (Platform.OS === 'android' && !Constants.default.isDevice) {
             this.setState({
                 errorMessage: 'Oops, this will not work on Sketch in an Android emulator. Try it on your device!',
@@ -121,8 +126,8 @@ export default class MapScreen extends React.Component {
                         region: {
                             latitude: searchObj.searchDetails.geometry.location.lat,
                             longitude: searchObj.searchDetails.geometry.location.lng,
-                            latitudeDelta: 0.0922,
-                            longitudeDelta: 0.0421,
+                            latitudeDelta: 0.0143,
+                            longitudeDelta: 0.0134,
                         },
                         whereText: searchObj.whereText,
                         dropText: searchObj.dropText,
@@ -142,8 +147,8 @@ export default class MapScreen extends React.Component {
                         region: {
                             latitude: searchObj.searchDetails.geometry.location.lat,
                             longitude: searchObj.searchDetails.geometry.location.lng,
-                            latitudeDelta: 0.0922,
-                            longitudeDelta: 0.0421,
+                            latitudeDelta: 0.0143,
+                            longitudeDelta: 0.0134,
                         },
                         whereText: searchObj.whereText,
                         dropText: searchObj.dropText,
@@ -153,18 +158,16 @@ export default class MapScreen extends React.Component {
                         checkCallLocation: 'navigation',
                         selected: 'drop',
                         geolocationFetchComplete: true,
-
+                        openSelectModal: true
                     }, () => {
                         this.getDrivers();
                     })
                 }
             }
-
+            
         }
         this.allCarsData();
         this.onPressModal();
-
-
     }
 
     _retrieveSettings = async () => {
@@ -180,8 +183,12 @@ export default class MapScreen extends React.Component {
         }
     };
 
+    componentWillUnmount() {
+        this._isMounted = false;
+    }
 
     componentDidMount() {
+        this._isMounted = true;
         this._retrieveSettings();
         setInterval(() => {
             if (this.state.passData && this.state.passData.wherelatitude) {
@@ -228,7 +235,7 @@ export default class MapScreen extends React.Component {
         }else{
             this.setState({ loadingModal: true });
         }
-        let location = await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 15000 });
+        let location = await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 2000, });
         if (location) {
             var pos = {
                 latitude: location.coords.latitude,
@@ -247,8 +254,8 @@ export default class MapScreen extends React.Component {
                                 region: {
                                     latitude: pos.latitude,
                                     longitude: pos.longitude,
-                                    latitudeDelta: 0.0922,
-                                    longitudeDelta: 0.0421,
+                                    latitudeDelta: 0.0143,
+                                    longitudeDelta: 0.0134,
                                 },
                                 geolocationFetchComplete: true
                             }, () => {
@@ -294,8 +301,6 @@ export default class MapScreen extends React.Component {
             }
         }
     }
-
-
 
     //Go to confirm booking page
     onPressBook() {
@@ -349,9 +354,6 @@ export default class MapScreen extends React.Component {
         });
     }
 
-
-
-
     getDriverTime(startLoc, destLoc) {
         return new Promise(function (resolve, reject) {
             fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=${startLoc}&destinations=${destLoc}&key=${google_map_key}`)
@@ -394,7 +396,7 @@ export default class MapScreen extends React.Component {
                     let driverLocation = [driver.location.lat, driver.location.lng];
                     let distance = distanceCalc(riderLocation, driverLocation);
                     freeCars.push(driver);
-                    if (distance < 10) {
+                    if (distance < 5) {
                         let destLoc = '"' + driver.location.lat + ', ' + driver.location.lng + '"';
                         driver.arriveDistance = distance;
                         driver.arriveTime = await this.getDriverTime(startLoc, destLoc);
@@ -431,20 +433,19 @@ export default class MapScreen extends React.Component {
             }
             allCars[i].active = this.state.passData.carType== allCars[i].name?true:false;
             //allCars[i].active = false;
-
         }
 
         this.setState({
             allCars: allCars,
             loadingModal: false,
-            nearby: availableDrivers,
+            nearby: availableDrivers, 
             freeCars: freeCars,
         });
 
-        if (availableDrivers.length == 0) {
+        /*if (availableDrivers.length == 0) {
 
             this.showNoDriverAlert();
-        }
+        }*/
 
     }
 
@@ -551,21 +552,20 @@ export default class MapScreen extends React.Component {
 
 
     tapAddress = (selection) => {
+        if (selection == 'drop') {
+            this.props.navigation.navigate('Search', { from: "drop", whereText: this.state.whereText, dropText: this.state.dropText, old: this.state.passData });
+        } 
         if (selection === this.state.selected) {
-            if (selection == 'drop') {
-                this.props.navigation.navigate('Search', { from: "drop", whereText: this.state.whereText, dropText: this.state.dropText, old: this.state.passData });
-            } else {
-                this.props.navigation.navigate('Search', { from: "where", whereText: this.state.whereText, dropText: this.state.dropText, old: this.state.passData });
-            }
+            this.props.navigation.navigate('Search', { from: "where", whereText: this.state.whereText, dropText: this.state.dropText, old: this.state.passData });
         } else {
             this.setState({ selected: selection });
-            if (selection == 'pickup') {
+            if (selection === 'pickup') {
                 this.setState({
                     region: {
                         latitude: this.state.passData.wherelatitude,
                         longitude: this.state.passData.wherelongitude,
-                        latitudeDelta: 0.0922,
-                        longitudeDelta: 0.0421,
+                        latitudeDelta: 0.0143,
+                        longitudeDelta: 0.0134,
                     },
                     geolocationFetchComplete: true
                 })
@@ -574,8 +574,8 @@ export default class MapScreen extends React.Component {
                     region: {
                         latitude: this.state.passData.droplatitude,
                         longitude: this.state.passData.droplongitude,
-                        latitudeDelta: 0.0922,
-                        longitudeDelta: 0.0421,
+                        latitudeDelta: 0.0143,
+                        longitudeDelta: 0.0134,
                     },
                     geolocationFetchComplete: true
                 })
@@ -631,6 +631,8 @@ export default class MapScreen extends React.Component {
 
     }
 
+    
+    /*
     onPressBookLater = () => {
         if ((this.state.passData.whereText == "" || this.state.passData.wherelatitude == 0 || this.state.passData.wherelongitude == 0) && (this.state.passData.dropText == "" || this.state.passData.droplatitude == 0 || this.state.passData.droplongitude == 0)) {
             alert(languageJSON.pickup_and_drop_location_blank_error)
@@ -645,11 +647,12 @@ export default class MapScreen extends React.Component {
                 this.setState({ dateMode: 'date', dateModalOpen: true });
             }
         }
-    }
+    };
 
     hideDatePicker = () => {
         this.setState({ dateModalOpen: false, dateMode: 'date' });
     };
+
 
     handleDateConfirm = (date) => {
         const { dateMode } = this.state;
@@ -689,20 +692,13 @@ export default class MapScreen extends React.Component {
             });
 
         }
-    };
+    };*/
+
 
 
     render() {
         return (
             <View style={styles.mainViewStyle}>
-                {/*<Header
-                    backgroundColor={colors.GREY.default}
-                    leftComponent={{ icon: 'md-menu', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.toggleDrawer(); } }}
-                    centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.map_screen_title}</Text>}
-                    containerStyle={styles.headerStyle}
-                    innerContainerStyles={styles.inrContStyle}
-                />*/}
-
                 
                 <View style={styles.mapcontainer}>
                     {this.state.geolocationFetchComplete ?
@@ -711,7 +707,6 @@ export default class MapScreen extends React.Component {
                             mapStyle={styles.map}
                             mapRegion={this.state.region}
                             nearby={this.state.freeCars}
-                            onRegionChangeComplete={this.onRegionChangeComplete}
                         >
                         </MapComponent>
                         : null}
@@ -772,60 +767,61 @@ export default class MapScreen extends React.Component {
                         </View>
                     </View>
 
+                    {this.state.openSelectModal ?
+                        <View style={styles.compViewStyle}>
+                            <Text style={styles.pickCabStyle}>{languageJSON.cab_selection_title}</Text>
+                            <Text style={styles.sampleTextStyle}>{languageJSON.cab_selection_subtitle}</Text>
+                            <ScrollView horizontal={true} style={styles.adjustViewStyle} showsHorizontalScrollIndicator={false}>
+                                {this.state.allCars.map((prop, key) => {
+                                    return (
+                                        <TouchableOpacity key={key} style={styles.cabDivStyle} onPress={() => { this.selectCarType(prop, key) }} >
+                                            <View style={[styles.imageStyle, {
+                                                backgroundColor: prop.active == true ? colors.YELLOW.secondary : colors.WHITE
+                                            }]
+                                            }>
+                                                <Image source={prop.image ? { uri: prop.image } : require('../../assets/images/microBlackCar.png')} style={styles.imageStyle1} />
+                                            </View>
+                                            <View style={styles.textViewStyle}>
+                                                <Text style={styles.text1}>{prop.name.toUpperCase()}</Text>
+                                                <Text style={styles.text2}>{prop.minTime != '' ? prop.minTime : languageJSON.not_available}</Text>
+                                            </View>
+                                        </TouchableOpacity>
+
+                                    );
+                                })}
+                            </ScrollView>
+                            <View style={{ flex: 0.5, flexDirection: 'row' }}>
+                                <BaseButton
+                                    title={languageJSON.book_now_button}
+                                    loading={false}
+                                    onPress={() => { this.onPressBookLater() }}
+                                    style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.GREY.secondary, width: width / 2, elevation: 0 }}
+                                >
+                                    <Text style={{ color: colors.WHITE, fontFamily: 'Roboto-Bold', fontSize: 18 }}>{languageJSON.book_later_button}</Text>
+                                </BaseButton>
+                                <BaseButton
+                                    title={languageJSON.book_now_button}
+                                    loading={false}
+                                    onPress={() => { this.onPressBook() }}
+                                    style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.GREY.btnPrimary, width: width / 2, elevation: 0 }}
+                                >
+                                    <Text style={{ color: colors.WHITE, fontFamily: 'Roboto-Bold', fontSize: 18 }}>{languageJSON.book_now_button}</Text>
+                                </BaseButton>
+
+                            </View>
+
+                        </View>
+                        : null
+                    }
                 </View>
-                
-                {/*
-                <View style={styles.compViewStyle}>
-                    <Text style={styles.pickCabStyle}>{languageJSON.cab_selection_title}</Text>
-                    <Text style={styles.sampleTextStyle}>{languageJSON.cab_selection_subtitle}</Text>
-                    <ScrollView horizontal={true} style={styles.adjustViewStyle} showsHorizontalScrollIndicator={false}>
-                        {this.state.allCars.map((prop, key) => {
-                            return (
-                                <TouchableOpacity key={key} style={styles.cabDivStyle} onPress={() => { this.selectCarType(prop, key) }} >
-                                    <View style={[styles.imageStyle, {
-                                        backgroundColor: prop.active == true ? colors.YELLOW.secondary : colors.WHITE
-                                    }]
-                                    }>
-                                        <Image source={prop.image ? { uri: prop.image } : require('../../assets/images/microBlackCar.png')} style={styles.imageStyle1} />
-                                    </View>
-                                    <View style={styles.textViewStyle}>
-                                        <Text style={styles.text1}>{prop.name.toUpperCase()}</Text>
-                                        <Text style={styles.text2}>{prop.minTime != '' ? prop.minTime : languageJSON.not_available}</Text>
-                                    </View>
-                                </TouchableOpacity>
-
-                            );
-                        })}
-                    </ScrollView>
-                    <View style={{ flex: 0.5, flexDirection: 'row' }}>
-                        <BaseButton
-                            title={languageJSON.book_now_button}
-                            loading={false}
-                            onPress={() => { this.onPressBookLater() }}
-                            style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.GREY.secondary, width: width / 2, elevation: 0 }}
-                        >
-                            <Text style={{ color: colors.WHITE, fontFamily: 'Roboto-Bold', fontSize: 18 }}>{languageJSON.book_later_button}</Text>
-                        </BaseButton>
-                        <BaseButton
-                            title={languageJSON.book_now_button}
-                            loading={false}
-                            onPress={() => { this.onPressBook() }}
-                            style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.GREY.btnPrimary, width: width / 2, elevation: 0 }}
-                        >
-                            <Text style={{ color: colors.WHITE, fontFamily: 'Roboto-Bold', fontSize: 18 }}>{languageJSON.book_now_button}</Text>
-                        </BaseButton>
-
-                    </View>
-
-                </View>*/}
 
                 {
-
                     this.bonusModal()
                 }
-                {
+                {/*{
                     this.loading()
                 }
+                
                 <DateTimePickerModal
                     date={this.state.selectedDateTime}
                     minimumDate={new Date()}
@@ -833,7 +829,7 @@ export default class MapScreen extends React.Component {
                     mode={this.state.dateMode}
                     onConfirm={this.handleDateConfirm}
                     onCancel={this.hideDatePicker}
-                />
+                />*/}
             </View>
         );
     }
@@ -851,7 +847,7 @@ const styles = StyleSheet.create({
         fontSize: 18
     },
     mapcontainer: {
-        flex: 10,
+        height: height,
         width: width,
         justifyContent: 'center',
         alignItems: 'center',
@@ -946,8 +942,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center'
     },
     compViewStyle: {
-        flex: 3.5,
-        alignItems: 'center'
+        flex: 1,
+        bottom: 0,
+        width: width,
+        height: height/3,
+        position: 'absolute',
+        alignItems: 'center',
+        backgroundColor: colors.WHITE
     },
     pickCabStyle: {
         flex: 0.3,
@@ -1022,7 +1023,7 @@ const styles = StyleSheet.create({
         width: height / 14,
         borderRadius: height / 14 / 2,
         borderWidth: 3,
-        borderColor: colors.YELLOW.secondary,
+        borderColor: colors.BLUE.Deep_Blue,
         //backgroundColor: colors.WHITE, 
         justifyContent: 'center',
         alignItems: 'center'
@@ -1045,7 +1046,20 @@ const styles = StyleSheet.create({
         fontSize: 20,
         alignSelf: 'flex-end'
     },
-
+    btnChamar: {
+        position:'absolute',
+        flex: 1, 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        backgroundColor: colors.DEEPBLUE, 
+        height: 50, 
+        bottom: 50,
+        marginHorizontal: 0,
+        left: 20,
+        right: 20,
+        borderRadius: 15,
+        elevation: 5,  
+    },  
     cancelButtonStyle: {
         backgroundColor: "#edede8",
         elevation: 0,

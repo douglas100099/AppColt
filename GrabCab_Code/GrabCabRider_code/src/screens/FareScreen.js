@@ -24,6 +24,7 @@ import { PromoComp } from "../components";
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
+import { color } from 'react-native-reanimated';
 
 export default class FareScreen extends React.Component {
     constructor(props) {
@@ -54,12 +55,12 @@ export default class FareScreen extends React.Component {
         }
     };
 
-    componentDidMount() {
-        var getCroods = this.props.navigation.getParam('data');
-        var carType = this.props.navigation.getParam('carType');
-        var carImage = this.props.navigation.getParam('carImage');
-        var bookLater = this.props.navigation.getParam('bookLater');
-        var bookingDate = this.props.navigation.getParam('bookingDate');
+    async componentDidMount() {
+        var getCroods = await this.props.navigation.getParam('data');
+        var carType = await this.props.navigation.getParam('carType');
+        var carImage = await this.props.navigation.getParam('carImage');
+        var bookLater = await this.props.navigation.getParam('bookLater');
+        var bookingDate = await this.props.navigation.getParam('bookingDate');
 
         const Data = firebase.database().ref('rates/');
         Data.once('value', rates => {
@@ -121,7 +122,7 @@ export default class FareScreen extends React.Component {
             this.setState({ coords: coords }, () => {
                 setTimeout(() => {
                     this.map.fitToCoordinates([{ latitude: this.state.region.wherelatitude, longitude: this.state.region.wherelongitude }, { latitude: this.state.region.droplatitude, longitude: this.state.region.droplongitude }], {
-                        edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
+                        edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
                         animated: true,
                     })
                 }, 1500);
@@ -285,6 +286,8 @@ export default class FareScreen extends React.Component {
                     } else {
                         var arr = [];
                         const userData = firebase.database().ref('users/');
+                        var driverUidnovo = 0;
+                        var distancia = 10;
                         userData.once('value', driverData => {
                             if (driverData.val()) {
                                 var allUsers = driverData.val();
@@ -297,19 +300,27 @@ export default class FareScreen extends React.Component {
                                             //calculate the distance of two locations
                                             var distance = distanceCalc(location1, location2);
                                             var originalDistance = (distance);
-                                            if (originalDistance <= 10) { // Request will be send if distance less than 10 km 
+                                            if (originalDistance <= 5) { // Request will be send if distance less than 10 km 
                                                 if (allUsers[key].carType == this.state.carType) {
                                                     allUsers[key].driverUid = key;
-                                                    arr.push(allUsers[key].driverUid);
-                                                    firebase.database().ref('users/' + allUsers[key].driverUid + '/waiting_riders_list/' + bookingKey + '/').set(data);
-                                                    this.sendPushNotification(allUsers[key].driverUid, bookingKey, languageJSON.new_booking_request_push_notification)
+
+                                                    if(originalDistance < distancia){
+                                                        distancia = originalDistance
+                                                        driverUidnovo = allUsers[key].driverUid
+                                                    }
                                                 }
                                             }
                                         }
-
                                     }
-
                                 }
+
+                                arr.push(driverUidnovo);
+                                console.log("++++++++++++++++++++++")
+                                console.log(data)
+                                console.log("++++++++++++++++++++++")
+                                firebase.database().ref('users/' + driverUidnovo + '/waiting_riders_list/' + bookingKey + '/').set(data);
+                                this.sendPushNotification(driverUidnovo, bookingKey, languageJSON.new_booking_request_push_notification)
+
                                 let bookingData = {
                                     bokkingId: bookingKey,
                                     coords: this.state.coords,
@@ -322,7 +333,7 @@ export default class FareScreen extends React.Component {
                                             requestedDriver: arr
                                         }).then((res) => {
                                             this.setState({ buttonDisabled: false });
-                                            this.props.navigation.navigate('BookedCab', { passData: bookingData });
+                                            this.props.navigation.navigate('BookedCab', { passData: bookingData, DriverRecent:  driverUidnovo});
                                         })
                                     } else {
                                         alert(languageJSON.driver_not_found);
@@ -378,64 +389,37 @@ export default class FareScreen extends React.Component {
     render() {
         return (
             <View style={styles.container}>
+                {/*
                 <Header
                     backgroundColor={colors.GREY.default}
-                    leftComponent={{ icon: 'md-menu', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.toggleDrawer(); } }}
+                    leftComponent={{ icon: 'md-menu', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.goBack(); } }}
                     centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.confrim_booking}</Text>}
                     //rightComponent={{ icon: 'ios-notifications', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.navigate('Notifications'); } }}
                     containerStyle={styles.headerStyle}
                     innerContainerStyles={styles.headerInnerStyle}
-                />
+                />*/}
 
-                <View style={styles.topContainer}>
-                    <View style={styles.topLeftContainer}>
-                        <View style={styles.circle} />
-                        <View style={styles.staightLine} />
-                        <View style={styles.square} />
-                    </View>
-                    <View style={styles.topRightContainer}>
-                        <TouchableOpacity style={styles.whereButton}>
-                            <View style={styles.whereContainer}>
-                                <Text numberOfLines={1} style={styles.whereText}>{this.state.region.whereText}</Text>
-                                <Icon
-                                    name='gps-fixed'
-                                    color={colors.WHITE}
-                                    size={23}
-                                    containerStyle={styles.iconContainer}
-                                />
-                            </View>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.dropButton}>
-                            <View style={styles.whereContainer}>
-                                <Text numberOfLines={1} style={styles.whereText}>{this.state.region.droptext}</Text>
-                                <Icon
-                                    name='search'
-                                    type='feather'
-                                    color={colors.WHITE}
-                                    size={23}
-                                    containerStyle={styles.iconContainer}
-                                />
-                            </View>
-                        </TouchableOpacity>
-                    </View>
-                </View>
                 <View style={styles.mapcontainer}>
                     {this.state.region && this.state.region.wherelatitude ?
                         <MapView
+                            style={{ flex: 1 }}
                             ref={map => { this.map = map }}
                             style={styles.map}
-                            provider={PROVIDER_GOOGLE}
+                            //provider={PROVIDER_GOOGLE}
                             initialRegion={{
                                 latitude: (this.state.region.wherelatitude),
                                 longitude: (this.state.region.wherelongitude),
-                                latitudeDelta: 0.9922,
-                                longitudeDelta: 1.9421
+                                latitudeDelta: 0.1,
+                                longitudeDelta: 0.1,
                             }}
+                            loadingEnabled
+                            showsUserLocation
                         >
                             <Marker
                                 coordinate={{ latitude: (this.state.region.wherelatitude), longitude: (this.state.region.wherelongitude) }}
                                 title={this.state.region.whereText}
-                                image={require('../../assets/images/rsz_2red_pin.png')}
+                                image={require('../../assets/images/markerUser.png')}
+                                anchor={{x:0, y:0}}
                             >
                             </Marker>
 
@@ -443,23 +427,94 @@ export default class FareScreen extends React.Component {
                             <Marker
                                 coordinate={{ latitude: (this.state.region.droplatitude), longitude: (this.state.region.droplongitude) }}
                                 title={this.state.region.droptext}
-                                pinColor={colors.GREEN.default}
-                                image={require('../../assets/images/rsz_2red_pin.png')}
+                                //pinColor={colors.GREEN.default}
+                                anchor={{x:0, y:0}}
+                                image={require('../../assets/images/marker.png')}
                             >
                             </Marker>
 
                             {this.state.coords ?
                                 <MapView.Polyline
                                     coordinates={this.state.coords}
-                                    strokeWidth={4}
-                                    strokeColor={colors.BLUE.default}
+                                    strokeWidth={2.5}
+                                    strokeColor={colors.DEEPBLUE}
                                 />
                                 : null}
 
                         </MapView>
-                        : null}
+                    : null}
+
+                    <View style={styles.viewStyleTop}>
+
+                        <Icon
+                            raised
+                            name='chevron-left'
+                            type='MaterialIcons'
+                            color={colors.BLACK}
+                            size={16}
+                            onPress={() => { this.props.navigation.goBack(); }}
+                            containerStyle={styles.iconMenuStyle}
+                        />
+
+                        {/* INPUT 
+                        <View style={styles.topContainer}>
+                            <View style={styles.topLeftContainer}>
+                                <View style={styles.circle} />
+                                <View style={styles.staightLine} />
+                                <View style={styles.square} />
+                            </View>
+                            <View style={styles.topRightContainer}>
+                                <TouchableOpacity style={styles.whereButton}>
+                                    <View style={styles.whereContainer}>
+                                        <Text numberOfLines={1} style={styles.whereText}>{this.state.region.whereText}</Text>
+                                        <Icon
+                                            name='gps-fixed'
+                                            color={colors.WHITE}
+                                            size={23}
+                                            containerStyle={styles.iconContainer}
+                                        />
+                                    </View>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.dropButton}>
+                                    <View style={styles.whereContainer}>
+                                        <Text numberOfLines={1} style={styles.whereText}>{this.state.region.droptext}</Text>
+                                        <Icon
+                                            name='search'
+                                            type='feather'
+                                            color={colors.WHITE}
+                                            size={23}
+                                            containerStyle={styles.iconContainer}
+                                        />
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
+                        </View>*/}
+                    </View>
+                    <View style={styles.containerBottom}>
+                        <Button
+                            title={languageJSON.confrim_booking}
+                            loading={false}
+                            loadingProps={{ size: "large", color: colors.BLUE.default.primary }}
+                            titleStyle={styles.buttonText}
+                            disabled={this.state.buttonDisabled}
+                            onPress={() => { this.bookNow() }}
+                            buttonStyle={styles.confirmButtonStyle}
+                        />
+                        {this.state.estimateTime  ? 
+                        <View style={styles.cardInfo} >
+                            <Text style={styles.textTypeCar}>Econômico</Text>
+                            <Text style={styles.price1}>{this.state.settings.symbol} <Text style={styles.price2}>{this.state.estimateFare}</Text> </Text>
+                            <View style={styles.timeBox}>
+                                <Text style={styles.estimatedTime}>{parseInt(this.state.estimateTime/60)} min</Text>
+                            </View>                            
+                        </View>
+                        : null
+                        }
+                    </View>
+
                 </View>
-                <View style={styles.bottomContainer}>
+
+                {/*<View style={styles.bottomContainer}>
                     <View style={styles.offerContainer}>
                         <TouchableOpacity >
                             <Text style={styles.offerText}> {languageJSON.estimate_fare_text}</Text>
@@ -486,6 +541,7 @@ export default class FareScreen extends React.Component {
                             </View>
 
                         </View>
+                        
                         <View style={styles.priceDetailsMiddle}>
                             <View style={styles.triangle} />
                             <View style={styles.lineHorizontal} />
@@ -494,32 +550,9 @@ export default class FareScreen extends React.Component {
                             <Image source={require('../../assets/images/paytm_logo.png')} style={styles.logoImage} />
                         </View>
                     </View>
-                    <View style={styles.buttonsContainer}>
-                        <View style={styles.iconContainer}>
-                            <Button
-                                title={languageJSON.cancel}
-                                loading={false}
-                                loadingProps={{ size: "large", color: colors.BLUE.default.primary }}
-                                titleStyle={styles.buttonText}
-                                onPress={() => { this.onPressCancel() }}
-                                buttonStyle={styles.buttonStyle}
-                                containerStyle={styles.buttonContainerStyle}
-                            />
-                        </View>
-                        <View style={styles.flexView}>
-                            <Button
-                                title={languageJSON.confrim_booking}
-                                loading={false}
-                                loadingProps={{ size: "large", color: colors.BLUE.default.primary }}
-                                titleStyle={styles.buttonText}
-                                disabled={this.state.buttonDisabled}
-                                onPress={() => { this.bookNow() }}
-                                buttonStyle={styles.confirmButtonStyle}
-                                containerStyle={styles.confirmButtonContainerStyle}
-                            />
-                        </View>
-                    </View>
-                </View>
+                    
+                </View>*/}
+
                 {
                     this.alertModal()
                 }
@@ -532,6 +565,10 @@ const styles = StyleSheet.create({
     headerStyle: {
         backgroundColor: colors.GREY.default,
         borderBottomWidth: 0
+    },
+    iconMenuStyle:{
+        marginLeft: 1,
+        marginBottom: 5, 
     },
     headerInnerStyle: {
         marginLeft: 10,
@@ -547,13 +584,28 @@ const styles = StyleSheet.create({
         backgroundColor: colors.WHITE,
         //marginTop: StatusBar.currentHeight
     },
+    viewStyleTop:{
+        position: 'absolute',
+        top: Platform.select({ ios: 60, android: 40 }),
+        marginHorizontal: 12,
+        width: width,
+    },
     topContainer: {
-        flex: 1.5,
+        flex: 1,
         flexDirection: 'row',
         borderTopWidth: 0,
         alignItems: 'center',
-        backgroundColor: colors.GREY.default,
-        paddingEnd: 20
+        backgroundColor: colors.WHITE,
+        paddingEnd: 10,
+        paddingBottom: 3,
+        paddingTop: 3,
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
+        shadowOffset: { x: 0, y: 0 },
+        shadowRadius: 15,
+        borderRadius: 20,
+        marginHorizontal: 12,
+        elevation: 20,
     },
     topLeftContainer: {
         flex: 1.5,
@@ -564,50 +616,125 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     circle: {
-        height: 12,
-        width: 12,
+        height: 10,
+        width: 10,
         borderRadius: 15 / 2,
-        backgroundColor: colors.YELLOW.light
+        backgroundColor: colors.BLACK
     },
     staightLine: {
-        height: height / 25,
-        width: 1,
-        backgroundColor: colors.YELLOW.light
+        height: height / 23,
+        width: 0.5,
+        backgroundColor: colors.BLACK
     },
     square: {
-        height: 14,
-        width: 14,
-        backgroundColor: colors.GREY.iconPrimary
+        height: 13,
+        width: 13,
+        backgroundColor: colors.BLUE.light
     },
-    whereButton: { flex: 1, justifyContent: 'center', borderBottomColor: colors.WHITE, borderBottomWidth: 1 },
-    whereContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'row' },
-    whereText: { flex: 9, fontFamily: 'Roboto-Regular', fontSize: 14, fontWeight: '400', color: colors.WHITE },
-    iconContainer: { flex: 1 },
-    dropButton: { flex: 1, justifyContent: 'center' },
+    whereButton: { 
+        flex: 1, 
+        justifyContent: 'center', 
+        borderBottomColor: colors.BLACK, 
+        borderBottomWidth: 1 
+    },
+    whereContainer: { 
+        flex: 1, 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        flexDirection: 'row' 
+    },
+    whereText: { 
+        flex: 9,
+        fontFamily: 'Inter-Medium',
+        fontSize: 12,
+        fontWeight: '400',
+        color: colors.BLACK,
+        marginTop: 10,
+        marginBottom: 10
+    },
+    iconContainer: { 
+        flex: 1 
+    },
+    dropButton: { 
+        flex: 1, 
+        justifyContent: 'center' 
+    },
     mapcontainer: {
-        flex: 7,
+        flex: 1,
         width: width,
         justifyContent: 'center',
-        alignItems: 'center',
+        //alignItems: 'center',
     },
     map: {
         flex: 1,
         ...StyleSheet.absoluteFillObject,
     },
-    bottomContainer: { flex: 2.5, alignItems: 'center' },
-    offerContainer: { flex: 1, backgroundColor: colors.YELLOW.secondary, width: width, justifyContent: 'center', borderBottomColor: colors.YELLOW.primary, borderBottomWidth: Platform.OS == 'ios' ? 1 : 0 },
-    offerText: { alignSelf: 'center', color: colors.GREY.btnPrimary, fontSize: 12, fontFamily: 'Roboto-Regular' },
-    offerCodeText: {
-        fontFamily: 'Roboto-Bold', fontSize: 14,
+    bottomContainer: { 
+        elevation: 15,
+        flex: 5, 
+        borderRadius: 50,
     },
-    priceDetailsContainer: { flex: 2.3, backgroundColor: colors.WHITE, flexDirection: 'row', position: 'relative', zIndex: 1 },
-    priceDetailsLeft: { flex: 19 },
-    priceDetailsMiddle: { flex: 2, height: 50, width: 1, alignItems: 'center' },
-    priceDetails: { flex: 1, flexDirection: 'row' },
-    totalFareContainer: { flex: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-    totalFareText: { color: colors.GREY.btnPrimary, fontFamily: 'Roboto-Bold', fontSize: 15, marginLeft: 40 },
-    infoIcon: { flex: 2, alignItems: 'center', justifyContent: 'center' },
-    priceText: { alignSelf: 'center', color: colors.GREY.iconSecondary, fontFamily: 'Roboto-Bold', fontSize: 20 },
+    offerContainer: { 
+        flex: 1,
+        backgroundColor: colors.YELLOW.secondary, 
+        width: width, 
+        justifyContent: 'center', 
+        borderBottomColor: colors.YELLOW.primary, 
+        borderBottomWidth: Platform.OS == 'ios' ? 1 : 0 
+    },
+    offerText: { 
+        alignSelf: 'center', 
+        color: colors.GREY.btnPrimary, 
+        fontSize: 12, 
+        fontFamily: 'Roboto-Regular' 
+    },
+    offerCodeText: {
+        fontFamily: 'Roboto-Bold', 
+        fontSize: 14,
+    },
+    priceDetailsContainer: { 
+        flex: 2.3, 
+        backgroundColor: colors.WHITE, 
+        flexDirection: 'row', 
+        position: 'relative', 
+        zIndex: 1 
+    },
+    priceDetailsLeft: { 
+        flex: 19 
+    },
+    priceDetailsMiddle: { 
+        flex: 2, 
+        height: 50, 
+        width: 1, 
+        alignItems: 'center' 
+    },
+    priceDetails: {
+        flex: 1, 
+        flexDirection: 'row' 
+    },
+    totalFareContainer: { 
+        flex: 8, 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'center' 
+    },
+    totalFareText: { 
+        color: colors.GREY.btnPrimary, 
+        fontFamily: 'Roboto-Bold', 
+        fontSize: 15, 
+        marginLeft: 40 
+    },
+    infoIcon: { 
+        flex: 2, 
+        alignItems: 'center', 
+        justifyContent: 'center' 
+    },
+    priceText: { 
+        alignSelf: 'center', 
+        color: colors.GREY.iconSecondary, 
+        fontFamily: 'Roboto-Bold', 
+        fontSize: 20 
+    },
     triangle: {
         width: 0,
         height: 0,
@@ -624,15 +751,107 @@ const styles = StyleSheet.create({
         ],
         marginTop: -1, overflow: 'visible'
     },
-    lineHorizontal: { height: height / 18, width: 1, backgroundColor: colors.BLACK, alignItems: 'center', marginTop: 10 },
-    logoContainer: { flex: 19, alignItems: 'center', justifyContent: 'center' },
-    logoImage: { width: 80, height: 80 },
-    buttonsContainer: { flex: 1.5, flexDirection: 'row' },
-    buttonText: { color: colors.WHITE, fontFamily: 'Roboto-Bold', fontSize: 17, alignSelf: 'flex-end' },
-    buttonStyle: { backgroundColor: colors.GREY.secondary, elevation: 0 },
-    buttonContainerStyle: { flex: 1, backgroundColor: colors.GREY.secondary },
-    confirmButtonStyle: { backgroundColor: colors.GREY.btnPrimary, elevation: 0 },
-    confirmButtonContainerStyle: { flex: 1, backgroundColor: colors.GREY.btnPrimary },
+    lineHorizontal: { 
+        height: height / 18, 
+        width: 1, 
+        backgroundColor: colors.BLACK, 
+        alignItems: 'center', 
+        marginTop: 10 
+    },
+    logoContainer: { 
+        flex: 19,
+        alignItems: 'center', 
+        justifyContent: 'center' 
+    },
+    logoImage: { 
+        width: 80, 
+        height: 80 
+    },
+    containerBottom: {
+        position: 'absolute',
+        width: width,
+        height: height/2.3,
+        bottom: 0,
+        backgroundColor: colors.WHITE,
+        elevation: 15,
+        borderTopRightRadius: 35,
+        borderTopLeftRadius: 35,
+        
+    },
+    buttonText: { 
+        color: colors.WHITE, 
+        fontFamily: 'Roboto-Bold', 
+        fontSize: 17, 
+        //alignSelf: 'flex-end' 
+    },
+    buttonStyle: { 
+        backgroundColor: colors.GREY.secondary, 
+        elevation: 0 
+    },
+    cardInfo: {
+        position: 'absolute',
+        backgroundColor: colors.WHITE,
+        left: 30,
+        borderRadius: 15,
+        width: 130,
+        height: 170,
+        top: 20,
+        right: 50,
+        elevation: 6,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOpacity: 0.5,
+        shadowOffset: { x: 0, y: 5 },
+        shadowRadius: 15,
+    },
+    estimatedTime: {
+        top: 2,
+        fontFamily: 'Inter-Bold',
+        opacity: 0.7,
+        left: 0, 
+        color: colors.WHITE
+    },
+    timeBox:{
+        top: 80,   
+        backgroundColor: colors.GREY1,
+        width: 70,
+        height: 25,
+        borderRadius: 50,
+        alignItems: 'center',
+    },  
+    textTypeCar:{
+        top: 65,
+        fontSize: 17,
+        fontFamily: 'Inter-Light',
+    },  
+    price1: {
+        top: 65,
+        fontSize: 13,
+        fontFamily: 'Inter-Bold', 
+    },
+    price2: {
+        top: 40,
+        fontSize: 19,
+        fontFamily: 'Inter-Light',
+    },
+    confirmButtonStyle: { 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        backgroundColor: colors.DEEPBLUE, 
+        height: 50,
+        position: 'absolute', 
+        bottom: 0,
+        top: (height/2.3)-80 ,
+        marginHorizontal: 0,
+        left: 20,
+        right: 20,
+        borderRadius: 15,
+        elevation: 5,  
+        shadowColor: '#000',
+        shadowOpacity: 0.5,
+        shadowOffset: { x: 0, y: 5 },
+        shadowRadius: 15,
+    },
 
     modalContainer: { flex: 1, justifyContent: 'center', backgroundColor: colors.GREY.background, overflow: 'visible' },
     modalImageConttainer: { alignItems: 'center', justifyContent: 'center', overflow: 'visible', position: 'relative', zIndex: 4, marginBottom: -40 },
@@ -668,9 +887,7 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         color: colors.WHITE
     },
-    flexView: {
-        flex: 1
-    },
+
     //alert modal
     alertModalContainer: { flex: 1, justifyContent: 'center', backgroundColor: colors.GREY.background },
     alertModalInnerContainer: { height: 200, width: (width * 0.85), backgroundColor: colors.WHITE, alignItems: 'center', alignSelf: 'center', borderRadius: 7 },

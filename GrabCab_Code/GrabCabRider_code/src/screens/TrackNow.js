@@ -201,7 +201,7 @@ export default class TrackNow extends React.Component {
                         <MapView
                             ref={map => { this.map = map }}
                             style={styles.map}
-                            provider={PROVIDER_GOOGLE}
+                            //provider={PROVIDER_GOOGLE}
                             showUserLocation
                             followUserLocation
                             loadingEnabled
@@ -210,12 +210,12 @@ export default class TrackNow extends React.Component {
                             {this.state.coords ?
                                 <MapView.Polyline
                                     coordinates={this.state.coords}
-                                    strokeWidth={5}
+                                    strokeWidth={3}
                                     strokeColor={colors.BLUE.default}
                                 />
                                 : null}
                             {this.state.routeCoordinates ?
-                                <MapView.Polyline coordinates={this.state.routeCoordinates} strokeWidth={5} />
+                                <MapView.Polyline coordinates={this.state.routeCoordinates} strokeWidth={3} />
                                 : null}
 
                             <Marker.Animated

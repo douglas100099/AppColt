@@ -28,7 +28,7 @@
     "ios": {
       "supportsTablet": true,
       "usesAppleSignIn": true,
-      "bundleIdentifier": "com.myth.appbolt",
+      "bundleIdentifier": "com.myth.appcolt",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app uses the location to find the Cabs near you.",
         "NSCameraUsageDescription": "This app uses the camera to take your profile picture.",
@@ -39,16 +39,16 @@
         ]
       },
       "config": {
-        "googleMapsApiKey": "AIzaSyBAlxYhT0LIXiKtSY1TnOr-iAnEKFgj3aE",
+        "googleMapsApiKey": "AIzaSyDALefKQ3xFjRRvw56_mRdPClMap41XAbM",
         "googleSignIn": {
-          "reservedClientId": "com.googleusercontent.apps.481937108307-aojcr4pjufm6ha80dhhicfd3qq6nj7t5"
+          "reservedClientId": "com.googleusercontent.apps.414404391933-kvp9cfasn2kuklmgrdtiuqqqdnekprga"
         }
       },
       "googleServicesFile": "./GoogleService-Info.plist",
       "buildNumber": "1.3"
     },
     "android": {
-      "package": "com.myth.appbolt",
+      "package": "com.myth.appcolt",
       "versionCode": 13,
       "permissions": [
         "CAMERA",
@@ -62,7 +62,7 @@
       "googleServicesFile": "./google-services.json",
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyBAlxYhT0LIXiKtSY1TnOr-iAnEKFgj3aE"
+          "apiKey": "AIzaSyDALefKQ3xFjRRvw56_mRdPClMap41XAbM"
         }
       },
       "useNextNotificationsApi": true
@@ -72,19 +72,18 @@
     "facebookDisplayName": "GrabCab",
     "extra":{
       "firebaseConfig":{
-        "apiKey": "AIzaSyDJty-EsGLTBg1esYp0FDWV1bARFWE5DHQ",
-        "authDomain": "app-bolt-e3395.firebaseapp.com",
-        "databaseURL": "https://app-bolt-e3395.firebaseio.com",
-        "projectId": "app-bolt-e3395",
-        "storageBucket": "app-bolt-e3395.appspot.com",
-        "messagingSenderId": "481937108307",
-        "appId": "1:481937108307:web:4669f57ce4bdce2faac5a6",
-        "measurementId": "G-VF3C9V8B4V"
+        "apiKey": "AIzaSyA_ulfyKW-NDZzvix7jaCSgL-uqElZkq0k",
+        "authDomain": "app-colt.firebaseapp.com",
+        "databaseURL": "https://app-colt.firebaseio.com",
+        "projectId": "app-colt",
+        "storageBucket": "app-colt.appspot.com",
+        "messagingSenderId": "414404391933",
+        "appId": "1:414404391933:web:4fe2919a63807454fddf94"
       },
-      "googlemapkey":"AIzaSyBAlxYhT0LIXiKtSY1TnOr-iAnEKFgj3aE",
-      "cloud_function_server_url":"https://us-central1-app-bolt-e3395.cloudfunctions.net",
-      "iosStandaloneAppClientId": "481937108307-aojcr4pjufm6ha80dhhicfd3qq6nj7t5.apps.googleusercontent.com",
-      "androidStandaloneAppClientId": "481937108307-s0e6op7filhffpqhptnclhjdg0ob7br1.apps.googleusercontent.com"
+      "googlemapkey":"AIzaSyDALefKQ3xFjRRvw56_mRdPClMap41XAbM",
+      "cloud_function_server_url":"https://us-central1-app-colt.cloudfunctions.net",
+      "iosStandaloneAppClientId": "414404391933-kvp9cfasn2kuklmgrdtiuqqqdnekprga.apps.googleusercontent.com",
+      "androidStandaloneAppClientId": "414404391933-lp0qlvv14kdqrbt8e2vp6multat4155o.apps.googleusercontent.com"
     }
   }
 }

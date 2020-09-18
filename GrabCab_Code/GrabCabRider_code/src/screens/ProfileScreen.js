@@ -56,7 +56,7 @@ export default class ProfileScreen extends React.Component {
 };
 
 
-  async componentWillMount() {
+  async UNSAFE_componentWillMount() {
     var curuser = firebase.auth().currentUser;
     this.setState({currentUser:curuser},()=>{
         const userData=firebase.database().ref('users/'+this.state.currentUser.uid);

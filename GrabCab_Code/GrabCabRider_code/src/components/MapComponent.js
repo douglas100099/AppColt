@@ -25,15 +25,13 @@ export default class MapComponent extends Component {
                 onMapReady={() => this.setState({ marginBottom: 1 })}
             >
      
-             
-
              {nearby?nearby.map((item,index)=>{
                 return (
                     <Marker.Animated
-                    coordinate={{latitude: item.location?item.location.lat:0.00, longitude: item.location?item.location.lng:0.00}}
-                    key = {index}
-                    image={require('../../assets/images/available_car.png')}
-                    //tracksViewChanges={this.state.tracksViewChanges}
+                        coordinate={{latitude: item.location?item.location.lat:0.00, longitude: item.location?item.location.lng:0.00}}
+                        key = {index}
+                        image={require('../../assets/images/available_car.png')}
+                        //tracksViewChanges={this.state.tracksViewChanges}
                     >
                     </Marker.Animated>
 

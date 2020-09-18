@@ -1,34 +1,34 @@
 {
   "project_info": {
-    "project_number": "481937108307",
-    "firebase_url": "https://app-bolt-e3395.firebaseio.com",
-    "project_id": "app-bolt-e3395",
-    "storage_bucket": "app-bolt-e3395.appspot.com"
+    "project_number": "414404391933",
+    "firebase_url": "https://app-colt.firebaseio.com",
+    "project_id": "app-colt",
+    "storage_bucket": "app-colt.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:481937108307:android:83671221144b14f6aac5a6",
+        "mobilesdk_app_id": "1:414404391933:android:c2bba35185394c83fddf94",
         "android_client_info": {
-          "package_name": "com.myth.appbolt"
+          "package_name": "com.myth.appcolt"
         }
       },
       "oauth_client": [
         {
-          "client_id": "481937108307-s0e6op7filhffpqhptnclhjdg0ob7br1.apps.googleusercontent.com",
+          "client_id": "414404391933-lp0qlvv14kdqrbt8e2vp6multat4155o.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBN92degTb_J8ochlHK9fwi44VdErihINI"
+          "current_key": "AIzaSyBf7xrSWvOU0xXrky3-ZzFzaaSY4YIPySE"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "481937108307-s0e6op7filhffpqhptnclhjdg0ob7br1.apps.googleusercontent.com",
+              "client_id": "414404391933-lp0qlvv14kdqrbt8e2vp6multat4155o.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

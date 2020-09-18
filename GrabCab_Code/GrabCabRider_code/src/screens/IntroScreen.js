@@ -196,7 +196,7 @@ export default class IntroScreen extends Component {
                             style={styles.socialIconImage}
                         ></Image>
                     </TouchableOpacity>
-                    {Platform.OS == 'ios' ?
+                    {/*{Platform.OS == 'ios' ?
                         <TouchableOpacity style={styles.socialIcon} onPress={() => { this.appleSigin() }}>
                             <Image
                                 source={require("../../assets/images/image_apple.png")}
@@ -204,7 +204,7 @@ export default class IntroScreen extends Component {
                                 style={styles.socialIconImage}
                             ></Image>
                         </TouchableOpacity>
-                        : null}
+                    : null}*/}
                 </View>
                 <View>
                     <TouchableOpacity style={styles.terms} onPress={() => this.openTerms()}>

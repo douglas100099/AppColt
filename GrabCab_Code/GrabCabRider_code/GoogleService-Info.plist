@@ -3,21 +3,21 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>481937108307-aojcr4pjufm6ha80dhhicfd3qq6nj7t5.apps.googleusercontent.com</string>
+	<string>414404391933-kvp9cfasn2kuklmgrdtiuqqqdnekprga.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.481937108307-aojcr4pjufm6ha80dhhicfd3qq6nj7t5</string>
+	<string>com.googleusercontent.apps.414404391933-kvp9cfasn2kuklmgrdtiuqqqdnekprga</string>
 	<key>API_KEY</key>
-	<string>AIzaSyAdxuz71qZobIJAia3LeWWqAMGiskW4-fo</string>
+	<string>AIzaSyCpXu1nWfxQrhGAxyzFkENYu5BjUBu-4cI</string>
 	<key>GCM_SENDER_ID</key>
-	<string>481937108307</string>
+	<string>414404391933</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.myth.appbolt</string>
+	<string>com.myth.appcolt</string>
 	<key>PROJECT_ID</key>
-	<string>app-bolt-e3395</string>
+	<string>app-colt</string>
 	<key>STORAGE_BUCKET</key>
-	<string>app-bolt-e3395.appspot.com</string>
+	<string>app-colt.appspot.com</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -29,8 +29,8 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:481937108307:ios:d451e79160ff96f3aac5a6</string>
+	<string>1:414404391933:ios:d5291a8be743fc40fddf94</string>
 	<key>DATABASE_URL</key>
-	<string>https://app-bolt-e3395.firebaseio.com</string>
+	<string>https://app-colt.firebaseio.com</string>
 </dict>
 </plist>

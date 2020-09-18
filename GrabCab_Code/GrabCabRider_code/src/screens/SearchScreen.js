@@ -12,7 +12,7 @@ export default class SearchScreen extends Component {
         searchFocused: false,
     }
 
-    componentWillMount() {
+    UNSAFE_componentWillMount() {
         let from = this.props.navigation.getParam('from');
         let whereText = this.props.navigation.getParam('whereText');
         let dropText = this.props.navigation.getParam('dropText');
@@ -87,9 +87,9 @@ export default class SearchScreen extends Component {
                 query={{
                     // available options: https://developers.google.com/places/web-service/autocomplete
                     key: google_map_key,
-                    language: 'en', // language of the results
-                    // types: '(cities)' 
-                    // components: "country:ng", // country name
+                    language: 'pt-BR', // language of the results
+                    //types: '(cities)' ,
+                    components: "country:br", // country name
                 }}
 
                 styles={{
@@ -160,7 +160,7 @@ export default class SearchScreen extends Component {
                 GoogleReverseGeocodingQuery={{
                     // available options for GoogleReverseGeocoding API : https://developers.google.com/maps/documentation/geocoding/intro
                     key: google_map_key,
-                    language: 'en',
+                    language: 'pt-BR',
                 }}
                 GooglePlacesSearchQuery={{
                     // available options for GooglePlacesSearch API : https://developers.google.com/places/web-service/search
@@ -185,7 +185,6 @@ export default class SearchScreen extends Component {
                     type='feather'
                     color= {colors.BLACK}
                     size={25}
-                    onPress={() => { this.props.navigation.goBack(); }}
                     containerStyle={styles.iconLocation}
                     />
                 :
@@ -194,13 +193,12 @@ export default class SearchScreen extends Component {
                     type='feather'
                     color= {colors.BLACK}
                     size={25}
-                    onPress={() => { this.props.navigation.goBack(); }}
                     containerStyle={styles.iconLocation}
                     />
                 }
                 
                 <View style={styles.textHeader} >
-                    <Text style={{ color: colors.GREY.secondary, fontSize: 15, }}> {this.state.from == 'where' ?  "Local de partida" : "Destino"} </Text>
+                    <Text style={{ color: colors.GREY.btnSecondary, fontSize: 15, }}> {this.state.from == 'where' ?  "Local de partida" : "Destino"} </Text>
                 </View>
             </View>
 

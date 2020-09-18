@@ -66,7 +66,7 @@ export default class CardDetailsScreen extends React.Component {
     this.getProviders();
   }
 
-  async componentWillMount() {
+  async UNSAFE_componentWillMount() {
     var pdata = this.props.navigation.getParam('data');
     if (pdata) {
       data = {

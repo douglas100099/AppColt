@@ -24,6 +24,7 @@ var { width, height } = Dimensions.get('window');
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
+import distanceCalc from '../common/distanceCalc';
 import { TrackNow } from '../components';
 
 export default class BookedCabScreen extends React.Component {
@@ -40,17 +41,23 @@ export default class BookedCabScreen extends React.Component {
             ],
             radio_props: [],
             value: 0,
-            driverSerach: true
+            driverSerach: true,
+            bookingDataState: null,
         }
+        this._isMounted = false;
     }
 
     componentDidMount() {
-        this.getParamData = this.props.navigation.getParam('passData');
+        this._isMounted = true;
+        this.state.bookingDataState == null ? this.getParamData = this.props.navigation.getParam('passData') : this.getParamData = this.state.bookingDataState
+        this.setState({ driverUidRecent: this.props.navigation.getParam('DriverRecent') })
+        console.log("DRIVER RECENT" + this.props.navigation.getParam('DriverRecent'))
+
         var curuser = firebase.auth().currentUser;
         let bookingResponse = firebase.database().ref(`users/` + curuser.uid + '/my-booking/' + this.getParamData.bokkingId);
         bookingResponse.on('value', currUserBookings => {
             if (currUserBookings.val()) {
-                console.log(currUserBookings.val());
+                console.log(currUserBookings.val() + " ->  CRRUSERBOOKING ")
                 let region = {
                     wherelatitude: currUserBookings.val().pickup.lat,
                     wherelongitude: currUserBookings.val().pickup.lng,
@@ -91,10 +98,122 @@ export default class BookedCabScreen extends React.Component {
                     })
                 } else if (currUserBookings.val().status == "START") {
                     this.props.navigation.navigate('trackRide', { data: currUserBookings.val(), bId: this.getParamData.bokkingId });
+                } else if (currUserBookings.val().status == "REJECTED") {
+                    console.log("REJECTED")
+
+                    this.recalcularMotorista(this.getParamData.bokkingId);
                 }
             }
         })
+    }
 
+    componentWillUnmount() {
+        this._isMounted = false;
+    }
+
+    verificarRejected(driverUid, currentBooking) {
+        if (driverUid == this.state.driverUidRecent) {
+            return false
+        }
+        console.log("verificarRejected")
+        const rejectedDrivers = firebase.database().ref('bookings/' + currentBooking + '/rejectedDrivers');
+        rejectedDrivers.once('value', drivers => {
+            if (drivers.val()) {
+                let rejectedDrivers = drivers.val();
+                for (reject in rejectedDrivers) {
+                    if (reject == driverUid) {
+                        return false;
+                    }
+                }
+            }
+        })
+        console.log(" RETORNOU TRUE ");
+        return true;
+    }
+
+    recalcularMotorista(param) {
+        console.log(" -> TA PROCURANDOOOO OUTRO")
+        const userData = firebase.database().ref('users/');
+        var driverUidnovo = 0;
+        var distanciaValue = 10;
+        var arr = []
+
+        userData.once('value', driverData => {
+            if (driverData.val()) {
+                var allUsers = driverData.val();
+                for (key in allUsers) {
+                    console.log(key + "-> ENTROU NO  FOR")
+                    console.log(driverUidnovo + "-> DRIVER UID NOVO")
+                    //checking if user is driver and it's a approved user and he/she is now free for take ride
+                    if (this.verificarRejected(key, param) == true) {
+                        console.log("------------------")
+                        console.log(allUsers[key].usertype == 'driver')
+                        console.log(allUsers[key].approved == true)
+                        console.log(allUsers[key].queue == false)
+                        console.log(allUsers[key].driverActiveStatus == true)
+
+                        if (allUsers[key].usertype == 'driver' && allUsers[key].approved == true && allUsers[key].queue == false && allUsers[key].driverActiveStatus == true) {
+                            if (allUsers[key].location) {
+                                console.log(allUsers[key].location)
+                                var location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];// rider lat and lng
+                                var location2 = [allUsers[key].location.lat, allUsers[key].location.lng];//Driver lat and lang
+                                //calculate the distance of two locations
+                                var distance = distanceCalc(location1, location2);
+                                var originalDistance = (distance);
+                                if (originalDistance <= 5) { // Request will be send if distance less than 10 km 
+                                    console.log(originalDistance <= 5)
+                                    if (allUsers[key].carType == this.state.carType) {
+                                        console.log(allUsers[key].carType == this.state.carType)
+                                        //Salva sempre o mais proximo
+                                        console.log(distance + ' < ' + distanciaValue)
+                                        if (distance < distanciaValue) {
+                                            distanciaValue = distance;
+                                            driverUidnovo = key;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                console.log(driverUidnovo + "-> SETANDO DRIVER UID NOVO")
+                arr.push(driverUidnovo);
+                this.pegarDataCorrida(param)
+
+                let bookingData = {
+                    bokkingId: param,
+                    coords: this.state.coords,
+                }
+
+                setTimeout(() => {
+                    firebase.database().ref('users/' + driverUidnovo + '/waiting_riders_list/' + param + '/').set(this.state.bookingdataDetails);
+                    this.sendPushNotification(driverUidnovo, param, languageJSON.new_booking_request_push_notification)
+                    
+                    if (arr.length > 0) {
+                        // set all requested drivers data to main booking node
+                        firebase.database().ref('bookings/' + param + '/').update({
+                            requestedDriver: arr
+                        }).then((res) => {
+                            this.setState({ bookingDataState: bookingData })
+                        })
+                    } else {
+                        alert(languageJSON.driver_not_found);
+                    }
+                }, 500)
+
+            }
+        })
+    }
+
+    pegarDataCorrida(param) {
+        const ref = firebase.database().ref('bookings/' + param + '/');
+        console.log("ENTROU NO PEGAR DATA ")
+        ref.on('value', snapshot => {
+            this.setState({
+                bookingdataDetails: snapshot.val()
+            })
+        })
     }
 
 
@@ -410,42 +529,42 @@ export default class BookedCabScreen extends React.Component {
                 <View style={styles.mapcontainer}>
                     {this.state.driverUID && this.state.region && this.state.bookingStatus ?
                         <TrackNow duid={this.state.driverUID} alldata={this.state.region} bookingStatus={this.state.bookingStatus} /> :
-                        this.state.region?
-                        <MapView
-                            ref={map => { this.map = map }}
-                            style={styles.map}
-                            provider={PROVIDER_GOOGLE}
-                            initialRegion={{
-                                latitude: this.state.region.wherelatitude, 
-                                longitude: this.state.region.wherelongitude,
-                                latitudeDelta: 0.9922,
-                                longitudeDelta: 1.9421
-                            }}
-                        >
-                            {this.state.region.wherelatitude ?
-                                <Marker
-                                    coordinate={{ latitude: (this.state.region.wherelatitude), longitude: (this.state.region.wherelongitude)}}
-                                    title={this.state.region.whereText}
-                                />
-                                : null}
-                            {this.state.region.droplatitude ?
-                                <Marker
-                                    coordinate={{ latitude: (this.state.region.droplatitude) , longitude: (this.state.region.droplongitude) }}
-                                    title={this.state.region.droptext}
-                                    pinColor={colors.GREEN.default}
-                                />
-                                : null}
-                            {this.state.coords ?
+                        this.state.region ?
+                            <MapView
+                                ref={map => { this.map = map }}
+                                style={styles.map}
+                                //provider={PROVIDER_GOOGLE}
+                                initialRegion={{
+                                    latitude: this.state.region.wherelatitude,
+                                    longitude: this.state.region.wherelongitude,
+                                    latitudeDelta: 0.9922,
+                                    longitudeDelta: 1.9421
+                                }}
+                            >
+                                {this.state.region.wherelatitude ?
+                                    <Marker
+                                        coordinate={{ latitude: (this.state.region.wherelatitude), longitude: (this.state.region.wherelongitude) }}
+                                        title={this.state.region.whereText}
+                                    />
+                                    : null}
+                                {this.state.region.droplatitude ?
+                                    <Marker
+                                        coordinate={{ latitude: (this.state.region.droplatitude), longitude: (this.state.region.droplongitude) }}
+                                        title={this.state.region.droptext}
+                                        pinColor={colors.GREEN.default}
+                                    />
+                                    : null}
+                                {this.state.coords ?
 
-                                <MapView.Polyline
-                                    coordinates={this.state.coords}
-                                    strokeWidth={4}
-                                    strokeColor={colors.BLUE.default}
-                                />
-                            : null}
+                                    <MapView.Polyline
+                                        coordinates={this.state.coords}
+                                        strokeWidth={4}
+                                        strokeColor={colors.BLUE.default}
+                                    />
+                                    : null}
 
-                        </MapView>
-                        :null
+                            </MapView>
+                            : null
                     }
 
 

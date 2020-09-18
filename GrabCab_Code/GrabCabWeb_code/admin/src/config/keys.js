@@ -1,14 +1,13 @@
 export const FirebaseConfig = {
-  apiKey: "AIzaSyDJty-EsGLTBg1esYp0FDWV1bARFWE5DHQ",
-    authDomain: "app-bolt-e3395.firebaseapp.com",
-    databaseURL: "https://app-bolt-e3395.firebaseio.com",
-    projectId: "app-bolt-e3395",
-    storageBucket: "app-bolt-e3395.appspot.com",
-    messagingSenderId: "481937108307",
-    appId: "1:481937108307:web:4669f57ce4bdce2faac5a6",
-    measurementId: "G-VF3C9V8B4V"
+  apiKey: "AIzaSyA_ulfyKW-NDZzvix7jaCSgL-uqElZkq0k",
+    authDomain: "app-colt.firebaseapp.com",
+    databaseURL: "https://app-colt.firebaseio.com",
+    projectId: "app-colt",
+    storageBucket: "app-colt.appspot.com",
+    messagingSenderId: "414404391933",
+    appId: "1:414404391933:web:4fe2919a63807454fddf94"
 };
 
-export const google_map_key = 'AIzaSyBAlxYhT0LIXiKtSY1TnOr-iAnEKFgj3aE';
+export const google_map_key = 'AIzaSyDALefKQ3xFjRRvw56_mRdPClMap41XAbM';
 
 export const isLive = true;

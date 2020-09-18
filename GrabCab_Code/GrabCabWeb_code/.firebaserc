@@ -1,16 +1,16 @@
 {
   "projects": {
-    "default": "app-bolt-e3395"
+    "default": "app-colt"
   },
   "targets": {
-    "app-bolt-e3395": {
+    "app-colt": {
       "hosting": {
         "admin": [
-          "app-bolt-e3395"
+          "app-colt"
         ]
         ,
         "website": [
-          "app-bolt"
+          "coltdriver"
         ]
       }
     }

@@ -25,6 +25,7 @@ export default class DriverTripAccept extends React.Component {
         });
     }
 
+
     constructor(props) {
         super(props);
         this.state = {
@@ -37,6 +38,8 @@ export default class DriverTripAccept extends React.Component {
             starCount: 5,
             modalVisible: false,
             alertModalVisible: false,
+            timer: 10,
+            tomada: true,
             coords: [],
             radio_props: [
                 { label: languageJSON.cancel_reson_1, value: 0 },
@@ -115,11 +118,24 @@ export default class DriverTripAccept extends React.Component {
         })
     }
 
+    updateTimer(){
+        const x = setInterval(() => {
+            if(this.state.timer == 1){
+                clearInterval(x)
+                this.state.tomada == false
+            }
+            this.setState({timer: this.state.timer - 1})}, 1000)
+            this.setState({timer: 10})
+    }
+
 
     async componentDidMount() {
        await this.getRiders();
        await this.getPhotoDriver();
        await this.getStatusDetails();
+       if(this.state.tomada){
+            this.updateTimer()
+       }
     }
 
     // find your origin and destination point coordinates and pass it to our method.
@@ -180,16 +196,15 @@ export default class DriverTripAccept extends React.Component {
         ref.on('value', (snapshot) => {
             this.setState({ driverDetails: snapshot.val() })
             var jobs = [];
-            if (snapshot.val() && snapshot.val().waiting_riders_list) {
+            if (snapshot.val() && snapshot.val().waiting_riders_list && this.state.modalVisible == false) {
                 let waiting_riderData = snapshot.val().waiting_riders_list;
                 for (let key in waiting_riderData) {
                     waiting_riderData[key].bookingId = key;
                     jobs.push(waiting_riderData[key]);
                 }
             }
-            this.setState({ tasklist: jobs.reverse() });
+            this.setState({ tasklist: jobs.reverse(), modalVisible: true});
             this.jobs = jobs;
-            console.log(this.jobs);
         });
     }
 
@@ -374,12 +389,104 @@ export default class DriverTripAccept extends React.Component {
                     </TouchableOpacity>
                 </View>
 
+                {/* BOTÃO LIGAR E DESLIGAR */}
                 <View style={{alignItems: 'center', flex: 1}}>
                     <TouchableOpacity style={[styles.btnOnOff, { backgroundColor: this.state.statusDetails ? colors.RED : colors.GREEN.light}]} onPress={() => { this.onChangeFunction(this.state.driverActiveStatus); }}>
                         <Text style={styles.textConectar}>{this.state.statusDetails ? 'DESCONECTAR' : 'CONECTAR'}</Text>
                     </TouchableOpacity>
                 </View>
-                <FlatList
+
+                {/* MODAL ACEITAR E REJEITAR */}
+                <View>
+                    <Modal
+                        animationType="slide"
+                        transparent={true}
+                        visible={false}
+                        onRequestClose={() => {
+                            alert("Modal has been closed.");
+                        }}
+                    >
+                        <View style={styles.modalMain}>
+                            <View style={styles.modalContainer}>
+                                <View style={styles.tituloModalView}>
+                                    <Text style={styles.txtTitulo}>Nova corrida</Text>
+                                    <View style={styles.viewDetalhesTempo}>
+                                        <View style={styles.tempoCorrida}>
+                                            <View style={styles.iconBack}>
+                                                <Icon
+                                                    size={15}
+                                                    name='schedule'
+                                                    type='material'
+                                                    color={colors.DEEPBLUE}
+                                                />
+                                            </View>
+                                            <Text style={styles.txtTempo}>9 min</Text>
+                                        </View>
+                                        <View style={styles.tempoKM}>
+                                            <View style={styles.iconBack}>
+                                                <Icon
+                                                    size={15}
+                                                    name='map-pin'
+                                                    type='feather'
+                                                    color={colors.DEEPBLUE}
+                                                />
+                                            </View>
+                                            <Text style={styles.txtTempo}>5 km</Text>
+                                        </View>
+                                    </View>
+                                    <View style={styles.viewBtnRejeitar}>
+                                        <TouchableOpacity style={styles.btnRejeitar} >
+                                            <Text>{this.state.timer}</Text>
+                                        </TouchableOpacity>
+                                    </View>    
+                                </View>
+                                <View style={styles.viewEndereco}>
+                                    <View style={styles.enderecoPartida}>
+                                        <Icon
+                                            size={15}
+                                            name='arrow-right-circle'
+                                            type='feather'
+                                            color={colors.DEEPBLUE}
+                                        />
+                                        <Text style={styles.txtPartida}>Rua Otorino Rodghere, 425, Cambota</Text>
+                                    </View>
+                                    <View style={styles.enderecoDestino}>
+                                        <Icon
+                                            size={15}
+                                            name='arrow-down-circle'
+                                            type='feather'
+                                            color={colors.RED}
+                                        />
+                                        <Text style={styles.txtDestino}>Rua Padre Luna, 1574, Centro</Text>
+                                    </View>
+                                </View>
+                                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+                                    <View style={styles.imgModalView}>
+                                        <Image source={this.state.photoDriver ? { uri: this.state.photoDriver } : require('../../assets/images/profilePic.png')} style={styles.imagemModal} />
+                                        <Text style={styles.nomePessoa}>João da Silva</Text>
+                                    </View>
+                                    <View style={styles.iconPgt}>
+                                        <View style={styles.formaPgt}>
+                                            <Icon
+                                                size={14}
+                                                name='credit-card'
+                                                type='feather'
+                                                color={colors.DEEPBLUE}
+                                            />
+                                        </View>
+                                        <Text style={styles.txtTempo}>Dinheiro</Text>
+                                    </View>
+                                </View>
+                                <View style={styles.viewBtn}>
+                                    <TouchableOpacity style={styles.btnAceitar} onPress={() => { alert('Corrida aceita') }}>
+                                        <Text style={styles.txtBtnAceitar}>Aceitar</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+                </View>
+                {/*<FlatList
                     data={this.state.tasklist}
                     keyExtractor={(item, index) => index.toString()}
                     ListEmptyComponent={<View style={{ flex: 1, justifyContent: "center", alignItems: "center", height: height}}><Text style={styles.addressViewTextStyle}>{languageJSON.rider_not_here}</Text></View>}
@@ -513,7 +620,7 @@ export default class DriverTripAccept extends React.Component {
                             </View>
                         </View>
                     </Modal>
-                </View>
+                </View>  */}
             </View>
 
         )
@@ -603,6 +710,216 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter-Bold',
         fontSize: 20,
         color: colors.WHITE,
+    },
+
+
+
+    // CSS DO MODAL //
+
+    modalMain: {
+        flex: 1,
+        backgroundColor: colors.GREY.background,
+        justifyContent: 'flex-end',
+        alignItems: 'center'
+    },
+
+    modalContainer: {
+        width: '100%',
+        backgroundColor: colors.WHITE,
+        borderTopRightRadius: 20,
+        borderTopLeftRadius: 20,
+        flexDirection: 'column',
+        paddingTop: 15,
+        flex: 1,
+        maxHeight: 330,
+    },
+
+    tituloModalView: {
+        borderBottomWidth: 0.6,
+        borderBottomColor: colors.GREY1,
+        paddingBottom: 16,
+        marginBottom: 5,
+    },
+
+    txtTitulo: {
+        marginLeft: 15,
+        fontFamily: 'Inter-Light',
+        fontSize: 20,
+        marginBottom: 8,
+        color: colors.BLACK,
+    },
+
+    imgModalView: {
+        marginTop: 10,
+        marginLeft: 15,
+        flexDirection:'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    imagemModal: {
+        height: 35,
+        width: 35,
+        borderRadius: 50,
+    },
+
+    nomePessoa: {
+        fontFamily: 'Inter-Bold',
+        fontSize: 14,
+        color: colors.BLACK,
+        marginLeft: 8
+    },
+
+    viewEndereco: {
+        marginTop: 15,
+        justifyContent: 'center',
+        borderBottomWidth: 0.6,
+        borderBottomColor: colors.GREY1,
+        paddingBottom: 16,
+        marginBottom: 5,
+    
+    },
+
+    enderecoPartida: {
+        flexDirection: 'row',
+        alignContent: 'center',
+        alignItems: 'center',
+        marginLeft: 15,
+        marginBottom: 5,
+    },
+
+    txtPartida: {
+        marginLeft: 4,
+        fontFamily: 'Inter-Regular',
+        fontSize: 13,
+    },
+
+    txtDestino: {
+        marginLeft: 4,
+        fontFamily: 'Inter-Regular',
+        fontSize: 13,
+    },
+
+    enderecoDestino: {
+        flexDirection: 'row',
+        marginTop: 5,
+        alignContent: 'center',
+        alignItems: 'center',
+        marginLeft: 15,
+    },
+
+    viewDetalhesTempo: {
+        marginLeft: 15,
+        flexDirection: "row",
+    },
+
+    tempoCorrida: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: 70,
+        borderRadius: 50,
+        height: 25,
+        backgroundColor: colors.GREY1,
+    },
+
+    iconBack: {
+        marginLeft: 2,
+        height: 23,
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 23,
+        backgroundColor: colors.WHITE,
+        borderRadius: 50,
+    },
+
+    txtTempo: {
+        fontFamily: 'Inter-ExtraBold',
+        opacity: 0.6,
+        marginLeft: 5,
+        fontSize: 12,
+    },
+
+    txtCorrida: {
+        fontFamily: 'Inter-ExtraBold',
+        opacity: 0.6,
+        marginLeft: 5,
+        fontSize: 12,
+    },
+
+    tempoKM: {
+        marginLeft: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: 70,
+        borderRadius: 50,
+        height: 25,
+        backgroundColor: colors.GREY1,
+    },
+
+    viewBtnRejeitar: {
+        position: 'absolute',
+        width: 50,
+        height: 50,
+        borderRadius: 50,
+        justifyContent: 'center',
+        alignSelf: 'flex-end',
+        alignItems: 'center',
+        right: 10,
+    },
+
+    btnRejeitar: {
+        width: 50,
+        height: 50,
+        justifyContent: 'center',
+        borderRadius: 50,
+        backgroundColor: colors.WHITE,
+        elevation: 3,
+    },
+
+    formaPgt: {
+        marginLeft: 2,
+        height: 23,
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 23,
+        backgroundColor: colors.WHITE,
+        borderRadius: 50,
+    },
+
+    iconPgt: {
+        flexDirection: 'row',
+        marginRight: 15,
+        alignItems: 'center',
+        width: 100,
+        borderRadius: 50,
+        height: 25,
+        backgroundColor: colors.GREY1,
+    },
+
+    viewBtn: {
+        position: 'absolute',
+        alignContent: 'center',
+        alignItems: 'center',
+        marginTop: 15,
+        bottom: 0,
+        left: 0,
+        right: 0,
+    },
+
+    btnAceitar: {
+        width: '95%',
+        borderRadius: 50,
+        height: 50,
+        backgroundColor: colors.DEEPBLUE,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 20,
+    },
+
+    txtBtnAceitar: {
+        fontFamily: 'Inter-Bold',
+        color: colors.WHITE,
+        fontSize: 18,
     },
 
 
@@ -698,7 +1015,7 @@ const styles = StyleSheet.create({
         borderRadius: 50
     },
     redDot: {
-        backgroundColor: colors.RED,
+        backgroundColor: colors.DEEPBLUE,
         width: 10,
         height: 10,
         borderRadius: 50
@@ -717,23 +1034,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center'
-    },
-    modalMain: {
-        flex: 1,
-        backgroundColor: colors.GREY.background,
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    modalContainer: {
-        width: '80%',
-        backgroundColor: colors.WHITE,
-        borderRadius: 10,
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingTop: 15,
-        flex: 1,
-        maxHeight: 180
     },
     modalHeading: {
         flexDirection: 'row',

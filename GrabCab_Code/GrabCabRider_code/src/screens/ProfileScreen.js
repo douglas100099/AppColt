@@ -208,6 +208,12 @@ async uploadmultimedia(url){
                {
                    this.uploadImage()
                }
+               <Header 
+                backgroundColor={colors.WHITE}
+                leftComponent={{icon:'chevron-left', type:'MaterialIcons', color:colors.BLACK, size: 35, component: TouchableWithoutFeedback,onPress: ()=>{this.props.navigation.goBack();} }}
+                containerStyle={styles.headerStyle}
+                innerContainerStyles={{marginLeft:10, marginRight: 10}}
+            />
                <View style={styles.viewStyle}>
                     <View style={styles.imageParentView}>
                         <View style={styles.imageViewStyle} >
@@ -226,7 +232,7 @@ async uploadmultimedia(url){
                                     style={styles.iconImage}
                                     size={18}
                                     type='feather'
-                                    color={colors.WHITE}
+                                    color={colors.BLACK}
                                     onPress={this.editProfile}
                                 />
                             </View>
@@ -268,7 +274,7 @@ async uploadmultimedia(url){
                                 color='#D5DDE0'
                                 size={25}
                             />
-                            <Text onPress={() => this.goWallet()} style={styles.profStyle}>Meu saldo ( {this.state.settings.symbol} {this.state.walletBalance?parseFloat(this.state.walletBalance).toFixed(2):0.00})</Text>
+                            <Text onPress={() => this.goWallet()} style={styles.profStyle}>Meu saldo ({this.state.settings.symbol} {this.state.walletBalance?parseFloat(this.state.walletBalance).toFixed(2):0.00})</Text>
                         </View>
                     </View>
                     <View style={styles.myViewStyle}>
@@ -299,7 +305,7 @@ async uploadmultimedia(url){
                                 type='feather'
                                 color='#D5DDE0'
                             />
-                            <Text style={styles.emailStyle}>{this.state.refferalId}</Text>
+                            <Text style={styles.emailStyle}>{this.state.refferalId + ' (Cod. Referência)'}</Text>
                         </View>
                     </View>
                     :null}
@@ -308,11 +314,11 @@ async uploadmultimedia(url){
                 
                 <View style={styles.flexView3}>
                 
-                    <TouchableOpacity onPress={()=>{this.signOut()}} style={styles.textIconStyle}>
+                    <TouchableOpacity onPress={()=>{this.signOut()}} style={styles.textIconStyle2}>
                         <Text style={styles.textButton2}>Sair</Text>
                     </TouchableOpacity> 
 
-                    <TouchableOpacity style={styles.textIconStyle2} onPress={()=>{this.deleteAccount()}}>
+                    <TouchableOpacity style={styles.textIconStyle} onPress={()=>{this.deleteAccount()}}>
                         <Text style={styles.textButton}>Deletar conta</Text>
                     </TouchableOpacity>
 
@@ -327,12 +333,12 @@ async uploadmultimedia(url){
 
 const styles = StyleSheet.create({
     headerStyle: { 
-        backgroundColor: colors.BLACK, 
+        backgroundColor: colors.TRANSPARENT, 
         borderBottomWidth: 0 
     },
     headerTitleStyle: { 
         color: colors.BLACK,
-        fontFamily:'Roboto-Bold',
+        fontFamily:'Inter-Bold',
         fontSize: 20
     },
     logo:{
@@ -381,7 +387,7 @@ const styles = StyleSheet.create({
         fontSize: 15, 
         left: 10, 
         color:colors.BLACK, 
-        fontFamily:'Inter-Bold'
+        fontFamily:'Inter-Regular'
     },
     iconCarteira: {
         marginLeft: 10
@@ -397,7 +403,7 @@ const styles = StyleSheet.create({
         marginTop: 13 
     },
     imageParentView:{ 
-        marginTop: 25,
+        marginTop: 5,
         borderRadius: 100/2, 
         width: 100, 
         height: 100, 
@@ -411,7 +417,8 @@ const styles = StyleSheet.create({
         height: 90,
         backgroundColor: colors.BLACK, 
         justifyContent: 'center', 
-        alignItems: 'center'
+        alignItems: 'center',
+        marginBottom: 10,
     },
     textPropStyle:{
         fontSize: 20, 
@@ -428,7 +435,7 @@ const styles = StyleSheet.create({
         marginRight: 15,
         height: 270, 
         borderRadius: 15,
-        marginTop: 30
+        marginTop: 20
     },
     myViewStyle:{
         flex: 1,
@@ -446,12 +453,12 @@ const styles = StyleSheet.create({
         fontSize: 15, 
         left: 10, 
         color: colors.BLACK, 
-        fontFamily:'Inter-Bold'
+        fontFamily:'Inter-Regular'
     },
     emailAdressStyle:{
         fontSize: 15, 
         color: colors.BLACK, 
-        fontFamily:'Inter-Bold'
+        fontFamily:'Inter-Regular'
     },
     mainIconView:{
         flex: 1, 
@@ -464,24 +471,25 @@ const styles = StyleSheet.create({
          fontSize: 15, 
          left: 10, 
          color:colors.BLACK, 
-         fontFamily:'Inter-Bold'
+         fontFamily:'Inter-Regular'
         },
     text2:{
         fontSize: 15, 
         left: 10, 
         color:colors.BLACK, 
-        fontFamily:'Inter-Bold'
+        fontFamily:'Inter-Regular'
     },
     textIconStyle:{
         alignSelf: 'center',
         alignItems: 'center', 
         justifyContent: 'center',
-        marginBottom: 20,
+        marginTop: 20,
     },
     textIconStyle2:{
         width: 333, 
         height: 60, 
         marginTop:10,
+        marginBottom: 20,
         borderRadius: 15,
         backgroundColor: colors.DEEPBLUE, 
         alignSelf: 'center',
@@ -489,12 +497,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center'
     },
     textButton: {
-        color: colors.WHITE,
+        color: colors.RED,
+        marginBottom: 15,
         fontFamily: 'Inter-Bold',
         fontSize: 18,
     },
     textButton2: {
-        color: colors.RED,
+        color: colors.WHITE,
         fontFamily: 'Inter-Bold',
         fontSize: 18,
     },
@@ -532,7 +541,8 @@ const styles = StyleSheet.create({
     iconBack: {
         width: 30,
         height: 30,
-        backgroundColor: colors.GREY2,
+        backgroundColor: colors.WHITE,
+        elevation: 4,
         borderRadius: 50,
         justifyContent: 'center'
     },

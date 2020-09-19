@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, Image, TouchableOpacity } from 'react-native';
+import { Text, View, Image, TouchableOpacity, Platform, StatusBar } from 'react-native';
 import { Icon } from 'react-native-elements'
 import { colors } from '../common/theme';
 import  languageJSON  from '../common/language';
@@ -34,17 +34,18 @@ const SideMenuHeader = ({headerStyle, userPhoto, userName, userEmail, onPress}) 
 //style for this component
 const styles = {
     viewStyle:{
-        backgroundColor:colors.BLUE.dark,
-        justifyContent:'center',
-        alignItems:'center',
+        backgroundColor:colors.DEEPBLUE,
+        justifyContent:'flex-end',
+        alignItems:'flex-start',
         height:200,
-        paddingTop:20,
+        paddingTop:Platform.OS=='ios'?20:StatusBar.currentHeight,
         shadowColor:colors.BLACK,
         shadowOffset:{width:0,height:2},
         shadowOpacity:0.2,
         elevation:2,
         position:'relative',
-        flexDirection:'column'
+        flexDirection:'column',
+        padding: 10,
     },
     textStyle:{
         fontSize:20,
@@ -63,6 +64,7 @@ const styles = {
         height: 84,
         borderRadius: 50,
         overflow: 'hidden',
+        marginLeft: 10,
         borderWidth: 2,
         borderColor: colors.WHITE,
         justifyContent: 'center',
@@ -70,10 +72,10 @@ const styles = {
         padding: 20
     },
     ProfileNameStyle:{
-        fontWeight: 'bold', 
+        fontFamily: 'Inter-Bold',
         color: colors.WHITE, 
-        fontSize: 18,
-        textAlign:"center"
+        marginLeft: 10,
+        fontSize: 15
     },
     iconViewStyle:{
         justifyContent: 'center', 
@@ -82,10 +84,13 @@ const styles = {
         marginTop: 4
     },
     emailStyle:{
+        fontFamily: 'Inter-Regular',
         color: colors.WHITE, 
         fontSize: 13,
         marginLeft: 4,
-        textAlign:"center"
+        justifyContent: 'center',
+        alignItems: 'center',
+        textAlign:'center',
     },
     imageStyle:{
         width: 80, 

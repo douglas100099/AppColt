@@ -54,6 +54,15 @@ export default class App extends React.Component {
         'Roboto-Regular': require('./assets/fonts/Roboto-Regular.ttf'),
         'Roboto-Medium': require('./assets/fonts/Roboto-Medium.ttf'),
         'Roboto-Light': require('./assets/fonts/Roboto-Light.ttf'),
+        'Inter-Black': require('./assets/fonts/Inter-Black.ttf'),
+        'Inter-Bold': require('./assets/fonts/Inter-Bold.ttf'),
+        'Inter-ExtraBold': require('./assets/fonts/Inter-ExtraBold.ttf'),
+        'Inter-ExtraLight': require('./assets/fonts/Inter-ExtraLight.ttf'),
+        'Inter-Light': require('./assets/fonts/Inter-Light.ttf'),
+        'Inter-Medium': require('./assets/fonts/Inter-Medium.ttf'),
+        'Inter-Regular': require('./assets/fonts/Inter-Regular.ttf'),
+        'Inter-SemiBold': require('./assets/fonts/Inter-SemiBold.ttf'),
+        'Inter-Thin': require('./assets/fonts/Inter-Thin.ttf'),
       }),
     ]);
   };

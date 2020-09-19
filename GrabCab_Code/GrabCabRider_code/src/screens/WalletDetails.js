@@ -90,8 +90,8 @@ export default class WalletDetails extends React.Component {
     return (
       <View style={styles.mainView}>
         <Header
-          backgroundColor={colors.GREY.default}
-          leftComponent={{ icon: 'md-menu', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.toggleDrawer(); } }}
+          backgroundColor={colors.WHITE}
+          leftComponent={{ icon: 'chevron-left', type: 'MaterialIcons', color: colors.BLACK, size: 35, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.goBack(); } }}
           centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.my_wallet_tile}</Text>}
           containerStyle={styles.headerStyle}
           innerContainerStyles={{ marginLeft: 10, marginRight: 10 }}
@@ -101,11 +101,11 @@ export default class WalletDetails extends React.Component {
           <View style={{ height: walletBar, marginBottom: 12 }}>
             <View >
               <View style={{ flexDirection: 'row', justifyContent: "space-around", marginTop: 8 }}>
-                <View style={{ height: walletBar - 50, width: '48%', backgroundColor: '#D5D5D5', borderRadius: 8, justifyContent: 'center', flexDirection: 'column' }}>
-                  <Text style={{ textAlign: 'center', fontSize: 18 }}>{languageJSON.wallet_ballance}</Text>
-                  <Text style={{ textAlign: 'center', fontSize: 25, fontWeight: '500', color: '#1CA84F' }}>{this.state.settings.symbol}{this.state.allData ? parseFloat(this.state.allData.walletBalance).toFixed(2) : ''}</Text>
+                <View style={{ height: walletBar - 10, width: '48%', backgroundColor: '#FFFF', borderRadius: 8, elevation: 5 ,justifyContent: 'center', flexDirection: 'column' }}>
+                  <Text style={{ textAlign: 'center', fontSize: 18, fontFamily: 'Inter-Regular' }}>Saldo</Text>
+                  <Text style={{ textAlign: 'center', fontSize: 25, fontWeight: '500', fontFamily: 'Inter-Bold' ,color: '#1CA84F' }}>{this.state.settings.symbol}{this.state.allData ? parseFloat(this.state.allData.walletBalance).toFixed(2) : ''}</Text>
                 </View>
-                <View style={{ height: walletBar - 50, width: '48%', backgroundColor: '#1CA84F', borderRadius: 8, justifyContent: 'center', flexDirection: 'column' }}>
+                <View style={{ height: walletBar - 10, width: '48%', backgroundColor: '#1CA84F', borderRadius: 8, justifyContent: 'center', flexDirection: 'column', elevation: 5 }}>
                   <Icon
                     name='add-circle'
                     type='MaterialIcons'
@@ -114,13 +114,13 @@ export default class WalletDetails extends React.Component {
                     iconStyle={{ lineHeight: 48 }}
                     onPress={() => this.doReacharge()}
                   />
-                  <Text style={{ textAlign: 'center', fontSize: 18, color: '#fff' }}>{languageJSON.add_money}</Text>
+                  <Text style={{ textAlign: 'center', fontSize: 18, color: '#fff', fontFamily: 'Inter-Bold'}}>Adicionar saldo</Text>
 
                 </View>
               </View>
             </View>
             <View style={{ marginVertical: 10 }}>
-              <Text style={{ paddingHorizontal: 10, fontSize: 18, fontWeight: '500', marginTop: 8 }}>{languageJSON.transaction_history_title}</Text>
+              <Text style={{ paddingHorizontal: 10, fontSize: 18, fontWeight: '500', marginTop: 8 }}>Historico de movimentação</Text>
             </View>
           </View>
 
@@ -138,11 +138,11 @@ export default class WalletDetails extends React.Component {
 
 const styles = StyleSheet.create({
   headerStyle: {
-    backgroundColor: colors.GREY.default,
+    backgroundColor: colors.WHITE,
     borderBottomWidth: 0
   },
   headerTitleStyle: {
-    color: colors.WHITE,
+    color: colors.BLACK,
     fontFamily: 'Roboto-Bold',
     fontSize: 20
   },

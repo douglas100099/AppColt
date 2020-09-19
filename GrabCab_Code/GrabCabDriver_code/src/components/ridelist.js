@@ -38,18 +38,19 @@ export default class RideList extends React.Component {
     newData = ({ item, index }) => {
         return (
             <TouchableOpacity style={styles.iconClickStyle} onPress={() => this.onPressButton(item, index)}>
-                <View style={styles.iconViewStyle}>
-                    <Icon
-                        name='car-sports'
-                        type='material-community'
-                        color={colors.DARK}
-                        size={35}
-                    />
-                </View>
                 <View style={styles.flexViewStyle}>
                     <View style={styles.textView1}>
+                        <View style={{ flexDirection: 'row' }}>
+                            <Text style={[styles.textStyle, styles.dateStyle]}>{item.bookingDate ? new Date(item.bookingDate).toLocaleString(dateStyle) : ''}</Text>
+                            {
+                                item.status == 'CANCELLED' ?
+                                    <Text style={[styles.textStyle2, styles.dateStyle2]}>CANCELADO</Text>
+                                    :
+                                    null
+                            }
+                        </View>
 
-                        <Text style={[styles.textStyle, styles.dateTextStyle]}>{new Date(item.tripdate).toLocaleString(dateStyle)}</Text>
+                        <Text style={[styles.textStyle, styles.dateStyle]}>{new Date(item.tripdate).toLocaleString(dateStyle)}</Text>
                         <View style={[styles.picupStyle, styles.position]}>
                             <View style={styles.greenDot} />
                             <Text style={[styles.picPlaceStyle, styles.placeStyle]}>{item.pickup.add ? item.pickup.add : ""}</Text>
@@ -61,16 +62,7 @@ export default class RideList extends React.Component {
 
                     </View>
                     <View style={styles.textView2}>
-                        <Text style={[styles.fareStyle, styles.dateTextStyle]}>{item.status == 'END' && item.payment_status == 'PAID' ? item.trip_cost > 0 ? this.state.currency.symbol + parseFloat(item.trip_cost).toFixed(2) : this.state.currency.symbol + parseFloat(item.estimate).toFixed(2) : null}</Text>
-                        {
-                            item.status == 'CANCELLED' ?
-                                <Image
-                                    style={styles.cancelImageStyle}
-                                    source={require('../../assets/images/cancel.png')}
-                                />
-                                :
-                                null
-                        }
+                        <Text style={[styles.fareStyle, styles.dateStyle]}>{item.status == 'END' && item.payment_status == 'PAID' ? item.trip_cost > 0 ? this.state.currency.symbol + parseFloat(item.trip_cost).toFixed(2) : this.state.currency.symbol + parseFloat(item.estimate).toFixed(2) : null}</Text>
                     </View>
                 </View>
             </TouchableOpacity>
@@ -94,7 +86,10 @@ export default class RideList extends React.Component {
 //style for this component
 const styles = StyleSheet.create({
     textStyle: {
-        fontSize: 18,
+        fontSize: 13,
+    },
+    textStyle2:{
+        fontSize: 13,
     },
     fareStyle: {
         fontSize: 18,
@@ -102,13 +97,13 @@ const styles = StyleSheet.create({
     carNoStyle: {
         marginLeft: 45,
         fontSize: 13,
-        marginTop: 10
+        marginTop: 10,
     },
     picupStyle: {
         flexDirection: 'row',
     },
     picPlaceStyle: {
-        color: colors.GREY.secondary
+        color: colors.BLACK
     },
     dropStyle: {
         flexDirection: 'row',
@@ -118,20 +113,23 @@ const styles = StyleSheet.create({
         fontSize: 20
     },
     dropPlaceStyle: {
-        color: colors.GREY.secondary
+        color: colors.BLACK,
+        
     },
     greenDot: {
         alignSelf: 'center',
         borderRadius: 10,
         width: 10,
         height: 10,
-        backgroundColor: colors.GREEN.default
+        backgroundColor: colors.DEEPBLUE
     },
     redDot: {
         borderRadius: 10,
         width: 10,
         height: 10,
-        backgroundColor: colors.RED
+        backgroundColor: colors.BLACK,
+        marginLeft: 20,
+
 
     },
     logoStyle: {
@@ -143,56 +141,82 @@ const styles = StyleSheet.create({
         flexDirection: 'row'
     },
     flexViewStyle: {
+        backgroundColor: colors.WHITE,
         flex: 7,
+        elevation: 2,
         flexDirection: 'row',
-        borderBottomColor: colors.GREY.secondary,
-        borderBottomWidth: 1,
-        marginTop: 10,
-        marginLeft: 5
+        borderRadius: 15,
+        marginTop: 20,
+        marginLeft: 20,
+        marginRight: 20
     },
-    dateTextStyle: {
-        fontFamily: 'Roboto-Bold',
-        color: colors.GREY.default
+    dateStyle: {
+        fontFamily: 'Inter-Bold',
+        color: colors.BLACK,
+        marginLeft: 20,
+        marginTop: 5,
+    },
+    dateStyle2: {
+        fontFamily: 'Inter-Bold',
+        color: colors.RED,
+        marginLeft: 20,
+        marginTop: 5,
+
     },
     carNoStyle: {
-        fontFamily: 'Roboto-Regular',
-        fontSize: 12,
+        fontFamily: 'Inter-Light',
+        fontSize: 13,
         marginTop: 8,
-        color: colors.GREY.default
+        paddingBottom: 5,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.GREY1,
+        marginLeft: 20,
+        color: colors.BLACK,
     },
     placeStyle: {
         marginLeft: 10,
-        fontFamily: 'Roboto-Regular',
-        fontSize: 16,
-        alignSelf: 'center'
+        fontFamily: 'Inter-Regular',
+        fontSize: 15,
+        alignSelf: 'center',
+        
     },
     textViewStyle: {
         marginTop: 10,
-        marginBottom: 10
+        marginBottom: 10,
+        
     },
     cancelImageStyle: {
         width: 50,
         height: 50,
         marginRight: 20,
-        marginTop: 10,
-        alignSelf:'flex-end'
+        marginTop: 18,
+        alignSelf:'flex-end',
+        backgroundColor: colors.TRANSPARENT
+        
+        
     },
     iconViewStyle: {
         flex: 1, marginTop: 10
     },
     textView1: {
-        flex: 5
+        flex: 5,
+        backgroundColor: colors.TRANSPARENT
     },
     textView2: {
-        flex: 2
+        flex: 2,
+        backgroundColor: colors.TRANSPARENT
     },
     textView3: {
-        flex: 1
+        flex: 1,
+        backgroundColor: colors.TRANSPARENT
     },
     position: {
-        marginTop: 20
+        marginTop: 20,
+        marginLeft: 20,
+        
     },
     textPosition: {
-        alignSelf: 'center'
+        alignSelf: 'center',
+        
     }
 });

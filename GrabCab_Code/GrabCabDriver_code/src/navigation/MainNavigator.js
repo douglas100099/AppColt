@@ -150,7 +150,7 @@ var { width, height } = Dimensions.get('window');
     export const DriverRootNavigator = createDrawerNavigator(
         DrawerRoutes,
         {
-        drawerWidth: width/1.9,
+        drawerWidth: width/1.53,
         initialRouteName:'DriverTripAccept',
         contentComponent: SideMenu,
     });

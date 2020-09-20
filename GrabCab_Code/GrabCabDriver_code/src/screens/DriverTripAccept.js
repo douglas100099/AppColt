@@ -4,6 +4,7 @@ import { Button, Header, Icon } from 'react-native-elements';
 import Polyline from '@mapbox/polyline';
 import MapView, { PROVIDER_GOOGLE, Marker, UrlTile } from 'react-native-maps';
 import { colors } from '../common/theme';
+import { MapComponent } from '../components';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 var { width, height } = Dimensions.get('window');
@@ -14,7 +15,9 @@ import { RequestPushMsg } from '../common/RequestPushMsg';
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import dateStyle from '../common/dateStyle';
+import { Audio } from 'expo-av';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
+const soundObject = new Audio.Sound();
 
 export default class DriverTripAccept extends React.Component {
 
@@ -36,10 +39,13 @@ export default class DriverTripAccept extends React.Component {
                 longitudeDelta: 0.9421,
             },
             starCount: 5,
+            geolocationFetchComplete: false,
             modalVisible: false,
             alertModalVisible: false,
             timer: 10,
             tomada: true,
+            retirarsom: false,
+            alertasom: false,
             coords: [],
             radio_props: [
                 { label: languageJSON.cancel_reson_1, value: 0 },
@@ -57,7 +63,7 @@ export default class DriverTripAccept extends React.Component {
             gotAddress: false,
 
         }
-        this._getLocationAsync();
+
     }
 
     //checking booking status
@@ -108,6 +114,7 @@ export default class DriverTripAccept extends React.Component {
 
     carteira=() => {
         this.props.navigation.push('MyEarning');
+        
     }
     getPhotoDriver() {
         let ref = firebase.database().ref('users/' + this.state.curUid + '/profile_image/');
@@ -117,6 +124,7 @@ export default class DriverTripAccept extends React.Component {
             })
         })
     }
+
 
     updateTimer(){
         const x = setInterval(() => {
@@ -129,10 +137,23 @@ export default class DriverTripAccept extends React.Component {
     }
 
 
+    async alertAudio(){
+        if(this.state.alertasom){
+            await soundObject.loadAsync(require('../../assets/sounds/alerta.mp3'));
+            await soundObject.playAsync();
+            await soundObject.setIsLoopingAsync(true)
+        }
+        else if(this.state.retirarsom) {
+            await soundObject.unloadAsync()
+            this.setState({retirarsom: false})
+        }
+    }
+
     async componentDidMount() {
        await this.getRiders();
        await this.getPhotoDriver();
        await this.getStatusDetails();
+       await this.getInfoEraning();
        if(this.state.tomada){
             this.updateTimer()
        }
@@ -159,34 +180,56 @@ export default class DriverTripAccept extends React.Component {
         }
     }
 
-    _getLocationAsync = async () => {
-        let { status } = await Permissions.askAsync(Permissions.LOCATION);
-        if (status !== 'granted') {
-            console.log('Permission to access location was denied');
-        }
-        let uid = firebase.auth().currentUser.uid;
-        let location = await Location.getCurrentPositionAsync({});
-        if (location) {
-            var latlng = location.coords.latitude + ',' + location.coords.longitude;
-            return fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
-                .then((response) => response.json())
-                .then((responseJson) => {
-                    if (responseJson.results[0] && responseJson.results[0].formatted_address) {
-                        let address = responseJson.results[0].formatted_address;
-                        firebase.database().ref('users/' + uid + '/location').update({
-                            add: address,
-                            lat: location.coords.latitude,
-                            lng: location.coords.longitude
-                        })
-                    } else {
-                        alert(languageJSON.api_error)
+    getInfoEraning() {
+        let userUid = firebase.auth().currentUser.uid;
+        let ref = firebase.database().ref('bookings/');
+        ref.once('value', allBookings => {
+            if (allBookings.val()) {
+                let data = allBookings.val();
+                var myBookingarr = [];
+                for (let k in data) {
+                    if (data[k].driver == userUid) {
+                        data[k].bookingKey = k
+                        myBookingarr.push(data[k])
                     }
-                })
-                .catch((error) => {
-                    console.error(error);
-                });
+                }
+
+                if (myBookingarr) {
+                    this.setState({ myBooking: myBookingarr }, () => {
+                        this.eraningCalculation()
+                        //console.log('this.state.myBooking ==>',this.state.myBooking)
+                    })
+
+                }
+            }
+        })
+    }
+
+    eraningCalculation(){
+       
+        if(this.state.myBooking){
+            let today =  new Date();
+            let tdTrans = 0;
+            for(let i=0;i<this.state.myBooking.length;i++){
+                const {tripdate,driver_share} = this.state.myBooking[i];
+                let tDate = new Date(tripdate);
+                if(driver_share != undefined){
+                    if(tDate.getDate() === today.getDate() && tDate.getMonth() === today.getMonth()){
+                        tdTrans  = tdTrans + driver_share;
+                        
+                    }                                               
+                }
+            }
+            this.setState({
+                today:tdTrans,
+                corridasDia: this.state.myBooking.length
+            })
+            //console.log('today- '+tdTrans +' monthly- '+ mnTrans + ' Total-'+ totTrans);
+
         }
-    };
+    }
+
+
 
     //get nearby riders function
     getRiders() {
@@ -196,14 +239,16 @@ export default class DriverTripAccept extends React.Component {
         ref.on('value', (snapshot) => {
             this.setState({ driverDetails: snapshot.val() })
             var jobs = [];
-            if (snapshot.val() && snapshot.val().waiting_riders_list && this.state.modalVisible == false) {
+            if (snapshot.val() && snapshot.val().waiting_riders_list) {
                 let waiting_riderData = snapshot.val().waiting_riders_list;
                 for (let key in waiting_riderData) {
                     waiting_riderData[key].bookingId = key;
                     jobs.push(waiting_riderData[key]);
-                }
-            }
-            this.setState({ tasklist: jobs.reverse(), modalVisible: true});
+                }        
+                this.setState({alertasom: true})
+                this.alertAudio();
+            }           
+            this.setState({ tasklist: jobs.reverse()});          
             this.jobs = jobs;
         });
     }
@@ -279,6 +324,8 @@ export default class DriverTripAccept extends React.Component {
                         for (let i = 0; i < requestedDriverArr.length; i++) {
                             firebase.database().ref('users/' + requestedDriverArr[i] + '/waiting_riders_list/' + item.bookingId + '/').remove();
                         }
+                        this.setState({alertasom: false, retirarsom: true})
+                        this.alertAudio();
                         this.props.navigation.navigate('DriverTripStart', { allDetails: item })
                     }
                     // console.log(snap.val().requestedDriver)
@@ -325,6 +372,8 @@ export default class DriverTripAccept extends React.Component {
                                     status: "REJECTED",
                                 });
                                 this.sendPushNotification(item.customer, item.bookingId, languageJSON.booking_request_rejected)
+                                this.setState({alertasom: false, retirarsom: true})
+                                this.alertAudio();
                             })
 
                         firebase.database().ref('bookings/' + item.bookingId + '/requestedDriver/').remove();
@@ -337,6 +386,7 @@ export default class DriverTripAccept extends React.Component {
                             requestedDriver: arr
                         })
                     }
+
                 }
             }
         });
@@ -362,6 +412,19 @@ export default class DriverTripAccept extends React.Component {
             <View style={styles.mainViewStyle}>
                 {/* AQUI ENTRA TODOS OS BOTÕES FLUTUANTES DO MENU */}
 
+                {/* MAPA */}
+                {/*
+                {this.state.geolocationFetchComplete ?
+                    <MapComponent
+                        markerRef={marker => { this.marker = marker; }}
+                        mapStyle={styles.map}
+                        mapRegion={this.state.region}
+                        nearby={this.state.freeCars}
+                        initialRegion={this.state.region}
+                    >
+                    </MapComponent>
+                    : null}
+                */}
                 {/* BOTÃO MENU VOLTAR */}
                 <View>
                     <TouchableOpacity style={styles.touchaVoltar} onPress={() => { this.props.navigation.toggleDrawer(); }}>
@@ -377,8 +440,8 @@ export default class DriverTripAccept extends React.Component {
                 {/* BOTÃO GANHOS CENTRO */}
                 <View style={{alignItems: 'center'}}>
                     <TouchableOpacity style={[styles.touchaGanhos, { borderColor: this.state.statusDetails ? colors.GREEN.light : colors.RED}]} onPress={() => { this.carteira() }}>
-                        <Text style={styles.touchaValor}>R$250,43</Text>
-                        <Text style={styles.touchaCorrida}>20 CORRIDAS</Text>
+                        <Text style={styles.touchaValor}>R$ {this.state.today?parseFloat(this.state.today).toFixed(2):'0'}</Text>
+                        <Text style={styles.touchaCorrida}>{this.state.corridasDia} CORRIDAS</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -390,18 +453,27 @@ export default class DriverTripAccept extends React.Component {
                 </View>
 
                 {/* BOTÃO LIGAR E DESLIGAR */}
+                {this.state.alertasom == false ?
                 <View style={{alignItems: 'center', flex: 1}}>
                     <TouchableOpacity style={[styles.btnOnOff, { backgroundColor: this.state.statusDetails ? colors.RED : colors.GREEN.light}]} onPress={() => { this.onChangeFunction(this.state.driverActiveStatus); }}>
                         <Text style={styles.textConectar}>{this.state.statusDetails ? 'DESCONECTAR' : 'CONECTAR'}</Text>
                     </TouchableOpacity>
                 </View>
+                :
+                null
+                }
 
                 {/* MODAL ACEITAR E REJEITAR */}
                 <View>
-                    <Modal
+               <FlatList
+                    data={this.state.tasklist}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={({ item, index }) => {
+                        return (
+                            <Modal
                         animationType="slide"
                         transparent={true}
-                        visible={false}
+                        visible={true}
                         onRequestClose={() => {
                             alert("Modal has been closed.");
                         }}
@@ -420,7 +492,7 @@ export default class DriverTripAccept extends React.Component {
                                                     color={colors.DEEPBLUE}
                                                 />
                                             </View>
-                                            <Text style={styles.txtTempo}>9 min</Text>
+                                            <Text style={styles.txtTempo}>{item.estimateDistance}</Text>
                                         </View>
                                         <View style={styles.tempoKM}>
                                             <View style={styles.iconBack}>
@@ -431,11 +503,11 @@ export default class DriverTripAccept extends React.Component {
                                                     color={colors.DEEPBLUE}
                                                 />
                                             </View>
-                                            <Text style={styles.txtTempo}>5 km</Text>
+                                            <Text style={styles.txtTempo}>{parseFloat(item.distance/1000).toFixed(2)}</Text>
                                         </View>
                                     </View>
                                     <View style={styles.viewBtnRejeitar}>
-                                        <TouchableOpacity style={styles.btnRejeitar} >
+                                        <TouchableOpacity style={styles.btnRejeitar} onPress={ () => {this.onPressIgnore(item)} }>
                                             <Text>{this.state.timer}</Text>
                                         </TouchableOpacity>
                                     </View>    
@@ -448,7 +520,7 @@ export default class DriverTripAccept extends React.Component {
                                             type='feather'
                                             color={colors.DEEPBLUE}
                                         />
-                                        <Text style={styles.txtPartida}>Rua Otorino Rodghere, 425, Cambota</Text>
+                                        <Text style={styles.txtPartida}>{item.pickup.add}</Text>
                                     </View>
                                     <View style={styles.enderecoDestino}>
                                         <Icon
@@ -457,13 +529,13 @@ export default class DriverTripAccept extends React.Component {
                                             type='feather'
                                             color={colors.RED}
                                         />
-                                        <Text style={styles.txtDestino}>Rua Padre Luna, 1574, Centro</Text>
+                                        <Text style={styles.txtDestino}>{item.drop.add}</Text>
                                     </View>
                                 </View>
                                 <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
                                     <View style={styles.imgModalView}>
                                         <Image source={this.state.photoDriver ? { uri: this.state.photoDriver } : require('../../assets/images/profilePic.png')} style={styles.imagemModal} />
-                                        <Text style={styles.nomePessoa}>João da Silva</Text>
+                                        <Text style={styles.nomePessoa}>{item.customer_name}</Text>
                                     </View>
                                     <View style={styles.iconPgt}>
                                         <View style={styles.formaPgt}>
@@ -478,13 +550,18 @@ export default class DriverTripAccept extends React.Component {
                                     </View>
                                 </View>
                                 <View style={styles.viewBtn}>
-                                    <TouchableOpacity style={styles.btnAceitar} onPress={() => { alert('Corrida aceita') }}>
+                                    <TouchableOpacity style={styles.btnAceitar} onPress={() => { this.onPressAccept(item) }}>
                                         <Text style={styles.txtBtnAceitar}>Aceitar</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
                         </View>
                     </Modal>
+                        )
+                    }
+                    }
+                />
+
                 </View>
                 {/*<FlatList
                     data={this.state.tasklist}
@@ -731,7 +808,7 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         paddingTop: 15,
         flex: 1,
-        maxHeight: 330,
+        maxHeight: 345,
     },
 
     tituloModalView: {

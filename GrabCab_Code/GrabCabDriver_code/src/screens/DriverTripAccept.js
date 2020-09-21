@@ -4,7 +4,6 @@ import { Button, Header, Icon } from 'react-native-elements';
 import Polyline from '@mapbox/polyline';
 import MapView, { PROVIDER_GOOGLE, Marker, UrlTile } from 'react-native-maps';
 import { colors } from '../common/theme';
-import { MapComponent } from '../components';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 var { width, height } = Dimensions.get('window');
@@ -14,10 +13,35 @@ var google;
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
-import dateStyle from '../common/dateStyle';
 import { Audio } from 'expo-av';
+import Geocoder from 'react-native-geocoding';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
-const soundObject = new Audio.Sound();
+
+const soundObject = new Audio.Sound(); // SOM DO ALERTA
+
+import * as TaskManager from 'expo-task-manager'; // DEFINE O GPS EM SEGUNDO PLANO
+
+const LATITUDE_DELTA = 0.01; // DEFINE O LATITUDE PADRÃO
+const LONGITUDE_DELTA = 0.01; // DEFINE O LONGITUDE PADRÃO
+
+const LOCATION_TRACKING = 'location-tracking';
+
+TaskManager.defineTask(LOCATION_TRACKING, async ({ data, error }) => {
+    if (error) {
+        console.log('LOCATION_TRACKING task ERROR:', error);
+      return;
+    }
+    if (data) {
+      const { locations } = data;
+        let lat = locations[0].coords.latitude;
+        let long = locations[0].coords.longitude;
+        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
+            lat: lat,
+            lng: long,
+            //add: responseJson.results[0].formatted_address
+        })
+    }
+  });
 
 export default class DriverTripAccept extends React.Component {
 
@@ -31,12 +55,14 @@ export default class DriverTripAccept extends React.Component {
 
     constructor(props) {
         super(props);
+        Geocoder.init(google_map_key);
+        this._isMounted=false;
         this.state = {
             region: {
                 latitude: 37.78825,
                 longitude: -122.4324,
-                latitudeDelta: 0.9922,
-                longitudeDelta: 0.9421,
+                latitudeDelta: 0.0143,
+                longitudeDelta: 0.0134,
             },
             starCount: 5,
             geolocationFetchComplete: false,
@@ -61,9 +87,10 @@ export default class DriverTripAccept extends React.Component {
             curUid: '',
             id: 0,
             gotAddress: false,
+            
 
         }
-
+        this._getLocationAsync()
     }
 
     //checking booking status
@@ -154,10 +181,69 @@ export default class DriverTripAccept extends React.Component {
        await this.getPhotoDriver();
        await this.getStatusDetails();
        await this.getInfoEraning();
+       await this.updateLocationPlano();
+       this._isMounted=true;
+       //this.getCurrentPosition();
        if(this.state.tomada){
             this.updateTimer()
        }
     }
+
+    UNSAFE_componentWillMount() {
+        //setInterval(this.updateLocation, 5000);
+        //this.updateLocationPlano();
+    }
+
+    componentWillUnmount(){
+        this._isMounted=false
+    }
+
+    updateLocationPlano = async () => {
+        let { status } = await Permissions.askAsync(Permissions.LOCATION);
+        console.log('ENTROU NO UPDATE')
+        if (status === 'granted') {
+            await Location.startLocationUpdatesAsync(LOCATION_TRACKING, {
+                accuracy: Location.Accuracy.Highest,
+                timeInterval: 5000,
+                distanceInterval: 0,
+                foregroundService: {
+                    notificationTitle: 'Colt App',
+                    notificationBody: 'Buscando Corridas'
+                  },
+                  pausesUpdatesAutomatically: false,
+            });
+
+            const hasStarted = await Location.hasStartedLocationUpdatesAsync(
+                LOCATION_TRACKING
+              );
+              console.log('tracking started?', hasStarted);
+        }
+    } 
+    /*
+    updateLocation = async () => {
+        if (this.state.driverActiveStatus == true) {
+
+            let { status } = await Permissions.askAsync(Permissions.LOCATION);
+            if (status !== 'granted') {
+                console.log('i am called')
+                this.setState({
+                    errorMessage: 'Permission to access location was denied',
+                });
+            }
+
+            let location = await Location.getCurrentPositionAsync({enableHighAccuracy: true, maximumAge: 1000, timeout: 2000});
+            let registrar = await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+                accuracy: Location.Accuracy.Balanced,
+              }); 
+            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
+                lat: location.coords.latitude,
+                lng: location.coords.longitude,
+                //add: responseJson.results[0].formatted_address
+            })
+        }
+    } */
+
+
 
     // find your origin and destination point coordinates and pass it to our method.
     async getDirections(startLoc, destinationLoc) {
@@ -229,7 +315,52 @@ export default class DriverTripAccept extends React.Component {
         }
     }
 
+    
+    _getLocationAsync = async () => {
+        let { status } = await Permissions.askAsync(Permissions.LOCATION);
+        if (status !== 'granted') {
+            console.log('Permission to access location was denied');
+        }
+        let uid = firebase.auth().currentUser.uid;
+        let location = await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 2000 });
+        if (location) {
+            var pos = {
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+            };
+            if (pos) {
+                var latlng = pos.latitude + ',' + pos.longitude;
+                return fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
+                    .then((response) => response.json())
+                    .then((responseJson) => {
+                        if (responseJson.results[0] && responseJson.results[0].formatted_address) {
+                            let address = responseJson.results[0].formatted_address;
+                            firebase.database().ref('users/' + uid + '/location').update({
+                                add: address,
+                                lat: pos.latitude,
+                                lng: pos.longitude
+                            })
+                            this.setState({ 
+                                region: {
+                                    latitude: pos.latitude,
+                                    longitude: pos.longitude,
+                                    latitudeDelta: 0.0143,
+                                    longitudeDelta: 0.0134,
+                                },
+                                geolocationFetchComplete: true
+                            })
+                        } else {
+                            alert(languageJSON.api_error)
+                        }
 
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                });
+
+            }
+        }
+    };
 
     //get nearby riders function
     getRiders() {
@@ -413,18 +544,20 @@ export default class DriverTripAccept extends React.Component {
                 {/* AQUI ENTRA TODOS OS BOTÕES FLUTUANTES DO MENU */}
 
                 {/* MAPA */}
-                {/*
+                
                 {this.state.geolocationFetchComplete ?
-                    <MapComponent
-                        markerRef={marker => { this.marker = marker; }}
-                        mapStyle={styles.map}
-                        mapRegion={this.state.region}
-                        nearby={this.state.freeCars}
-                        initialRegion={this.state.region}
+                    <MapView
+                        ref={ map => { this.map = map }}
+                        style={styles.map}
+                        provider={PROVIDER_GOOGLE}
+                        showsUserLocation
+                        showsMyLocationButton
+                        followUserLocation
+                        region={this.state.region}
                     >
-                    </MapComponent>
+                    </MapView>
                     : null}
-                */}
+
                 {/* BOTÃO MENU VOLTAR */}
                 <View>
                     <TouchableOpacity style={styles.touchaVoltar} onPress={() => { this.props.navigation.toggleDrawer(); }}>
@@ -447,7 +580,7 @@ export default class DriverTripAccept extends React.Component {
 
                 {/* BOTÃO FOTOS */}
                 <View>
-                    <TouchableOpacity style={styles.touchaFoto} onPress={() => { this.photoPerfil() }}>
+                    <TouchableOpacity style={styles.touchaFoto} onPress={() => { this.updateLocationPlano() }}>
                         <Image source={this.state.photoDriver?{uri:this.state.photoDriver}:require('../../assets/images/profilePic.png')} style={styles.imagemPerfil} />
                     </TouchableOpacity>
                 </View>

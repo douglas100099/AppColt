@@ -31,6 +31,7 @@
     "react-native-actionsheet": "^2.4.2",
     "react-native-dash": "^0.0.9",
     "react-native-elements": "^1.1.0",
+    "react-native-geocoding": "^0.4.0",
     "react-native-gesture-handler": "~1.6.0",
     "react-native-google-maps-directions": "^2.1.1",
     "react-native-maps": "0.27.1",

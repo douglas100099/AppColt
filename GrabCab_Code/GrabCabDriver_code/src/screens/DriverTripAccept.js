@@ -21,12 +21,12 @@ const soundObject = new Audio.Sound(); // SOM DO ALERTA
 
 import * as TaskManager from 'expo-task-manager'; // DEFINE O GPS EM SEGUNDO PLANO
 
-const LATITUDE_DELTA = 0.01; // DEFINE O LATITUDE PADRÃO
-const LONGITUDE_DELTA = 0.01; // DEFINE O LONGITUDE PADRÃO
+//const LATITUDE_DELTA = 0.01; // DEFINE O LATITUDE PADRÃO
+//const LONGITUDE_DELTA = 0.01; // DEFINE O LONGITUDE PADRÃO
 
-const LOCATION_TRACKING = 'location-tracking';
+//const LOCATION_TRACKING = 'location-tracking';
 
-TaskManager.defineTask(LOCATION_TRACKING, async ({ data, error }) => {
+/*TaskManager.defineTask(LOCATION_TRACKING, async ({ data, error }) => {
     if (error) {
         console.log('LOCATION_TRACKING task ERROR:', error);
       return;
@@ -38,10 +38,9 @@ TaskManager.defineTask(LOCATION_TRACKING, async ({ data, error }) => {
         firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
             lat: lat,
             lng: long,
-            //add: responseJson.results[0].formatted_address
         })
     }
-  });
+  }); */
 
 export default class DriverTripAccept extends React.Component {
 
@@ -181,7 +180,7 @@ export default class DriverTripAccept extends React.Component {
        await this.getPhotoDriver();
        await this.getStatusDetails();
        await this.getInfoEraning();
-       await this.updateLocationPlano();
+       //await this.updateLocationPlano();
        this._isMounted=true;
        //this.getCurrentPosition();
        if(this.state.tomada){
@@ -198,7 +197,7 @@ export default class DriverTripAccept extends React.Component {
         this._isMounted=false
     }
 
-    updateLocationPlano = async () => {
+    /*updateLocationPlano = async () => {
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
         console.log('ENTROU NO UPDATE')
         if (status === 'granted') {
@@ -218,7 +217,7 @@ export default class DriverTripAccept extends React.Component {
               );
               console.log('tracking started?', hasStarted);
         }
-    } 
+    } */
     /*
     updateLocation = async () => {
         if (this.state.driverActiveStatus == true) {

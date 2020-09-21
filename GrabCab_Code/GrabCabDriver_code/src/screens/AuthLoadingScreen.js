@@ -40,7 +40,13 @@ export class AuthLoadingScreen extends React.Component {
     const { status } = await Location.requestPermissionsAsync();
     if (status === 'granted') {
       await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-        accuracy: Location.Accuracy.High
+        accuracy: Location.Accuracy.Highest,
+        timeInterval: 5000,
+        showsBackgroundLocationIndicator: true,
+        foregroundService: {
+          notificationTitle: 'Colt Motorista',
+          notificationBody: 'Você está conectado'
+        }
       });
     }
   }

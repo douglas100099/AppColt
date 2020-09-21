@@ -17,7 +17,7 @@ import {
 import languageJSON from './src/common/language';
 
 var firebaseConfig = Constants.manifest.extra.firebaseConfig;
-firebase.initializeApp(firebaseConfig);
+!firebase.apps.length ? firebase.initializeApp(firebaseConfig) : firebase.app();
 
 
 Notifications.setNotificationHandler({

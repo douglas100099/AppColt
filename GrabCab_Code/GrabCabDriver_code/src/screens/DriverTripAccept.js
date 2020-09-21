@@ -183,7 +183,6 @@ export default class DriverTripAccept extends React.Component {
        await this.getInfoEraning();
        await this.updateLocationPlano();
        this._isMounted=true;
-       //this.getCurrentPosition();
        if(this.state.tomada){
             this.updateTimer()
        }
@@ -219,31 +218,6 @@ export default class DriverTripAccept extends React.Component {
               console.log('tracking started?', hasStarted);
         }
     } 
-    /*
-    updateLocation = async () => {
-        if (this.state.driverActiveStatus == true) {
-
-            let { status } = await Permissions.askAsync(Permissions.LOCATION);
-            if (status !== 'granted') {
-                console.log('i am called')
-                this.setState({
-                    errorMessage: 'Permission to access location was denied',
-                });
-            }
-
-            let location = await Location.getCurrentPositionAsync({enableHighAccuracy: true, maximumAge: 1000, timeout: 2000});
-            let registrar = await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-                accuracy: Location.Accuracy.Balanced,
-              }); 
-            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
-                lat: location.coords.latitude,
-                lng: location.coords.longitude,
-                //add: responseJson.results[0].formatted_address
-            })
-        }
-    } */
-
-
 
     // find your origin and destination point coordinates and pass it to our method.
     async getDirections(startLoc, destinationLoc) {
@@ -734,103 +708,12 @@ export default class DriverTripAccept extends React.Component {
 
                                     </MapView>
                                 </View>
-                                <View style={styles.mapDetails}>
-                                    <View style={styles.dateView}>
-                                        <Text style={styles.listDate}>{new Date(item.tripdate).toLocaleString(dateStyle)}</Text>
-                                    </View>
-                                    <View style={styles.addressViewStyle}>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                            <View style={styles.greenDot}></View>
-                                            <Text style={styles.addressViewTextStyle}>{item.pickup.add}</Text>
-                                        </View>
-                                        <View style={styles.fixAdressStyle}>
-                                            <View style={styles.redDot}></View>
-                                            <Text style={styles.addressViewTextStyle}>{item.drop.add}</Text>
-                                        </View>
-                                    </View>
-
-                                    <View style={styles.detailsBtnView}>
-                                        <View style={{ flex: 1 }}>
-                                            <Button
-                                                onPress={() => {
-                                                    this.setModalVisible(true, item);
-                                                }}
-                                                title={languageJSON.ignore_text}
-                                                titleStyle={styles.titleStyles}
-                                                buttonStyle={styles.myButtonStyle}
-                                                containerStyle={{
-                                                    flex: 1,
-                                                    alignSelf: 'flex-end',
-                                                    paddingRight: 14
-                                                }}
-                                            />
-                                        </View>
-                                        <View style={styles.viewFlex1}>
-                                            <Button
-                                                title={languageJSON.accept}
-                                                titleStyle={styles.titleStyles}
-                                                onPress={() => {
-                                                    this.onPressAccept(item)
-                                                }}
-                                                buttonStyle={{
-                                                    backgroundColor: colors.GREEN.light,
-                                                    width: height / 6,
-                                                    padding: 2,
-                                                    borderColor: colors.TRANSPARENT,
-                                                    borderWidth: 0,
-                                                    borderRadius: 5,
-                                                }}
-                                                containerStyle={{
-                                                    flex: 1,
-                                                    alignSelf: 'flex-start',
-                                                    paddingLeft: 14
-                                                }}
-                                            />
-                                        </View>
-                                    </View>
-                                </View>
                             </View>
                         )
                     }
                     }
                 />
-
-                <View style={styles.modalPage}>
-                    <Modal
-                        animationType="slide"
-                        transparent={true}
-                        visible={this.state.modalVisible}
-                        onRequestClose={() => {
-                            Alert.alert(languageJSON.modal_close);
-                        }}>
-                        <View style={styles.modalMain}>
-                            <View style={styles.modalContainer}>
-                                <View style={styles.modalHeading}>
-                                    <Text style={styles.alertStyle}>{languageJSON.alert_text}</Text>
-                                </View>
-                                <View style={styles.modalBody}>
-                                    <Text style={{ fontSize: 16 }}>{languageJSON.ignore_job_title}</Text>
-                                </View>
-                                <View style={styles.modalFooter}>
-                                    <TouchableHighlight
-                                        style={[styles.btnStyle, styles.clickText]}
-                                        onPress={() => {
-                                            this.setModalVisible(!this.state.modalVisible, null)
-                                        }}>
-                                        <Text style={styles.cancelTextStyle}>{languageJSON.cancel}</Text>
-                                    </TouchableHighlight>
-                                    <TouchableHighlight
-                                        style={styles.btnStyle}
-                                        onPress={() => {
-                                            this.onPressIgnore(this.state.modalData)
-                                        }}>
-                                        <Text style={styles.okStyle}>{languageJSON.ok}</Text>
-                                    </TouchableHighlight>
-                                </View>
-                            </View>
-                        </View>
-                    </Modal>
-                </View>  */}
+                 */}
             </View>
 
         )
@@ -842,10 +725,6 @@ export default class DriverTripAccept extends React.Component {
 
 //Screen Styling
 const styles = StyleSheet.create({
-    headerStyle: {
-        backgroundColor: colors.WHITE,
-        borderBottomWidth: 0
-    },
 
     // AQUI ENTRA O NOVO CSS // -----
     touchaVoltar: {
@@ -1049,13 +928,6 @@ const styles = StyleSheet.create({
         fontSize: 12,
     },
 
-    txtCorrida: {
-        fontFamily: 'Inter-ExtraBold',
-        opacity: 0.6,
-        marginLeft: 5,
-        fontSize: 12,
-    },
-
     tempoKM: {
         marginLeft: 12,
         flexDirection: 'row',
@@ -1135,36 +1007,6 @@ const styles = StyleSheet.create({
 
     // FIM DO NOVO CSS // -------
 
-    headerInnerStyle: {
-        marginLeft: 10,
-        marginRight: 10
-    },
-    btnMenu: {
-        position: 'absolute',
-        left: 20,
-        top: 20,
-        width: 50,
-        height: 50
-    },
-    headerTitleStyle: {
-        color: colors.WHITE,
-        fontFamily: 'Roboto-Bold',
-        fontSize: 20
-    },
-    mapcontainer: {
-        flex: 1.5,
-        width: width,
-        height: 150,
-        borderWidth: 7,
-        borderColor: colors.WHITE,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    mapDetails: {
-        backgroundColor: colors.WHITE,
-        flex: 1,
-        flexDirection: 'column',
-    },
     map: {
         flex: 1,
         ...StyleSheet.absoluteFillObject,
@@ -1185,39 +1027,7 @@ const styles = StyleSheet.create({
             { rotate: '180deg' }
         ]
     },
-    signInTextStyle: {
-        fontFamily: 'Inter-Bold',
-        fontWeight: "700",
-        color: colors.WHITE
-    },
-    listItemView: {
-        flex: 1,
-        width: '100%',
-        // height: 350,
-        marginBottom: 10,
-        flexDirection: 'column',
-    },
-    dateView: {
-        flex: 1.1
-    },
-    listDate: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        paddingLeft: 10,
-        color: colors.GREY.default,
-        flex: 1
-    },
-    addressViewStyle: {
-        flex: 2,
-        paddingLeft: 10
-    },
-    addressViewTextStyle: {
-        color: colors.GREY.secondary,
-        fontSize: 15,
-        marginLeft: 15,
-        lineHeight: 24
-        , flexWrap: "wrap",
-    },
+
     greenDot: {
         backgroundColor: colors.GREEN.default,
         width: 10,
@@ -1230,88 +1040,9 @@ const styles = StyleSheet.create({
         height: 10,
         borderRadius: 50
     },
-    detailsBtnView: {
-        flex: 2,
-        justifyContent: 'space-between',
-        flexDirection: 'row',
-        width: width,
-        marginTop: 10,
-        marginBottom: 10
-    },
 
-    modalPage: {
-        flex: 1,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    modalHeading: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    modalBody: {
-        flex: 2,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    modalFooter: {
-        flex: 1,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        borderTopColor: colors.GREY.iconPrimary,
-        borderTopWidth: 1,
-        width: '100%',
-    },
-    btnStyle: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     mainViewStyle: {
         flex: 1,
-        //marginTop: StatusBar.currentHeight
+        marginTop: StatusBar.currentHeight
     },
-    fixAdressStyle: {
-        flexDirection: 'row',
-        alignItems: 'center'
-    },
-    myButtonStyle: {
-        backgroundColor: colors.RED,
-        width: height / 6,
-        padding: 2,
-        borderColor: colors.TRANSPARENT,
-        borderWidth: 0,
-        borderRadius: 5,
-    },
-    alertStyle: {
-        fontWeight: 'bold',
-        fontSize: 18,
-        width: '100%',
-        textAlign: 'center'
-    },
-    cancelTextStyle: {
-        color: colors.BLUE.secondary,
-        fontSize: 18,
-        fontWeight: 'bold',
-        width: "100%",
-        textAlign: 'center'
-    },
-    okStyle: {
-        color: colors.BLUE.secondary,
-        fontSize: 18,
-        fontWeight: 'bold'
-    },
-    viewFlex1: {
-        flex: 1
-    },
-    clickText: {
-        borderRightColor: colors.GREY.iconPrimary,
-        borderRightWidth: 1
-    },
-    titleStyles: {
-        width: "100%",
-        alignSelf: 'center'
-    }
 });

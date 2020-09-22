@@ -15,7 +15,7 @@ import * as Location from 'expo-location';
 
 const LOCATION_TASK_NAME = 'background-location-task';
 
-TaskManager.defineTask(LOCATION_TASK_NAME, ({ data: { locations }, error }) => {
+TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data: { locations }, error }) => {
   if (error) {
     console.log("Task Error");
     return;
@@ -27,6 +27,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, ({ data: { locations }, error }) => {
       lat: location.coords.latitude,
       lng: location.coords.longitude
     });
+    console.log('Atualizando localização')
   }
 });
 
@@ -36,12 +37,14 @@ export class AuthLoadingScreen extends React.Component {
     this._bootstrapAsync();
   }
 
+
   async StartBackgroundLocation() {
     const { status } = await Location.requestPermissionsAsync();
     if (status === 'granted') {
+      console.log('Checando permissões do Background Location')
       await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
         accuracy: Location.Accuracy.Highest,
-        timeInterval: 5000,
+        timeInterval: 2000,
         showsBackgroundLocationIndicator: true,
         foregroundService: {
           notificationTitle: 'Colt Motorista',
@@ -65,9 +68,11 @@ export class AuthLoadingScreen extends React.Component {
                   let activeStatus = status.val();
                   if(activeStatus){
                     this.StartBackgroundLocation();
+                    console.log('TENTOU')
                   }
                   else{
                     Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+                    console.log('Parando o Background Location')
                   }
                 });
                 this.props.navigation.navigate('DriverRoot');

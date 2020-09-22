@@ -27,7 +27,6 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data: { locations }, error }
       lat: location.coords.latitude,
       lng: location.coords.longitude
     });
-    console.log('Atualizando localização')
   }
 });
 
@@ -68,11 +67,9 @@ export class AuthLoadingScreen extends React.Component {
                   let activeStatus = status.val();
                   if(activeStatus){
                     this.StartBackgroundLocation();
-                    console.log('TENTOU')
                   }
                   else{
                     Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
-                    console.log('Parando o Background Location')
                   }
                 });
                 this.props.navigation.navigate('DriverRoot');
@@ -141,7 +138,7 @@ export class AuthLoadingScreen extends React.Component {
     return (
       <View style={styles.container}>
         <ImageBackground
-          source={require("../../assets/images/intro.jpg")}
+          source={require("../../assets/images/splash.png")}
           resizeMode="stretch"
           style={styles.imagebg}
         >

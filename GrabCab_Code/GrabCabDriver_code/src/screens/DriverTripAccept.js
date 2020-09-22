@@ -197,51 +197,6 @@ export default class DriverTripAccept extends React.Component {
         this._isMounted=false
     }
 
-    /*updateLocationPlano = async () => {
-        let { status } = await Permissions.askAsync(Permissions.LOCATION);
-        console.log('ENTROU NO UPDATE')
-        if (status === 'granted') {
-            await Location.startLocationUpdatesAsync(LOCATION_TRACKING, {
-                accuracy: Location.Accuracy.Highest,
-                timeInterval: 5000,
-                distanceInterval: 0,
-                foregroundService: {
-                    notificationTitle: 'Colt App',
-                    notificationBody: 'Buscando Corridas'
-                  },
-                  pausesUpdatesAutomatically: false,
-            });
-
-            const hasStarted = await Location.hasStartedLocationUpdatesAsync(
-                LOCATION_TRACKING
-              );
-              console.log('tracking started?', hasStarted);
-        }
-    } */
-    /*
-    updateLocation = async () => {
-        if (this.state.driverActiveStatus == true) {
-
-            let { status } = await Permissions.askAsync(Permissions.LOCATION);
-            if (status !== 'granted') {
-                console.log('i am called')
-                this.setState({
-                    errorMessage: 'Permission to access location was denied',
-                });
-            }
-
-            let location = await Location.getCurrentPositionAsync({enableHighAccuracy: true, maximumAge: 1000, timeout: 2000});
-            let registrar = await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-                accuracy: Location.Accuracy.Balanced,
-              }); 
-            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
-                lat: location.coords.latitude,
-                lng: location.coords.longitude,
-                //add: responseJson.results[0].formatted_address
-            })
-        }
-    } */
-
 
 
     // find your origin and destination point coordinates and pass it to our method.
@@ -579,7 +534,7 @@ export default class DriverTripAccept extends React.Component {
 
                 {/* BOTÃO FOTOS */}
                 <View>
-                    <TouchableOpacity style={styles.touchaFoto} onPress={() => { this.updateLocationPlano() }}>
+                    <TouchableOpacity style={styles.touchaFoto} onPress={() => { this.photoPerfil() }}>
                         <Image source={this.state.photoDriver?{uri:this.state.photoDriver}:require('../../assets/images/profilePic.png')} style={styles.imagemPerfil} />
                     </TouchableOpacity>
                 </View>

@@ -140,7 +140,7 @@ export default class IntroScreen extends Component {
                             <View style={styles.inputMobile}>
                                 <TextInput
                                     ref={(ref) => { this.otpInput = ref }}
-                                    style={styles.textInput}
+                                    style={styles.textInputSMS}
                                     onChangeText={(value) => this.setState({ verificationCode: value })}
                                     value={this.state.verificationCode}
                                     ditable={!!this.state.verificationId}
@@ -154,7 +154,7 @@ export default class IntroScreen extends Component {
                             onPress={() => this.onPressLogin()}
                             style={styles.materialButtonDark}
                         >
-                            <Text style={styles.txtBtn}>Login</Text>
+                            <Text style={styles.txtBtn}>Login ou Cadastrar</Text>
                         </TouchableOpacity>
                     }
                     {!!this.state.verificationId ?

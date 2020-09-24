@@ -32,17 +32,27 @@ export default class DiverReg extends React.Component {
             mobile: this.props.reqData ? this.props.reqData.profile.mobile : '',
             vehicleNum: '',
             cpfNum: '',
+            cnh: '',
+            dataValidade: '',
+            orgaoEmissor: '',
             vehicleName: '',
-            image: null,
+            renavam: '',
+            imageCnh: null,
+            imageCrlv: null,
             carType: '',
             cpfNumValid: true,
+            renavamValid: true,
+            cnhValid: true,
+            OrgaoEmissorValid: true,
+            dataValidadeValid: true,
             fnameValid: true,
             lnameValid: true,
             mobileValid: true,
             emailValid: true,
             vehicleNumValid: true,
             vehicleNameValid: true,
-            imageValid: true,
+            imageCnhValid: true,
+            imageCrlvValid: true,
         }
     }
 
@@ -82,7 +92,7 @@ export default class DiverReg extends React.Component {
     // mobile number validation
     validateMobile() {
         const { mobile } = this.state
-        const mobileValid = (mobile.length > 0)
+        const mobileValid = (mobile.length >= 14)
         LayoutAnimation.easeInEaseOut()
         this.setState({ mobileValid })
         mobileValid || this.mobileInput.shake();
@@ -91,12 +101,52 @@ export default class DiverReg extends React.Component {
 
     // cpf validation
     validateCpf() {
-        const { cpf } = this.state
-        const cpfNumValid = (cpf.length > 0)
+        const { cpfNum } = this.state
+        const cpfNumValid = (cpfNum.length >= 11)
         LayoutAnimation.easeInEaseOut()
         this.setState({ cpfNumValid })
         cpfNumValid || this.cpfNumInput.shake();
         return cpfNumValid
+    }
+
+    // cnh validation
+    validateCnh() {
+        const { cnh } = this.state
+        const cnhValid = (cnh.length >= 11)
+        LayoutAnimation.easeInEaseOut()
+        this.setState({ cnhValid })
+        cnhValid || this.cnhInput.shake();
+        return cnhValid
+    }
+
+    // Orgao Emissor validation
+    validateOrgaoEmissor() {
+        const { orgaoEmissor } = this.state
+        const OrgaoEmissorValid = (orgaoEmissor.length > 2)
+        LayoutAnimation.easeInEaseOut()
+        this.setState({ OrgaoEmissorValid })
+        OrgaoEmissorValid || this.orgaoEmissorInput.shake();
+        return OrgaoEmissorValid
+    }
+
+    // Orgao Emissor validation
+    validateDataValidade() {
+        const { dataValidade } = this.state
+        const dataValidadeValid = (dataValidade.length >= 10)
+        LayoutAnimation.easeInEaseOut()
+        this.setState({ dataValidadeValid })
+        dataValidadeValid || this.dataValidadeInput.shake();
+        return dataValidadeValid
+    }
+
+    // RENAVAM validation
+    validateRenavam() {
+        const { renavam } = this.state
+        const renavamValid = (renavam.length >= 11)
+        LayoutAnimation.easeInEaseOut()
+        this.setState({ renavamValid })
+        renavamValid || this.renavamInput.shake();
+        return renavamValid
     }
 
     // email validation
@@ -131,18 +181,28 @@ export default class DiverReg extends React.Component {
         return vehicleNumValid
     }
 
-    // image upload validation
-    validateImage() {
-        const { image } = this.state;
-        const imageValid = (image != null);
+    // IMAGEM CNH UPLOAD VALIDATION
+    validateImageCnh() {
+        const { imageCnh } = this.state;
+        const imageCnhValid = (imageCnh != null);
         LayoutAnimation.easeInEaseOut()
-        this.setState({ imageValid })
-        imageValid;
-        return imageValid
+        this.setState({ imageCnhValid })
+        imageCnhValid;
+        return imageCnhValid
+    }
+
+    // IMAGEM CRVL UPLOAD VALIDATION
+    validateImageCrlv() {
+        const { imageCrlv } = this.state;
+        const imageCrlvValid = (imageCrlv != null);
+        LayoutAnimation.easeInEaseOut()
+        this.setState({ imageCrlvValid })
+        imageCrlvValid;
+        return imageCrlvValid
     }
 
     //imagepicker for license upload
-    CapturePhoto = async () => {
+    CapturePhotoCnh = async () => {
         //permission check
         const { status: cameraStatus } = await Permissions.askAsync(Permissions.CAMERA)
         const { status: cameraRollStatus } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
@@ -155,7 +215,30 @@ export default class DiverReg extends React.Component {
                 quality: 1.0
             });
             if (!result.cancelled) {
-                this.setState({ image: result.uri });
+                this.setState({ imageCnh: result.uri });
+                
+            }
+        } else {
+            throw new Error('Camera permission not granted');
+        }
+    }
+
+    //imagepicker for license upload
+    CapturePhotoCrlv = async () => {
+        //permission check
+        const { status: cameraStatus } = await Permissions.askAsync(Permissions.CAMERA)
+        const { status: cameraRollStatus } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+
+        if (cameraStatus === 'granted' && cameraRollStatus === 'granted') {
+            let result = await ImagePicker.launchImageLibraryAsync({
+                allowsEditing: true,
+                aspect: [4, 3],
+                // base64: true,
+                quality: 1.0
+            });
+            if (!result.cancelled) {
+                this.setState({ imageCrlv: result.uri });
+                
             }
         } else {
             throw new Error('Camera permission not granted');
@@ -163,8 +246,13 @@ export default class DiverReg extends React.Component {
     }
 
     //upload cancel
-    cancelPhoto = () => {
-        this.setState({ image: null });
+    cancelPhotoCnh = () => {
+        this.setState({ imageCnh: null });
+    }
+
+    //upload cancel
+    cancelPhotoCrlv = () => {
+        this.setState({ imageCrlv: null });
     }
 
     //register button press for validation
@@ -175,285 +263,403 @@ export default class DiverReg extends React.Component {
         const lnameValid = this.validateLastname();
         const mobileValid = this.validateMobile();
         const emailValid = this.validateEmail();
-        const imageValid = this.validateImage();
+        const imageCnhValid = this.validateImageCnh();
+        const imageCrlvValid = this.validateImageCrlv();
         const vehicleNumValid = this.validateVehicleNum();
         const vehicleNameValid = this.validateVehicleName();
 
-        if (fnameValid && lnameValid && mobileValid && emailValid && vehicleNumValid && vehicleNameValid && imageValid && this.state.carType) {
-            onPressRegister(this.state.fname, this.state.lname, this.state.mobile, this.state.email, this.state.vehicleNum, this.state.vehicleName, this.state.image, this.state.carType);
+        const cpfNumValid = this.validateCpf();
+        const cnhValid = this.validateCnh();
+        const OrgaoEmissorValid = this.validateOrgaoEmissor();
+        const dataValidadeValid = this.validateDataValidade();
+        const renavamValid = this.validateRenavam();
+
+        if (fnameValid && lnameValid && mobileValid && emailValid && vehicleNumValid && vehicleNameValid && imageCnhValid && imageCrlvValid && cpfNumValid && renavamValid && dataValidadeValid && OrgaoEmissorValid && cnhValid && this.state.carType) {
+            onPressRegister(this.state.cnh, this.state.cpfNum, this.state.orgaoEmissor, this.state.dataValidade, this.state.renavam, this.state.fname, this.state.lname, this.state.mobile, this.state.email, this.state.vehicleNum, this.state.vehicleName, this.state.imageCnh, this.state.imageCrlv, this.state.carType);
         }
     }
 
     render() {
         const { onPressBack, loading } = this.props;
-        let { image } = this.state;
+        let { imageCnh } = this.state;
+        let { imageCrlv } = this.state;
         return (
-            <View style={{ flex: 1, backgroundColor: colors.WHITE }}>
+            <View style={{ flex: 1, backgroundColor: colors.WHITE, marginTop: Platform.select({ ios: 40, android: 30 }) }}>
                 <Text style={styles.headerStyle}>Registro</Text>
                 <ScrollView style={styles.scrollViewStyle}>
 
-                    <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? "padding" : "padding"} style={styles.form}>
-                        <View style={styles.containerStyle}>
 
-                            {/*  CAMPOS DE NOME  */}
+                    <View style={styles.containerStyle}>
 
-                            <Text style={styles.txtContainer2}>Dados pessoais</Text>
-                            <View style={styles.textInputContainerStyle}>
-                                <Text style={styles.txtContainer}>Nome</Text>
-                                <Input
-                                    ref={input => (this.fnameInput = input)}
-                                    editable={true}
-                                    returnKeyType={'next'}
-                                    underlineColorAndroid={colors.TRANSPARENT}
-                                    value={this.state.fname}
-                                    keyboardType={'default'}
-                                    inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text) => { this.setState({ fname: text }) }}
-                                    errorMessage={this.state.fnameValid ? null : languageJSON.first_name_error}
-                                    secureTextEntry={false}
-                                    blurOnSubmit={true}
-                                    onSubmitEditing={() => { this.validateFirstName(); this.lnameInput.focus() }}
-                                    errorStyle={styles.errorMessageStyle}
-                                    inputContainerStyle={styles.inputContainerStyle}
-                                    containerStyle={styles.textInputStyle}
-                                />
-                            </View>
+                        {/*  CAMPOS DE NOME  */}
 
-                            {/*  CAMPOS DE SOBRENOME  */}
-
-                            <View style={styles.textInputContainerStyle}>
-                                <Text style={styles.txtContainer}>Sobrenome</Text>
-                                <Input
-                                    ref={input => (this.lnameInput = input)}
-                                    editable={true}
-                                    returnKeyType={'next'}
-                                    underlineColorAndroid={colors.TRANSPARENT}
-                                    value={this.state.lname}
-                                    keyboardType={'default'}
-                                    inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text) => { this.setState({ lname: text }) }}
-                                    errorMessage={this.state.lnameValid ? null : languageJSON.last_name_error}
-                                    secureTextEntry={false}
-                                    blurOnSubmit={true}
-                                    onSubmitEditing={() => { this.validateLastname(); this.cpfNumInput.focus() }}
-                                    errorStyle={styles.errorMessageStyle}
-                                    inputContainerStyle={styles.inputContainerStyle}
-                                    containerStyle={styles.textInputStyle}
-                                />
-                            </View>
-
-                            {/*  CAMPOS DE CPF  */}
-
-                            <View style={styles.textInputContainerStyle}>
-                                <Text style={styles.txtContainer}>CPF</Text>
-                                <Input
-                                    ref={input => (this.cpfNumInput = input)}
-                                    editable={true}
-                                    returnKeyType={'next'}
-                                    underlineColorAndroid={colors.TRANSPARENT}
-                                    value={this.state.cpfNum}
-                                    keyboardType={'numeric'}
-                                    inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text) => { this.setState({ cpfNum: text }) }}
-                                    errorMessage={this.state.cpfNumValid ? null : languageJSON.last_name_error}
-                                    secureTextEntry={false}
-                                    maxLength={11}
-                                    blurOnSubmit={true}
-                                    onSubmitEditing={() => { this.validateLastname(); this.emailInput.focus() }}
-                                    errorStyle={styles.errorMessageStyle}
-                                    inputContainerStyle={styles.inputContainerStyle}
-                                    containerStyle={styles.textInputStyle}
-                                />
-                            </View>
-
-                            {/*  CAMPOS DE E-MAIL  */}
-
-                            <View style={styles.textInputContainerStyle}>
-                                <Text style={styles.txtContainer}>E-mail</Text>
-                                <Input
-                                    ref={input => (this.emailInput = input)}
-                                    editable={this.props.reqData.profile.email ? false : true}
-                                    returnKeyType={'next'}
-                                    underlineColorAndroid={colors.TRANSPARENT}
-                                    value={this.state.email}
-                                    keyboardType={'email-address'}
-                                    inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text) => { this.setState({ email: text }) }}
-                                    errorMessage={this.state.emailValid ? null : languageJSON.email_blank_error}
-                                    secureTextEntry={false}
-                                    blurOnSubmit={true}
-                                    onSubmitEditing={() => { this.validateEmail(); this.mobileInput.focus() }}
-                                    errorStyle={styles.errorMessageStyle}
-                                    inputContainerStyle={styles.inputContainerStyle}
-                                    containerStyle={styles.textInputStyle}
-                                />
-                            </View>
-
-                            {/*  CAMPOS DE CELULAR  */}
-
-                            <View style={styles.textInputContainerStyle}>
-                                <Text style={styles.txtContainer}>Celular</Text>
-                                <Input
-                                    ref={input => (this.mobileInput = input)}
-                                    editable={this.props.reqData.profile.mobile ? false : true}
-                                    returnKeyType={'done'}
-                                    underlineColorAndroid={colors.TRANSPARENT}
-                                    value={this.state.mobile}
-                                    keyboardType={'numeric'}
-                                    inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text) => { this.setState({ mobile: text }) }}
-                                    errorMessage={this.state.mobileValid ? null : languageJSON.mobile_no_blank_error}
-                                    secureTextEntry={false}
-                                    blurOnSubmit={true}
-                                    onSubmitEditing={() => { this.validateMobile(); this.vehicleNameInput.focus() }}
-                                    errorStyle={styles.errorMessageStyle}
-                                    inputContainerStyle={styles.inputContainerStyle}
-                                    containerStyle={styles.textInputStyle}
-                                />
-                            </View>
-
-
-
-                            <Text style={styles.txtContainer2}>Dados da CNH</Text>
-                            <View style={styles.textInputContainerStyle}>
-                                <Text style={styles.txtContainer}>Número da CNH</Text>
-                                <Input
-                                    ref={input => (this.mobileInput = input)}
-                                    editable={this.props.reqData.profile.mobile ? false : true}
-                                    returnKeyType={'done'}
-                                    underlineColorAndroid={colors.TRANSPARENT}
-                                    value={this.state.mobile}
-                                    keyboardType={'numeric'}
-                                    inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text) => { this.setState({ mobile: text }) }}
-                                    errorMessage={this.state.mobileValid ? null : languageJSON.mobile_no_blank_error}
-                                    secureTextEntry={false}
-                                    blurOnSubmit={true}
-                                    onSubmitEditing={() => { this.validateMobile(); this.vehicleNameInput.focus() }}
-                                    errorStyle={styles.errorMessageStyle}
-                                    inputContainerStyle={styles.inputContainerStyle}
-                                    containerStyle={styles.textInputStyle}
-                                />
-                            </View>
-
-
-                            <Text style={styles.txtContainer2}>Dados do carro</Text>
-
-                            {/*  TIPO DE CARRO  */}
-
-                            <View style={styles.textInputContainerStyle}>
-                                <Text style={styles.txtContainer}>Tipo de carro</Text>
-                                {this.state.cars ?
-                                    <RNPickerSelect
-                                        placeholder={{}}
-                                        value={this.state.carType}
-                                        useNativeAndroidPickerStyle={true}
-                                        style={{
-                                            inputIOS: styles.pickerStyle,
-                                            placeholder: {
-                                                color: 'white',
-                                            },
-                                            inputAndroid: styles.pickerStyle,
-                                        }}
-                                        onValueChange={(value) => this.setState({ carType: value })}
-                                        items={this.state.cars}
-                                    />
-                                    : null}
-                            </View>
-
-                            {/*  CAMPOS DE MODELO DE VEÍCULO  */}
-
-                            <View style={styles.textInputContainerStyle}>
-                                <Text style={styles.txtContainer}>Modelo do veículo</Text>
-                                <Input
-                                    ref={input => (this.vehicleNameInput = input)}
-                                    editable={true}
-                                    returnKeyType={'next'}
-                                    underlineColorAndroid={colors.TRANSPARENT}
-                                    value={this.state.vehicleName}
-                                    inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text) => { this.setState({ vehicleName: text }) }}
-                                    errorMessage={this.state.vehicleNameValid ? null : languageJSON.vehicle_model_name_blank_error}
-                                    blurOnSubmit={true}
-                                    onSubmitEditing={() => { this.validateVehicleName();; this.vehicleNumInput.focus() }}
-                                    errorStyle={styles.errorMessageStyle}
-                                    inputContainerStyle={styles.inputContainerStyle}
-                                    containerStyle={styles.textInputStyle}
-                                />
-                            </View>
-
-                            {/*  CAMPOS DE PLACA DE VEÍCULO  */}
-
-                            <View style={styles.textInputContainerStyle}>
-                                <Text style={styles.txtContainer}>Placa do veículo</Text>
-                                <Input
-                                    ref={input => (this.vehicleNumInput = input)}
-                                    editable={true}
-                                    underlineColorAndroid={colors.TRANSPARENT}
-                                    value={this.state.vehicleNum}
-                                    inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text) => { this.setState({ vehicleNum: text }) }}
-                                    errorMessage={this.state.vehicleNumValid ? null : languageJSON.vehicle_number_blank_err}
-                                    blurOnSubmit={true}
-                                    autoCapitalize='characters'
-                                    onSubmitEditing={() => { this.validateVehicleNum() }}
-                                    errorStyle={styles.errorMessageStyle}
-                                    inputContainerStyle={styles.inputContainerStyle}
-                                    containerStyle={styles.textInputStyle}
-                                />
-                            </View>
-
-                            {
-                                image ?
-                                    <View style={styles.imagePosition}>
-                                        <TouchableOpacity style={styles.photoClick} onPress={this.cancelPhoto}>
-                                            <Image source={require('../../assets/images/cross.png')} resizeMode={'contain'} style={styles.imageStyle} />
-                                        </TouchableOpacity>
-                                        <Image source={{ uri: image }} style={styles.photoResult} resizeMode={'cover'} />
-                                    </View>
-                                    :
-                                    <View style={styles.capturePhoto}>
-                                        <View>
-                                            {
-                                                this.state.imageValid ?
-                                                    <Text style={styles.capturePhotoTitle}>{languageJSON.upload_driving_lisence}</Text>
-                                                    :
-                                                    <Text style={styles.errorPhotoTitle}>{languageJSON.upload_driving_lisence}</Text>
-                                            }
-
-                                        </View>
-                                        <View style={styles.capturePicClick}>
-                                            <TouchableOpacity style={styles.flexView1} onPress={this.CapturePhoto}>
-                                                <View>
-                                                    <View style={styles.imageFixStyle}>
-                                                        <Image source={require('../../assets/images/camera.png')} resizeMode={'contain'} style={styles.imageStyle2} />
-                                                    </View>
-                                                </View>
-                                            </TouchableOpacity>
-                                            <View style={styles.myView}>
-                                                <View style={styles.myView1} />
-                                            </View>
-                                            <View style={styles.myView2}>
-                                                <View style={styles.myView3}>
-                                                    <Text style={styles.textStyle}>{languageJSON.image_size_warning}</Text>
-                                                </View>
-                                            </View>
-                                        </View>
-                                    </View>
-                            }
-
-                            <View style={styles.buttonContainer}>
-                                <Button
-                                    onPress={() => { this.onPressRegister() }}
-                                    title={languageJSON.reg_no}
-                                    loading={loading}
-                                    titleStyle={styles.buttonTitle}
-                                    buttonStyle={styles.registerButton}
-                                />
-                            </View>
-                            <View style={styles.gapView} />
+                        <Text style={styles.txtContainer2}>Dados pessoais</Text>
+                        <View style={styles.textInputContainerStyle}>
+                            <Text style={styles.txtContainer}>Nome</Text>
+                            <Input
+                                ref={input => (this.fnameInput = input)}
+                                editable={true}
+                                returnKeyType={'next'}
+                                underlineColorAndroid={colors.TRANSPARENT}
+                                value={this.state.fname}
+                                keyboardType={'default'}
+                                inputStyle={styles.inputTextStyle}
+                                onChangeText={(text) => { this.setState({ fname: text }) }}
+                                errorMessage={this.state.fnameValid ? null : 'Por favor, insira seu nome'}
+                                secureTextEntry={false}
+                                blurOnSubmit={true}
+                                onSubmitEditing={() => { this.validateFirstName(); this.lnameInput.focus() }}
+                                errorStyle={styles.errorMessageStyle}
+                                inputContainerStyle={styles.inputContainerStyle}
+                                containerStyle={styles.textInputStyle}
+                            />
                         </View>
-                    </KeyboardAvoidingView>
+
+                        {/*  CAMPOS DE SOBRENOME  */}
+
+                        <View style={styles.textInputContainerStyle}>
+                            <Text style={styles.txtContainer}>Sobrenome</Text>
+                            <Input
+                                ref={input => (this.lnameInput = input)}
+                                editable={true}
+                                returnKeyType={'next'}
+                                underlineColorAndroid={colors.TRANSPARENT}
+                                value={this.state.lname}
+                                keyboardType={'default'}
+                                inputStyle={styles.inputTextStyle}
+                                onChangeText={(text) => { this.setState({ lname: text }) }}
+                                errorMessage={this.state.lnameValid ? null : 'Por favor, insira seu sobrenome'}
+                                secureTextEntry={false}
+                                blurOnSubmit={true}
+                                onSubmitEditing={() => { this.validateLastname(); this.cpfNumInput.focus() }}
+                                errorStyle={styles.errorMessageStyle}
+                                inputContainerStyle={styles.inputContainerStyle}
+                                containerStyle={styles.textInputStyle}
+                            />
+                        </View>
+
+                        {/*  CAMPOS DE CPF  */}
+
+                        <View style={styles.textInputContainerStyle}>
+                            <Text style={styles.txtContainer}>CPF</Text>
+                            <Input
+                                ref={input => (this.cpfNumInput = input)}
+                                editable={true}
+                                returnKeyType={'next'}
+                                underlineColorAndroid={colors.TRANSPARENT}
+                                value={this.state.cpfNum}
+                                keyboardType={'numeric'}
+                                inputStyle={styles.inputTextStyle}
+                                onChangeText={(text) => { this.setState({ cpfNum: text }) }}
+                                errorMessage={this.state.cpfNumValid ? null : 'CPF inválido, insira novamente sem ponto e hifén'}
+                                secureTextEntry={false}
+                                maxLength={11}
+                                blurOnSubmit={true}
+                                onSubmitEditing={() => { this.validateCpf(); this.emailInput.focus() }}
+                                errorStyle={styles.errorMessageStyle}
+                                inputContainerStyle={styles.inputContainerStyle}
+                                containerStyle={styles.textInputStyle}
+                            />
+                        </View>
+
+                        {/*  CAMPOS DE E-MAIL  */}
+
+                        <View style={styles.textInputContainerStyle}>
+                            <Text style={styles.txtContainer}>E-mail</Text>
+                            <Input
+                                ref={input => (this.emailInput = input)}
+                                editable={this.props.reqData.profile.email ? false : true}
+                                returnKeyType={'next'}
+                                underlineColorAndroid={colors.TRANSPARENT}
+                                value={this.state.email}
+                                keyboardType={'email-address'}
+                                inputStyle={styles.inputTextStyle}
+                                onChangeText={(text) => { this.setState({ email: text }) }}
+                                errorMessage={this.state.emailValid ? null : 'E-mail inválido ou em branco'}
+                                secureTextEntry={false}
+                                blurOnSubmit={true}
+                                onSubmitEditing={() => { this.validateEmail(); this.mobileInput.focus() }}
+                                errorStyle={styles.errorMessageStyle}
+                                inputContainerStyle={styles.inputContainerStyle}
+                                containerStyle={styles.textInputStyle}
+                            />
+                        </View>
+
+                        {/*  CAMPOS DE CELULAR  */}
+
+                        <View style={styles.textInputContainerStyle}>
+                            <Text style={styles.txtContainer}>Celular</Text>
+                            <Input
+                                ref={input => (this.mobileInput = input)}
+                                editable={this.props.reqData.profile.mobile ? false : true}
+                                returnKeyType={'done'}
+                                underlineColorAndroid={colors.TRANSPARENT}
+                                value={this.state.mobile}
+                                keyboardType={'numeric'}
+                                inputStyle={styles.inputTextStyle}
+                                onChangeText={(text) => { this.setState({ mobile: text }) }}
+                                errorMessage={this.state.mobileValid ? null : 'Celular inválido ou em branco'}
+                                secureTextEntry={false}
+                                blurOnSubmit={true}
+                                onSubmitEditing={() => { this.validateMobile(); this.cnhInput.focus() }}
+                                errorStyle={styles.errorMessageStyle}
+                                inputContainerStyle={styles.inputContainerStyle}
+                                containerStyle={styles.textInputStyle}
+                            />
+                        </View>
+
+                        {/*  NUMERO DA CNH  */}
+
+                        <Text style={styles.txtContainer2}>Dados da CNH</Text>
+                        <View style={styles.textInputContainerStyle}>
+                            <Text style={styles.txtContainer}>Número de registro CNH</Text>
+                            <Input
+                                ref={input => (this.cnhInput = input)}
+                                editable={true}
+                                returnKeyType={'next'}
+                                underlineColorAndroid={colors.TRANSPARENT}
+                                value={this.state.cnh}
+                                keyboardType={'numeric'}
+                                inputStyle={styles.inputTextStyle}
+                                onChangeText={(text) => { this.setState({ cnh: text }) }}
+                                errorMessage={this.state.cnhValid ? null : 'Número da CNH inválido'}
+                                secureTextEntry={false}
+                                maxLength={11}
+                                blurOnSubmit={true}
+                                onSubmitEditing={() => { this.validateCnh(); this.orgaoEmissorInput.focus() }}
+                                errorStyle={styles.errorMessageStyle}
+                                inputContainerStyle={styles.inputContainerStyle}
+                                containerStyle={styles.textInputStyle}
+                            />
+                        </View>
+
+                        {/*  ORGÃO EMISSOR  */}
+
+                        <View style={styles.textInputContainerStyle}>
+                            <Text style={styles.txtContainer}>Orgão emissor</Text>
+                            <Input
+                                ref={input => (this.orgaoEmissorInput = input)}
+                                editable={true}
+                                returnKeyType={'next'}
+                                underlineColorAndroid={colors.TRANSPARENT}
+                                value={this.state.orgaoEmissor}
+                                keyboardType={'default'}
+                                inputStyle={styles.inputTextStyle}
+                                onChangeText={(text) => { this.setState({ orgaoEmissor: text }) }}
+                                errorMessage={this.state.OrgaoEmissorValid ? null : 'Insira o nome do orgão emissor'}
+                                secureTextEntry={false}
+                                blurOnSubmit={true}
+                                onSubmitEditing={() => { this.validateOrgaoEmissor(); this.cpfNumInput.focus() }}
+                                errorStyle={styles.errorMessageStyle}
+                                inputContainerStyle={styles.inputContainerStyle}
+                                containerStyle={styles.textInputStyle}
+                            />
+                        </View>
+
+
+                        {/*  DATA DE VALIDADE  */}
+
+                        <View style={styles.textInputContainerStyle}>
+                            <Text style={styles.txtContainer}>Data de validade</Text>
+                            <Input
+                                ref={input => (this.dataValidadeInput = input)}
+                                editable={true}
+                                returnKeyType={'done'}
+                                underlineColorAndroid={colors.TRANSPARENT}
+                                value={this.state.dataValidade}
+                                keyboardType={'numeric'}
+                                inputStyle={styles.inputTextStyle}
+                                onChangeText={(text) => { this.setState({ mobile: text }) }}
+                                errorMessage={this.state.dataValidadeValid ? null : 'Informe a data de validade da CNH'}
+                                secureTextEntry={false}
+                                blurOnSubmit={true}
+                                onSubmitEditing={() => { this.validateDataValidade(); this.renavamInput.focus() }}
+                                errorStyle={styles.errorMessageStyle}
+                                inputContainerStyle={styles.inputContainerStyle}
+                                containerStyle={styles.textInputStyle}
+                            />
+                        </View>
+
+                        {/*  IMAGEM DA CNH  */}
+
+                        {
+                            imageCnh ?
+                                <View style={styles.imagePosition}>
+                                    <TouchableOpacity style={styles.photoClick} onPress={this.cancelPhotoCnh}>
+                                        <Image source={require('../../assets/images/cross.png')} resizeMode={'contain'} style={styles.imageStyle} />
+                                    </TouchableOpacity>
+                                    <Image source={{ uri: imageCnh }} style={styles.photoResult} resizeMode={'cover'} />
+                                </View>
+                                :
+                                <View style={styles.capturePhoto}>
+                                    <View>
+                                        {
+                                            this.state.imageCnhValid ?
+                                                <Text style={styles.capturePhotoTitle}>Envie uma foto de sua CNH</Text>
+                                                :
+                                                <Text style={styles.errorPhotoTitle}>Falha ao enviar, tente novamente.</Text>
+                                        }
+
+                                    </View>
+                                    <View style={styles.capturePicClick}>
+                                        <TouchableOpacity style={styles.flexView1} onPress={this.CapturePhotoCnh}>
+                                            <View>
+                                                <View style={styles.imageFixStyle}>
+                                                    <Image source={require('../../assets/images/habilitacao.png')} resizeMode={'contain'} style={styles.imageStyle2} />
+                                                </View>
+                                            </View>
+                                        </TouchableOpacity>
+                                        <View style={styles.myView}>
+                                            <View style={styles.myView1} />
+                                        </View>
+                                        <View style={styles.myView2}>
+                                            <View style={styles.myView3}>
+                                                <Text style={styles.textStyle}>Tamanho max: 2MB</Text>
+                                            </View>
+                                        </View>
+                                    </View>
+                                </View>
+                        }
+
+
+                        <Text style={styles.txtContainer2}>Dados do carro</Text>
+
+                        {/*  RENAVAM  */}
+
+                        <View style={styles.textInputContainerStyle}>
+                            <Text style={styles.txtContainer}>RENAVAM</Text>
+                            <Input
+                                ref={input => (this.renavamInput = input)}
+                                editable={true}
+                                underlineColorAndroid={colors.TRANSPARENT}
+                                value={this.state.renavam}
+                                inputStyle={styles.inputTextStyle}
+                                onChangeText={(text) => { this.setState({ vehicleNum: text }) }}
+                                errorMessage={this.state.renavamValid ? null : languageJSON.vehicle_number_blank_err}
+                                blurOnSubmit={true}
+                                autoCapitalize='characters'
+                                onSubmitEditing={() => { this.validateRenavam(); this.vehicleNameInput.focus() }}
+                                errorStyle={styles.errorMessageStyle}
+                                inputContainerStyle={styles.inputContainerStyle}
+                                containerStyle={styles.textInputStyle}
+                            />
+                        </View>
+
+                        {/*  TIPO DE CARRO  */}
+                        {/*
+                        <View style={styles.textInputContainerStyle}>
+                            <Text style={styles.txtContainer}>Tipo de carro</Text>
+                            {this.state.cars ?
+                                <RNPickerSelect
+                                    placeholder={{}}
+                                    value={this.state.carType}
+                                    useNativeAndroidPickerStyle={true}
+                                    style={{
+                                        inputIOS: styles.pickerStyle,
+                                        placeholder: {
+                                            color: 'white',
+                                        },
+                                        inputAndroid: styles.pickerStyle,
+                                    }}
+                                    onValueChange={(value) => this.setState({ carType: value })}
+                                    items={this.state.cars}
+                                />
+                                : null}
+                        </View>*/}
+
+                        {/*  CAMPOS DE MODELO DE VEÍCULO  */}
+
+                        <View style={styles.textInputContainerStyle}>
+                            <Text style={styles.txtContainer}>Modelo do veículo</Text>
+                            <Input
+                                ref={input => (this.vehicleNameInput = input)}
+                                editable={true}
+                                returnKeyType={'next'}
+                                underlineColorAndroid={colors.TRANSPARENT}
+                                value={this.state.vehicleName}
+                                inputStyle={styles.inputTextStyle}
+                                onChangeText={(text) => { this.setState({ vehicleName: text }) }}
+                                errorMessage={this.state.vehicleNameValid ? null : languageJSON.vehicle_model_name_blank_error}
+                                blurOnSubmit={true}
+                                onSubmitEditing={() => { this.validateVehicleName();; this.vehicleNumInput.focus() }}
+                                errorStyle={styles.errorMessageStyle}
+                                inputContainerStyle={styles.inputContainerStyle}
+                                containerStyle={styles.textInputStyle}
+                            />
+                        </View>
+
+                        {/*  CAMPOS DE PLACA DE VEÍCULO  */}
+
+                        <View style={styles.textInputContainerStyle}>
+                            <Text style={styles.txtContainer}>Placa do veículo</Text>
+                            <Input
+                                ref={input => (this.vehicleNumInput = input)}
+                                editable={true}
+                                underlineColorAndroid={colors.TRANSPARENT}
+                                value={this.state.vehicleNum}
+                                inputStyle={styles.inputTextStyle}
+                                onChangeText={(text) => { this.setState({ vehicleNum: text }) }}
+                                errorMessage={this.state.vehicleNumValid ? null : languageJSON.vehicle_number_blank_err}
+                                blurOnSubmit={true}
+                                autoCapitalize='characters'
+                                onSubmitEditing={() => { this.validateVehicleNum() }}
+                                errorStyle={styles.errorMessageStyle}
+                                inputContainerStyle={styles.inputContainerStyle}
+                                containerStyle={styles.textInputStyle}
+                            />
+                        </View>
+
+                        {
+                            imageCrlv ?
+                                <View style={styles.imagePosition}>
+                                    <TouchableOpacity style={styles.photoClick} onPress={this.cancelPhotoCrlv}>
+                                        <Image source={require('../../assets/images/cross.png')} resizeMode={'contain'} style={styles.imageStyle} />
+                                    </TouchableOpacity>
+                                    <Image source={{ uri: imageCrlv }} style={styles.photoResult} resizeMode={'cover'} />
+                                </View>
+                                :
+                                <View style={styles.capturePhoto}>
+                                    <View>
+                                        {
+                                            this.state.imageCrlvValid ?
+                                                <Text style={styles.capturePhotoTitle}>Envie uma foto do CRLV</Text>
+                                                :
+                                                <Text style={styles.errorPhotoTitle}>Falha ao enviar, tente novamente.</Text>
+                                        }
+
+                                    </View>
+                                    <View style={styles.capturePicClick}>
+                                        <TouchableOpacity style={styles.flexView1} onPress={this.CapturePhotoCrlv}>
+                                            <View>
+                                                <View style={styles.imageFixStyle}>
+                                                    <Image source={require('../../assets/images/crlv.png')} resizeMode={'contain'} style={styles.imageStyle3} />
+                                                </View>
+                                            </View>
+                                        </TouchableOpacity>
+                                        <View style={styles.myView}>
+                                            <View style={styles.myView1} />
+                                        </View>
+                                        <View style={styles.myView2}>
+                                            <View style={styles.myView3}>
+                                                <Text style={styles.textStyle}>Tamanho max: 2MB</Text>
+                                            </View>
+                                        </View>
+                                    </View>
+                                </View>
+                        }
+
+                        <View style={styles.buttonContainer}>
+                            <Button
+                                onPress={() => { this.onPressRegister() }}
+                                title='Cadastrar'
+                                loading={loading}
+                                titleStyle={styles.buttonTitle}
+                                buttonStyle={styles.registerButton}
+                            />
+                        </View>
+                        <View style={styles.gapView} />
+                    </View>
+
                 </ScrollView>
             </View>
         );
@@ -490,16 +696,17 @@ const styles = {
         borderRadius: 40
     },
     registerButton: {
-        backgroundColor: colors.SKY,
-        width: 180,
+        backgroundColor: colors.DEEPBLUE,
+        width: '95%',
         height: 50,
         borderColor: colors.TRANSPARENT,
         borderWidth: 0,
-        marginTop: 30,
+        marginTop: 45,
         borderRadius: 15,
     },
     buttonTitle: {
-        fontSize: 16
+        fontSize: 16,
+        fontFamily: 'Inter-Bold'
     },
     pickerStyle: {
         color: 'white',
@@ -524,6 +731,7 @@ const styles = {
     },
     containerStyle: {
         flexDirection: 'column',
+        backgroundColor: colors.WHITE
 
     },
     form: {
@@ -588,13 +796,15 @@ const styles = {
     },
     capturePhotoTitle: {
         color: colors.BLACK,
-        fontSize: 14,
+        fontFamily: 'Inter-Bold',
+        fontSize: 13,
         textAlign: 'center',
         paddingBottom: 15,
 
     },
     errorPhotoTitle: {
         color: colors.RED,
+        fontFamily: 'Inter-Bold',
         fontSize: 13,
         textAlign: 'center',
         paddingBottom: 15,
@@ -624,6 +834,9 @@ const styles = {
     },
     capturePicClick: {
         backgroundColor: colors.WHITE,
+        borderWidth: 1,
+        borderRadius: 15,
+        borderColor: colors.GREY1,
         flexDirection: 'row',
         position: 'relative',
         zIndex: 1
@@ -641,9 +854,15 @@ const styles = {
         justifyContent: 'center'
     },
     imageStyle2: {
-        width: 150,
+        width: 50,
         height: height / 15
     },
+
+    imageStyle3: {
+        width: 32,
+        height: height / 15
+    },
+
     myView: {
         flex: 2,
         height: 50,
@@ -651,11 +870,11 @@ const styles = {
         alignItems: 'center'
     },
     myView1: {
-        height: height / 18,
+        height: height / 15,
         width: 1.5,
-        backgroundColor: colors.GREY.btnSecondary,
+        backgroundColor: colors.GREY1,
         alignItems: 'center',
-        marginTop: 10
+
     },
     myView2: {
         flex: 20,

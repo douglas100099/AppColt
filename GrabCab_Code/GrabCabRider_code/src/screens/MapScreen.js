@@ -27,6 +27,8 @@ import Geocoder from 'react-native-geocoding';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import distanceCalc from '../common/distanceCalc';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
+const LATITUDE_DELTA = 0.01;
+const LONGITUDE_DELTA = 0.01;
 
 export default class MapScreen extends React.Component {
 

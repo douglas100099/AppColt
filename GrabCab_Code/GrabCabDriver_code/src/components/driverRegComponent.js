@@ -275,7 +275,7 @@ export default class DiverReg extends React.Component {
         const renavamValid = this.validateRenavam();
 
         if (fnameValid && lnameValid && mobileValid && emailValid && vehicleNumValid && vehicleNameValid && imageCnhValid && imageCrlvValid && cpfNumValid && renavamValid && dataValidadeValid && OrgaoEmissorValid && cnhValid && this.state.carType) {
-            onPressRegister(this.state.cnh, this.state.cpfNum, this.state.orgaoEmissor, this.state.dataValidade, this.state.renavam, this.state.fname, this.state.lname, this.state.mobile, this.state.email, this.state.vehicleNum, this.state.vehicleName, this.state.imageCnh, this.state.imageCrlv, this.state.carType);
+            onPressRegister(this.state.fname, this.state.lname, this.state.mobile, this.state.email, this.state.vehicleNum, this.state.vehicleName, this.state.imageCrlv, this.state.imageCnh, this.state.carType, this.state.cpfNum, this.state.cnh, this.state.dataValidade, this.state.orgaoEmissor, this.state.renavam);
         }
     }
 
@@ -284,7 +284,7 @@ export default class DiverReg extends React.Component {
         let { imageCnh } = this.state;
         let { imageCrlv } = this.state;
         return (
-            <View style={{ flex: 1, backgroundColor: colors.WHITE, marginTop: Platform.select({ ios: 40, android: 30 }) }}>
+            <View style={{ flex: 1, backgroundColor: colors.WHITE,}}>
                 <Text style={styles.headerStyle}>Registro</Text>
                 <ScrollView style={styles.scrollViewStyle}>
 
@@ -469,10 +469,11 @@ export default class DiverReg extends React.Component {
                                 value={this.state.dataValidade}
                                 keyboardType={'numeric'}
                                 inputStyle={styles.inputTextStyle}
-                                onChangeText={(text) => { this.setState({ mobile: text }) }}
+                                onChangeText={(text) => { this.setState({ dataValidade: text }) }}
                                 errorMessage={this.state.dataValidadeValid ? null : 'Informe a data de validade da CNH'}
                                 secureTextEntry={false}
                                 blurOnSubmit={true}
+                                maxLength={10}
                                 onSubmitEditing={() => { this.validateDataValidade(); this.renavamInput.focus() }}
                                 errorStyle={styles.errorMessageStyle}
                                 inputContainerStyle={styles.inputContainerStyle}
@@ -522,7 +523,7 @@ export default class DiverReg extends React.Component {
                         }
 
 
-                        <Text style={styles.txtContainer2}>Dados do carro</Text>
+                        <Text style={styles.txtContainer2}>Dados do CRLV</Text>
 
                         {/*  RENAVAM  */}
 
@@ -534,10 +535,11 @@ export default class DiverReg extends React.Component {
                                 underlineColorAndroid={colors.TRANSPARENT}
                                 value={this.state.renavam}
                                 inputStyle={styles.inputTextStyle}
-                                onChangeText={(text) => { this.setState({ vehicleNum: text }) }}
+                                onChangeText={(text) => { this.setState({ renavam: text }) }}
                                 errorMessage={this.state.renavamValid ? null : languageJSON.vehicle_number_blank_err}
                                 blurOnSubmit={true}
-                                autoCapitalize='characters'
+                                keyboardType={'numeric'}
+                                maxLength={11}
                                 onSubmitEditing={() => { this.validateRenavam(); this.vehicleNameInput.focus() }}
                                 errorStyle={styles.errorMessageStyle}
                                 inputContainerStyle={styles.inputContainerStyle}
@@ -601,6 +603,7 @@ export default class DiverReg extends React.Component {
                                 onChangeText={(text) => { this.setState({ vehicleNum: text }) }}
                                 errorMessage={this.state.vehicleNumValid ? null : languageJSON.vehicle_number_blank_err}
                                 blurOnSubmit={true}
+                                maxLength={8}
                                 autoCapitalize='characters'
                                 onSubmitEditing={() => { this.validateVehicleNum() }}
                                 errorStyle={styles.errorMessageStyle}
@@ -779,7 +782,7 @@ const styles = {
         textAlign: 'center',
         flexDirection: 'row',
         marginBottom: 25,
-        marginTop: 0
+        marginTop: Platform.select({ ios: 40, android: 30 })
     },
     capturePhoto: {
         width: '80%',

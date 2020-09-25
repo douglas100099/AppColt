@@ -29,7 +29,7 @@ export default class DriverRegistrationPage extends React.Component {
   }
 
   //register button click after all validation
-  async clickRegister(fname, lname, mobile, email, vehicleNum, vehicleName, image, CarType) {
+  async clickRegister(fname, lname, mobile, email, vehicleNum, vehicleName, imageCrlv, imageCnh, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam) {
     var regData = {
       firstName: fname,
       lastName: lname,
@@ -37,12 +37,19 @@ export default class DriverRegistrationPage extends React.Component {
       email: email,
       vehicleNumber: vehicleNum,
       vehicleModel: vehicleName,
-      licenseImage: image,
+      licenseImage: imageCnh,
+      imagemCrlv: imageCrlv,
       usertype: 'driver',
       approved: false,
       queue: false,
       carType: CarType,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+
+      cpfNum: cpfNum,
+      cnh: cnh,
+      dataValidade: dataValidade,
+      orgaoEmissor: orgaoEmissor,
+      renavam: renavam,
     }
     firebase.auth().currentUser.updateProfile({
       displayName:regData.firstName + ' '+ regData.lastName,
@@ -69,7 +76,7 @@ export default class DriverRegistrationPage extends React.Component {
   }
 
   //upload of picture
-  async uploadmultimedia(fname, lname, mobile, email, vehicleNum, vehicleName, url, CarType) {
+  async uploadmultimediaCrlv(fname, lname, mobile, email, vehicleNum, vehicleName, urlCrlv, urlCnh, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam ) {
     this.setState({ loading: true })
     const blob = await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -77,12 +84,13 @@ export default class DriverRegistrationPage extends React.Component {
         resolve(xhr.response); // when BlobModule finishes reading, resolve with the blob
       };
       xhr.onerror = function () {
-        reject(new TypeError('Image blob conversion issue'));
+        console.log(urlCrlv)
+        reject(new TypeError('Erro na conversão da IMG do CRLV'));
         //this.setState({ loading: false });
         alert(languageJSON.upload_image_error);
       };
       xhr.responseType = 'blob'; // use BlobModule's UriHandler
-      xhr.open('GET', url, true); // fetch the blob from uri in async mode
+      xhr.open('GET', urlCrlv, true); // fetch the blob from uri in async mode
       xhr.send(null); // no initial data
     });
 
@@ -95,8 +103,43 @@ export default class DriverRegistrationPage extends React.Component {
       return imageRef.put(blob).then(() => {
         blob.close()
         return imageRef.getDownloadURL()
-      }).then((dwnldurl) => {
-        this.clickRegister(fname, lname, mobile, email, vehicleNum, vehicleName, dwnldurl, CarType);
+      }).then((dwnldurlCrlv) => {
+        this.uploadmultimediaCnh(fname, lname, mobile, email, vehicleNum, vehicleName, dwnldurlCrlv, urlCnh, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam);
+      }).catch(error=>{
+        console.log(error);
+      });
+    }
+
+  }
+
+  async uploadmultimediaCnh(fname, lname, mobile, email, vehicleNum, vehicleName, urlCrlv, urlCnh, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam ) {
+    this.setState({ loading: true })
+    const blob = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        resolve(xhr.response); // when BlobModule finishes reading, resolve with the blob
+      };
+      xhr.onerror = function () {
+        reject(new TypeError('Erro na conversão da IMG da CNH'));
+        //this.setState({ loading: false });
+        alert(languageJSON.upload_image_error);
+      };
+      xhr.responseType = 'blob'; // use BlobModule's UriHandler
+      xhr.open('GET', urlCnh, true); // fetch the blob from uri in async mode
+      xhr.send(null); // no initial data
+    });
+
+    if ((blob.size / 1000000) > 2) {
+      this.setState({ loading: false }, () => { alert(languageJSON.image_size_error) })
+    }
+    else {
+      var timestamp = new Date().getTime()
+      var imageRef = firebase.storage().ref().child(`users/driver_licenses/` + timestamp + `/`);
+      return imageRef.put(blob).then(() => {
+        blob.close()
+        return imageRef.getDownloadURL()
+      }).then((dwnldurlCnh) => {
+        this.clickRegister(fname, lname, mobile, email, vehicleNum, vehicleName, urlCrlv, dwnldurlCnh, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam);
       }).catch(error=>{
         console.log(error);
       });
@@ -105,11 +148,12 @@ export default class DriverRegistrationPage extends React.Component {
   }
 
 
+
   render() {
     const registrationData = this.props.navigation.getParam("requireData");
     return (
       <View style={styles.containerView}>
-        <DiverReg reqData={registrationData ? registrationData : ""} onPressRegister={(fname, lname, mobile, email, vehicleNum, vehicleName, image, CarType) => this.uploadmultimedia(fname, lname, mobile, email, vehicleNum, vehicleName, image, CarType)} onPressBack={() => { this.props.navigation.goBack() }} loading={this.state.loading}></DiverReg>
+        <DiverReg reqData={registrationData ? registrationData : ""} onPressRegister={(fname, lname, mobile, email, vehicleNum, vehicleName, imageCrlv, imageCnh, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam) => this.uploadmultimediaCrlv(fname, lname, mobile, email, vehicleNum, vehicleName, imageCrlv, imageCnh, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam)} onPressBack={() => { this.props.navigation.goBack() }} loading={this.state.loading}></DiverReg>
       </View>
     );
   }

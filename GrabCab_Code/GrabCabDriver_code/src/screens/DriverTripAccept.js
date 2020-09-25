@@ -13,8 +13,35 @@ var google;
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
-import dateStyle from '../common/dateStyle';
+import { Audio } from 'expo-av';
+import Geocoder from 'react-native-geocoding';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
+
+const soundObject = new Audio.Sound(); // SOM DO ALERTA
+
+import * as TaskManager from 'expo-task-manager'; // DEFINE O GPS EM SEGUNDO PLANO
+
+const LATITUDE_DELTA = 0.01; // DEFINE O LATITUDE PADRÃO
+const LONGITUDE_DELTA = 0.01; // DEFINE O LONGITUDE PADRÃO
+
+const LOCATION_TRACKING = 'location-tracking';
+
+TaskManager.defineTask(LOCATION_TRACKING, async ({ data, error }) => {
+    if (error) {
+        console.log('LOCATION_TRACKING task ERROR:', error);
+      return;
+    }
+    if (data) {
+      const { locations } = data;
+        let lat = locations[0].coords.latitude;
+        let long = locations[0].coords.longitude;
+        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
+            lat: lat,
+            lng: long,
+            //add: responseJson.results[0].formatted_address
+        })
+    }
+  });
 
 export default class DriverTripAccept extends React.Component {
 
@@ -28,18 +55,23 @@ export default class DriverTripAccept extends React.Component {
 
     constructor(props) {
         super(props);
+        Geocoder.init(google_map_key);
+        this._isMounted=false;
         this.state = {
             region: {
                 latitude: 37.78825,
                 longitude: -122.4324,
-                latitudeDelta: 0.9922,
-                longitudeDelta: 0.9421,
+                latitudeDelta: 0.0143,
+                longitudeDelta: 0.0134,
             },
             starCount: 5,
+            geolocationFetchComplete: false,
             modalVisible: false,
             alertModalVisible: false,
             timer: 10,
             tomada: true,
+            retirarsom: false,
+            alertasom: false,
             coords: [],
             radio_props: [
                 { label: languageJSON.cancel_reson_1, value: 0 },
@@ -55,9 +87,10 @@ export default class DriverTripAccept extends React.Component {
             curUid: '',
             id: 0,
             gotAddress: false,
+            
 
         }
-        this._getLocationAsync();
+        this._getLocationAsync()
     }
 
     //checking booking status
@@ -108,6 +141,7 @@ export default class DriverTripAccept extends React.Component {
 
     carteira=() => {
         this.props.navigation.push('MyEarning');
+        
     }
     getPhotoDriver() {
         let ref = firebase.database().ref('users/' + this.state.curUid + '/profile_image/');
@@ -117,6 +151,7 @@ export default class DriverTripAccept extends React.Component {
             })
         })
     }
+
 
     updateTimer(){
         const x = setInterval(() => {
@@ -129,14 +164,60 @@ export default class DriverTripAccept extends React.Component {
     }
 
 
+    async alertAudio(){
+        if(this.state.alertasom){
+            await soundObject.loadAsync(require('../../assets/sounds/alerta.mp3'));
+            await soundObject.playAsync();
+            await soundObject.setIsLoopingAsync(true)
+        }
+        else if(this.state.retirarsom) {
+            await soundObject.unloadAsync()
+            this.setState({retirarsom: false})
+        }
+    }
+
     async componentDidMount() {
        await this.getRiders();
        await this.getPhotoDriver();
        await this.getStatusDetails();
+       await this.getInfoEraning();
+       await this.updateLocationPlano();
+       this._isMounted=true;
        if(this.state.tomada){
             this.updateTimer()
        }
     }
+
+    UNSAFE_componentWillMount() {
+        //setInterval(this.updateLocation, 5000);
+        //this.updateLocationPlano();
+    }
+
+    componentWillUnmount(){
+        this._isMounted=false
+    }
+
+    updateLocationPlano = async () => {
+        let { status } = await Permissions.askAsync(Permissions.LOCATION);
+        console.log('ENTROU NO UPDATE')
+        if (status === 'granted') {
+            await Location.startLocationUpdatesAsync(LOCATION_TRACKING, {
+                accuracy: Location.Accuracy.Highest,
+                timeInterval: 5000,
+                distanceInterval: 0,
+                foregroundService: {
+                    notificationTitle: 'Colt App',
+                    notificationBody: 'Buscando Corridas'
+                  },
+                  pausesUpdatesAutomatically: false,
+            });
+
+            const hasStarted = await Location.hasStartedLocationUpdatesAsync(
+                LOCATION_TRACKING
+              );
+              console.log('tracking started?', hasStarted);
+        }
+    } 
 
     // find your origin and destination point coordinates and pass it to our method.
     async getDirections(startLoc, destinationLoc) {
@@ -159,32 +240,99 @@ export default class DriverTripAccept extends React.Component {
         }
     }
 
+    getInfoEraning() {
+        let userUid = firebase.auth().currentUser.uid;
+        let ref = firebase.database().ref('bookings/');
+        ref.once('value', allBookings => {
+            if (allBookings.val()) {
+                let data = allBookings.val();
+                var myBookingarr = [];
+                for (let k in data) {
+                    if (data[k].driver == userUid) {
+                        data[k].bookingKey = k
+                        myBookingarr.push(data[k])
+                    }
+                }
+
+                if (myBookingarr) {
+                    this.setState({ myBooking: myBookingarr }, () => {
+                        this.eraningCalculation()
+                        //console.log('this.state.myBooking ==>',this.state.myBooking)
+                    })
+
+                }
+            }
+        })
+    }
+
+    eraningCalculation(){
+       
+        if(this.state.myBooking){
+            let today =  new Date();
+            let tdTrans = 0;
+            for(let i=0;i<this.state.myBooking.length;i++){
+                const {tripdate,driver_share} = this.state.myBooking[i];
+                let tDate = new Date(tripdate);
+                if(driver_share != undefined){
+                    if(tDate.getDate() === today.getDate() && tDate.getMonth() === today.getMonth()){
+                        tdTrans  = tdTrans + driver_share;
+                        
+                    }                                               
+                }
+            }
+            this.setState({
+                today:tdTrans,
+                corridasDia: this.state.myBooking.length
+            })
+            //console.log('today- '+tdTrans +' monthly- '+ mnTrans + ' Total-'+ totTrans);
+
+        }
+    }
+
+    
     _getLocationAsync = async () => {
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
         if (status !== 'granted') {
             console.log('Permission to access location was denied');
         }
         let uid = firebase.auth().currentUser.uid;
-        let location = await Location.getCurrentPositionAsync({});
+        let location = await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 2000 });
         if (location) {
-            var latlng = location.coords.latitude + ',' + location.coords.longitude;
-            return fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
-                .then((response) => response.json())
-                .then((responseJson) => {
-                    if (responseJson.results[0] && responseJson.results[0].formatted_address) {
-                        let address = responseJson.results[0].formatted_address;
-                        firebase.database().ref('users/' + uid + '/location').update({
-                            add: address,
-                            lat: location.coords.latitude,
-                            lng: location.coords.longitude
-                        })
-                    } else {
-                        alert(languageJSON.api_error)
-                    }
-                })
-                .catch((error) => {
-                    console.error(error);
+            var pos = {
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+            };
+            if (pos) {
+                var latlng = pos.latitude + ',' + pos.longitude;
+                return fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
+                    .then((response) => response.json())
+                    .then((responseJson) => {
+                        if (responseJson.results[0] && responseJson.results[0].formatted_address) {
+                            let address = responseJson.results[0].formatted_address;
+                            firebase.database().ref('users/' + uid + '/location').update({
+                                add: address,
+                                lat: pos.latitude,
+                                lng: pos.longitude
+                            })
+                            this.setState({ 
+                                region: {
+                                    latitude: pos.latitude,
+                                    longitude: pos.longitude,
+                                    latitudeDelta: 0.0143,
+                                    longitudeDelta: 0.0134,
+                                },
+                                geolocationFetchComplete: true
+                            })
+                        } else {
+                            alert(languageJSON.api_error)
+                        }
+
+                    })
+                    .catch((error) => {
+                        console.error(error);
                 });
+
+            }
         }
     };
 
@@ -196,14 +344,16 @@ export default class DriverTripAccept extends React.Component {
         ref.on('value', (snapshot) => {
             this.setState({ driverDetails: snapshot.val() })
             var jobs = [];
-            if (snapshot.val() && snapshot.val().waiting_riders_list && this.state.modalVisible == false) {
+            if (snapshot.val() && snapshot.val().waiting_riders_list) {
                 let waiting_riderData = snapshot.val().waiting_riders_list;
                 for (let key in waiting_riderData) {
                     waiting_riderData[key].bookingId = key;
                     jobs.push(waiting_riderData[key]);
-                }
-            }
-            this.setState({ tasklist: jobs.reverse(), modalVisible: true});
+                }        
+                this.setState({alertasom: true})
+                this.alertAudio();
+            }           
+            this.setState({ tasklist: jobs.reverse()});          
             this.jobs = jobs;
         });
     }
@@ -279,6 +429,8 @@ export default class DriverTripAccept extends React.Component {
                         for (let i = 0; i < requestedDriverArr.length; i++) {
                             firebase.database().ref('users/' + requestedDriverArr[i] + '/waiting_riders_list/' + item.bookingId + '/').remove();
                         }
+                        this.setState({alertasom: false, retirarsom: true})
+                        this.alertAudio();
                         this.props.navigation.navigate('DriverTripStart', { allDetails: item })
                     }
                     // console.log(snap.val().requestedDriver)
@@ -325,6 +477,8 @@ export default class DriverTripAccept extends React.Component {
                                     status: "REJECTED",
                                 });
                                 this.sendPushNotification(item.customer, item.bookingId, languageJSON.booking_request_rejected)
+                                this.setState({alertasom: false, retirarsom: true})
+                                this.alertAudio();
                             })
 
                         firebase.database().ref('bookings/' + item.bookingId + '/requestedDriver/').remove();
@@ -337,6 +491,7 @@ export default class DriverTripAccept extends React.Component {
                             requestedDriver: arr
                         })
                     }
+
                 }
             }
         });
@@ -362,6 +517,21 @@ export default class DriverTripAccept extends React.Component {
             <View style={styles.mainViewStyle}>
                 {/* AQUI ENTRA TODOS OS BOTÕES FLUTUANTES DO MENU */}
 
+                {/* MAPA */}
+                
+                {this.state.geolocationFetchComplete ?
+                    <MapView
+                        ref={ map => { this.map = map }}
+                        style={styles.map}
+                        provider={PROVIDER_GOOGLE}
+                        showsUserLocation
+                        showsMyLocationButton
+                        followUserLocation
+                        region={this.state.region}
+                    >
+                    </MapView>
+                    : null}
+
                 {/* BOTÃO MENU VOLTAR */}
                 <View>
                     <TouchableOpacity style={styles.touchaVoltar} onPress={() => { this.props.navigation.toggleDrawer(); }}>
@@ -377,31 +547,40 @@ export default class DriverTripAccept extends React.Component {
                 {/* BOTÃO GANHOS CENTRO */}
                 <View style={{alignItems: 'center'}}>
                     <TouchableOpacity style={[styles.touchaGanhos, { borderColor: this.state.statusDetails ? colors.GREEN.light : colors.RED}]} onPress={() => { this.carteira() }}>
-                        <Text style={styles.touchaValor}>R$250,43</Text>
-                        <Text style={styles.touchaCorrida}>20 CORRIDAS</Text>
+                        <Text style={styles.touchaValor}>R$ {this.state.today?parseFloat(this.state.today).toFixed(2):'0'}</Text>
+                        <Text style={styles.touchaCorrida}>{this.state.corridasDia} CORRIDAS</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* BOTÃO FOTOS */}
                 <View>
-                    <TouchableOpacity style={styles.touchaFoto} onPress={() => { this.photoPerfil() }}>
+                    <TouchableOpacity style={styles.touchaFoto} onPress={() => { this.updateLocationPlano() }}>
                         <Image source={this.state.photoDriver?{uri:this.state.photoDriver}:require('../../assets/images/profilePic.png')} style={styles.imagemPerfil} />
                     </TouchableOpacity>
                 </View>
 
                 {/* BOTÃO LIGAR E DESLIGAR */}
+                {this.state.alertasom == false ?
                 <View style={{alignItems: 'center', flex: 1}}>
                     <TouchableOpacity style={[styles.btnOnOff, { backgroundColor: this.state.statusDetails ? colors.RED : colors.GREEN.light}]} onPress={() => { this.onChangeFunction(this.state.driverActiveStatus); }}>
                         <Text style={styles.textConectar}>{this.state.statusDetails ? 'DESCONECTAR' : 'CONECTAR'}</Text>
                     </TouchableOpacity>
                 </View>
+                :
+                null
+                }
 
                 {/* MODAL ACEITAR E REJEITAR */}
                 <View>
-                    <Modal
+               <FlatList
+                    data={this.state.tasklist}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={({ item, index }) => {
+                        return (
+                            <Modal
                         animationType="slide"
                         transparent={true}
-                        visible={false}
+                        visible={true}
                         onRequestClose={() => {
                             alert("Modal has been closed.");
                         }}
@@ -420,7 +599,7 @@ export default class DriverTripAccept extends React.Component {
                                                     color={colors.DEEPBLUE}
                                                 />
                                             </View>
-                                            <Text style={styles.txtTempo}>9 min</Text>
+                                            <Text style={styles.txtTempo}>{item.estimateDistance}</Text>
                                         </View>
                                         <View style={styles.tempoKM}>
                                             <View style={styles.iconBack}>
@@ -431,11 +610,11 @@ export default class DriverTripAccept extends React.Component {
                                                     color={colors.DEEPBLUE}
                                                 />
                                             </View>
-                                            <Text style={styles.txtTempo}>5 km</Text>
+                                            <Text style={styles.txtTempo}>{parseFloat(item.distance/1000).toFixed(2)}</Text>
                                         </View>
                                     </View>
                                     <View style={styles.viewBtnRejeitar}>
-                                        <TouchableOpacity style={styles.btnRejeitar} >
+                                        <TouchableOpacity style={styles.btnRejeitar} onPress={ () => {this.onPressIgnore(item)} }>
                                             <Text>{this.state.timer}</Text>
                                         </TouchableOpacity>
                                     </View>    
@@ -448,7 +627,7 @@ export default class DriverTripAccept extends React.Component {
                                             type='feather'
                                             color={colors.DEEPBLUE}
                                         />
-                                        <Text style={styles.txtPartida}>Rua Otorino Rodghere, 425, Cambota</Text>
+                                        <Text style={styles.txtPartida}>{item.pickup.add}</Text>
                                     </View>
                                     <View style={styles.enderecoDestino}>
                                         <Icon
@@ -457,13 +636,13 @@ export default class DriverTripAccept extends React.Component {
                                             type='feather'
                                             color={colors.RED}
                                         />
-                                        <Text style={styles.txtDestino}>Rua Padre Luna, 1574, Centro</Text>
+                                        <Text style={styles.txtDestino}>{item.drop.add}</Text>
                                     </View>
                                 </View>
                                 <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
                                     <View style={styles.imgModalView}>
                                         <Image source={this.state.photoDriver ? { uri: this.state.photoDriver } : require('../../assets/images/profilePic.png')} style={styles.imagemModal} />
-                                        <Text style={styles.nomePessoa}>João da Silva</Text>
+                                        <Text style={styles.nomePessoa}>{item.customer_name}</Text>
                                     </View>
                                     <View style={styles.iconPgt}>
                                         <View style={styles.formaPgt}>
@@ -478,13 +657,18 @@ export default class DriverTripAccept extends React.Component {
                                     </View>
                                 </View>
                                 <View style={styles.viewBtn}>
-                                    <TouchableOpacity style={styles.btnAceitar} onPress={() => { alert('Corrida aceita') }}>
+                                    <TouchableOpacity style={styles.btnAceitar} onPress={() => { this.onPressAccept(item) }}>
                                         <Text style={styles.txtBtnAceitar}>Aceitar</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
                         </View>
                     </Modal>
+                        )
+                    }
+                    }
+                />
+
                 </View>
                 {/*<FlatList
                     data={this.state.tasklist}
@@ -524,103 +708,12 @@ export default class DriverTripAccept extends React.Component {
 
                                     </MapView>
                                 </View>
-                                <View style={styles.mapDetails}>
-                                    <View style={styles.dateView}>
-                                        <Text style={styles.listDate}>{new Date(item.tripdate).toLocaleString(dateStyle)}</Text>
-                                    </View>
-                                    <View style={styles.addressViewStyle}>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                            <View style={styles.greenDot}></View>
-                                            <Text style={styles.addressViewTextStyle}>{item.pickup.add}</Text>
-                                        </View>
-                                        <View style={styles.fixAdressStyle}>
-                                            <View style={styles.redDot}></View>
-                                            <Text style={styles.addressViewTextStyle}>{item.drop.add}</Text>
-                                        </View>
-                                    </View>
-
-                                    <View style={styles.detailsBtnView}>
-                                        <View style={{ flex: 1 }}>
-                                            <Button
-                                                onPress={() => {
-                                                    this.setModalVisible(true, item);
-                                                }}
-                                                title={languageJSON.ignore_text}
-                                                titleStyle={styles.titleStyles}
-                                                buttonStyle={styles.myButtonStyle}
-                                                containerStyle={{
-                                                    flex: 1,
-                                                    alignSelf: 'flex-end',
-                                                    paddingRight: 14
-                                                }}
-                                            />
-                                        </View>
-                                        <View style={styles.viewFlex1}>
-                                            <Button
-                                                title={languageJSON.accept}
-                                                titleStyle={styles.titleStyles}
-                                                onPress={() => {
-                                                    this.onPressAccept(item)
-                                                }}
-                                                buttonStyle={{
-                                                    backgroundColor: colors.GREEN.light,
-                                                    width: height / 6,
-                                                    padding: 2,
-                                                    borderColor: colors.TRANSPARENT,
-                                                    borderWidth: 0,
-                                                    borderRadius: 5,
-                                                }}
-                                                containerStyle={{
-                                                    flex: 1,
-                                                    alignSelf: 'flex-start',
-                                                    paddingLeft: 14
-                                                }}
-                                            />
-                                        </View>
-                                    </View>
-                                </View>
                             </View>
                         )
                     }
                     }
                 />
-
-                <View style={styles.modalPage}>
-                    <Modal
-                        animationType="slide"
-                        transparent={true}
-                        visible={this.state.modalVisible}
-                        onRequestClose={() => {
-                            Alert.alert(languageJSON.modal_close);
-                        }}>
-                        <View style={styles.modalMain}>
-                            <View style={styles.modalContainer}>
-                                <View style={styles.modalHeading}>
-                                    <Text style={styles.alertStyle}>{languageJSON.alert_text}</Text>
-                                </View>
-                                <View style={styles.modalBody}>
-                                    <Text style={{ fontSize: 16 }}>{languageJSON.ignore_job_title}</Text>
-                                </View>
-                                <View style={styles.modalFooter}>
-                                    <TouchableHighlight
-                                        style={[styles.btnStyle, styles.clickText]}
-                                        onPress={() => {
-                                            this.setModalVisible(!this.state.modalVisible, null)
-                                        }}>
-                                        <Text style={styles.cancelTextStyle}>{languageJSON.cancel}</Text>
-                                    </TouchableHighlight>
-                                    <TouchableHighlight
-                                        style={styles.btnStyle}
-                                        onPress={() => {
-                                            this.onPressIgnore(this.state.modalData)
-                                        }}>
-                                        <Text style={styles.okStyle}>{languageJSON.ok}</Text>
-                                    </TouchableHighlight>
-                                </View>
-                            </View>
-                        </View>
-                    </Modal>
-                </View>  */}
+                 */}
             </View>
 
         )
@@ -632,10 +725,6 @@ export default class DriverTripAccept extends React.Component {
 
 //Screen Styling
 const styles = StyleSheet.create({
-    headerStyle: {
-        backgroundColor: colors.WHITE,
-        borderBottomWidth: 0
-    },
 
     // AQUI ENTRA O NOVO CSS // -----
     touchaVoltar: {
@@ -731,7 +820,7 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         paddingTop: 15,
         flex: 1,
-        maxHeight: 330,
+        maxHeight: 345,
     },
 
     tituloModalView: {
@@ -839,13 +928,6 @@ const styles = StyleSheet.create({
         fontSize: 12,
     },
 
-    txtCorrida: {
-        fontFamily: 'Inter-ExtraBold',
-        opacity: 0.6,
-        marginLeft: 5,
-        fontSize: 12,
-    },
-
     tempoKM: {
         marginLeft: 12,
         flexDirection: 'row',
@@ -925,36 +1007,6 @@ const styles = StyleSheet.create({
 
     // FIM DO NOVO CSS // -------
 
-    headerInnerStyle: {
-        marginLeft: 10,
-        marginRight: 10
-    },
-    btnMenu: {
-        position: 'absolute',
-        left: 20,
-        top: 20,
-        width: 50,
-        height: 50
-    },
-    headerTitleStyle: {
-        color: colors.WHITE,
-        fontFamily: 'Roboto-Bold',
-        fontSize: 20
-    },
-    mapcontainer: {
-        flex: 1.5,
-        width: width,
-        height: 150,
-        borderWidth: 7,
-        borderColor: colors.WHITE,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    mapDetails: {
-        backgroundColor: colors.WHITE,
-        flex: 1,
-        flexDirection: 'column',
-    },
     map: {
         flex: 1,
         ...StyleSheet.absoluteFillObject,
@@ -975,39 +1027,7 @@ const styles = StyleSheet.create({
             { rotate: '180deg' }
         ]
     },
-    signInTextStyle: {
-        fontFamily: 'Inter-Bold',
-        fontWeight: "700",
-        color: colors.WHITE
-    },
-    listItemView: {
-        flex: 1,
-        width: '100%',
-        // height: 350,
-        marginBottom: 10,
-        flexDirection: 'column',
-    },
-    dateView: {
-        flex: 1.1
-    },
-    listDate: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        paddingLeft: 10,
-        color: colors.GREY.default,
-        flex: 1
-    },
-    addressViewStyle: {
-        flex: 2,
-        paddingLeft: 10
-    },
-    addressViewTextStyle: {
-        color: colors.GREY.secondary,
-        fontSize: 15,
-        marginLeft: 15,
-        lineHeight: 24
-        , flexWrap: "wrap",
-    },
+
     greenDot: {
         backgroundColor: colors.GREEN.default,
         width: 10,
@@ -1020,88 +1040,9 @@ const styles = StyleSheet.create({
         height: 10,
         borderRadius: 50
     },
-    detailsBtnView: {
-        flex: 2,
-        justifyContent: 'space-between',
-        flexDirection: 'row',
-        width: width,
-        marginTop: 10,
-        marginBottom: 10
-    },
 
-    modalPage: {
-        flex: 1,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    modalHeading: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    modalBody: {
-        flex: 2,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    modalFooter: {
-        flex: 1,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        borderTopColor: colors.GREY.iconPrimary,
-        borderTopWidth: 1,
-        width: '100%',
-    },
-    btnStyle: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     mainViewStyle: {
         flex: 1,
-        //marginTop: StatusBar.currentHeight
+        marginTop: StatusBar.currentHeight
     },
-    fixAdressStyle: {
-        flexDirection: 'row',
-        alignItems: 'center'
-    },
-    myButtonStyle: {
-        backgroundColor: colors.RED,
-        width: height / 6,
-        padding: 2,
-        borderColor: colors.TRANSPARENT,
-        borderWidth: 0,
-        borderRadius: 5,
-    },
-    alertStyle: {
-        fontWeight: 'bold',
-        fontSize: 18,
-        width: '100%',
-        textAlign: 'center'
-    },
-    cancelTextStyle: {
-        color: colors.BLUE.secondary,
-        fontSize: 18,
-        fontWeight: 'bold',
-        width: "100%",
-        textAlign: 'center'
-    },
-    okStyle: {
-        color: colors.BLUE.secondary,
-        fontSize: 18,
-        fontWeight: 'bold'
-    },
-    viewFlex1: {
-        flex: 1
-    },
-    clickText: {
-        borderRightColor: colors.GREY.iconPrimary,
-        borderRightWidth: 1
-    },
-    titleStyles: {
-        width: "100%",
-        alignSelf: 'center'
-    }
 });

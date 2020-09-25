@@ -52,7 +52,7 @@ export default class DriverStartTrip extends React.Component {
         }, () => {
             this.checkStaus()
         })
-        setInterval(this.updateLocation.bind(this), 10000);
+        setInterval(this.updateLocation.bind(this), 5000);
     }
 
     checkStaus() {

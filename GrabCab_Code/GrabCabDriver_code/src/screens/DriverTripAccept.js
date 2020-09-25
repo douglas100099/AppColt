@@ -21,12 +21,12 @@ const soundObject = new Audio.Sound(); // SOM DO ALERTA
 
 import * as TaskManager from 'expo-task-manager'; // DEFINE O GPS EM SEGUNDO PLANO
 
-const LATITUDE_DELTA = 0.01; // DEFINE O LATITUDE PADRÃO
-const LONGITUDE_DELTA = 0.01; // DEFINE O LONGITUDE PADRÃO
+//const LATITUDE_DELTA = 0.01; // DEFINE O LATITUDE PADRÃO
+//const LONGITUDE_DELTA = 0.01; // DEFINE O LONGITUDE PADRÃO
 
-const LOCATION_TRACKING = 'location-tracking';
+//const LOCATION_TRACKING = 'location-tracking';
 
-TaskManager.defineTask(LOCATION_TRACKING, async ({ data, error }) => {
+/*TaskManager.defineTask(LOCATION_TRACKING, async ({ data, error }) => {
     if (error) {
         console.log('LOCATION_TRACKING task ERROR:', error);
       return;
@@ -38,10 +38,9 @@ TaskManager.defineTask(LOCATION_TRACKING, async ({ data, error }) => {
         firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
             lat: lat,
             lng: long,
-            //add: responseJson.results[0].formatted_address
         })
     }
-  });
+  }); */
 
 export default class DriverTripAccept extends React.Component {
 
@@ -181,7 +180,7 @@ export default class DriverTripAccept extends React.Component {
        await this.getPhotoDriver();
        await this.getStatusDetails();
        await this.getInfoEraning();
-       await this.updateLocationPlano();
+       //await this.updateLocationPlano();
        this._isMounted=true;
        if(this.state.tomada){
             this.updateTimer()
@@ -196,28 +195,6 @@ export default class DriverTripAccept extends React.Component {
     componentWillUnmount(){
         this._isMounted=false
     }
-
-    updateLocationPlano = async () => {
-        let { status } = await Permissions.askAsync(Permissions.LOCATION);
-        console.log('ENTROU NO UPDATE')
-        if (status === 'granted') {
-            await Location.startLocationUpdatesAsync(LOCATION_TRACKING, {
-                accuracy: Location.Accuracy.Highest,
-                timeInterval: 5000,
-                distanceInterval: 0,
-                foregroundService: {
-                    notificationTitle: 'Colt App',
-                    notificationBody: 'Buscando Corridas'
-                  },
-                  pausesUpdatesAutomatically: false,
-            });
-
-            const hasStarted = await Location.hasStartedLocationUpdatesAsync(
-                LOCATION_TRACKING
-              );
-              console.log('tracking started?', hasStarted);
-        }
-    } 
 
     // find your origin and destination point coordinates and pass it to our method.
     async getDirections(startLoc, destinationLoc) {
@@ -554,7 +531,7 @@ export default class DriverTripAccept extends React.Component {
 
                 {/* BOTÃO FOTOS */}
                 <View>
-                    <TouchableOpacity style={styles.touchaFoto} onPress={() => { this.updateLocationPlano() }}>
+                    <TouchableOpacity style={styles.touchaFoto} onPress={() => { this.photoPerfil() }}>
                         <Image source={this.state.photoDriver?{uri:this.state.photoDriver}:require('../../assets/images/profilePic.png')} style={styles.imagemPerfil} />
                     </TouchableOpacity>
                 </View>

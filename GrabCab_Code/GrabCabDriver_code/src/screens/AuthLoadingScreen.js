@@ -15,7 +15,7 @@ import * as Location from 'expo-location';
 
 const LOCATION_TASK_NAME = 'background-location-task';
 
-TaskManager.defineTask(LOCATION_TASK_NAME, ({ data: { locations }, error }) => {
+TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data: { locations }, error }) => {
   if (error) {
     console.log("Task Error");
     return;
@@ -36,11 +36,19 @@ export class AuthLoadingScreen extends React.Component {
     this._bootstrapAsync();
   }
 
+
   async StartBackgroundLocation() {
     const { status } = await Location.requestPermissionsAsync();
     if (status === 'granted') {
+      console.log('Checando permissões do Background Location')
       await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-        accuracy: Location.Accuracy.High
+        accuracy: Location.Accuracy.Highest,
+        timeInterval: 2000,
+        showsBackgroundLocationIndicator: true,
+        foregroundService: {
+          notificationTitle: 'Colt Motorista',
+          notificationBody: 'Você está conectado'
+        }
       });
     }
   }
@@ -130,7 +138,7 @@ export class AuthLoadingScreen extends React.Component {
     return (
       <View style={styles.container}>
         <ImageBackground
-          source={require("../../assets/images/intro.jpg")}
+          source={require("../../assets/images/splash.png")}
           resizeMode="stretch"
           style={styles.imagebg}
         >

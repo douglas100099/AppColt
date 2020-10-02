@@ -17,7 +17,7 @@ import {
 import languageJSON from './src/common/language';
 
 var firebaseConfig = Constants.manifest.extra.firebaseConfig;
-firebase.initializeApp(firebaseConfig);
+!firebase.apps.length ? firebase.initializeApp(firebaseConfig) : firebase.app();
 
 
 Notifications.setNotificationHandler({
@@ -47,7 +47,7 @@ export default class App extends React.Component {
         require('./assets/images/background.png'),
         require('./assets/images/logo.png'),
         require('./assets/images/bg.png'),
-        require('./assets/images/intro.jpg'),
+        require('./assets/images/splash.png'),
       ]),
       Font.loadAsync({
         'Roboto-Bold': require('./assets/fonts/Roboto-Bold.ttf'),
@@ -100,7 +100,7 @@ export default class App extends React.Component {
         :
         <View style={[styles.container, styles.horizontal]}>
           <ImageBackground
-              source={require("./assets/images/intro.jpg")}
+              source={require("./assets/images/splash.png")}
               resizeMode="stretch"
               style={styles.imagebg}
           >

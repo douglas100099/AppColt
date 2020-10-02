@@ -25,12 +25,6 @@ import languageJSON from '../common/language';
 import Geocoder from 'react-native-geocoding';
 import distanceCalc from '../common/distanceCalc';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
-<<<<<<< HEAD
-import { Marker } from 'react-native-maps';
-=======
-const LATITUDE_DELTA = 0.01;
-const LONGITUDE_DELTA = 0.01;
->>>>>>> 2b47c83faf61082b6b952d257e7428197ea60511
 
 export default class MapScreen extends React.Component {
     bonusAmmount = 0;

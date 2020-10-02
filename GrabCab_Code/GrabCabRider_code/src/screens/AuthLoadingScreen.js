@@ -9,7 +9,7 @@ import {
   Text
 } from 'react-native';
 
-import * as firebase from 'firebase'
+import * as firebase from 'firebase';
 import GetPushToken from '../common/GetPushToken';
 import languageJSON from '../common/language';
 
@@ -97,12 +97,12 @@ export class AuthLoadingScreen extends React.Component {
     return (
       <View style={styles.container}>
         <ImageBackground
-          source={require("../../assets/images/intro.jpg")}
-          resizeMode="stretch"
+          source={require("../../assets/images/splash.png")}
+          //resizeMode="stretch"
           style={styles.imagebg}
         >
-          <ActivityIndicator />
-          <Text style={{ paddingBottom: 100 }}>{languageJSON.fetching_data}</Text>
+          {/*<ActivityIndicator />
+          <Text style={{ paddingBottom: 100 }}>{languageJSON.fetching_data}</Text>*/}
         </ImageBackground>
       </View>
     );

@@ -120,8 +120,8 @@ export default class TrackNow extends React.Component {
     getMapRegion = () => ({
         latitude: this.state.latitude,
         longitude: this.state.longitude,
-        latitudeDelta: 0.009,
-        longitudeDelta: 0.009
+        latitudeDelta: 0.0143,
+        longitudeDelta: 0.0134
     });
 
     // find your origin and destination point coordinates and pass it to our method.
@@ -201,7 +201,7 @@ export default class TrackNow extends React.Component {
                         <MapView
                             ref={map => { this.map = map }}
                             style={styles.map}
-                            //provider={PROVIDER_GOOGLE}
+                            provider={PROVIDER_GOOGLE}
                             showUserLocation
                             followUserLocation
                             loadingEnabled
@@ -222,7 +222,7 @@ export default class TrackNow extends React.Component {
                                 ref={marker => {
                                     this.marker = marker;
                                 }}
-                                image={require('../../assets/images/track_Car.png')}
+                                image={require('../../assets/images/available_car.png')}
                                 coordinate={new AnimatedRegion({
                                     latitude: this.state.latitude,
                                     longitude: this.state.longitude,
@@ -234,14 +234,14 @@ export default class TrackNow extends React.Component {
 
                             {this.state.allData ?
                                 <Marker
-                                    image={require('../../assets/images/rsz_2red_pin.png')}
+                                    image={require('../../assets/images/markerUser.png')}
                                     coordinate={{ latitude: this.state.allData.pickup.lat, longitude: this.state.allData.pickup.lng }}
                                 >
                                 </Marker>
                                 : null}
                             {this.state.allData ?
                                 <Marker
-                                    image={require('../../assets/images/rsz_2red_pin.png')}
+                                    image={require('../../assets/images/marker.png')}
                                     coordinate={{ latitude: this.state.allData.drop.lat, longitude: this.state.allData.drop.lng }}
                                 >
                                 </Marker>

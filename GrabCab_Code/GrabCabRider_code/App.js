@@ -17,7 +17,7 @@ import {
 import languageJSON from './src/common/language';
 
 var firebaseConfig = Constants.manifest.extra.firebaseConfig;
-firebase.initializeApp(firebaseConfig);
+!firebase.apps.length ? firebase.initializeApp(firebaseConfig) : firebase.app();
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -66,6 +66,8 @@ export default class App extends React.Component {
   };
 
   async componentDidMount() {
+    await this._loadResourcesAsync();
+    /*
     if (__DEV__) {
       this.setState({ updateMsg: languageJSON.loading_assets });
       this._loadResourcesAsync().then(() => {
@@ -90,8 +92,16 @@ export default class App extends React.Component {
         console.log(e);
       }
     }
+    */
   }
 
+  render(){
+    return(
+      <AppContainer />
+    )
+  }
+
+  /*
   render() {
     return (
       this.state.assetsLoaded ?
@@ -99,18 +109,19 @@ export default class App extends React.Component {
         :
         <View style={styles.container}>
           <ImageBackground
-            source={require("./assets/images/intro.jpg")}
+            source={require("./assets/images/splash.png")}
             resizeMode="stretch"
             style={styles.imagebg}
           >
             <ActivityIndicator />
-            <Text style={{ paddingBottom: 100 }}>{this.state.updateMsg}</Text>
+            {/*<Text style={{ paddingBottom: 100 }}>{this.state.updateMsg}</Text>
           </ImageBackground>
         </View>
     );
   }
-}
+}*/
 
+/*
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -127,3 +138,4 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   }
 });
+*/}

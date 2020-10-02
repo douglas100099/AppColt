@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "GrabCab",
-    "description": "Taxi Booking App",
-    "slug": "GrabCab",
+    "name": "Colt",
+    "description": "Aplicativo de transporte",
+    "slug": "Colt",
     "privacy": "public",
     "platforms": [
       "ios",
@@ -35,6 +35,7 @@
         "NSPhotoLibraryUsageDescription": "This app uses Photo Library for uploading your profile picture.",
         "ITSAppUsesNonExemptEncryption":false,
         "UIBackgroundModes": [
+          "location",
           "fetch"
         ]
       },

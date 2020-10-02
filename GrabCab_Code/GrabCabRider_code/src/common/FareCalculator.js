@@ -15,7 +15,8 @@ export function farehelper(distance,time,rateDetails){
     let calculateData = {
         distaceRate:estimateRateForKM,
         timeRate:estimateRateForhour,
-        totalCost:total,grandTotal:grandtotal,
+        totalCost:total,
+        grandTotal:grandtotal,
         convenience_fees:convenienceFee}
         
     return calculateData

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Platform, StatusBar, Dimensions, StyleSheet, Button, View,Text } from 'react-native';
+import { Platform, StatusBar, Dimensions, StyleSheet, Button, View, Text } from 'react-native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { colors } from '../common/theme';
 import { google_map_key } from '../common/key';
@@ -16,7 +16,12 @@ export default class SearchScreen extends Component {
         let from = this.props.navigation.getParam('from');
         let whereText = this.props.navigation.getParam('whereText');
         let dropText = this.props.navigation.getParam('dropText');
+
+        let allCars = this.props.navigation.getParam('allCars');
+
+
         this.setState({
+            allCars: allCars,
             from: from,
             whereText: whereText,
             dropText: dropText
@@ -24,6 +29,7 @@ export default class SearchScreen extends Component {
     }
     goMap(data, details, from) {
         if (from == "where") {
+
             let searchObj = {
                 searchData: data,
                 searchDetails: details,
@@ -36,7 +42,8 @@ export default class SearchScreen extends Component {
             oldData.wherelatitude = details.geometry.location.lat,
                 oldData.wherelongitude = details.geometry.location.lng,
                 oldData.whereText = details.formatted_address
-            this.props.navigation.replace('Map', { searchObj: searchObj, old: oldData });
+
+            this.props.navigation.replace('Map', { searchObj: searchObj, old: oldData, allCars: this.state.allCars });
         }
         else if (from == 'drop') {
             let searchObj = {
@@ -51,7 +58,8 @@ export default class SearchScreen extends Component {
             oldData.droplatitude = details.geometry.location.lat,
                 oldData.droplongitude = details.geometry.location.lng,
                 oldData.droptext = details.formatted_address
-            this.props.navigation.replace('Map', { searchObj: searchObj, old: oldData });
+
+            this.props.navigation.replace('Map', { searchObj: searchObj, old: oldData, allCars: this.state.allCars  });
         }
 
     }
@@ -62,20 +70,18 @@ export default class SearchScreen extends Component {
         return (
             <GooglePlacesAutocomplete
                 placeholder='Procurar'
-                enablePoweredByContainer = { false }
+                enablePoweredByContainer={false}
                 minLength={2} // minimum length of text to search
                 autoFocus={true}
                 returnKeyType={'search'} // Can be left out for default return key https://facebook.github.io/react-native/docs/textinput.html#returnkeytype
                 listViewDisplayed='auto'  // true/false/undefined
                 fetchDetails={true}
 
-                //onPress={() => { this.props.navigation.goBack(); }}
-
-                textInputProps={{ 
+                textInputProps={{
                     onFocus: () => { this.setState({ searchFocused: true }) },
                     onBlur: () => { this.setState({ searchFocused: false }) },
                     autoCapitalize: "none",
-                    autoCorrect: false, 
+                    autoCorrect: false,
                 }}
 
                 onPress={(data, details = null) => { // 'details' is provided when fetchDetails = true
@@ -83,12 +89,11 @@ export default class SearchScreen extends Component {
                 }}
 
                 getDefaultValue={() => ''}
-
                 query={{
                     // available options: https://developers.google.com/places/web-service/autocomplete
                     key: google_map_key,
                     language: 'pt-BR', // language of the results
-                    //types: '(cities)' ,
+                    //types: '(cities)',
                     components: "country:br", // country name
                 }}
 
@@ -107,7 +112,7 @@ export default class SearchScreen extends Component {
                         borderBottomWidth: 0,
                         fontSize: 18,
                     },
-                    textInput:{
+                    textInput: {
                         height: 45,
                         margin: 0,
                         borderRadius: 30,
@@ -170,37 +175,37 @@ export default class SearchScreen extends Component {
 
                 debounce={200} // debounce the requests in ms. Set to 0 to remove debounce. By default 0ms.
             >
-            <Icon
-                name='chevron-left'
-                type='MaterialIcons'
-                color= {colors.BLACK}
-                size={35}
-                onPress={() => { this.props.navigation.goBack(); }}
-                containerStyle={styles.iconBack}
-            />
-            <View style={styles.containerHeader}>
-                {this.state.from == 'where' ? 
-                    <Icon
-                    name='map-pin'
-                    type='feather'
-                    color= {colors.BLACK}
-                    size={25}
-                    containerStyle={styles.iconLocation}
-                    />
-                :
-                    <Icon
-                    name='map-pin'
-                    type='feather'
-                    color= {colors.BLACK}
-                    size={25}
-                    containerStyle={styles.iconLocation}
-                    />
-                }
-                
-                <View style={styles.textHeader} >
-                    <Text style={{ color: colors.GREY.btnSecondary, fontSize: 15, }}> {this.state.from == 'where' ?  "Local de partida" : "Destino"} </Text>
+                <Icon
+                    name='chevron-left'
+                    type='MaterialIcons'
+                    color={colors.BLACK}
+                    size={35}
+                    onPress={() => { this.props.navigation.goBack(); }}
+                    containerStyle={styles.iconBack}
+                />
+                <View style={styles.containerHeader}>
+                    {this.state.from == 'where' ?
+                        <Icon
+                            name='map-pin'
+                            type='feather'
+                            color={colors.BLACK}
+                            size={25}
+                            containerStyle={styles.iconLocation}
+                        />
+                        :
+                        <Icon
+                            name='map-pin'
+                            type='feather'
+                            color={colors.BLACK}
+                            size={25}
+                            containerStyle={styles.iconLocation}
+                        />
+                    }
+
+                    <View style={styles.textHeader} >
+                        <Text style={{ color: colors.GREY.btnSecondary, fontSize: 15, }}> {this.state.from == 'where' ? "Local de partida" : "Destino"} </Text>
+                    </View>
                 </View>
-            </View>
 
             </GooglePlacesAutocomplete>
         );
@@ -210,14 +215,14 @@ export default class SearchScreen extends Component {
 const styles = StyleSheet.create({
     iconBack: {
         position: "absolute",
-        top: Platform.select({ ios: -50 , android: -50 }),
+        top: Platform.select({ ios: -50, android: -50 }),
         marginLeft: 6
     },
     containerHeader: {
         position: "absolute",
-        top: Platform.select({ ios: -33 , android: -33 }),
+        top: Platform.select({ ios: -33, android: -33 }),
         left: width - 20,
-        alignContent:'center',
+        alignContent: 'center',
         justifyContent: 'center',
         alignItems: 'flex-end',
     },
@@ -225,7 +230,7 @@ const styles = StyleSheet.create({
         position: "absolute",
         right: 30
     },
-    iconLocation:{
+    iconLocation: {
         position: "absolute",
         marginLeft: 0,
         opacity: 0.4,

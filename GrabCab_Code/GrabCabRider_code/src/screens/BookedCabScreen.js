@@ -51,13 +51,11 @@ export default class BookedCabScreen extends React.Component {
         this._isMounted = true;
         this.state.bookingDataState == null ? this.getParamData = this.props.navigation.getParam('passData') : this.getParamData = this.state.bookingDataState
         this.setState({ driverUidRecent: this.props.navigation.getParam('DriverRecent') })
-        console.log("DRIVER RECENT" + this.props.navigation.getParam('DriverRecent'))
 
         var curuser = firebase.auth().currentUser;
         let bookingResponse = firebase.database().ref(`users/` + curuser.uid + '/my-booking/' + this.getParamData.bokkingId);
         bookingResponse.on('value', currUserBookings => {
             if (currUserBookings.val()) {
-                console.log(currUserBookings.val() + " ->  CRRUSERBOOKING ")
                 let region = {
                     wherelatitude: currUserBookings.val().pickup.lat,
                     wherelongitude: currUserBookings.val().pickup.lng,
@@ -100,7 +98,6 @@ export default class BookedCabScreen extends React.Component {
                     this.props.navigation.navigate('trackRide', { data: currUserBookings.val(), bId: this.getParamData.bokkingId });
                 } else if (currUserBookings.val().status == "REJECTED") {
                     console.log("REJECTED")
-
                     this.recalcularMotorista(this.getParamData.bokkingId);
                 }
             }
@@ -112,10 +109,9 @@ export default class BookedCabScreen extends React.Component {
     }
 
     verificarRejected(driverUid, currentBooking) {
-        if (driverUid == this.state.driverUidRecent) {
+        if (driverUid == this.state.driverUidRecent || driverUid == 0) {
             return false
         }
-        console.log("verificarRejected")
         const rejectedDrivers = firebase.database().ref('bookings/' + currentBooking + '/rejectedDrivers');
         rejectedDrivers.once('value', drivers => {
             if (drivers.val()) {
@@ -127,12 +123,10 @@ export default class BookedCabScreen extends React.Component {
                 }
             }
         })
-        console.log(" RETORNOU TRUE ");
         return true;
     }
 
     recalcularMotorista(param) {
-        console.log(" -> TA PROCURANDOOOO OUTRO")
         const userData = firebase.database().ref('users/');
         var driverUidnovo = 0;
         var distanciaValue = 10;
@@ -144,7 +138,7 @@ export default class BookedCabScreen extends React.Component {
                 for (key in allUsers) {
                     console.log(key + "-> ENTROU NO  FOR")
                     console.log(driverUidnovo + "-> DRIVER UID NOVO")
-                    //checking if user is driver and it's a approved user and he/she is now free for take ride
+                    //Check if driver was rejected the booking
                     if (this.verificarRejected(key, param) == true) {
                         console.log("------------------")
                         console.log(allUsers[key].usertype == 'driver')
@@ -155,8 +149,8 @@ export default class BookedCabScreen extends React.Component {
                         if (allUsers[key].usertype == 'driver' && allUsers[key].approved == true && allUsers[key].queue == false && allUsers[key].driverActiveStatus == true) {
                             if (allUsers[key].location) {
                                 console.log(allUsers[key].location)
-                                var location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];// rider lat and lng
-                                var location2 = [allUsers[key].location.lat, allUsers[key].location.lng];//Driver lat and lang
+                                var location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];    //Rider Lat and Lang
+                                var location2 = [allUsers[key].location.lat, allUsers[key].location.lng];   //Driver lat and lang
                                 //calculate the distance of two locations
                                 var distance = distanceCalc(location1, location2);
                                 var originalDistance = (distance);
@@ -179,7 +173,7 @@ export default class BookedCabScreen extends React.Component {
 
                 console.log(driverUidnovo + "-> SETANDO DRIVER UID NOVO")
                 arr.push(driverUidnovo);
-                this.pegarDataCorrida(param)
+                this.getBookingData(param)
 
                 let bookingData = {
                     bokkingId: param,
@@ -189,7 +183,7 @@ export default class BookedCabScreen extends React.Component {
                 setTimeout(() => {
                     firebase.database().ref('users/' + driverUidnovo + '/waiting_riders_list/' + param + '/').set(this.state.bookingdataDetails);
                     this.sendPushNotification(driverUidnovo, param, languageJSON.new_booking_request_push_notification)
-                    
+
                     if (arr.length > 0) {
                         // set all requested drivers data to main booking node
                         firebase.database().ref('bookings/' + param + '/').update({
@@ -206,7 +200,7 @@ export default class BookedCabScreen extends React.Component {
         })
     }
 
-    pegarDataCorrida(param) {
+    getBookingData(param) {
         const ref = firebase.database().ref('bookings/' + param + '/');
         console.log("ENTROU NO PEGAR DATA ")
         ref.on('value', snapshot => {
@@ -215,7 +209,6 @@ export default class BookedCabScreen extends React.Component {
             })
         })
     }
-
 
     getCancelReasons() {
         const reasonListPath = firebase.database().ref('/cancel_reason/');
@@ -257,12 +250,10 @@ export default class BookedCabScreen extends React.Component {
     }
     //Cancel button press
     onPressCancel(param) {
-
         this.setState({
             modalVisible: true,
             driverSerach: false
         });
-
     }
     dissMissCancel() {
         if (this.state.bookingStatus == "NEW") {
@@ -277,11 +268,8 @@ export default class BookedCabScreen extends React.Component {
         this.setState({ modalVisible: false }, () => {
             setTimeout(() => {
                 // update status for rider booking node
-                firebase.database().ref(`/users/` + this.state.currentUser.uid + '/my-booking/' + this.state.currentBookingId + '/').update({
-                    status: 'CANCELLED',
-                    reason: this.state.radio_props[this.state.value].label
-
-                }).then(() => {
+                firebase.database().ref(`/users/` + this.state.currentUser.uid + '/my-booking/' + this.state.currentBookingId + '/').remove()
+                .then(() => {
                     //remove booking request from requested driver
                     const requestedDriver = firebase.database().ref('bookings/' + this.state.currentBookingId + '/requestedDriver');
                     requestedDriver.once('value', drivers => {
@@ -533,7 +521,7 @@ export default class BookedCabScreen extends React.Component {
                             <MapView
                                 ref={map => { this.map = map }}
                                 style={styles.map}
-                                //provider={PROVIDER_GOOGLE}
+                                provider={PROVIDER_GOOGLE}
                                 initialRegion={{
                                     latitude: this.state.region.wherelatitude,
                                     longitude: this.state.region.wherelongitude,
@@ -566,10 +554,6 @@ export default class BookedCabScreen extends React.Component {
                             </MapView>
                             : null
                     }
-
-
-
-
 
                     <TouchableOpacity
                         style={styles.floatButtonStyle}
@@ -675,44 +659,37 @@ export default class BookedCabScreen extends React.Component {
 
                 {/* Booking Modal */}
 
+                
                 <Modal
-                    animationType="slide"
-                    transparent={true}
+                    animationType="fade"
+                    transparent={false}
                     visible={this.state.driverSerach}
                     onRequestClose={() => {
                         Alert.alert(languageJSON.modal_closed);
                     }}
                 >
-                    <View style={{ flex: 1, backgroundColor: "rgba(22,22,22,0.8)", justifyContent: 'center', alignItems: 'center' }}>
-                        <View style={{ width: '80%', backgroundColor: "#FFF", borderRadius: 10, justifyContent: 'center', alignItems: 'center', flex: 1, maxHeight: 310 }}>
-                            <View style={{ marginTop: 15 }}>
-                                <Image source={require('../../assets/images/lodingDriver.gif')} resizeMode={'contain'} style={{ width: 160, height: 160, marginTop: 15 }} />
-                                <View><Text style={{ color: colors.BLUE.default.primary, fontSize: 16, marginTop: 12 }}>{languageJSON.driver_assign_messege}</Text></View>
-                                <View style={styles.buttonContainer}>
-                                    <Button
-                                        title={languageJSON.cancel_ride}
-                                        loading={false}
-                                        loadingProps={{ size: "large", color: colors.BLUE.default.primary }}
-                                        titleStyle={styles.buttonTitleText}
-                                        onPress={() => { this.onPressCancel('fromLoading') }}
-                                        buttonStyle={styles.cancelButtonStyle}
-                                        containerStyle={{ marginTop: 30 }}
-                                    />
-                                </View>
-                            </View>
-                        </View>
+                    <View style={{ flex: 1, backgroundColor: colors.WHITE, width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
+
+                        <Image source={require('../../assets/images/searchDrivers.gif')} style={styles.styleGif} />
+                        <Text style={styles.textGif}> Procurando motoristas próximos </Text>
+                        <TouchableOpacity style={styles.touchView} onPress={() => { this.onPressCancel('fromLoading') }}>
+
+                                <Text style={styles.textCancel}> Cancelar </Text>
+
+                        </TouchableOpacity>
                     </View>
                 </Modal>
+
             </View>
         );
     }
-
-
-
 }
 
 const styles = StyleSheet.create({
-    mainContainer: { flex: 1, backgroundColor: colors.WHITE, },
+    mainContainer: { 
+        flex: 1,
+        backgroundColor: colors.WHITE, 
+    },
     headerStyle: {
         backgroundColor: colors.GREY.default,
         borderBottomWidth: 0,
@@ -752,35 +729,150 @@ const styles = StyleSheet.create({
         width: 17,
         backgroundColor: colors.GREY.iconPrimary
     },
-    whereButton: { flex: 1, justifyContent: 'center', borderBottomColor: colors.WHITE, borderBottomWidth: 1 },
-    whereContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'row' },
-    whereText: { flex: 9, fontFamily: 'Roboto-Regular', fontSize: 14, fontWeight: '400', color: colors.WHITE },
-    iconContainer: { flex: 1 },
-    dropButton: { flex: 1, justifyContent: 'center' },
+    whereButton: { flex: 1, 
+        justifyContent: 'center', 
+        borderBottomColor: colors.WHITE, 
+        borderBottomWidth: 1 
+    },
+    whereContainer: { 
+        flex: 1, 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        flexDirection: 'row' 
+    },
+    whereText: { 
+        flex: 9, 
+        fontFamily: 'Roboto-Regular', 
+        fontSize: 14, 
+        fontWeight: '400', 
+        color: colors.WHITE 
+    },
+    iconContainer: { 
+        flex: 1 
+    },
+    dropButton: { 
+        flex: 1, 
+        justifyContent: 'center' 
+    },
     mapcontainer: {
         flex: 7,
         width: width,
         // justifyContent: 'center',
         // alignItems: 'center',
     },
-    bottomContainer: { flex: 2.5, alignItems: 'center' },
+    bottomContainer: { 
+        flex: 2.5, 
+        alignItems: 'center' 
+    },
     map: {
         flex: 1,
         ...StyleSheet.absoluteFillObject,
     },
-    otpContainer: { flex: 0.8, backgroundColor: colors.YELLOW.secondary, width: width, flexDirection: 'row', justifyContent: 'space-between' },
-    cabText: { paddingLeft: 10, alignSelf: 'center', color: colors.BLACK, fontFamily: 'Roboto-Regular' },
-    cabBoldText: { fontFamily: 'Roboto-Bold' },
-    otpText: { paddingRight: 10, alignSelf: 'center', color: colors.BLACK, fontFamily: 'Roboto-Bold' },
-    cabDetailsContainer: { flex: 2.5, backgroundColor: colors.WHITE, flexDirection: 'row', position: 'relative', zIndex: 1 },
-    cabDetails: { flex: 19 },
-    cabName: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-    cabNameText: { color: colors.GREY.btnPrimary, fontFamily: 'Roboto-Bold', fontSize: 13 },
-    cabPhoto: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    cabImage: { width: 150, height: height / 15, marginBottom: 6 },
-    cabNumber: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    cabNumberText: { color: colors.GREY.iconSecondary, fontFamily: 'Roboto-Bold', fontSize: 13 },
-    verticalDesign: { flex: 2, height: 50, width: 1, alignItems: 'center' },
+    touchView: {
+        borderRadius: 50,
+        height: 50,
+        backgroundColor: colors.DEEPBLUE,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        position: 'absolute',
+        right: 70,
+        left: 70,
+        bottom: 25,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
+        shadowOffset: { x: 0, y: 0 },
+        shadowRadius: 15,
+    },
+    textCancel: {
+        color: '#fff',
+        fontFamily: 'Inter-SemiBold',
+        fontSize: 18,
+    },
+    textGif: {
+        color: "#fff", 
+        top: 55,
+        position: 'absolute',
+        fontSize: 20,
+        fontFamily: 'Inter-SemiBold',
+        opacity: 0.6,
+    },
+    styleGif: {
+        width: '100%',
+        height: '100%',
+        position: 'absolute',
+        flex: 1
+    },
+    otpContainer: { 
+        flex: 0.8, 
+        backgroundColor: colors.YELLOW.secondary, 
+        width: width, 
+        flexDirection: 'row', 
+        justifyContent: 'space-between' 
+    },
+    cabText: { 
+        paddingLeft: 10, 
+        alignSelf: 'center', 
+        color: colors.BLACK, 
+        fontFamily: 'Roboto-Regular' 
+    },
+    cabBoldText: { 
+        fontFamily: 'Roboto-Bold' 
+    },
+    otpText: { 
+        paddingRight: 10, 
+        alignSelf: 'center', 
+        color: colors.BLACK, 
+        fontFamily: 'Roboto-Bold' 
+    },
+    cabDetailsContainer: { 
+        flex: 2.5,
+        backgroundColor: colors.WHITE, 
+        flexDirection: 'row', 
+        position: 'relative', 
+        zIndex: 1 
+    },
+    cabDetails: { 
+        flex: 19 
+    },
+    cabName: { 
+        flex: 1, 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'center' 
+    },
+    cabNameText: { 
+        color: colors.GREY.btnPrimary, 
+        fontFamily: 'Roboto-Bold', 
+        fontSize: 13 
+    },
+    cabPhoto: { 
+        flex: 1, 
+        alignItems: 'center', 
+        justifyContent: 'center' 
+    },
+    cabImage: { 
+        width: 150, 
+        height: height / 15, 
+        marginBottom: 6 
+    },
+    cabNumber: { 
+        flex: 1, 
+        alignItems: 'center', 
+        justifyContent: 'center' 
+    },
+    cabNumberText: { 
+        color: colors.GREY.iconSecondary, 
+        fontFamily: 'Roboto-Bold', 
+        fontSize: 13 
+    },
+    verticalDesign: { 
+        flex: 2, 
+        height: 50, 
+        width: 1, 
+        alignItems: 'center' 
+    },
     triangle: {
         width: 0,
         height: 0,
@@ -799,48 +891,212 @@ const styles = StyleSheet.create({
         marginTop: -1,
         overflow: 'visible'
     },
-    verticalLine: { height: height / 18, width: 0.5, backgroundColor: colors.BLACK, alignItems: 'center', marginTop: 10 },
-    driverDetails: { flex: 19, alignItems: 'center', justifyContent: 'center' },
-    driverPhotoContainer: { flex: 5.4, justifyContent: 'flex-end', alignItems: 'center' },
-    driverPhoto: { borderRadius: height / 20 / 2, width: height / 20, height: height / 20 },
-    driverNameContainer: { flex: 2.2, alignItems: 'center', justifyContent: 'center' },
-    driverNameText: { color: colors.GREY.btnPrimary, fontFamily: 'Roboto-Bold', fontSize: 14 },
-    ratingContainer: { flex: 2.4, alignItems: 'center', justifyContent: 'center' },
-    ratingContainerStyle: { marginTop: 2, paddingBottom: Platform.OS == 'android' ? 5 : 0 },
-    buttonsContainer: { flex: 1.5, flexDirection: 'row' },
-    buttonContainer: { flex: 1 },
-    buttonTitleText: { color: colors.WHITE, fontFamily: 'Roboto-Bold', fontSize: 18, alignSelf: 'flex-end' },
-    cancelButtonStyle: { backgroundColor: colors.GREY.secondary, elevation: 0 },
-    cancelButtonContainerStyle: { flex: 1, backgroundColor: colors.GREY.secondary },
-    callButtonStyle: { backgroundColor: colors.GREY.btnPrimary, elevation: 0 },
-    callButtonContainerStyle: { flex: 1, backgroundColor: colors.GREY.btnPrimary },
+    verticalLine: {
+        height: height / 18, 
+        width: 0.5, 
+        backgroundColor: colors.BLACK, 
+        alignItems: 'center', 
+        marginTop: 10 
+    },
+    driverDetails: { 
+        flex: 19, 
+        alignItems: 'center', 
+        justifyContent: 'center' 
+    },
+    driverPhotoContainer: { 
+        flex: 5.4, 
+        justifyContent: 'flex-end', 
+        alignItems: 'center' 
+    },
+    driverPhoto: { 
+        borderRadius: height / 20 / 2, 
+        width: height / 20, 
+        height: height / 20 
+    },
+    driverNameContainer: { 
+        flex: 2.2, 
+        alignItems: 'center', 
+        justifyContent: 'center' 
+    },
+    driverNameText: { 
+        color: colors.GREY.btnPrimary, 
+        fontFamily: 'Roboto-Bold', 
+        fontSize: 14 
+    },
+    ratingContainer: { 
+        flex: 2.4, 
+        alignItems: 'center', 
+        justifyContent: 'center' 
+    },
+    ratingContainerStyle: { 
+        marginTop: 2,
+        paddingBottom: Platform.OS == 'android' ? 5 : 0 
+    },
+    buttonsContainer: { 
+        flex: 1.5, 
+        flexDirection: 'row' 
+    },
+    buttonContainer: { 
+        flex: 1 
+    },
+    buttonTitleText: { 
+        color: colors.WHITE, 
+        fontFamily: 'Roboto-Bold', 
+        fontSize: 18, 
+        alignSelf: 'flex-end' 
+    },
+    cancelButtonStyle: { 
+        backgroundColor: colors.GREY.secondary, 
+        elevation: 0 
+    },
+    cancelButtonContainerStyle: { 
+        flex: 1, 
+        backgroundColor: colors.GREY.secondary 
+    },
+    callButtonStyle: { 
+        backgroundColor: colors.GREY.btnPrimary, 
+        elevation: 0 
+    },
+    callButtonContainerStyle: { 
+        flex: 1, 
+        backgroundColor: colors.GREY.btnPrimary 
+    },
 
     //alert modal
-    alertModalContainer: { flex: 1, justifyContent: 'center', backgroundColor: colors.GREY.background },
-    alertModalInnerContainer: { height: 200, width: (width * 0.85), backgroundColor: colors.WHITE, alignItems: 'center', alignSelf: 'center', borderRadius: 7 },
-    alertContainer: { flex: 2, justifyContent: 'space-between', width: (width - 100) },
-    rideCancelText: { flex: 1, top: 15, color: colors.BLACK, fontFamily: 'Roboto-Bold', fontSize: 20, alignSelf: 'center' },
-    horizontalLLine: { width: (width - 110), height: 0.5, backgroundColor: colors.BLACK, alignSelf: 'center', },
-    msgContainer: { flex: 2.5, alignItems: 'center', justifyContent: 'center' },
-    cancelMsgText: { color: colors.BLACK, fontFamily: 'Roboto-Regular', fontSize: 15, alignSelf: 'center', textAlign: 'center' },
-    okButtonContainer: { flex: 1, width: (width * 0.85), flexDirection: 'row', backgroundColor: colors.GREY.iconSecondary, alignSelf: 'center' },
-    okButtonStyle: { flexDirection: 'row', backgroundColor: colors.GREY.iconSecondary, alignItems: 'center', justifyContent: 'center' },
-    okButtonContainerStyle: { flex: 1, width: (width * 0.85), backgroundColor: colors.GREY.iconSecondary, },
+    alertModalContainer: { 
+        flex: 1, 
+        justifyContent: 'center', 
+        backgroundColor: colors.GREY.background 
+    },
+    alertModalInnerContainer: { 
+        height: 200, 
+        width: (width * 0.85), 
+        backgroundColor: colors.WHITE, 
+        alignItems: 'center', 
+        alignSelf: 'center', 
+        borderRadius: 7 
+    },
+    alertContainer: { 
+        flex: 2, 
+        justifyContent: 'space-between', 
+        width: (width - 100) 
+    },
+    rideCancelText: { 
+        flex: 1, 
+        top: 15, 
+        color: colors.BLACK, 
+        fontFamily: 'Roboto-Bold', 
+        fontSize: 20, 
+        alignSelf: 'center' 
+    },
+    horizontalLLine: { 
+        width: (width - 110), 
+        height: 0.5, 
+        backgroundColor: colors.BLACK, 
+        alignSelf: 'center', 
+    },
+    msgContainer: { 
+        flex: 2.5, 
+        alignItems: 'center', 
+        justifyContent: 'center' 
+    },
+    cancelMsgText: { 
+        color: colors.BLACK, 
+        fontFamily: 'Roboto-Regular', 
+        fontSize: 15, 
+        alignSelf: 'center', 
+        textAlign: 'center' 
+    },
+    okButtonContainer: { 
+        flex: 1, 
+        width: (width * 0.85), 
+        flexDirection: 'row', 
+        backgroundColor: colors.GREY.iconSecondary, 
+        alignSelf: 'center' 
+    },
+    okButtonStyle: { 
+        flexDirection: 'row', 
+        backgroundColor: colors.GREY.iconSecondary, 
+        alignItems: 'center', 
+        justifyContent: 'center' 
+    },
+    okButtonContainerStyle: { 
+        flex: 1, 
+        width: (width * 0.85), 
+        backgroundColor: colors.GREY.iconSecondary, 
+    },
 
     //cancel modal
-    cancelModalContainer: { flex: 1, justifyContent: 'center', backgroundColor: colors.GREY.background },
-    cancelModalInnerContainer: { height: 400, width: width * 0.85, padding: 0, backgroundColor: colors.WHITE, alignItems: 'center', alignSelf: 'center', borderRadius: 7 },
-    cancelContainer: { flex: 1, justifyContent: 'space-between', width: (width * 0.85) },
-    cancelReasonContainer: { flex: 1 },
-    cancelReasonText: { top: 10, color: colors.BLACK, fontFamily: 'Roboto-Bold', fontSize: 20, alignSelf: 'center' },
-    radioContainer: { flex: 8, alignItems: 'center' },
-    radioText: { fontSize: 16, fontFamily: 'Roboto-Medium', color: colors.DARK, },
-    radioContainerStyle: { paddingTop: 30, marginLeft: 10 },
-    radioStyle: { paddingBottom: 25 },
-    cancelModalButtosContainer: { flex: 1, flexDirection: 'row', backgroundColor: colors.GREY.iconSecondary, alignItems: 'center', justifyContent: 'center' },
-    buttonSeparataor: { height: height / 35, width: 0.5, backgroundColor: colors.WHITE, alignItems: 'center', marginTop: 3 },
-    cancelModalButttonStyle: { backgroundColor: colors.GREY.iconSecondary, borderRadius: 0 },
-    cancelModalButtonContainerStyle: { flex: 1, width: (width * 2) / 2, backgroundColor: colors.GREY.iconSecondary, alignSelf: 'center', margin: 0 },
+    cancelModalContainer: { 
+        flex: 1, 
+        justifyContent: 'center', 
+        backgroundColor: colors.GREY.background 
+    },
+    cancelModalInnerContainer: { 
+        height: 400, 
+        width: width * 0.85, 
+        padding: 0, 
+        backgroundColor: colors.WHITE, 
+        alignItems: 'center', 
+        alignSelf: 'center', 
+        borderRadius: 7 
+    },
+    cancelContainer: { 
+        flex: 1, 
+        justifyContent: 'space-between', 
+        width: (width * 0.85) 
+    },
+    cancelReasonContainer: { 
+        flex: 1 
+    },
+    cancelReasonText: { 
+        top: 10, 
+        color: colors.BLACK, 
+        fontFamily: 'Roboto-Bold', 
+        fontSize: 20, 
+        alignSelf: 'center' 
+    },
+    radioContainer: { 
+        flex: 8, 
+        alignItems: 'center' 
+    },
+    radioText: { 
+        fontSize: 16, 
+        fontFamily: 'Roboto-Medium', 
+        color: colors.DARK, 
+    },
+    radioContainerStyle: { 
+        paddingTop: 30, 
+        marginLeft: 10 
+    },
+    radioStyle: { 
+        paddingBottom: 25 
+    },
+    cancelModalButtosContainer: { 
+        flex: 1, 
+        flexDirection: 'row', 
+        backgroundColor: colors.GREY.iconSecondary, 
+        alignItems: 'center', 
+        justifyContent: 'center' 
+    },
+    buttonSeparataor: { 
+        height: height / 35, 
+        width: 0.5, 
+        backgroundColor: colors.WHITE, 
+        alignItems: 'center', 
+        marginTop: 3 
+    },
+    cancelModalButttonStyle: { 
+        backgroundColor: colors.GREY.iconSecondary, 
+        borderRadius: 0 
+    },
+    cancelModalButtonContainerStyle: { 
+        flex: 1, 
+        width: (width * 2) / 2, 
+        backgroundColor: colors.GREY.iconSecondary, 
+        alignSelf: 'center', 
+        margin: 0 
+    },
     signInTextStyle: {
         fontFamily: 'Roboto-Bold',
         fontWeight: "700",

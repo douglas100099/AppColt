@@ -72,7 +72,6 @@ export default class TrackNow extends React.Component {
             const dat = firebase.database().ref('users/' + duid + '/');
             setInterval(() => {
 
-
                 dat.once('value', snapshot => {
                     if (snapshot.val() && snapshot.val().location) {
                         var data = snapshot.val().location;
@@ -102,21 +101,15 @@ export default class TrackNow extends React.Component {
                                                 }
                                             })
                                         }
-
                                     }
                                 }
-
                                 this.getDirections();
                             })
                         }
-
                     }
-
-
                 })
 
             }, 10000)
-
         }
     }
 
@@ -192,14 +185,15 @@ export default class TrackNow extends React.Component {
                     {this.state.allData?
                     <Marker
                         coordinate={{ latitude: this.state.allData.wherelatitude, longitude: this.state.allData.wherelongitude}}
-                        image={require('../../assets/images/rsz_2red_pin.png')}
+                        image={require('../../assets/images/marker.png')}
                     >
                     </Marker>
                     :null}
                     {this.state.latitude?
                     <Marker
                         coordinate={{ latitude: this.state.latitude, longitude: this.state.longitude }}
-                        image={require('../../assets/images/track_Car.png')}
+                        anchor={{ x : 0 , y : 0 }}
+                        image={require('../../assets/images/available_car.png')}
                     >
                     </Marker>
                     :null}

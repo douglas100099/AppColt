@@ -10,7 +10,8 @@ import {
     Platform,
     AsyncStorage,
     Alert,
-    TouchableWithoutFeedback
+    ScrollView,
+    TouchableWithoutFeedback, TouchableHighlightBase
 } from 'react-native';
 import { Icon, Button, Header } from 'react-native-elements';
 import Polyline from '@mapbox/polyline';
@@ -29,10 +30,14 @@ import { color } from 'react-native-reanimated';
 export default class FareScreen extends React.Component {
     constructor(props) {
         super(props);
+        this._isMounted = false;
         this.state = {
             alertModalVisible: false,
             region: {},
             coords: [],
+            rateDetailsObjects: [],
+            detailsBooking: [],
+            rateType: [],
             settings: {
                 code: '',
                 symbol: '',
@@ -40,7 +45,10 @@ export default class FareScreen extends React.Component {
                 wallet: false,
                 otp_secure: false
             },
-            buttonDisabled:false
+            buttonDisabled: false,
+            carType: 'Colt econômico',
+            carImage: "https://dev.exicube.com/images/car0.png",
+            metodoPagamento: 'Dinheiro',
         }
     }
 
@@ -55,46 +63,44 @@ export default class FareScreen extends React.Component {
         }
     };
 
+    componentWillUnmount() {
+        this._isMounted = false;
+    }
+
     async componentDidMount() {
+        this._isMounted = true;
         var getCroods = await this.props.navigation.getParam('data');
-        var carType = await this.props.navigation.getParam('carType');
-        var carImage = await this.props.navigation.getParam('carImage');
-        var bookLater = await this.props.navigation.getParam('bookLater');
-        var bookingDate = await this.props.navigation.getParam('bookingDate');
+        var minTimeEconomico = await this.props.navigation.getParam('minTimeEconomico');
+        var minTimeConfort = await this.props.navigation.getParam('minTimeConfort');
+        var arrayRates = [];
 
         const Data = firebase.database().ref('rates/');
         Data.once('value', rates => {
             if (rates.val()) {
                 var carTypeWiseRate = rates.val();
                 for (var i = 0; i < carTypeWiseRate.car_type.length; i++) {
-                    if (carTypeWiseRate.car_type[i].name == carType) {
-                        var rates = carTypeWiseRate.car_type[i];
-                        this.setState({
-                            region: getCroods,
-                            curUID: firebase.auth().currentUser,
-                            rateDetails: rates,
-                            carType: carType,
-                            carImage: carImage,
-                            bookLater: bookLater ? true : false,
-                            bookingDate: bookingDate ? bookingDate : null
-                        }, () => {
-                            this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
-                            const userData = firebase.database().ref('users/' + this.state.curUID.uid);
-                            userData.once('value', userData => {
-                                this.setState({ userDetails: userData.val() });
-                            })
-                        })
-                    }
+                    var ratesObject = carTypeWiseRate.car_type[i]
+                    arrayRates.push(ratesObject)
                 }
+                this.setState({
+                    minTimeEconomico: minTimeEconomico,
+                    minTimeConfort: minTimeConfort,
+                    rateDetailsObjects: arrayRates,
+                    region: getCroods,
+                    curUID: firebase.auth().currentUser,
+                }, () => {
+                    this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
+                    const userData = firebase.database().ref('users/' + this.state.curUID.uid);
+                    userData.once('value', userData => {
+                        this.setState({ userDetails: userData.val() });
+                    })
+                })
+
             }
         })
 
         this._retrieveSettings();
-
     }
-
-
-
 
     // FOR ROOT DIRECTIONS
     async getDirections(startLoc, destLoc) {
@@ -102,16 +108,40 @@ export default class FareScreen extends React.Component {
             var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destLoc}&key=${google_map_key}`)
             var respJson = await resp.json();
 
-            var fareCalculation = farehelper(respJson.routes[0].legs[0].distance.value, respJson.routes[0].legs[0].duration.value, this.state.rateDetails ? this.state.rateDetails : 1)
+            var arrayDetails = []
+            for (let i = 0; i < this.state.rateDetailsObjects.length; i++) {
+                var fareCalculation = farehelper(respJson.routes[0].legs[0].distance.value, respJson.routes[0].legs[0].duration.value, this.state.rateDetailsObjects[i] ? this.state.rateDetailsObjects[i] : 1)
+                var detailsBooking = {
+                    distance: respJson.routes[0].legs[0].distance.value,
+                    fareCost: fareCalculation ? parseFloat(fareCalculation.totalCost).toFixed(2) : 0,
+                    estimateFare: fareCalculation ? parseFloat(fareCalculation.grandTotal).toFixed(2) : 0,
+                    estimateTime: respJson.routes[0].legs[0].duration.value,
+                    convenience_fees: fareCalculation ? parseFloat(fareCalculation.convenience_fees).toFixed(2) : 0
+                }
+                arrayDetails.push(detailsBooking);
+                i == 0 ? this.setState({ estimatePrice1: detailsBooking.estimateFare, estimatedTimeBooking: detailsBooking.estimateTime }) : this.setState({ estimatePrice2: detailsBooking.estimateFare, estimatedTimeBooking: detailsBooking.estimateTime })
+            }
             this.setState({
-                distance: respJson.routes[0].legs[0].distance.value,
-                fareCost: fareCalculation ? parseFloat(fareCalculation.totalCost).toFixed(2) : 0,
-                estimateFare: fareCalculation ? parseFloat(fareCalculation.grandTotal).toFixed(2) : 0,
-                estimateTime: respJson.routes[0].legs[0].duration.value,
-                convenience_fees: fareCalculation ? parseFloat(fareCalculation.convenience_fees).toFixed(2) : 0
-            }, () => {
-
+                detailsBooking: arrayDetails,
             })
+            if (this.state.minTimeEconomico != null) {
+                this.setState({
+                    selected: 0,
+                    estimateFare: this.state.detailsBooking[0].estimateFare,
+                    distance: this.state.detailsBooking[0].distance,
+                    carType: this.state.rateDetailsObjects[0].name,
+                    carImage: this.state.rateDetailsObjects[0].image
+                })
+            } else if (this.minTimeConfort != null) {
+                this.setState({
+                    selected: 1,
+                    estimateFare: this.state.detailsBooking[1].estimateFare,
+                    distance: this.state.detailsBooking[1].distance,
+                    carType: this.state.rateDetailsObjects[1].name,
+                    carImage: this.state.rateDetailsObjects[1].image
+                })
+            }
+
             var points = Polyline.decode(respJson.routes[0].overview_polyline.points);
             var coords = points.map((point) => {
                 return {
@@ -122,11 +152,12 @@ export default class FareScreen extends React.Component {
             this.setState({ coords: coords }, () => {
                 setTimeout(() => {
                     this.map.fitToCoordinates([{ latitude: this.state.region.wherelatitude, longitude: this.state.region.wherelongitude }, { latitude: this.state.region.droplatitude, longitude: this.state.region.droplongitude }], {
-                        edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+                        edgePadding: { top: 50, right: 50, bottom: 80, left: 50 },
                         animated: true,
                     })
-                }, 1500);
+                }, 500);
             })
+
             return coords
         }
         catch (error) {
@@ -161,7 +192,6 @@ export default class FareScreen extends React.Component {
         this.props.navigation.goBack();
     }
 
-
     alertModal() {
         return (
             <Modal
@@ -187,8 +217,9 @@ export default class FareScreen extends React.Component {
                                 <Button
                                     title={languageJSON.no_driver_found_alert_OK_button}
                                     titleStyle={styles.signInTextStyle}
-                                    onPress={() => { 
-                                        this.setState({ alertModalVisible: false,buttonDisabled:false }, () => { this.props.navigation.popToTop() }) }}
+                                    onPress={() => {
+                                        this.setState({ alertModalVisible: false, buttonDisabled: false }, () => { this.props.navigation.popToTop() })
+                                    }}
                                     buttonStyle={styles.okButtonStyle}
                                     containerStyle={styles.okButtonContainerStyle}
                                 />
@@ -205,6 +236,11 @@ export default class FareScreen extends React.Component {
 
     //CONFRIM BOOKING
     bookNow() {
+        if (this.state.selected == 0 && this.state.minTimeEconomico == null) {
+            alert("Não há motoristas disponíveis no momento!")
+        } else if (this.state.selected == 1 && this.state.minTimeConfort == null) {
+            alert("Não há motoristas disponíveis no momento!")
+        }
         this.setState({ buttonDisabled: true });
         var curuser = firebase.auth().currentUser.uid;
 
@@ -215,7 +251,6 @@ export default class FareScreen extends React.Component {
         else {
             var otp = false;
         }
-
         let today = new Date().toString();
 
         var data = {
@@ -237,16 +272,18 @@ export default class FareScreen extends React.Component {
             trip_cost: 0,
             trip_end_time: "00:00",
             trip_start_time: "00:00",
-            tripdate: this.state.bookLater ? this.state.bookingDate.toString() : today,
+            tripdate: today,
             estimate: this.state.estimateFare,
             otp: otp,
-            bookLater: this.state.bookLater,
-            bookingDate: today
+            bookingDate: today,
+
+            metodoPagamento: this.state.metodoPagamento,
+            imageRider: this.state.userDetails.profile_image ? this.state.userDetails.profile_image : null,
         }
 
         var MyBooking = {
-            carType: this.state.carType,
             carImage: this.state.carImage,
+            carType: this.state.carType,
             driver: "",
             driver_image: "",
             driver_name: "",
@@ -260,97 +297,93 @@ export default class FareScreen extends React.Component {
             trip_cost: 0,
             trip_end_time: "00:00",
             trip_start_time: "00:00",
-            tripdate: this.state.bookLater ? this.state.bookingDate.toString() : today,
+            tripdate: today,
             estimate: this.state.estimateFare,
             coords: this.state.coords,
             otp: otp,
-            bookLater: this.state.bookLater,
-            bookingDate: today
+            bookingDate: today,
+
+            metodoPagamento: this.state.metodoPagamento,
         }
 
         firebase.database().ref('bookings/').push(data).then((res) => {
             var bookingKey = res.key;
             firebase.database().ref('users/' + curuser + '/my-booking/' + bookingKey + '/').set(MyBooking).then((res) => {
                 this.setState({ currentBookingId: bookingKey }, () => {
-                    if (this.state.bookLater) {
-                        Alert.alert(
-                            languageJSON.alert,
-                            languageJSON.booking_taken + bookingKey,
-                            [
-
-                                { text: "OK", onPress: () => this.props.navigation.navigate('RideList') }
-                            ],
-                            { cancelable: false }
-                        );
-
-                    } else {
-                        var arr = [];
-                        const userData = firebase.database().ref('users/');
-                        var driverUidnovo = 0;
-                        var distancia = 10;
-                        userData.once('value', driverData => {
-                            if (driverData.val()) {
-                                var allUsers = driverData.val();
-                                for (key in allUsers) {
-                                    //checking if user is driver and it's a approved user and he/she is now free for take ride
-                                    if (allUsers[key].usertype == 'driver' && allUsers[key].approved == true && allUsers[key].queue == false && allUsers[key].driverActiveStatus == true) {
-                                        if (allUsers[key].location) {
-                                            var location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];// rider lat and lng
-                                            var location2 = [allUsers[key].location.lat, allUsers[key].location.lng];//Driver lat and lang
-                                            //calculate the distance of two locations
-                                            var distance = distanceCalc(location1, location2);
-                                            var originalDistance = (distance);
-                                            if (originalDistance <= 5) { // Request will be send if distance less than 10 km 
-                                                if (allUsers[key].carType == this.state.carType) {
-                                                    allUsers[key].driverUid = key;
-
-                                                    if(originalDistance < distancia){
-                                                        distancia = originalDistance
-                                                        driverUidnovo = allUsers[key].driverUid
-                                                    }
+                    var arr = [];
+                    const userData = firebase.database().ref('users/');
+                    var driverUidnovo = 0;
+                    var distancia = 10;
+                    userData.once('value', driverData => {
+                        if (driverData.val()) {
+                            var allUsers = driverData.val();
+                            for (key in allUsers) {
+                                //checking if user is driver and it's a approved user and he/she is now free for take ride
+                                if (allUsers[key].usertype == 'driver' && allUsers[key].approved == true && allUsers[key].queue == false && allUsers[key].driverActiveStatus == true) {
+                                    if (allUsers[key].location) {
+                                        var location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];// rider lat and lng
+                                        var location2 = [allUsers[key].location.lat, allUsers[key].location.lng];//Driver lat and lang
+                                        //calculate the distance of two locations
+                                        var distance = distanceCalc(location1, location2);
+                                        var originalDistance = (distance);
+                                        if (originalDistance <= 5) { // Request will be send if distance less than 5 km 
+                                            if (allUsers[key].carType == this.state.carType) {
+                                                allUsers[key].driverUid = key;
+                                                if (originalDistance < distancia) {
+                                                    distancia = originalDistance
+                                                    driverUidnovo = allUsers[key].driverUid
                                                 }
                                             }
                                         }
                                     }
                                 }
-
-                                arr.push(driverUidnovo);
-                                console.log("++++++++++++++++++++++")
-                                console.log(data)
-                                console.log("++++++++++++++++++++++")
-                                firebase.database().ref('users/' + driverUidnovo + '/waiting_riders_list/' + bookingKey + '/').set(data);
-                                this.sendPushNotification(driverUidnovo, bookingKey, languageJSON.new_booking_request_push_notification)
-
-                                let bookingData = {
-                                    bokkingId: bookingKey,
-                                    coords: this.state.coords,
-                                }
-
-                                setTimeout(() => {
-                                    if (arr.length > 0) {
-                                        // set all requested drivers data to main booking node
-                                        firebase.database().ref('bookings/' + bookingKey + '/').update({
-                                            requestedDriver: arr
-                                        }).then((res) => {
-                                            this.setState({ buttonDisabled: false });
-                                            this.props.navigation.navigate('BookedCab', { passData: bookingData, DriverRecent:  driverUidnovo});
-                                        })
-                                    } else {
-                                        alert(languageJSON.driver_not_found);
-                                    }
-                                }, 300)
-
                             }
-                        })
 
-                    }
+                            arr.push(driverUidnovo);
+                            firebase.database().ref('users/' + driverUidnovo + '/waiting_riders_list/' + bookingKey + '/').set(data);
+                            this.sendPushNotification(driverUidnovo, bookingKey, languageJSON.new_booking_request_push_notification)
+
+                            let bookingData = {
+                                bokkingId: bookingKey,
+                                coords: this.state.coords,
+                            }
+
+                            setTimeout(() => {
+                                if (arr.length > 0) {
+                                    // set all requested drivers data to main booking node
+                                    firebase.database().ref('bookings/' + bookingKey + '/').update({
+                                        requestedDriver: arr
+                                    }).then((res) => {
+                                        this.setState({ buttonDisabled: false });
+                                        this.props.navigation.navigate('BookedCab', { passData: bookingData, DriverRecent: driverUidnovo });
+                                    })
+                                } else {
+                                    alert(languageJSON.driver_not_found);
+                                }
+                            }, 300)
+                        }
+                    })
                 })
             })
-
         })
     }
 
-    // Add promo user details to promo node
+    selectCarType(param, type) {
+        if (type == 0) {
+            if (param != null) {
+                this.setState({ selected: 0, estimateFare: this.state.detailsBooking[0].estimateFare, distance: this.state.detailsBooking[0].distance, carType: this.state.rateDetailsObjects[0].name, carImage: this.state.rateDetailsObjects[0].image })
+            } else {
+                alert("Não há motoristas disponíveis no momento!")
+            }
+        } else if (type == 1) {
+            if (param != null) {
+                this.setState({ selected: 1, estimateFare: this.state.detailsBooking[1].estimateFare, distance: this.state.detailsBooking[1].distance, carType: this.state.rateDetailsObjects[1].name, carImage: this.state.rateDetailsObjects[1].image })
+            } else {
+                alert("Não há motoristas disponíveis no momento!")
+            }
+        }
+    }
+
     addDetailsToPromo(offerkey, curUId) {
         const promoData = firebase.database().ref('offers/' + offerkey);
         promoData.once('value', promo => {
@@ -358,14 +391,12 @@ export default class FareScreen extends React.Component {
                 let promoData = promo.val();
                 let user_avail = promoData.user_avail;
                 if (user_avail) {
-
                     firebase.database().ref('offers/' + offerkey + '/user_avail/details').push({
                         userId: curUId
                     }).then(() => {
                         firebase.database().ref('offers/' + offerkey + '/user_avail/').update({ count: user_avail.count + 1 })
                     })
                 } else {
-                    //console.log('i am working2')
                     firebase.database().ref('offers/' + offerkey + '/user_avail/details').push({
                         userId: curUId
                     }).then(() => {
@@ -389,46 +420,38 @@ export default class FareScreen extends React.Component {
     render() {
         return (
             <View style={styles.container}>
-                {/*
-                <Header
-                    backgroundColor={colors.GREY.default}
-                    leftComponent={{ icon: 'md-menu', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.goBack(); } }}
-                    centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.confrim_booking}</Text>}
-                    //rightComponent={{ icon: 'ios-notifications', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.navigate('Notifications'); } }}
-                    containerStyle={styles.headerStyle}
-                    innerContainerStyles={styles.headerInnerStyle}
-                />*/}
-
                 <View style={styles.mapcontainer}>
                     {this.state.region && this.state.region.wherelatitude ?
                         <MapView
-                            style={{ flex: 1 }}
                             ref={map => { this.map = map }}
                             style={styles.map}
-                            //provider={PROVIDER_GOOGLE}
+                            provider={PROVIDER_GOOGLE}
                             initialRegion={{
                                 latitude: (this.state.region.wherelatitude),
                                 longitude: (this.state.region.wherelongitude),
-                                latitudeDelta: 0.1,
-                                longitudeDelta: 0.1,
+                                latitudeDelta: 0.143,
+                                longitudeDelta: 0.134,
                             }}
                             loadingEnabled
                             showsUserLocation
+                            showsCompass={false}
+                            showsScale={false}
+                            rotateEnabled={false}
+                            showsMyLocationButton={false}
+                            zoomControlEnabled={false}
+                            zoomEnabled={false}
                         >
                             <Marker
                                 coordinate={{ latitude: (this.state.region.wherelatitude), longitude: (this.state.region.wherelongitude) }}
                                 title={this.state.region.whereText}
                                 image={require('../../assets/images/markerUser.png')}
-                                anchor={{x:0, y:0}}
+                                anchor={{ x: 0, y: 0 }}
                             >
                             </Marker>
-
-
                             <Marker
                                 coordinate={{ latitude: (this.state.region.droplatitude), longitude: (this.state.region.droplongitude) }}
                                 title={this.state.region.droptext}
-                                //pinColor={colors.GREEN.default}
-                                anchor={{x:0, y:0}}
+                                anchor={{ x: 0, y: 0 }}
                                 image={require('../../assets/images/marker.png')}
                             >
                             </Marker>
@@ -436,122 +459,100 @@ export default class FareScreen extends React.Component {
                             {this.state.coords ?
                                 <MapView.Polyline
                                     coordinates={this.state.coords}
-                                    strokeWidth={2.5}
+                                    strokeWidth={3}
                                     strokeColor={colors.DEEPBLUE}
                                 />
                                 : null}
-
                         </MapView>
-                    : null}
+                        : null}
 
-                    <View style={styles.viewStyleTop}>
-
-                        <Icon
-                            raised
-                            name='chevron-left'
-                            type='MaterialIcons'
-                            color={colors.BLACK}
-                            size={16}
-                            onPress={() => { this.props.navigation.goBack(); }}
-                            containerStyle={styles.iconMenuStyle}
-                        />
-
-                        {/* INPUT 
-                        <View style={styles.topContainer}>
-                            <View style={styles.topLeftContainer}>
-                                <View style={styles.circle} />
-                                <View style={styles.staightLine} />
-                                <View style={styles.square} />
-                            </View>
-                            <View style={styles.topRightContainer}>
-                                <TouchableOpacity style={styles.whereButton}>
-                                    <View style={styles.whereContainer}>
-                                        <Text numberOfLines={1} style={styles.whereText}>{this.state.region.whereText}</Text>
-                                        <Icon
-                                            name='gps-fixed'
-                                            color={colors.WHITE}
-                                            size={23}
-                                            containerStyle={styles.iconContainer}
-                                        />
-                                    </View>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.dropButton}>
-                                    <View style={styles.whereContainer}>
-                                        <Text numberOfLines={1} style={styles.whereText}>{this.state.region.droptext}</Text>
-                                        <Icon
-                                            name='search'
-                                            type='feather'
-                                            color={colors.WHITE}
-                                            size={23}
-                                            containerStyle={styles.iconContainer}
-                                        />
-                                    </View>
-                                </TouchableOpacity>
-                            </View>
-                        </View>*/}
-                    </View>
-                    <View style={styles.containerBottom}>
-                        <Button
-                            title={languageJSON.confrim_booking}
-                            loading={false}
-                            loadingProps={{ size: "large", color: colors.BLUE.default.primary }}
-                            titleStyle={styles.buttonText}
-                            disabled={this.state.buttonDisabled}
-                            onPress={() => { this.bookNow() }}
-                            buttonStyle={styles.confirmButtonStyle}
-                        />
-                        {this.state.estimateTime  ? 
-                        <View style={styles.cardInfo} >
-                            <Text style={styles.textTypeCar}>Econômico</Text>
-                            <Text style={styles.price1}>{this.state.settings.symbol} <Text style={styles.price2}>{this.state.estimateFare}</Text> </Text>
-                            <View style={styles.timeBox}>
-                                <Text style={styles.estimatedTime}>{parseInt(this.state.estimateTime/60)} min</Text>
-                            </View>                            
-                        </View>
-                        : null
-                        }
-                    </View>
-
-                </View>
-
-                {/*<View style={styles.bottomContainer}>
-                    <View style={styles.offerContainer}>
-                        <TouchableOpacity >
-                            <Text style={styles.offerText}> {languageJSON.estimate_fare_text}</Text>
+                    <View style={styles.bordaIconeVoltar}>
+                        <TouchableOpacity onPress={() => { this.props.navigation.goBack(); }}>
+                            <Icon
+                                name='chevron-left'
+                                type='MaterialIcons'
+                                size={35}
+                            />
                         </TouchableOpacity>
                     </View>
+                </View>
 
-                    <View style={styles.priceDetailsContainer}>
-                        <View style={styles.priceDetailsLeft}>
-                            <View style={styles.priceDetails}>
-                                <View style={styles.totalFareContainer}>
-                                    <Text style={styles.totalFareText}>{languageJSON.total_fare}</Text>
-                                </View>
-                                <Icon
-                                    name='info'
-                                    color={colors.WHITE}
-                                    type='simple-line-icon'
-                                    size={15}
-                                    containerStyle={styles.infoIcon}
-                                />
+                {this.state.rateDetailsObjects[0] && this.state.estimatePrice1 ?
+                    <View style={styles.containerBottom}>
+                        <View style={styles.cards}>
+                            <View style={[styles.cardInfo,
+                            {
+                                borderWidth: this.state.selected == 0 ? 1 : 0,
+                                borderColor: this.state.selected == 0 ? colors.DEEPBLUE : colors.GREY3,
+                            }
+                            ]} >
+                                <TouchableOpacity style={styles.touchCard1} onPress={() => this.selectCarType(this.state.minTimeEconomico, 0)}>
+                                    <Image
+                                        style={[styles.carEconomico, { opacity: this.state.minTimeEconomico == null ? 0.2 : 1, }]}
+                                        source={require('../../assets/images/coltEconomico.png')}
+                                    />
+                                    <Text style={[styles.textTypeCar, { opacity: this.state.minTimeEconomico == null ? 0.2 : 1, }]}>{this.state.rateDetailsObjects[0].name}</Text>
+                                    <Text style={[styles.price1, { opacity: this.state.minTimeEconomico == null ? 0.2 : 1, }]}>{this.state.settings.symbol} <Text style={styles.price2}> {this.state.estimatePrice1} </Text></Text>
+                                    <View style={[styles.timeBox, { width: this.state.minTimeEconomico == null ? 120 : 70 }]}>
+                                        <Text style={styles.estimatedTime}>{this.state.minTimeEconomico == null ? 'Não disponível' : parseInt(this.state.minTimeEconomico / 60) + " min"} </Text>
+                                    </View>
+                                </TouchableOpacity>
                             </View>
 
-                            <View style={styles.iconContainer}>
-                                <Text style={styles.priceText}> {this.state.settings.symbol} {this.state.estimateFare}</Text>
+                            <View style={[styles.cardInfo2,
+                            {
+                                borderWidth: this.state.selected == 1 ? 1 : 0,
+                                borderColor: this.state.selected == 1 ? colors.DEEPBLUE : colors.GREY3,
+                            }
+                            ]} >
+                                <TouchableOpacity style={styles.touchCard2} onPress={() => this.selectCarType(this.state.minTimeConfort, 1)}>
+                                    <Image
+                                        style={[styles.carEconomico, { opacity: this.state.minTimeConfort == null ? 0.2 : 1, }]}
+                                        source={require('../../assets/images/coltConfort.png')}
+                                    />
+                                    <Text style={[styles.textTypeCar, { opacity: this.state.minTimeConfort == null ? 0.2 : 1, }]}>{this.state.rateDetailsObjects[1].name}</Text>
+                                    <Text style={[styles.price1, { opacity: this.state.minTimeConfort == null ? 0.2 : 1, }]}>{this.state.settings.symbol} <Text style={styles.price2}>{this.state.estimatePrice2} </Text></Text>
+                                    <View style={[styles.timeBox, { width: this.state.minTimeConfort == null ? 120 : 70 }]}>
+                                        <Text style={styles.estimatedTime}>{this.state.minTimeConfort == null ? 'Não disponível' : parseInt(this.state.minTimeConfort / 60) + " min"} </Text>
+                                    </View>
+                                </TouchableOpacity>
                             </View>
 
                         </View>
-                        
-                        <View style={styles.priceDetailsMiddle}>
-                            <View style={styles.triangle} />
-                            <View style={styles.lineHorizontal} />
+                        <View style={styles.estimatedTimeBooking}>
+                            <View style={styles.containerTempo}>
+                                <Text style={styles.textEstimatedTime}>Tempo estimado </Text>
+                                <Text style={styles.estimatedTimeNumber}>{parseInt(this.state.estimatedTimeBooking / 60)} min</Text>
+                            </View>
+                            <View style={styles.containerDinheiro}>
+                                <TouchableOpacity style={styles.containerDinheiro} onPress={() => alert("Teste")}>
+                                    <View style={styles.bordaIconeDinheiro}>
+                                        <Icon
+                                            name='dollar-sign'
+                                            type='feather'
+                                            size={17}
+                                            color={colors.WHITE}
+                                            containerStyle={styles.iconMetodoPagamento}
+                                        />
+                                    </View>
+                                    <Text style={styles.metodoPagamento}> Dinheiro </Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                        <View style={styles.logoContainer}>
-                            <Image source={require('../../assets/images/paytm_logo.png')} style={styles.logoImage} />
+                        <View style={styles.viewBotao}>
+                            <Button
+                                title={languageJSON.confrim_booking}
+                                loading={false}
+                                loadingProps={{ size: "large", color: colors.BLUE.default.primary }}
+                                titleStyle={styles.buttonText}
+                                disabled={this.state.buttonDisabled}
+                                onPress={() => { this.bookNow() }}
+                                buttonStyle={styles.confirmButtonStyle}
+                            />
                         </View>
                     </View>
-                    
-                </View>*/}
+                    : null
+                }
 
                 {
                     this.alertModal()
@@ -566,10 +567,6 @@ const styles = StyleSheet.create({
         backgroundColor: colors.GREY.default,
         borderBottomWidth: 0
     },
-    iconMenuStyle:{
-        marginLeft: 1,
-        marginBottom: 5, 
-    },
     headerInnerStyle: {
         marginLeft: 10,
         marginRight: 10
@@ -581,14 +578,7 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        backgroundColor: colors.WHITE,
         //marginTop: StatusBar.currentHeight
-    },
-    viewStyleTop:{
-        position: 'absolute',
-        top: Platform.select({ ios: 60, android: 40 }),
-        marginHorizontal: 12,
-        width: width,
     },
     topContainer: {
         flex: 1,
@@ -607,281 +597,285 @@ const styles = StyleSheet.create({
         marginHorizontal: 12,
         elevation: 20,
     },
-    topLeftContainer: {
-        flex: 1.5,
-        alignItems: 'center'
-    },
-    topRightContainer: {
-        flex: 9.5,
-        justifyContent: 'space-between',
-    },
-    circle: {
-        height: 10,
-        width: 10,
-        borderRadius: 15 / 2,
-        backgroundColor: colors.BLACK
-    },
-    staightLine: {
-        height: height / 23,
-        width: 0.5,
-        backgroundColor: colors.BLACK
-    },
-    square: {
-        height: 13,
-        width: 13,
-        backgroundColor: colors.BLUE.light
-    },
-    whereButton: { 
-        flex: 1, 
-        justifyContent: 'center', 
-        borderBottomColor: colors.BLACK, 
-        borderBottomWidth: 1 
-    },
-    whereContainer: { 
-        flex: 1, 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        flexDirection: 'row' 
-    },
-    whereText: { 
-        flex: 9,
-        fontFamily: 'Inter-Medium',
-        fontSize: 12,
-        fontWeight: '400',
-        color: colors.BLACK,
-        marginTop: 10,
-        marginBottom: 10
-    },
-    iconContainer: { 
-        flex: 1 
-    },
-    dropButton: { 
-        flex: 1, 
-        justifyContent: 'center' 
+    iconContainer: {
+        flex: 1
     },
     mapcontainer: {
-        flex: 1,
+        flex: 2,
+        top: 0,
         width: width,
+        height: (height - 300),
         justifyContent: 'center',
         //alignItems: 'center',
+    },
+    bordaIconeVoltar: {
+        position: 'absolute',
+        top: 0,
+        backgroundColor: colors.WHITE,
+        width: 35,
+        height: 35,
+        borderRadius: 50,
+        elevation: 5,
+        marginTop: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+        left: 15,
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
     },
     map: {
         flex: 1,
         ...StyleSheet.absoluteFillObject,
     },
-    bottomContainer: { 
-        elevation: 15,
-        flex: 5, 
-        borderRadius: 50,
-    },
-    offerContainer: { 
+    offerContainer: {
         flex: 1,
-        backgroundColor: colors.YELLOW.secondary, 
-        width: width, 
-        justifyContent: 'center', 
-        borderBottomColor: colors.YELLOW.primary, 
-        borderBottomWidth: Platform.OS == 'ios' ? 1 : 0 
+        backgroundColor: colors.YELLOW.secondary,
+        width: width,
+        justifyContent: 'center',
+        borderBottomColor: colors.YELLOW.primary,
+        borderBottomWidth: Platform.OS == 'ios' ? 1 : 0
     },
-    offerText: { 
-        alignSelf: 'center', 
-        color: colors.GREY.btnPrimary, 
-        fontSize: 12, 
-        fontFamily: 'Roboto-Regular' 
+    offerText: {
+        alignSelf: 'center',
+        color: colors.GREY.btnPrimary,
+        fontSize: 12,
+        fontFamily: 'Roboto-Regular'
     },
     offerCodeText: {
-        fontFamily: 'Roboto-Bold', 
+        fontFamily: 'Roboto-Bold',
         fontSize: 14,
     },
-    priceDetailsContainer: { 
-        flex: 2.3, 
-        backgroundColor: colors.WHITE, 
-        flexDirection: 'row', 
-        position: 'relative', 
-        zIndex: 1 
+    priceDetailsContainer: {
+        flex: 2.3,
+        backgroundColor: colors.WHITE,
+        flexDirection: 'row',
+        position: 'relative',
+        zIndex: 1
     },
-    priceDetailsLeft: { 
-        flex: 19 
+    priceDetailsLeft: {
+        flex: 19
     },
-    priceDetailsMiddle: { 
-        flex: 2, 
-        height: 50, 
-        width: 1, 
-        alignItems: 'center' 
+    priceDetailsMiddle: {
+        flex: 2,
+        height: 50,
+        width: 1,
+        alignItems: 'center'
     },
     priceDetails: {
-        flex: 1, 
-        flexDirection: 'row' 
+        flex: 1,
+        flexDirection: 'row'
     },
-    totalFareContainer: { 
-        flex: 8, 
-        flexDirection: 'row', 
-        alignItems: 'center', 
-        justifyContent: 'center' 
+    totalFareContainer: {
+        flex: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center'
     },
-    totalFareText: { 
-        color: colors.GREY.btnPrimary, 
-        fontFamily: 'Roboto-Bold', 
-        fontSize: 15, 
-        marginLeft: 40 
+    totalFareText: {
+        color: colors.GREY.btnPrimary,
+        fontFamily: 'Roboto-Bold',
+        fontSize: 15,
+        marginLeft: 40
     },
-    infoIcon: { 
-        flex: 2, 
-        alignItems: 'center', 
-        justifyContent: 'center' 
+    infoIcon: {
+        flex: 2,
+        alignItems: 'center',
+        justifyContent: 'center'
     },
-    priceText: { 
-        alignSelf: 'center', 
-        color: colors.GREY.iconSecondary, 
-        fontFamily: 'Roboto-Bold', 
-        fontSize: 20 
+    priceText: {
+        alignSelf: 'center',
+        color: colors.GREY.iconSecondary,
+        fontFamily: 'Roboto-Bold',
+        fontSize: 20
     },
-    triangle: {
-        width: 0,
-        height: 0,
-        backgroundColor: colors.TRANSPARENT,
-        borderStyle: 'solid',
-        borderLeftWidth: 9,
-        borderRightWidth: 9,
-        borderBottomWidth: 10,
-        borderLeftColor: colors.TRANSPARENT,
-        borderRightColor: colors.TRANSPARENT,
-        borderBottomColor: colors.YELLOW.secondary,
-        transform: [
-            { rotate: '180deg' }
-        ],
-        marginTop: -1, overflow: 'visible'
-    },
-    lineHorizontal: { 
-        height: height / 18, 
-        width: 1, 
-        backgroundColor: colors.BLACK, 
-        alignItems: 'center', 
-        marginTop: 10 
-    },
-    logoContainer: { 
+    logoContainer: {
         flex: 19,
-        alignItems: 'center', 
-        justifyContent: 'center' 
-    },
-    logoImage: { 
-        width: 80, 
-        height: 80 
+        alignItems: 'center',
+        justifyContent: 'center'
     },
     containerBottom: {
-        position: 'absolute',
         width: width,
-        height: height/2.3,
-        bottom: 0,
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
         backgroundColor: colors.WHITE,
-        elevation: 15,
-        borderTopRightRadius: 35,
-        borderTopLeftRadius: 35,
-        
+        elevation: 5,
+        flex: 1.3,
+        alignSelf: 'center',
     },
-    buttonText: { 
-        color: colors.WHITE, 
-        fontFamily: 'Roboto-Bold', 
-        fontSize: 17, 
-        //alignSelf: 'flex-end' 
+    viewBotao: {
+        paddingTop: 5
     },
-    buttonStyle: { 
-        backgroundColor: colors.GREY.secondary, 
-        elevation: 0 
-    },
-    cardInfo: {
-        position: 'absolute',
-        backgroundColor: colors.WHITE,
-        left: 30,
-        borderRadius: 15,
-        width: 130,
-        height: 170,
-        top: 20,
-        right: 50,
-        elevation: 6,
+    confirmButtonStyle: {
+        justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: colors.DEEPBLUE,
+        height: 50,
+        marginHorizontal: 30,
+        borderRadius: 30,
+        elevation: 5,
         shadowColor: '#000',
         shadowOpacity: 0.5,
         shadowOffset: { x: 0, y: 5 },
         shadowRadius: 15,
     },
-    estimatedTime: {
-        top: 2,
-        fontFamily: 'Inter-Bold',
-        opacity: 0.7,
-        left: 0, 
-        color: colors.WHITE
+    estimatedTimeBooking: {
+        paddingBottom: 10,
+        paddingTop: 10,
+        flexDirection: 'row',
+        marginHorizontal: 50,
+        justifyContent: 'space-between',
     },
-    timeBox:{
-        top: 80,   
+    containerTempo: {
+        justifyContent: 'center',
+    },
+    containerDinheiro: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'row',
+        right: 0,
+    },
+    bordaIconeDinheiro: {
+        width: 22,
+        height: 22,
+        backgroundColor: colors.GREEN.light,
+        opacity: 0.6,
+        borderRadius: 50,
+        left: 0,
+        justifyContent: 'center'
+    },
+    iconMetodoPagamento: {
+    },
+    textEstimatedTime: {
+        color: colors.GREY1,
+        fontFamily: 'Inter-Bold',
+        fontSize: 15,
+        left: 0
+    },
+    estimatedTimeNumber: {
+        fontSize: 16,
+        fontFamily: 'Inter-Bold',
+        color: colors.DEEPBLUE
+    },
+    metodoPagamento: {
+        fontFamily: 'Inter-Regular',
+        fontSize: 17,
+        color: colors.BLACK,
+        marginLeft: 0
+    },
+    cards: {
+        backgroundColor: colors.WHITE,
+        justifyContent: 'space-between',
+        flexDirection: 'row',
+        marginHorizontal: 50,
+    },
+    buttonText: {
+        color: colors.WHITE,
+        fontFamily: 'Roboto-Bold',
+        fontSize: 17,
+        //alignSelf: 'flex-end' 
+    },
+    buttonStyle: {
+        backgroundColor: colors.GREY.secondary,
+        elevation: 0
+    },
+    cardInfo: {
+        backgroundColor: colors.WHITE,
+        borderRadius: 15,
+        width: 130,
+        height: 150,
+        top: 6,
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
+        shadowOffset: { x: 0, y: 5 },
+        shadowRadius: 15,
+    },
+    touchCard1: {
+        alignItems: 'center',
+    },
+    touchCard2: {
+        alignItems: 'center',
+    },
+    cardInfo2: {
+        backgroundColor: colors.WHITE,
+        borderRadius: 15,
+        width: 130,
+        height: 150,
+        top: 6,
+        right: 0,
+        elevation: 4,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
+        shadowOffset: { x: 0, y: 5 },
+        shadowRadius: 15,
+    },
+    carEconomico: {
+        marginHorizontal: 20,
+        top: 0,
+        width: 80,
+        height: 60
+    },
+    estimatedTime: {
+        top: 0,
+        fontFamily: 'Inter-Bold',
+        opacity: 0.8,
+        left: 0,
+        color: colors.WHITE,
+    },
+    timeBox: {
+        top: 14,
         backgroundColor: colors.GREY1,
         width: 70,
         height: 25,
         borderRadius: 50,
+        alignSelf: 'center',
         alignItems: 'center',
-    },  
-    textTypeCar:{
-        top: 65,
-        fontSize: 17,
-        fontFamily: 'Inter-Light',
-    },  
-    price1: {
-        top: 65,
+        justifyContent: 'center'
+    },
+    textTypeCar: {
+        top: 0,
         fontSize: 13,
-        fontFamily: 'Inter-Bold', 
+        fontFamily: 'Inter-Regular',
+    },
+    price1: {
+        top: 0,
+        fontSize: 13,
+        fontFamily: 'Inter-Bold',
     },
     price2: {
         top: 40,
         fontSize: 19,
         fontFamily: 'Inter-Light',
     },
-    confirmButtonStyle: { 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        backgroundColor: colors.DEEPBLUE, 
-        height: 50,
-        position: 'absolute', 
-        bottom: 0,
-        top: (height/2.3)-80 ,
-        marginHorizontal: 0,
-        left: 20,
-        right: 20,
-        borderRadius: 15,
-        elevation: 5,  
-        shadowColor: '#000',
-        shadowOpacity: 0.5,
-        shadowOffset: { x: 0, y: 5 },
-        shadowRadius: 15,
-    },
 
-    modalContainer: { flex: 1, justifyContent: 'center', backgroundColor: colors.GREY.background, overflow: 'visible' },
-    modalImageConttainer: { alignItems: 'center', justifyContent: 'center', overflow: 'visible', position: 'relative', zIndex: 4, marginBottom: -40 },
-    modalImage: { width: 90, height: 90, },
-    modalInnerContainer: {
-        height: 400, width: (width - 85), backgroundColor: colors.WHITE, alignItems: 'center', alignSelf: 'center', borderRadius: 7, overflow: 'visible'
+    /////////////////
+    modalImage: {
+        width: 90,
+        height: 90,
     },
-    modalInner: { flex: 1, justifyContent: 'space-between', width: (width - 100), overflow: 'visible', },
-    fareTextContainer: { flex: 0.7, borderBottomWidth: 5, borderBottomColor: colors.WHITE },
-    fareText: { top: 40, color: colors.BLACK, fontFamily: 'Roboto-Bold', fontSize: 20, alignSelf: 'center' },
-    horizontalLine: { width: width - 120, height: 1, marginTop: 3, backgroundColor: colors.GREY.iconSecondary, alignSelf: 'center' },
-    upperContainer: { flex: 3, alignItems: 'center' },
-    fareDetailsContainer: { flex: 2, flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' },
-    fareDetails: { flex: 1.2, alignItems: 'flex-start', justifyContent: 'space-between', paddingLeft: 20, paddingTop: 20 },
-    fareTitleText: { flex: 1, fontFamily: 'Roboto-Bold', fontSize: 14, color: colors.BLACK },
-    verticalLine: { width: 0.8, height: 100, backgroundColor: colors.GREY.iconSecondary, marginLeft: 1 },
-    farePriceContainer: { flex: 1, alignItems: 'flex-end', justifyContent: 'space-between', paddingRight: 20, paddingTop: 20 },
-    farePriceText: { flex: 1, fontFamily: 'Roboto-Regular', fontSize: 16, fontWeight: '900', color: colors.BLACK },
-    discountPriceText: { flex: 1, fontFamily: 'Roboto-Regular', fontSize: 16, fontWeight: '900', color: colors.LIGHT_RED },
-    line: { width: width - 120, height: 1, backgroundColor: colors.GREY.iconSecondary, alignSelf: 'center', marginTop: 3 },
-    totalPriceContainer: { flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingRight: 20, paddingLeft: 20 },
-    totalPrice: { flex: 1.5, alignItems: 'flex-start' },
-    totalPriceText: { flex: 0.5, paddingTop: 10, fontFamily: 'Roboto-Bold', fontSize: 16, fontWeight: '900', color: colors.BLACK },
-    taxText: { flex: 1, marginTop: 0, fontFamily: 'Roboto-Regular', fontSize: 13, fontWeight: '900', color: colors.GREY.secondary },
-    totalPriceNumberContainer: { flex: 1, alignItems: 'flex-end', justifyContent: 'space-between' },
-    totalPriceNumber: { flex: 1, paddingTop: 10, fontFamily: 'Roboto-Bold', fontSize: 18, fontWeight: '900', color: colors.BLACK },
-    termsContainer: { flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingLeft: 10 },
-    termsText: { flex: 1, fontFamily: 'Roboto-Regular', fontSize: 12, color: colors.GREY.btnSecondary },
-    buttonContainer: { flex: 0.5, width: ((width - 85)), flexDirection: 'row', backgroundColor: colors.GREY.iconSecondary, alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
-    doneButtonStyle: { backgroundColor: colors.GREY.iconSecondary, borderRadius: 0, elevation: 0 },
+    modalInnerContainer: {
+        height: 400,
+        width: (width - 85),
+        backgroundColor: colors.WHITE,
+        alignItems: 'center',
+        alignSelf: 'center',
+        borderRadius: 7,
+        overflow: 'visible'
+    },
+    buttonContainer: {
+        flex: 0.5,
+        width: ((width - 85)),
+        flexDirection: 'row',
+        backgroundColor: colors.GREY.iconSecondary,
+        alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: 'center'
+    },
     signInTextStyle: {
         fontFamily: 'Roboto-Bold',
         fontWeight: "700",
@@ -889,14 +883,66 @@ const styles = StyleSheet.create({
     },
 
     //alert modal
-    alertModalContainer: { flex: 1, justifyContent: 'center', backgroundColor: colors.GREY.background },
-    alertModalInnerContainer: { height: 200, width: (width * 0.85), backgroundColor: colors.WHITE, alignItems: 'center', alignSelf: 'center', borderRadius: 7 },
-    alertContainer: { flex: 2, justifyContent: 'space-between', width: (width - 100) },
-    rideCancelText: { flex: 1, top: 15, color: colors.BLACK, fontFamily: 'Roboto-Bold', fontSize: 20, alignSelf: 'center' },
-    horizontalLLine: { width: (width - 110), height: 0.5, backgroundColor: colors.BLACK, alignSelf: 'center', },
-    msgContainer: { flex: 2.5, alignItems: 'center', justifyContent: 'center' },
-    cancelMsgText: { color: colors.BLACK, fontFamily: 'Roboto-Regular', fontSize: 15, alignSelf: 'center', textAlign: 'center' },
-    okButtonContainer: { flex: 1, width: (width * 0.85), flexDirection: 'row', backgroundColor: colors.GREY.iconSecondary, alignSelf: 'center' },
-    okButtonStyle: { flexDirection: 'row', backgroundColor: colors.GREY.iconSecondary, alignItems: 'center', justifyContent: 'center' },
-    okButtonContainerStyle: { flex: 1, width: (width * 0.85), backgroundColor: colors.GREY.iconSecondary, },
+    alertModalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        backgroundColor: colors.GREY.background
+    },
+    alertModalInnerContainer: {
+        height: 200,
+        width: (width * 0.85),
+        backgroundColor: colors.WHITE,
+        alignItems: 'center',
+        alignSelf: 'center',
+        borderRadius: 7
+    },
+    alertContainer: {
+        flex: 2,
+        justifyContent: 'space-between',
+        width: (width - 100)
+    },
+    rideCancelText: {
+        flex: 1,
+        top: 15,
+        color: colors.BLACK,
+        fontFamily: 'Roboto-Bold',
+        fontSize: 20,
+        alignSelf: 'center'
+    },
+    horizontalLLine: {
+        width: (width - 110),
+        height: 0.5,
+        backgroundColor: colors.BLACK,
+        alignSelf: 'center',
+    },
+    msgContainer: {
+        flex: 2.5,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    cancelMsgText: {
+        color: colors.BLACK,
+        fontFamily: 'Roboto-Regular',
+        fontSize: 15,
+        alignSelf: 'center',
+        textAlign: 'center'
+    },
+    okButtonContainer: {
+        flex: 1,
+        width: (width * 0.85),
+        flexDirection: 'row',
+        backgroundColor: colors.GREY.iconSecondary,
+        alignSelf: 'center'
+    },
+    okButtonStyle: {
+        flexDirection: 'row',
+        backgroundColor: colors.GREY.iconSecondary,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    okButtonContainerStyle: {
+        flex: 1,
+        width: (width * 0.85),
+        backgroundColor: colors.GREY.iconSecondary,
+    },
 });

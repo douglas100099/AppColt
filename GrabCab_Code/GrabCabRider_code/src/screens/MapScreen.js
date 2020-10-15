@@ -24,11 +24,9 @@ import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import Geocoder from 'react-native-geocoding';
 import distanceCalc from '../common/distanceCalc';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 export default class MapScreen extends React.Component {
     bonusAmmount = 0;
-    //   allCabs = '';
     constructor(props) {
         super(props);
         this._isMounted = false;
@@ -48,7 +46,6 @@ export default class MapScreen extends React.Component {
             whereText: languageJSON.map_screen_where_input_text,
             dropText: languageJSON.map_screen_drop_input_text,
             backgroundColor: colors.WHITE,
-            //carType: "",
             allRiders: [],
             passData: {
                 droplatitude: 0,
@@ -57,12 +54,10 @@ export default class MapScreen extends React.Component {
                 whereText: "",
                 wherelatitude: 0,
                 wherelongitude: 0,
-                //carType: '',
             },
             allCars: [],
             nearby: [],
             mainCarTypes: [],
-            //checkCallLocation: '',
             freeCars: [],
             settings: {
                 symbol: '',
@@ -70,27 +65,30 @@ export default class MapScreen extends React.Component {
                 cash: false,
                 wallet: false
             },
-            selected: 'drop',
+            selected: '',
+            updateFromText: true,
             geolocationFetchComplete: false,
-            checkPrepareDrivers: null,
         }
     }
 
     async UNSAFE_componentWillMount() {
+        console.log("O COMPONENTE WILLMOUNT")
+
         if (Platform.OS === 'android' && !Constants.default.isDevice) {
             this.setState({
-                errorMessage: 'Oops, this will not work on Sketch in an Android emulator. Try it on your device!',
+                errorMessage: 'Ops, isso não funciona com Sketch no emulador Android. Tente usar em seu dispositivo!'
             });
         } else {
             if (!this.props.navigation.state.params) {
-                this._getLocationAsync();
+
+                this.getLocationUser();
+                //this._getLocationAsync();
             }
         }
 
-        this.setState({ checkPrepareDrivers: true })
-
         let searchObj = await this.props.navigation.getParam('searchObj') ? this.props.navigation.getParam('searchObj') : null;
         let allCarsParam = await this.props.navigation.getParam('allCars') ? this.props.navigation.getParam('allCars') : null;
+
         var minTimeEco;
         var minTimeCon;
         if (allCarsParam != null) {
@@ -121,12 +119,14 @@ export default class MapScreen extends React.Component {
                         minTimeEco: minTimeEco,
                         minTimeCon: minTimeCon,
                         dropText: languageJSON.map_screen_drop_input_text,
+                        updateFromText: false
                     }, () => {
-                        this.getDrivers();
+                        this.getDrivers()
                     })
                 }
             } else if (searchObj.searchFrom == 'drop') {
                 if (searchObj.searchDetails) {
+
                     this.setState({
                         region: {
                             latitude: searchObj.searchDetails.geometry.location.lat,
@@ -142,11 +142,13 @@ export default class MapScreen extends React.Component {
                         minTimeEco: minTimeEco,
                         minTimeCon: minTimeCon,
                     }, () => {
-                        this.getDrivers();
+                        this.getDrivers()
                     })
+
                     this.allCarsData();
                     this.onPressModal();
-                    this.onPressBook()
+
+                    this.goToFareScreen()
                 }
             }
         }
@@ -154,17 +156,35 @@ export default class MapScreen extends React.Component {
         this.onPressModal();
     }
 
-    componentDidMount() {
-        this._isMounted = true;
-        this._retrieveSettings();
+    getLocationUser() {
+        var curuser = firebase.auth().currentUser.uid;
+        const userLocation = firebase.database().ref('users/' + curuser + '/location');
 
-        console.log("SETANDO INTERVALO")
-        this.setState({
-            intervalGetDrivers: setInterval(() => {
-                if (this.state.passData && this.state.passData.wherelatitude) {
-                    this.getDrivers();
+        userLocation.once('value', location => {
+            if (location.val()) {
+                let loc = location.val();
+                if (this.state.updateFromText) {
+                    this.setState({
+                        whereText: loc.add,
+                        region: {
+                            latitude: loc.lat,
+                            longitude: loc.lng,
+                            latitudeDelta: 0.0143,
+                            longitudeDelta: 0.0134,
+                        },
+                        geolocationFetchComplete: true
+                    }, () => {
+                        let obj = {}
+                        obj = this.state.passData;
+                        obj.wherelatitude = loc.lat
+                        obj.wherelongitude = loc.lng
+                        obj.whereText = loc.add;
+                        this.setState({
+                            passData: obj,
+                        })
+                    })
                 }
-            }, 10000)
+            }
         })
     }
 
@@ -185,182 +205,29 @@ export default class MapScreen extends React.Component {
         })
     }
 
-    _retrieveSettings = async () => {
-        try {
-            const value = await AsyncStorage.getItem('settings');
-            if (value !== null) {
-                this.setState({ settings: JSON.parse(value) }, () => {
-                    //console.log("Settings", this.state.settings);
-                });
-            }
-        } catch (error) {
-            //console.log("Asyncstorage issue 9");
-        }
-    };
+    componentDidMount() {
+        this._isMounted = true;
+        this._retrieveSettings();
 
-    componentWillUnmount() {
-        this._isMounted = false;
-        console.log(" DEU CLEAR ")
-        //clearInterval(this.state.intervalGetDrivers)
-    }
-
-    loading() {
-        return (
-            <Modal
-                animationType="fade"
-                transparent={true}
-                visible={this.state.loadingModal}
-                onRequestClose={() => {
-                    this.setState({ loadingModal: false })
-                }}
-            >
-                <View style={{ flex: 1, backgroundColor: "rgba(22,22,22,0.8)", justifyContent: 'center', alignItems: 'center' }}>
-                    <View style={{ width: '85%', backgroundColor: "#DBD7D9", borderRadius: 10, flex: 1, maxHeight: 70 }}>
-                        <View style={{ alignItems: 'center', flexDirection: 'row', flex: 1, justifyContent: "center" }}>
-                            <Image
-                                style={{ width: 80, height: 80, backgroundColor: colors.TRANSPARENT }}
-                                source={require('../../assets/images/loader.gif')}
-                            />
-                            <View style={{ flex: 1 }}>
-                                <Text style={{ color: "#000", fontSize: 16, }}>{languageJSON.driver_finding_alert}</Text>
-                            </View>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
-        )
-    }
-
-
-    _getLocationAsync = async () => {
-        let { status } = await Permissions.askAsync(Permissions.LOCATION);
-        if (status !== 'granted') {
-            alert("Para acessar sua localização, é necessária permissão!");
-        } else {
-            this.setState({ loadingModal: true });
-        }
-        let location = await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 2000, });
-        if (location) {
-            var pos = {
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-            };
-            var curuser = firebase.auth().currentUser.uid;
-
-            if (pos) {
-                if (this.state.passData.wherelatitude == 0) {
-
-                    let latlng = pos.latitude + ',' + pos.longitude;
-                    fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
-                        .then((response) => response.json())
-                        .then((responseJson) => {
-                            this.setState({
-                                whereText: responseJson.results[0].formatted_address,
-                                region: {
-                                    latitude: pos.latitude,
-                                    longitude: pos.longitude,
-                                    latitudeDelta: 0.0143,
-                                    longitudeDelta: 0.0134,
-                                    loadingModal: false
-                                },
-                                geolocationFetchComplete: true
-                            }, () => {
-                                let obj = {}
-                                obj = this.state.passData;
-                                obj.wherelatitude = pos.latitude
-                                obj.wherelongitude = pos.longitude
-                                obj.whereText = responseJson.results[0].formatted_address;
-                                this.setState({
-                                    passData: obj,
-                                    checkPrepareDrivers: true
-                                    //checkCallLocation: 'navigation',
-                                })
-                                this.getDrivers();
-                                firebase.database().ref('users/' + curuser + '/location').update({
-                                    add: responseJson.results[0].formatted_address,
-                                    lat: pos.latitude,
-                                    lng: pos.longitude
-                                })
-                            });
-                        })
-                        .catch((error) => {
-                            console.error(error);
-                        });
-                } else {
-
-                    let obj = {}
-                    obj = this.state.passData;
-                    obj.wherelatitude = pos.latitude
-                    obj.wherelongitude = pos.longitude
-                    obj.whereText = this.state.passData.whereText;
-                    this.setState({
-                        passData: obj,
-                        checkPrepareDrivers: true
-                        //checkCallLocation: 'navigation',
-                    })
+        console.log("O COMPONENTE DIDMOUNT")
+        this.intervalGetDrivers = setInterval(() => {
+            if (this._isMounted) {
+                this.getLocationUser();
+                if (this.state.passData && this.state.passData.wherelatitude) {
                     this.getDrivers();
-                    firebase.database().ref('users/' + curuser + '/location').update({
-                        lat: pos.latitude,
-                        lng: pos.longitude
-                    })
                 }
-
-
             }
-        }
+        }, 5000)
     }
 
-    //Go to confirm booking page
-    onPressBook() {
-        let driver_available = false;
-        if ((this.state.passData.whereText == "" || this.state.passData.wherelatitude == 0 || this.state.passData.wherelongitude == 0) && (this.state.passData.dropText == "" || this.state.passData.droplatitude == 0 || this.state.passData.droplongitude == 0)) {
-            alert(languageJSON.pickup_and_drop_location_blank_error)
-        } else {
-            if (this.state.passData.whereText == "" || this.state.passData.wherelatitude == 0 || this.state.passData.wherelongitude == 0) {
-                alert(languageJSON.pickup_location_blank_error)
-            } else if (this.state.passData.dropText == "" || this.state.passData.droplatitude == 0 || this.state.passData.droplongitude == 0) {
-                alert(languageJSON.drop_location_blank_error)
-            } else {
-                // this.setState({ checkPrepareDrivers: false })
-                driver_available = true;
-            }
-            if (driver_available) {
-                this.props.navigation.navigate('FareDetails', { data: this.state.passData, minTimeEconomico: this.state.minTimeEco, minTimeConfort: this.state.minTimeCon });
-            } else {
-                // alert(languageJSON.no_driver_found_alert_messege);
-            }
-        }
-    }
-
-    getDriverTime(startLoc, destLoc) {
-        console.log("GET DRIVERS TIME")
-        return new Promise(function (resolve, reject) {
-            fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=${startLoc}&destinations=${destLoc}&key=${google_map_key}`)
-                .then((response) => response.json())
-                .then((res) =>
-                    resolve({
-                        distance_in_meter: res.rows[0].elements[0].distance.value,
-                        time_in_secs: res.rows[0].elements[0].duration.value,
-                        timein_text: res.rows[0].elements[0].duration.text
-                    })
-                )
-                .catch(error => {
-                    reject(error);
-                });
-        });
-    }
-
-
-    async getDrivers() {
+    getDrivers() {
         const userData = firebase.database().ref('users/');
 
         userData.once('value', userData => {
             if (userData.val()) {
                 let allUsers = userData.val();
-                //(allUsers);
-                if (this.state.checkPrepareDrivers) {
-                    this.prepareDrivers(allUsers);
-                }
+
+                this.prepareDrivers(allUsers);
             }
         })
     }
@@ -424,6 +291,84 @@ export default class MapScreen extends React.Component {
             loadingModal: false,
             nearby: availableDrivers,
             freeCars: freeCars,
+        });
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.intervalGetDrivers)
+        this._isMounted = false;
+        console.log(" -------DESMONTOU-------- ")
+    }
+
+    loading() {
+        return (
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={this.state.loadingModal}
+                onRequestClose={() => {
+                    this.setState({ loadingModal: false })
+                }}
+            >
+                <View style={{ flex: 1, backgroundColor: "rgba(22,22,22,0.8)", justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ width: '85%', backgroundColor: "#DBD7D9", borderRadius: 10, flex: 1, maxHeight: 70 }}>
+                        <View style={{ alignItems: 'center', flexDirection: 'row', flex: 1, justifyContent: "center" }}>
+                            <Image
+                                style={{ width: 80, height: 80, backgroundColor: colors.TRANSPARENT }}
+                                source={require('../../assets/images/loader.gif')}
+                            />
+                            <View style={{ flex: 1 }}>
+                                <Text style={{ color: "#000", fontSize: 16, }}>Carregando sua localização, aguarde...</Text>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+        )
+    }
+
+    _retrieveSettings = async () => {
+        try {
+            const value = await AsyncStorage.getItem('settings');
+            if (value !== null) {
+                this.setState({ settings: JSON.parse(value) }, () => {
+                });
+            }
+        } catch (error) {
+            //console.log("Asyncstorage issue 9");
+        }
+    };
+
+    //Vai pra pagina de confirmaçao
+    goToFareScreen() {
+        if ((this.state.passData.whereText == "" || this.state.passData.wherelatitude == 0 || this.state.passData.wherelongitude == 0) && (this.state.passData.dropText == "" || this.state.passData.droplatitude == 0 || this.state.passData.droplongitude == 0)) {
+            alert(languageJSON.pickup_and_drop_location_blank_error)
+        } else {
+            if (this.state.passData.whereText == "" || this.state.passData.wherelatitude == 0 || this.state.passData.wherelongitude == 0) {
+                alert(languageJSON.pickup_location_blank_error)
+            } else if (this.state.passData.dropText == "" || this.state.passData.droplatitude == 0 || this.state.passData.droplongitude == 0) {
+                alert(languageJSON.drop_location_blank_error)
+            } else {
+                this.props.navigation.replace('FareDetails', { data: this.state.passData, minTimeEconomico: this.state.minTimeEco, minTimeConfort: this.state.minTimeCon });
+            }
+        }
+    }
+
+    getDriverTime(startLoc, destLoc) {
+        console.log("GET DRIVERS TIME")
+        return new Promise(function (resolve, reject) {
+            fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=${startLoc}&destinations=${destLoc}&key=${google_map_key}`)
+                .then((response) => response.json())
+                .then((res) =>
+                    resolve({
+                        distance_in_meter: res.rows[0].elements[0].distance.value,
+                        time_in_secs: res.rows[0].elements[0].duration.value,
+                        timein_text: res.rows[0].elements[0].duration.text
+                    })
+                )
+                .catch(error => {
+                    reject(error);
+                });
         });
     }
 
@@ -522,61 +467,14 @@ export default class MapScreen extends React.Component {
     }
 
     tapAddress = (selection) => {
-        //this.setState({ checkPrepareDrivers: false })
         if (selection == 'drop') {
-            this.props.navigation.navigate('Search', { from: "drop", whereText: this.state.whereText, dropText: this.state.dropText, old: this.state.passData, allCars: this.state.allCars ? this.state.allCars : null });
+            this.props.navigation.navigate('Search', { from: "drop", locationUser: this.state.region, whereText: this.state.whereText, dropText: this.state.dropText, old: this.state.passData, allCars: this.state.allCars ? this.state.allCars : null });
         } else if (selection == 'pickup') {
             this.setState({ selected: "pickup" })
-            this.props.navigation.navigate('Search', { from: "where", whereText: this.state.whereText, dropText: this.state.dropText, old: this.state.passData, allCars: this.state.allCars ? this.state.allCars : null });
+            this.props.navigation.navigate('Search', { from: "where", locationUser: this.state.region, whereText: this.state.whereText, dropText: this.state.dropText, old: this.state.passData, allCars: this.state.allCars ? this.state.allCars : null });
         }
     };
 
-    /*onRegionChangeComplete = (region) => {
-        Geocoder.from({
-            latitude: region.latitude,
-            longitude: region.longitude
-        }).then(json => {
-            var addressComponent = json.results[0].formatted_address;
-            if (this.state.selected == 'pickup') {
-                this.setState({
-                    region: region,
-                    whereText: addressComponent,
-                    passData: {
-                        droplatitude: this.state.passData.droplatitude,
-                        droplongitude: this.state.passData.droplongitude,
-                        droptext: this.state.passData.droptext,
-                        whereText: addressComponent,
-                        wherelatitude: region.latitude,
-                        wherelongitude: region.longitude,
-                        carType: this.state.passData.carType,
-                        carImage: this.state.passData.carImage
-                    },
-                    carType: this.state.carType,
-                    checkCallLocation: 'moveMarker',
-                    geolocationFetchComplete: true
-                });
-            } else {
-                this.setState({
-                    region: region,
-                    dropText: addressComponent,
-                    passData: {
-                        droplatitude: region.latitude,
-                        droplongitude: region.longitude,
-                        droptext: addressComponent,
-                        whereText: this.state.passData.whereText,
-                        wherelatitude: this.state.passData.wherelatitude,
-                        wherelongitude: this.state.passData.wherelongitude,
-                        carType: this.state.passData.carType,
-                        carImage: this.state.passData.carImage
-                    },
-                    carType: this.state.carType,
-                    checkCallLocation: 'moveMarker',
-                    geolocationFetchComplete: true
-                });
-            }
-        })
-            .catch(error => console.warn(error));
-    }*/
 
     render() {
         return (
@@ -592,7 +490,25 @@ export default class MapScreen extends React.Component {
                             initialRegion={this.state.region}
                             pickup={this.state.selected == 'pickup' ? this.state.region : null}
                         />
-                        : null}
+                        :
+                        <Modal
+                            animationType="fade"
+                            transparent={true}
+                            visible={true}
+                        >
+                            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.WHITE }}>
+
+                                <Image
+                                    style={{ width: 150, height: 150, backgroundColor: colors.TRANSPARENT }}
+                                    source={require('../../assets/images/loading.gif')}
+                                />
+                                <View style={styles.viewTextLoading}>
+                                    <Text style={styles.textLoading}>Carregando sua localização, aguarde...</Text>
+                                </View>
+                            </View>
+                        </Modal>
+
+                    }
                     {/* ICONE MENU */}
                     <View style={styles.bordaIconeMenu}>
                         <TouchableOpacity onPress={() => { this.props.navigation.toggleDrawer() }}>
@@ -604,6 +520,7 @@ export default class MapScreen extends React.Component {
                             />
                         </TouchableOpacity>
                     </View>
+                    {this.state.geolocationFetchComplete ? 
                     <View style={styles.viewStyleTop}>
 
                         <View style={styles.inputPickup}>
@@ -635,6 +552,7 @@ export default class MapScreen extends React.Component {
                         </View>
 
                     </View>
+                    : null}
                 </View>
 
                 {
@@ -655,6 +573,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         position: 'absolute'
+    },
+    textLoading:{
+        fontFamily: 'Inter-Bold',
+        fontSize: 18,
+        fontWeight: "600",
     },
     map: {
         flex: 1,
@@ -688,7 +611,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowOffset: { x: 0, y: 0 },
         shadowRadius: 15,
-        height: 70,
+        height: 60,
         justifyContent: 'center',
         borderColor: colors.GREY.primary
     },
@@ -702,7 +625,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 12,
         width: width,
         bottom: 0,
-        marginBottom: 30
+        marginBottom: 40
     },
     bordaIconeMenu2: {
         width: 37,
@@ -724,8 +647,8 @@ const styles = StyleSheet.create({
     bordaIconeMenu: {
         width: 37,
         height: 37,
-        left: 15,
-        top: 40,
+        left: 20,
+        top: 55,
         position: 'absolute',
         alignItems: 'center',
         alignSelf: 'center',
@@ -797,15 +720,6 @@ const styles = StyleSheet.create({
         marginTop: 10,
         marginBottom: 10
     },
-    compViewStyle: {
-        flex: 1,
-        bottom: 0,
-        width: width,
-        height: height / 3,
-        position: 'absolute',
-        alignItems: 'center',
-        backgroundColor: colors.WHITE
-    },
     buttonContainer: {
         flex: 1
     },
@@ -815,20 +729,6 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter-Medium',
         fontSize: 20,
         alignSelf: 'flex-end'
-    },
-    btnChamar: {
-        position: 'absolute',
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: colors.DEEPBLUE,
-        height: 50,
-        bottom: 50,
-        marginHorizontal: 0,
-        left: 20,
-        right: 20,
-        borderRadius: 15,
-        elevation: 5,
     },
     cancelButtonStyle: {
         backgroundColor: "#edede8",

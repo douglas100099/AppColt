@@ -6,15 +6,7 @@ import Constants from 'expo-constants';
 import * as firebase from 'firebase';
 import * as Notifications from 'expo-notifications';
 import * as Updates from 'expo-updates';
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  View,
-  ImageBackground,
-  Dimensions
-} from "react-native";
-import languageJSON from './src/common/language';
+
 
 var firebaseConfig = Constants.manifest.extra.firebaseConfig;
 !firebase.apps.length ? firebase.initializeApp(firebaseConfig) : firebase.app();
@@ -28,11 +20,6 @@ Notifications.setNotificationHandler({
 });
 
 export default class App extends React.Component {
-
-  state = {
-    assetsLoaded: false,
-    updateMsg: ''
-  };
 
   constructor() {
     super();
@@ -67,75 +54,11 @@ export default class App extends React.Component {
 
   async componentDidMount() {
     await this._loadResourcesAsync();
-    /*
-    if (__DEV__) {
-      this.setState({ updateMsg: languageJSON.loading_assets });
-      this._loadResourcesAsync().then(() => {
-        console.log("OK");
-        this.setState({ assetsLoaded: true });
-      });
-    } else {
-      try {
-        this.setState({ updateMsg: languageJSON.checking_updates })
-        const update = await Updates.checkForUpdateAsync();
-        if (update.isAvailable) {
-          this.setState({ updateMsg: languageJSON.downloading_updates })
-          await Updates.fetchUpdateAsync();
-          await Updates.reloadAsync();
-        } else {
-          this.setState({ updateMsg: languageJSON.loading_assets });
-          this._loadResourcesAsync().then(() => {
-            this.setState({ assetsLoaded: true });
-          });
-        }
-      } catch (e) {
-        console.log(e);
-      }
-    }
-    */
   }
 
-  render(){
-    return(
+  render() {
+    return (
       <AppContainer />
     )
   }
-
-  /*
-  render() {
-    return (
-      this.state.assetsLoaded ?
-        <AppContainer />
-        :
-        <View style={styles.container}>
-          <ImageBackground
-            source={require("./assets/images/splash.png")}
-            resizeMode="stretch"
-            style={styles.imagebg}
-          >
-            <ActivityIndicator />
-            {/*<Text style={{ paddingBottom: 100 }}>{this.state.updateMsg}</Text>
-          </ImageBackground>
-        </View>
-    );
-  }
-}*/
-
-/*
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: 'center'
-  },
-  imagebg: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
-    justifyContent: "flex-end",
-    alignItems: 'center'
-  }
-});
-*/}
+}

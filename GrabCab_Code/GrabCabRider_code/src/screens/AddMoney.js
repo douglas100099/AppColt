@@ -71,7 +71,7 @@ export default class AddMoneyScreen extends React.Component {
         var time = d.getTime();
         let payData = {
             email: this.state.allData.email,
-            amount: this.state.amount,
+            amount: this.state.amount, 
             order_id: time.toString(),
             name: languageJSON.add_money,
             description: languageJSON.wallet_ballance,

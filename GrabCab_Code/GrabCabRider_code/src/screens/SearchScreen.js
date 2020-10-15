@@ -1,26 +1,39 @@
 import React, { Component } from 'react';
-import { Platform, StatusBar, Dimensions, StyleSheet, Button, View, Text } from 'react-native';
+import { Platform, StatusBar, Dimensions, StyleSheet, Button, View, Text, TouchableOpacity } from 'react-native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { colors } from '../common/theme';
 import { google_map_key } from '../common/key';
 import { Icon } from 'react-native-elements';
 import { color } from 'react-native-reanimated';
+import { NavigationActions, StackActions } from 'react-navigation';
 var { height, width } = Dimensions.get('window');
+
+const homePlace = {
+    description: 'Home',
+    geometry: { location: { lat: 48.8152937, lng: 2.4597668 } },
+};
+
+const workPlace = {
+    description: 'Work',
+    geometry: { location: { lat: 48.8496818, lng: 2.2940881 } },
+};
 
 export default class SearchScreen extends Component {
     state = {
         searchFocused: false,
     }
 
+
     UNSAFE_componentWillMount() {
         let from = this.props.navigation.getParam('from');
         let whereText = this.props.navigation.getParam('whereText');
         let dropText = this.props.navigation.getParam('dropText');
+        let locationUser = this.props.navigation.getParam('locationUser');
 
         let allCars = this.props.navigation.getParam('allCars');
 
-
         this.setState({
+            locationUser: locationUser,
             allCars: allCars,
             from: from,
             whereText: whereText,
@@ -43,7 +56,17 @@ export default class SearchScreen extends Component {
                 oldData.wherelongitude = details.geometry.location.lng,
                 oldData.whereText = details.formatted_address
 
-            this.props.navigation.replace('Map', { searchObj: searchObj, old: oldData, allCars: this.state.allCars });
+            this.props
+                .navigation
+                .dispatch(StackActions.reset({
+                    index: 0,
+                    actions: [
+                        NavigationActions.navigate({
+                            routeName: 'Map',
+                            params: { searchObj: searchObj, old: oldData, allCars: this.state.allCars },
+                        }),
+                    ],
+                }))
         }
         else if (from == 'drop') {
             let searchObj = {
@@ -51,6 +74,7 @@ export default class SearchScreen extends Component {
                 searchDetails: details,
                 searchFrom: from,
                 whereText: this.state.whereText,
+
                 dropText: details.formatted_address
             }
 
@@ -59,10 +83,37 @@ export default class SearchScreen extends Component {
                 oldData.droplongitude = details.geometry.location.lng,
                 oldData.droptext = details.formatted_address
 
-            this.props.navigation.replace('Map', { searchObj: searchObj, old: oldData, allCars: this.state.allCars  });
+            var minTimeEco
+            var minTimeCon
+            if (this.state.allCars != null) {
+                for (key in this.state.allCars) {
+                    if (key == 0) {
+                        minTimeEco = this.state.allCars[key].minTime != '' ? this.state.allCars[key].minTime : null
+                    } else if (key == 1) {
+                        minTimeCon = this.state.allCars[key].minTime != '' ? this.state.allCars[key].minTime : null
+                    }
+                }
+            }
+
+            this.props
+                .navigation
+                .dispatch(StackActions.reset({
+                    index: 0,
+                    actions: [
+                        NavigationActions.navigate({
+                            routeName: 'FareDetails',
+                            params: { data: oldData, minTimeEconomico: minTimeEco, minTimeConfort: minTimeCon },
+                        }),
+                    ],
+                }))
+
+            //this.props.navigation.replace('FareDetails', { data: oldData, minTimeEconomico: minTimeEco, minTimeConfort: minTimeCon });
+            //this.props.navigation.navigate('Map', { searchObj: searchObj, old: oldData, allCars: this.state.allCars, checkDrivers: false  });
         }
 
+
     }
+
     render() {
         const { searchFocused } = this.state;
         const { onLocationSelected } = this.props;
@@ -93,9 +144,15 @@ export default class SearchScreen extends Component {
                     // available options: https://developers.google.com/places/web-service/autocomplete
                     key: google_map_key,
                     language: 'pt-BR', // language of the results
-                    //types: '(cities)',
+                    types: ['(regions)'],
                     components: "country:br", // country name
+                    radius: 30000,
+                    //sessiontoken: ,
+                    location: '"' + this.state.locationUser.latitude + ',' + this.state.locationUser.longitude + '"',
+                    //strictbounds: true,
                 }}
+                predefinedPlaces={[homePlace, workPlace]} 
+                predefinedPlacesAlwaysVisible = {false}
 
                 styles={{
                     container: {
@@ -159,7 +216,7 @@ export default class SearchScreen extends Component {
                     },
                 }}
                 renderDescription={(row) => row.description || row.formatted_address || row.name}
-                currentLocation={true} // Will add a 'Current location' button at the top of the predefined places list
+                //currentLocation={true} // Will add a 'Current location' button at the top of the predefined places list
                 currentLocationLabel="Localização atual"
                 nearbyPlacesAPI='GoogleReverseGeocoding' // Which API to use: GoogleReverseGeocoding or GooglePlacesSearch
                 GoogleReverseGeocodingQuery={{
@@ -170,19 +227,19 @@ export default class SearchScreen extends Component {
                 GooglePlacesSearchQuery={{
                     // available options for GooglePlacesSearch API : https://developers.google.com/places/web-service/search
                     rankby: 'distance',
-                    types: 'establishment'
+                    types: 'establishment',
                 }}
 
                 debounce={200} // debounce the requests in ms. Set to 0 to remove debounce. By default 0ms.
             >
-                <Icon
-                    name='chevron-left'
-                    type='MaterialIcons'
-                    color={colors.BLACK}
-                    size={35}
-                    onPress={() => { this.props.navigation.goBack(); }}
-                    containerStyle={styles.iconBack}
-                />
+                <TouchableOpacity style={styles.iconBack} onPress={() => { this.props.navigation.goBack(); }}>
+                    <Icon
+                        name='chevron-left'
+                        type='MaterialIcons'
+                        color={colors.BLACK}
+                        size={40}
+                    />
+                </TouchableOpacity>
                 <View style={styles.containerHeader}>
                     {this.state.from == 'where' ?
                         <Icon

@@ -8,7 +8,7 @@ import {
     KeyboardAvoidingView,
     Alert,
     TextInput,
-    Image
+    Image, TouchableWithoutFeedbackBase, TouchableHighlightBase
 } from "react-native";
 import MaterialButtonDark from "../components/MaterialButtonDark";
 import * as firebase from 'firebase'

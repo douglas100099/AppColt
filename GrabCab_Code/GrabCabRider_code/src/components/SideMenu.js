@@ -31,7 +31,6 @@ export default class SideMenu extends React.Component {
                 wallet: false
             }
         }
-
     }
 
     _retrieveSettings = async () => {
@@ -57,7 +56,6 @@ export default class SideMenu extends React.Component {
         })
         this.tripSatusCheck();
         this._retrieveSettings();
-
     }
 
     //check for device height(specially iPhone 6)
@@ -94,7 +92,6 @@ export default class SideMenu extends React.Component {
                     if (data['my-booking']) {
                         let bookingData = userData.val()['my-booking']
                         for (key in bookingData) {
-
                             bookingData[key].bookingKey = key
                             if (bookingData[key].payment_status) {
                                 if (bookingData[key].payment_status == "WAITING" && bookingData[key].status == 'END' && bookingData[key].skip != true && bookingData[key].paymentstart != true) {
@@ -105,16 +102,12 @@ export default class SideMenu extends React.Component {
                                     this.props.navigation.navigate('CardDetails', { data: bookingData[key] });
                                 }
                             }
-
                         }
                     }
                 }
             })
         })
     }
-
-
-
 
     render() {
         return (

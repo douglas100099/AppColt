@@ -8,10 +8,7 @@ import {
     Text,
     Platform,
     Modal,
-    TouchableWithoutFeedback,
     Linking,
-    Alert,
-    AsyncStorage
 } from 'react-native';
 import { Icon, Button, Header } from 'react-native-elements';
 import Polyline from '@mapbox/polyline';
@@ -21,11 +18,13 @@ import RadioForm from 'react-native-simple-radio-button';
 import { colors } from '../common/theme';
 import * as firebase from 'firebase';
 var { width, height } = Dimensions.get('window');
+var smallDevice = width < 375;
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import distanceCalc from '../common/distanceCalc';
 import { TrackNow } from '../components';
+import { color } from 'react-native-reanimated';
 
 export default class BookedCabScreen extends React.Component {
     getParamData;
@@ -36,9 +35,7 @@ export default class BookedCabScreen extends React.Component {
             starCount: 5,
             modalVisible: false,
             alertModalVisible: false,
-            coords: [
-
-            ],
+            coords: [],
             radio_props: [],
             value: 0,
             driverSerach: true,
@@ -56,48 +53,51 @@ export default class BookedCabScreen extends React.Component {
         let bookingResponse = firebase.database().ref(`users/` + curuser.uid + '/my-booking/' + this.getParamData.bokkingId);
         bookingResponse.on('value', currUserBookings => {
             if (currUserBookings.val()) {
+                let currUserBooking = currUserBookings.val()
+
                 let region = {
-                    wherelatitude: currUserBookings.val().pickup.lat,
-                    wherelongitude: currUserBookings.val().pickup.lng,
-                    droplatitude: currUserBookings.val().drop.lat,
-                    droplongitude: currUserBookings.val().drop.lng,
-                    whereText: currUserBookings.val().pickup.add,
-                    droptext: currUserBookings.val().drop.add
+                    wherelatitude: currUserBooking.pickup.lat,
+                    wherelongitude: currUserBooking.pickup.lng,
+                    droplatitude: currUserBooking.drop.lat,
+                    droplongitude: currUserBooking.drop.lng,
+                    whereText: currUserBooking.pickup.add,
+                    droptext: currUserBooking.drop.add
                 }
                 this.setState({
                     coords: this.getParamData.coords,
                     region: region,
-                    distance: currUserBookings.val().estimateDistance,
+                    distance: currUserBooking.estimateDistance,
                     estimateFare: this.getParamData.estimate,
                     estimateTime: 0,
                     currentBookingId: this.getParamData.bokkingId,
                     currentUser: curuser,
-                    bookingStatus: currUserBookings.val().status,
-                    carType: currUserBookings.val().carType,
-                    driverUID: currUserBookings.val().driver,
-                    driverName: currUserBookings.val().driver_name,
-                    driverPic: currUserBookings.val().driver_image,
-                    carImage: currUserBookings.val().carImage,
-                    driverContact: currUserBookings.val().driver_contact,
-                    carModel: currUserBookings.val().vehicleModelName,
-                    carNo: currUserBookings.val().vehicle_number,
-                    starCount: currUserBookings.val().driverRating,
-                    otp: currUserBookings.val().otp
+                    bookingStatus: currUserBooking.status,
+                    carType: currUserBooking.carType,
+                    driverUID: currUserBooking.driver,
+                    driverName: currUserBooking.driver_name,
+                    driverPic: currUserBooking.driver_image,
+                    carImage: currUserBooking.carImage,
+                    driverContact: currUserBooking.driver_contact,
+                    carModel: currUserBooking.vehicleModelName,
+                    carNo: currUserBooking.vehicle_number,
+                    starCount: currUserBooking.driverRating,
+                    otp: currUserBooking.otp,
+
+                    imageRider: currUserBooking.imageRider ? currUserBooking.imageRider : null,
                 }, () => {
                     this.getCancelReasons();
-                    this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
+                    //this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
                 })
 
-                // Checking for booking status
-                if (currUserBookings.val().status == "ACCEPTED") {
+                //Checando o status da corrida 
+                if (currUserBooking.status == "ACCEPTED") {
                     this.setState({
-                        bookingStatus: currUserBookings.val().status,
+                        bookingStatus: currUserBooking.status,
                         driverSerach: false
                     })
-                } else if (currUserBookings.val().status == "START") {
-                    this.props.navigation.navigate('trackRide', { data: currUserBookings.val(), bId: this.getParamData.bokkingId });
-                } else if (currUserBookings.val().status == "REJECTED") {
-                    console.log("REJECTED")
+                } else if (currUserBooking.status == "START") {
+                    this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId });
+                } else if (currUserBooking.status == "REJECTED") {
                     this.recalcularMotorista(this.getParamData.bokkingId);
                 }
             }
@@ -136,30 +136,22 @@ export default class BookedCabScreen extends React.Component {
             if (driverData.val()) {
                 var allUsers = driverData.val();
                 for (key in allUsers) {
-                    console.log(key + "-> ENTROU NO  FOR")
-                    console.log(driverUidnovo + "-> DRIVER UID NOVO")
-                    //Check if driver was rejected the booking
+
+                    //Verifica se o motorista rejeitou a corrida
                     if (this.verificarRejected(key, param) == true) {
-                        console.log("------------------")
-                        console.log(allUsers[key].usertype == 'driver')
-                        console.log(allUsers[key].approved == true)
-                        console.log(allUsers[key].queue == false)
-                        console.log(allUsers[key].driverActiveStatus == true)
 
                         if (allUsers[key].usertype == 'driver' && allUsers[key].approved == true && allUsers[key].queue == false && allUsers[key].driverActiveStatus == true) {
                             if (allUsers[key].location) {
-                                console.log(allUsers[key].location)
                                 var location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];    //Rider Lat and Lang
                                 var location2 = [allUsers[key].location.lat, allUsers[key].location.lng];   //Driver lat and lang
-                                //calculate the distance of two locations
+
+                                //Calcula a distancia entre dois pontos
                                 var distance = distanceCalc(location1, location2);
                                 var originalDistance = (distance);
-                                if (originalDistance <= 5) { // Request will be send if distance less than 10 km 
-                                    console.log(originalDistance <= 5)
+                                if (originalDistance <= 5) { //5KM
+
                                     if (allUsers[key].carType == this.state.carType) {
-                                        console.log(allUsers[key].carType == this.state.carType)
                                         //Salva sempre o mais proximo
-                                        console.log(distance + ' < ' + distanciaValue)
                                         if (distance < distanciaValue) {
                                             distanciaValue = distance;
                                             driverUidnovo = key;
@@ -171,7 +163,6 @@ export default class BookedCabScreen extends React.Component {
                     }
                 }
 
-                console.log(driverUidnovo + "-> SETANDO DRIVER UID NOVO")
                 arr.push(driverUidnovo);
                 this.getBookingData(param)
 
@@ -185,14 +176,12 @@ export default class BookedCabScreen extends React.Component {
                     this.sendPushNotification(driverUidnovo, param, languageJSON.new_booking_request_push_notification)
 
                     if (arr.length > 0) {
-                        // set all requested drivers data to main booking node
+                        //Atualiza o Bookings do firebase com os dados do motorista selecionado
                         firebase.database().ref('bookings/' + param + '/').update({
                             requestedDriver: arr
                         }).then((res) => {
                             this.setState({ bookingDataState: bookingData })
                         })
-                    } else {
-                        alert(languageJSON.driver_not_found);
                     }
                 }, 500)
 
@@ -202,7 +191,6 @@ export default class BookedCabScreen extends React.Component {
 
     getBookingData(param) {
         const ref = firebase.database().ref('bookings/' + param + '/');
-        console.log("ENTROU NO PEGAR DATA ")
         ref.on('value', snapshot => {
             this.setState({
                 bookingdataDetails: snapshot.val()
@@ -221,8 +209,9 @@ export default class BookedCabScreen extends React.Component {
         })
     }
 
-    // find your origin and destination point coordinates and pass it to our method.
-    async getDirections(startLoc, destinationLoc) {
+    //Encontra seu ponto de origem e destinoo e passa pro metodo 
+    /*/async getDirections(startLoc, destinationLoc) {
+        console.log("GET DIRECTIONS USANDO")
         try {
             let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=${google_map_key}`)
             let respJson = await resp.json();
@@ -247,73 +236,87 @@ export default class BookedCabScreen extends React.Component {
             alert(error)
             return error
         }
-    }
+    }*/
+
     //Cancel button press
-    onPressCancel(param) {
+    onPressCancel() {
         this.setState({
             modalVisible: true,
-            driverSerach: false
         });
     }
+
     dissMissCancel() {
-        if (this.state.bookingStatus == "NEW") {
-            this.setState({ modalVisible: false, driverSerach: true })
-        } else {
-            this.setState({ modalVisible: false })
-        }
+        this.setState({ modalVisible: false })
     }
 
-    //cancel modal ok button press
-    onCancelConfirm() {
-        this.setState({ modalVisible: false }, () => {
-            setTimeout(() => {
-                // update status for rider booking node
-                firebase.database().ref(`/users/` + this.state.currentUser.uid + '/my-booking/' + this.state.currentBookingId + '/').remove()
-                .then(() => {
-                    //remove booking request from requested driver
-                    const requestedDriver = firebase.database().ref('bookings/' + this.state.currentBookingId + '/requestedDriver');
-                    requestedDriver.once('value', drivers => {
-                        if (drivers.val()) {
-                            let requetedDrivers = drivers.val();
-                            let count = 0;
-                            for (i = 0; i < requetedDrivers.length; i++) {
-                                firebase.database().ref(`/users/` + requetedDrivers[i] + '/waiting_riders_list/' + this.state.currentBookingId + '/').remove();
+    //Cancelar corrida antes do motorista ter aceito
+    onCancellSearchBooking() {
+
+        //Remove a corrida do perfil do passageiro
+        firebase.database().ref(`/users/` + this.state.currentUser.uid + '/my-booking/' + this.state.currentBookingId + '/').remove()
+            .then(() => {
+                //Remove booking request do requested drivers no firebase
+                const requestedDriver = firebase.database().ref('bookings/' + this.state.currentBookingId + '/requestedDriver');
+                requestedDriver.once('value', drivers => {
+                    if (drivers.val()) {
+                        let requetedDrivers = drivers.val();
+                        let count = 0;
+                        if (requetedDrivers) {
+                            for (let i = 0; i < requetedDrivers.length; i++) {
+                                var ref = firebase.database().ref(`/users/` + requetedDrivers[i] + '/waiting_riders_list/' + this.state.currentBookingId + '/')
+                                if (ref) {
+                                    ref.remove();
+                                }
                                 count = count + 1;
                             }
                             if (count == requetedDrivers.length) {
                                 firebase.database().ref('bookings/' + this.state.currentBookingId + '/requestedDriver/').remove();
                             }
                         }
-                    })
-                    // update status for main booking node
-                    firebase.database().ref(`bookings/` + this.state.currentBookingId + '/').update({
-                        status: 'CANCELLED',
-                        reason: this.state.radio_props[this.state.value].label
-                    }).then(() => {
-                        // It will work if driver accept the rides
-                        firebase.database().ref(`/users/` + this.state.driverUID + '/my_bookings/' + this.state.currentBookingId + '/').on('value', curbookingData => {
-                            if (curbookingData.val()) {
-                                if (curbookingData.val().status == 'ACCEPTED') {
-                                    firebase.database().ref(`/users/` + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
-                                        status: 'CANCELLED',
-                                        reason: this.state.radio_props[this.state.value].label
-                                    }).then(() => {
-                                        firebase.database().ref(`/users/` + this.state.driverUID + '/').update({ queue: false })
-                                        this.setState({ alertModalVisible: true });
-                                        this.sendPushNotification(curbookingData.val().driver, this.state.currentBookingId, this.state.driverName + ' has cancelled the current booking')
-                                    })
-                                }
-                            } else {
-                                this.setState({ alertModalVisible: true });
-                            }
-                        })
-                    })
+                    }
                 })
-            }, 500);
+            })
+        //Atualiza o status da corrida em "bookings" no firebase
+        firebase.database().ref(`bookings/` + this.state.currentBookingId + '/').update({
+            status: 'CANCELLED',
         })
+            .then(() => {
+                this.setState({ driverSerach: false }, () => { setTimeout(() => { this.props.navigation.replace('Map') }, 400) })
+            })
     }
 
-    //call driver button press
+    onCancelConfirm() {
+        //Atualiza o status da corrida em "bookings" no firebase
+        firebase.database().ref(`bookings/` + this.state.currentBookingId + '/').update({
+            status: 'CANCELLED',
+        })
+        firebase.database().ref(`/users/` + this.state.currentUser.uid + '/my-booking/' + this.state.currentBookingId + '/').update({
+            status: 'CANCELLED',
+            reason: this.state.radio_props[this.state.value].label
+        })
+            .then(() => {
+                //Essa parte serve pra caso o motorista ter aceito a corrida e o passageiro cancelar em seguida
+                firebase.database().ref(`/users/` + this.state.driverUID + '/my_bookings/' + this.state.currentBookingId + '/').on('value', curbookingData => {
+                    if (curbookingData.val()) {
+                        if (curbookingData.val().status == 'ACCEPTED') {
+                            this.setState({ modalVisible: false })
+                            firebase.database().ref(`/users/` + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
+                                status: 'CANCELLED',
+                                reason: this.state.radio_props[this.state.value].label
+                            })
+                                .then(() => {
+                                    firebase.database().ref(`/users/` + this.state.driverUID + '/').update({ queue: false })
+                                    this.setState({ alertModalVisible: true });
+                                    this.sendPushNotification(curbookingData.val().driver, this.state.currentBookingId, this.state.driverName + ' cancelou a corrida atual!')
+                                })
+                        }
+                    }
+                })
+            })
+
+    }
+
+    //Botao ligar pro motorista
     onPressCall(phoneNumber) {
         Linking.canOpenURL(phoneNumber).then(supported => {
             if (!supported) {
@@ -323,6 +326,7 @@ export default class BookedCabScreen extends React.Component {
             }
         }).catch(err => console.error('An error occurred', err));
     }
+
     sendPushNotification(customerUID, bookingId, msg) {
         const customerRoot = firebase.database().ref('users/' + customerUID);
         customerRoot.once('value', customerData => {
@@ -332,11 +336,12 @@ export default class BookedCabScreen extends React.Component {
             }
         })
     }
-    //caacel modal design
+
+    //Modal cancelar corrida
     cancelModal() {
         return (
             <Modal
-                animationType="none"
+                animationType='fade'
                 transparent={true}
                 visible={this.state.modalVisible}
                 onRequestClose={() => {
@@ -353,16 +358,16 @@ export default class BookedCabScreen extends React.Component {
                             <View style={styles.radioContainer}>
                                 <RadioForm
                                     radio_props={this.state.radio_props ? this.state.radio_props : null}
-                                    initial={0}
-                                    animation={false}
-                                    buttonColor={colors.GREY.secondary}
-                                    selectedButtonColor={colors.GREY.secondary}
-                                    buttonSize={10}
+                                    initial = {5}
+                                    animation = {true}
+                                    buttonColor = {colors.GREY2}
+                                    selectedButtonColor = {colors.DEEPBLUE}
+                                    buttonSize = {10}
                                     buttonOuterSize={20}
-                                    style={styles.radioContainerStyle}
-                                    labelStyle={styles.radioText}
-                                    radioStyle={styles.radioStyle}
-                                    onPress={(value) => { this.setState({ value: value }) }}
+                                    style = {styles.radioContainerStyle}
+                                    labelStyle = {styles.radioText}
+                                    radioStyle = {styles.radioStyle}
+                                    onPress = {(value) => { this.setState({ value: value }) }}
                                 />
                             </View>
                             <View style={styles.cancelModalButtosContainer}>
@@ -395,11 +400,11 @@ export default class BookedCabScreen extends React.Component {
         )
     }
 
-    //ride cancel confirm modal design
+    //Modal corrida cancelada com sucesso
     alertModal() {
         return (
             <Modal
-                animationType="none"
+                animationType='slide'
                 transparent={true}
                 visible={this.state.alertModalVisible}
                 onRequestClose={() => {
@@ -410,18 +415,23 @@ export default class BookedCabScreen extends React.Component {
 
                         <View style={styles.alertContainer}>
 
-                            <Text style={styles.rideCancelText}>{languageJSON.rider_cancel_text}</Text>
+                            <Text style={styles.rideCancelText}>Conluído</Text>
 
                             <View style={styles.horizontalLLine} />
 
                             <View style={styles.msgContainer}>
-                                <Text style={styles.cancelMsgText}>{languageJSON.cancel_messege1}  {this.state.currentBookingId} {languageJSON.cancel_messege2} </Text>
+                                <Text style={styles.cancelMsgText}> Corrida cancelada com sucesso! </Text>
                             </View>
                             <View style={styles.okButtonContainer}>
                                 <Button
                                     title={languageJSON.no_driver_found_alert_OK_button}
                                     titleStyle={styles.signInTextStyle}
-                                    onPress={() => { this.setState({ alertModalVisible: false, currentBookingId: null }, () => { this.props.navigation.popToTop() }) }}
+                                    onPress={
+                                        () => {
+                                            this.setState({ alertModalVisible: false, currentBookingId: null },
+                                                () => { setTimeout(() => { this.props.navigation.replace('Map') }, 400) }
+                                            )
+                                        }}
                                     buttonStyle={styles.okButtonStyle}
                                     containerStyle={styles.okButtonContainerStyle}
                                 />
@@ -435,6 +445,7 @@ export default class BookedCabScreen extends React.Component {
             </Modal>
         )
     }
+
     chat() {
         this.props.navigation.navigate("onlineChat", { passData: this.getParamData })
     }
@@ -442,214 +453,109 @@ export default class BookedCabScreen extends React.Component {
     render() {
         return (
             <View style={styles.mainContainer}>
-                <Header
-                    backgroundColor={colors.GREY.default}
-                    leftComponent={{ icon: 'md-menu', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.toggleDrawer(); } }}
-                    rightComponent={{
-                        icon: 'ios-sad', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => {
-
-                            Alert.alert(
-                                languageJSON.panic_text,
-                                languageJSON.panic_question,
-                                [
-                                    {
-                                        text: languageJSON.cancel,
-                                        onPress: () => console.log('Cancel Pressed'),
-                                        style: 'cancel'
-                                    },
-                                    {
-                                        text: 'OK', onPress: async () => {
-                                            const value = await AsyncStorage.getItem('settings');
-                                            if (value !== null) {
-                                                let settings = JSON.parse(value);
-                                                if (Platform.OS === 'android') {
-                                                    phoneNumber = `tel:${settings.panic}`;
-                                                } else {
-                                                    phoneNumber = `telprompt:${settings.panic}`;
-                                                }
-                                                Linking.openURL(phoneNumber);
-                                            }
-                                        }
-                                    }
-                                ],
-                                { cancelable: false }
-                            );
-                        }
-                    }}
-                    centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.booked_cab_title}</Text>}
-                    containerStyle={styles.headerStyle}
-                    innerContainerStyles={styles.headerInner}
-                />
-
-                <View style={styles.topContainer}>
-                    <View style={styles.topLeftContainer}>
-                        <View style={styles.circle} />
-                        <View style={styles.staightLine} />
-                        <View style={styles.square} />
-                    </View>
-                    <View style={styles.topRightContainer}>
-                        <TouchableOpacity style={styles.whereButton}>
-                            <View style={styles.whereContainer}>
-                                <Text numberOfLines={1} style={styles.whereText}>{this.state.region && this.state.region.whereText ? this.state.region.whereText : ""}</Text>
-                                <Icon
-                                    name='gps-fixed'
-                                    color={colors.WHITE}
-                                    size={23}
-                                    containerStyle={styles.iconContainer}
-                                />
-                            </View>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.dropButton}>
-                            <View style={styles.whereContainer}>
-                                <Text numberOfLines={1} style={styles.whereText}>{this.state.region && this.state.region.droptext ? this.state.region.droptext : ""}</Text>
-                                <Icon
-                                    name='search'
-                                    type='feather'
-                                    color={colors.WHITE}
-                                    size={23}
-                                    containerStyle={styles.iconContainer}
-                                />
-                            </View>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
                 <View style={styles.mapcontainer}>
                     {this.state.driverUID && this.state.region && this.state.bookingStatus ?
-                        <TrackNow duid={this.state.driverUID} alldata={this.state.region} bookingStatus={this.state.bookingStatus} /> :
-                        this.state.region ?
-                            <MapView
-                                ref={map => { this.map = map }}
-                                style={styles.map}
-                                provider={PROVIDER_GOOGLE}
-                                initialRegion={{
-                                    latitude: this.state.region.wherelatitude,
-                                    longitude: this.state.region.wherelongitude,
-                                    latitudeDelta: 0.9922,
-                                    longitudeDelta: 1.9421
-                                }}
-                            >
-                                {this.state.region.wherelatitude ?
-                                    <Marker
-                                        coordinate={{ latitude: (this.state.region.wherelatitude), longitude: (this.state.region.wherelongitude) }}
-                                        title={this.state.region.whereText}
-                                    />
-                                    : null}
-                                {this.state.region.droplatitude ?
-                                    <Marker
-                                        coordinate={{ latitude: (this.state.region.droplatitude), longitude: (this.state.region.droplongitude) }}
-                                        title={this.state.region.droptext}
-                                        pinColor={colors.GREEN.default}
-                                    />
-                                    : null}
-                                {this.state.coords ?
+                        <TrackNow duid={this.state.driverUID} alldata={this.state.region} bookingStatus={this.state.bookingStatus} />
+                        : null}
 
-                                    <MapView.Polyline
-                                        coordinates={this.state.coords}
-                                        strokeWidth={4}
-                                        strokeColor={colors.BLUE.default}
-                                    />
-                                    : null}
-
-                            </MapView>
-                            : null
-                    }
-
-                    <TouchableOpacity
-                        style={styles.floatButtonStyle}
-                        onPress={() => this.chat()}
-                    >
+                    <TouchableOpacity style={styles.btnTeste}>
                         <Icon
-                            name="ios-chatbubbles"
-                            type="ionicon"
+                            name="navigation"
+                            type="feather"
                             // icon: 'chat', color: '#fff',
-                            size={30}
-                            color={colors.WHITE}
+                            size={23}
+                            color={colors.DEEPBLUE}
                         />
                     </TouchableOpacity>
+
+                    {/* Botao Chat */}
+                    <TouchableOpacity style={styles.btnChatMotorista} onPress={() => this.chat()}>
+                        <View>
+                            <Text style={styles.txtChatMotorista}> Chat </Text>
+                        </View>
+                    </TouchableOpacity>
                 </View>
-                <View style={styles.bottomContainer}>
-                    <View style={styles.otpContainer}>
-                        <Text style={styles.cabText}>{languageJSON.you_selected} <Text style={styles.cabBoldText}>{this.state.carType}</Text></Text>
-                        <Text style={styles.otpText}>{this.state.otp ? languageJSON.otp + this.state.otp : null}</Text>
 
-                    </View>
-                    <View style={styles.cabDetailsContainer}>
-                        {this.state.bookingStatus == "NEW" ? null :
-                            <View style={styles.cabDetails}>
-                                <View style={styles.cabName}>
-                                    <Text style={styles.cabNameText}>{this.state.carModel ? this.state.carModel : null}</Text>
-                                </View>
-
-                                <View style={styles.cabPhoto}>
-                                    <Image source={{ uri: this.state.carImage }} resizeMode={'contain'} style={styles.cabImage} />
-                                </View>
-
-                                <View style={styles.cabNumber}>
-                                    <Text style={styles.cabNumberText}>{this.state.carNo ? this.state.carNo : null}</Text>
-                                </View>
-
-                            </View>
-                        }
-                        {this.state.bookingStatus == "NEW" ? null :
-                            <View style={styles.verticalDesign}>
-                                <View style={styles.triangle} />
-                                <View style={styles.verticalLine} />
-                            </View>
-                        }
-                        {this.state.bookingStatus == "NEW" ? null :
-                            <View style={styles.driverDetails}>
-                                <View style={styles.driverPhotoContainer}>
-                                    <Image source={this.state.driverPic ? { uri: this.state.driverPic } : require('../../assets/images/profilePic.png')} style={styles.driverPhoto} />
-                                </View>
-                                <View style={styles.driverNameContainer}>
-                                    <Text style={styles.driverNameText}>{this.state.driverName ? this.state.driverName : null}</Text>
-                                </View>
-                                <View style={styles.ratingContainer}>
-                                    <StarRating
-                                        disabled={true}
-                                        maxStars={5}
-                                        starSize={height / 42}
-                                        fullStar={'ios-star'}
-                                        halfStar={'ios-star-half'}
-                                        emptyStar={'ios-star-outline'}
-                                        iconSet={'Ionicons'}
-                                        fullStarColor={colors.YELLOW.primary}
-                                        emptyStarColor={colors.YELLOW.primary}
-                                        halfStarColor={colors.YELLOW.primary}
-                                        rating={parseInt(this.state.starCount)}
-                                        containerStyle={styles.ratingContainerStyle}
-                                    />
-                                </View>
-                            </View>
-                        }
-                    </View>
-                    <View style={styles.buttonsContainer}>
-                        <View style={styles.buttonContainer}>
-                            <Button
-                                title={languageJSON.cancel_ride}
-                                loading={false}
-                                loadingProps={{ size: "large", color: colors.BLUE.default.primary }}
-                                titleStyle={styles.buttonTitleText}
-                                onPress={() => { this.onPressCancel(null) }}
-                                buttonStyle={styles.cancelButtonStyle}
-                                containerStyle={styles.cancelButtonContainerStyle}
-                            />
-                        </View>
-                        <View style={styles.buttonContainer}>
-                            <Button
-                                disabled={this.state.bookingStatus == "NEW" ? true : false}
-                                title={languageJSON.call_driver}
-                                loading={false}
-                                loadingProps={{ size: "large", color: colors.BLUE.default.primary }}
-                                titleStyle={styles.buttonTitleText}
-                                onPress={() => { this.onPressCall('tel:' + this.state.driverContact) }}
-                                buttonStyle={styles.callButtonStyle}
-                                containerStyle={styles.callButtonContainerStyle}
-                            />
-                        </View>
+                <View style={{ backgroundColor: colors.GREY2, opacity: 0.6, height: 20, justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={styles.viewInfo}>
+                        <Text style={{ color: colors.WHITE, fontFamily: 'Inter-Bold', fontSize: 14, alignSelf: 'center' }}> Confira as informações e a placa do carro!</Text>
                     </View>
                 </View>
+
+                {/* Modal inferior */}
+                <View style={styles.containerBottom}>
+                    <View style={styles.containerFoto}>
+                        <Image
+                            style={styles.ImageStyle}
+                            source={this.state.driverPic ? { uri: this.state.driverPic } : require('../../assets/images/profilePic.png')}
+                        />
+
+                        <Text style={styles.nameDriver}> {this.state.driverName ? this.state.driverName : null} </Text>
+                        <View style={styles.rating}>
+                            <Icon
+                                name="star"
+                                type="feather"
+                                // icon: 'chat', color: '#fff',
+                                size={23}
+                                color={colors.YELLOW.secondary}
+                            />
+                            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 15, fontWeight: '600' }}> {this.state.starCount ? this.state.starCount : null} </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.containerCarDetails}>
+                        <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                            <Image
+                                style={styles.carEconomico}
+                                source={require('../../assets/images/coltEconomicoEmpty.png')}
+                            />
+                            <Text style={{ fontSize: 18, fontFamily: 'Inter-Medium', fontWeight: "500", textAlign: 'center', marginBottom: 5 }}> {this.state.carType} </Text>
+                        </View>
+
+                        <View style={styles.boxPlacaCarro}>
+                            <Text style={styles.placaCarro} > {this.state.carNo ? this.state.carNo : null} </Text>
+                        </View>
+                        <View style={styles.containerTxtCarro}>
+                            <Text style={styles.marcaCarro}> {this.state.carModel ? this.state.carModel : null} </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.containerBtn}>
+                        <TouchableOpacity style={styles.btnLigarMotorista} onPress={() => { this.onPressCall('tel:' + this.state.driverContact) }}>
+                            <View>
+                                <Text style={styles.txtLigarMotorista}> Ligar pro motorista </Text>
+                            </View>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.btnCancelarCorrida} onPress={() => { this.onPressCancel() }}>
+                            <View style={styles.bordaIcon}>
+                                <Icon
+                                    name="x"
+                                    type="feather"
+                                    // icon: 'chat', color: '#fff',
+                                    size={35}
+                                    color={colors.WHITE}
+                                />
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+
+                </View>
+
+                {/* Booking Modal */}
+                <Modal
+                    animationType="fade"
+                    transparent={false}
+                    visible={this.state.driverSerach}
+                >
+                    <View style={{ flex: 1, backgroundColor: colors.WHITE, width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
+                        <Image source={require('../../assets/images/searchDrivers.gif')} style={styles.styleGif} />
+                        <Text style={styles.textGif}> Procurando motoristas próximos </Text>
+                        <TouchableOpacity style={styles.touchView} onPress={() => { this.onCancellSearchBooking() }}>
+                            <Text style={styles.textCancel}> Cancelar </Text>
+                        </TouchableOpacity>
+                    </View>
+                </Modal>
+
                 {
                     this.cancelModal()
                 }
@@ -657,112 +563,73 @@ export default class BookedCabScreen extends React.Component {
                     this.alertModal()
                 }
 
-                {/* Booking Modal */}
-
-                
-                <Modal
-                    animationType="fade"
-                    transparent={false}
-                    visible={this.state.driverSerach}
-                    onRequestClose={() => {
-                        Alert.alert(languageJSON.modal_closed);
-                    }}
-                >
-                    <View style={{ flex: 1, backgroundColor: colors.WHITE, width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
-
-                        <Image source={require('../../assets/images/searchDrivers.gif')} style={styles.styleGif} />
-                        <Text style={styles.textGif}> Procurando motoristas próximos </Text>
-                        <TouchableOpacity style={styles.touchView} onPress={() => { this.onPressCancel('fromLoading') }}>
-
-                                <Text style={styles.textCancel}> Cancelar </Text>
-
-                        </TouchableOpacity>
-                    </View>
-                </Modal>
-
             </View>
         );
     }
 }
 
 const styles = StyleSheet.create({
-    mainContainer: { 
+    mainContainer: {
         flex: 1,
-        backgroundColor: colors.WHITE, 
+        backgroundColor: colors.WHITE,
     },
-    headerStyle: {
-        backgroundColor: colors.GREY.default,
-        borderBottomWidth: 0,
-        height: Platform.select({ android: 54 })
-    },
-    headerTitleStyle: {
-        color: colors.WHITE,
-        fontFamily: 'Roboto-Bold',
-        fontSize: 18
-    },
-    headerInner: {
-        marginLeft: 10,
-        marginRight: 10
-    },
-    topContainer: { flex: 1.5, flexDirection: 'row', borderTopWidth: 0, alignItems: 'center', backgroundColor: colors.GREY.default, paddingEnd: 20 },
-    topLeftContainer: {
-        flex: 1.5,
-        alignItems: 'center'
-    },
-    topRightContainer: {
-        flex: 9.5,
-        justifyContent: 'space-between',
-    },
-    circle: {
-        height: 15,
-        width: 15,
-        borderRadius: 15 / 2,
-        backgroundColor: colors.YELLOW.light
-    },
-    staightLine: {
-        height: height / 25,
-        width: 1,
-        backgroundColor: colors.YELLOW.light
-    },
-    square: {
-        height: 17,
-        width: 17,
-        backgroundColor: colors.GREY.iconPrimary
-    },
-    whereButton: { flex: 1, 
-        justifyContent: 'center', 
-        borderBottomColor: colors.WHITE, 
-        borderBottomWidth: 1 
-    },
-    whereContainer: { 
-        flex: 1, 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        flexDirection: 'row' 
-    },
-    whereText: { 
-        flex: 9, 
-        fontFamily: 'Roboto-Regular', 
-        fontSize: 14, 
-        fontWeight: '400', 
-        color: colors.WHITE 
-    },
-    iconContainer: { 
-        flex: 1 
-    },
-    dropButton: { 
-        flex: 1, 
-        justifyContent: 'center' 
-    },
+
+    ///////////////////////////
     mapcontainer: {
         flex: 7,
         width: width,
-        // justifyContent: 'center',
-        // alignItems: 'center',
     },
-    bottomContainer: { 
-        flex: 2.5, 
-        alignItems: 'center' 
+    btnChatMotorista: {
+        position: 'absolute',
+        justifyContent: 'center',
+        alignItems: 'center',
+        right: 0,
+        height: 30,
+        borderRadius: 50,
+        backgroundColor: colors.WHITE,
+        width: 100,
+        bottom: 0,
+        marginBottom: 8,
+        marginRight: 10,
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
+        shadowOffset: { x: 0, y: 0 },
+        shadowRadius: 10,
+        elevation: 5
+    },
+    carEconomico: {
+        marginHorizontal: 20,
+        top: 0,
+        width: 100,
+        height: 40,
+        opacity: 0.4
+    },
+    btnTeste: {
+        position: 'absolute',
+        justifyContent: 'center',
+        alignItems: 'center',
+        right: 0,
+        height: 50,
+        borderRadius: 50,
+        backgroundColor: colors.WHITE,
+        width: 50,
+        bottom: 50,
+        marginBottom: 8,
+        marginRight: 10,
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
+        shadowOffset: { x: 0, y: 0 },
+        shadowRadius: 10,
+        elevation: 5
+    },
+    txtChatMotorista: {
+        fontFamily: 'Inter-Bold',
+        fontSize: 16,
+        color: colors.BLACK,
+    },
+    bottomContainer: {
+        flex: 2.5,
+        alignItems: 'center'
     },
     map: {
         flex: 1,
@@ -771,7 +638,8 @@ const styles = StyleSheet.create({
     touchView: {
         borderRadius: 50,
         height: 50,
-        backgroundColor: colors.DEEPBLUE,
+        backgroundColor: colors.LIGHT_RED,
+        opacity: 0.5,
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'column',
@@ -791,7 +659,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
     textGif: {
-        color: "#fff", 
+        color: "#fff",
         top: 55,
         position: 'absolute',
         fontSize: 20,
@@ -804,298 +672,141 @@ const styles = StyleSheet.create({
         position: 'absolute',
         flex: 1
     },
-    otpContainer: { 
-        flex: 0.8, 
-        backgroundColor: colors.YELLOW.secondary, 
-        width: width, 
-        flexDirection: 'row', 
-        justifyContent: 'space-between' 
-    },
-    cabText: { 
-        paddingLeft: 10, 
-        alignSelf: 'center', 
-        color: colors.BLACK, 
-        fontFamily: 'Roboto-Regular' 
-    },
-    cabBoldText: { 
-        fontFamily: 'Roboto-Bold' 
-    },
-    otpText: { 
-        paddingRight: 10, 
-        alignSelf: 'center', 
-        color: colors.BLACK, 
-        fontFamily: 'Roboto-Bold' 
-    },
-    cabDetailsContainer: { 
-        flex: 2.5,
-        backgroundColor: colors.WHITE, 
-        flexDirection: 'row', 
-        position: 'relative', 
-        zIndex: 1 
-    },
-    cabDetails: { 
-        flex: 19 
-    },
-    cabName: { 
-        flex: 1, 
-        flexDirection: 'row', 
-        alignItems: 'center', 
-        justifyContent: 'center' 
-    },
-    cabNameText: { 
-        color: colors.GREY.btnPrimary, 
-        fontFamily: 'Roboto-Bold', 
-        fontSize: 13 
-    },
-    cabPhoto: { 
-        flex: 1, 
-        alignItems: 'center', 
-        justifyContent: 'center' 
-    },
-    cabImage: { 
-        width: 150, 
-        height: height / 15, 
-        marginBottom: 6 
-    },
-    cabNumber: { 
-        flex: 1, 
-        alignItems: 'center', 
-        justifyContent: 'center' 
-    },
-    cabNumberText: { 
-        color: colors.GREY.iconSecondary, 
-        fontFamily: 'Roboto-Bold', 
-        fontSize: 13 
-    },
-    verticalDesign: { 
-        flex: 2, 
-        height: 50, 
-        width: 1, 
-        alignItems: 'center' 
-    },
-    triangle: {
-        width: 0,
-        height: 0,
-        backgroundColor: colors.TRANSPARENT,
-        borderStyle: 'solid',
-        borderLeftWidth: 9,
-        borderRightWidth: 9,
-        borderBottomWidth: 10,
-        borderLeftColor: colors.TRANSPARENT,
-        borderRightColor: colors.TRANSPARENT,
-        borderBottomColor: colors.YELLOW.secondary,
-        transform: [
-            { rotate: '180deg' }
-        ],
-
-        marginTop: -1,
-        overflow: 'visible'
-    },
-    verticalLine: {
-        height: height / 18, 
-        width: 0.5, 
-        backgroundColor: colors.BLACK, 
-        alignItems: 'center', 
-        marginTop: 10 
-    },
-    driverDetails: { 
-        flex: 19, 
-        alignItems: 'center', 
-        justifyContent: 'center' 
-    },
-    driverPhotoContainer: { 
-        flex: 5.4, 
-        justifyContent: 'flex-end', 
-        alignItems: 'center' 
-    },
-    driverPhoto: { 
-        borderRadius: height / 20 / 2, 
-        width: height / 20, 
-        height: height / 20 
-    },
-    driverNameContainer: { 
-        flex: 2.2, 
-        alignItems: 'center', 
-        justifyContent: 'center' 
-    },
-    driverNameText: { 
-        color: colors.GREY.btnPrimary, 
-        fontFamily: 'Roboto-Bold', 
-        fontSize: 14 
-    },
-    ratingContainer: { 
-        flex: 2.4, 
-        alignItems: 'center', 
-        justifyContent: 'center' 
-    },
-    ratingContainerStyle: { 
-        marginTop: 2,
-        paddingBottom: Platform.OS == 'android' ? 5 : 0 
-    },
-    buttonsContainer: { 
-        flex: 1.5, 
-        flexDirection: 'row' 
-    },
-    buttonContainer: { 
-        flex: 1 
-    },
-    buttonTitleText: { 
-        color: colors.WHITE, 
-        fontFamily: 'Roboto-Bold', 
-        fontSize: 18, 
-        alignSelf: 'flex-end' 
-    },
-    cancelButtonStyle: { 
-        backgroundColor: colors.GREY.secondary, 
-        elevation: 0 
-    },
-    cancelButtonContainerStyle: { 
-        flex: 1, 
-        backgroundColor: colors.GREY.secondary 
-    },
-    callButtonStyle: { 
-        backgroundColor: colors.GREY.btnPrimary, 
-        elevation: 0 
-    },
-    callButtonContainerStyle: { 
-        flex: 1, 
-        backgroundColor: colors.GREY.btnPrimary 
-    },
 
     //alert modal
-    alertModalContainer: { 
-        flex: 1, 
-        justifyContent: 'center', 
-        backgroundColor: colors.GREY.background 
+    alertModalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        backgroundColor: colors.GREY.background
     },
-    alertModalInnerContainer: { 
-        height: 200, 
-        width: (width * 0.85), 
-        backgroundColor: colors.WHITE, 
-        alignItems: 'center', 
-        alignSelf: 'center', 
-        borderRadius: 7 
+    alertModalInnerContainer: {
+        height: 200,
+        width: (width * 0.85),
+        backgroundColor: colors.WHITE,
+        alignItems: 'center',
+        alignSelf: 'center',
+        borderRadius: 7
     },
-    alertContainer: { 
-        flex: 2, 
-        justifyContent: 'space-between', 
-        width: (width - 100) 
+    alertContainer: {
+        flex: 2,
+        justifyContent: 'space-between',
+        width: (width - 100)
     },
-    rideCancelText: { 
-        flex: 1, 
-        top: 15, 
-        color: colors.BLACK, 
-        fontFamily: 'Roboto-Bold', 
-        fontSize: 20, 
-        alignSelf: 'center' 
+    rideCancelText: {
+        flex: 1,
+        top: 15,
+        color: colors.BLACK,
+        fontFamily: 'Roboto-Bold',
+        fontSize: 20,
+        alignSelf: 'center'
     },
-    horizontalLLine: { 
-        width: (width - 110), 
-        height: 0.5, 
-        backgroundColor: colors.BLACK, 
-        alignSelf: 'center', 
+    horizontalLLine: {
+        width: (width - 110),
+        height: 0.5,
+        backgroundColor: colors.BLACK,
+        alignSelf: 'center',
     },
-    msgContainer: { 
-        flex: 2.5, 
-        alignItems: 'center', 
-        justifyContent: 'center' 
+    msgContainer: {
+        flex: 2.5,
+        alignItems: 'center',
+        justifyContent: 'center'
     },
-    cancelMsgText: { 
-        color: colors.BLACK, 
-        fontFamily: 'Roboto-Regular', 
-        fontSize: 15, 
-        alignSelf: 'center', 
-        textAlign: 'center' 
+    cancelMsgText: {
+        color: colors.BLACK,
+        fontFamily: 'Roboto-Regular',
+        fontSize: 15,
+        alignSelf: 'center',
+        textAlign: 'center'
     },
-    okButtonContainer: { 
-        flex: 1, 
-        width: (width * 0.85), 
-        flexDirection: 'row', 
-        backgroundColor: colors.GREY.iconSecondary, 
-        alignSelf: 'center' 
+    okButtonContainer: {
+        flex: 1,
+        width: (width * 0.85),
+        flexDirection: 'row',
+        backgroundColor: colors.GREY.iconSecondary,
+        alignSelf: 'center'
     },
-    okButtonStyle: { 
-        flexDirection: 'row', 
-        backgroundColor: colors.GREY.iconSecondary, 
-        alignItems: 'center', 
-        justifyContent: 'center' 
+    okButtonStyle: {
+        flexDirection: 'row',
+        backgroundColor: colors.GREY.iconSecondary,
+        alignItems: 'center',
+        justifyContent: 'center'
     },
-    okButtonContainerStyle: { 
-        flex: 1, 
-        width: (width * 0.85), 
-        backgroundColor: colors.GREY.iconSecondary, 
+    okButtonContainerStyle: {
+        flex: 1,
+        width: (width * 0.85),
+        backgroundColor: colors.GREY.iconSecondary,
     },
 
     //cancel modal
-    cancelModalContainer: { 
-        flex: 1, 
-        justifyContent: 'center', 
-        backgroundColor: colors.GREY.background 
+    cancelModalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        backgroundColor: colors.GREY.background
     },
-    cancelModalInnerContainer: { 
-        height: 400, 
-        width: width * 0.85, 
-        padding: 0, 
-        backgroundColor: colors.WHITE, 
-        alignItems: 'center', 
-        alignSelf: 'center', 
-        borderRadius: 7 
+    cancelModalInnerContainer: {
+        height: 400,
+        width: width * 0.85,
+        padding: 0,
+        backgroundColor: colors.WHITE,
+        alignItems: 'center',
+        alignSelf: 'center',
+        borderRadius: 7
     },
-    cancelContainer: { 
-        flex: 1, 
-        justifyContent: 'space-between', 
-        width: (width * 0.85) 
+    cancelContainer: {
+        flex: 1,
+        justifyContent: 'space-between',
+        width: (width * 0.85)
     },
-    cancelReasonContainer: { 
-        flex: 1 
+    cancelReasonContainer: {
+        flex: 1
     },
-    cancelReasonText: { 
-        top: 10, 
-        color: colors.BLACK, 
-        fontFamily: 'Roboto-Bold', 
-        fontSize: 20, 
-        alignSelf: 'center' 
+    cancelReasonText: {
+        top: 10,
+        color: colors.BLACK,
+        fontFamily: 'Inter-Bold',
+        fontSize: 20,
+        alignSelf: 'center'
     },
-    radioContainer: { 
-        flex: 8, 
-        alignItems: 'center' 
+    radioContainer: {
+        flex: 8,
+        alignItems: 'center'
     },
-    radioText: { 
-        fontSize: 16, 
-        fontFamily: 'Roboto-Medium', 
-        color: colors.DARK, 
+    radioText: {
+        fontSize: 15,
+        fontFamily: 'Inter-Medium',
+        color: colors.DARK,
     },
-    radioContainerStyle: { 
-        paddingTop: 30, 
-        marginLeft: 10 
+    radioContainerStyle: {
+        paddingTop: 30,
+        marginLeft: 20
     },
-    radioStyle: { 
-        paddingBottom: 25 
+    radioStyle: {
+        paddingBottom: 25
     },
-    cancelModalButtosContainer: { 
-        flex: 1, 
-        flexDirection: 'row', 
-        backgroundColor: colors.GREY.iconSecondary, 
-        alignItems: 'center', 
-        justifyContent: 'center' 
+    cancelModalButtosContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        backgroundColor: colors.GREY.iconSecondary,
+        alignItems: 'center',
+        justifyContent: 'center'
     },
-    buttonSeparataor: { 
-        height: height / 35, 
-        width: 0.5, 
-        backgroundColor: colors.WHITE, 
-        alignItems: 'center', 
-        marginTop: 3 
+    buttonSeparataor: {
+        height: height / 35,
+        width: 0.5,
+        backgroundColor: colors.WHITE,
+        alignItems: 'center',
+        marginTop: 3
     },
-    cancelModalButttonStyle: { 
-        backgroundColor: colors.GREY.iconSecondary, 
-        borderRadius: 0 
+    cancelModalButttonStyle: {
+        backgroundColor: colors.GREY.iconSecondary,
+        borderRadius: 0
     },
-    cancelModalButtonContainerStyle: { 
-        flex: 1, 
-        width: (width * 2) / 2, 
-        backgroundColor: colors.GREY.iconSecondary, 
-        alignSelf: 'center', 
-        margin: 0 
+    cancelModalButtonContainerStyle: {
+        flex: 1,
+        width: (width * 2) / 2,
+        backgroundColor: colors.GREY.iconSecondary,
+        alignSelf: 'center',
+        margin: 0
     },
     signInTextStyle: {
         fontFamily: 'Roboto-Bold',
@@ -1114,5 +825,124 @@ const styles = StyleSheet.create({
         height: 60,
         backgroundColor: colors.BLACK,
         borderRadius: 30
+    },
+    viewInfo: {
+
+    },
+    containerBottom: {
+        width: width,
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+        elevation: 5,
+        backgroundColor: colors.WHITE,
+        flex: 3.5,
+        alignSelf: 'center',
+    },
+    containerFoto: {
+        position: 'absolute',
+        justifyContent: 'center',
+        alignItems: 'center',
+        left: 20,
+        top: 15,
+    },
+    ImageStyle: {
+        width: 90,
+        height: 90,
+        borderColor: colors.GREY1,
+        borderWidth: 2,
+        borderRadius: 100
+    },
+    nameDriver: {
+        fontFamily: 'Inter-Bold',
+        fontSize: 17,
+        fontWeight: "600",
+    },
+    reLocation: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.WHITE,
+        width: 60,
+        height: 60,
+        borderRadius: 100
+    },
+    rating: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    containerCarDetails: {
+        position: 'absolute',
+        right: 20,
+        top: 20,
+        flexDirection: 'column',
+    },
+    containerBtn: {
+        position: 'absolute',
+        bottom: 0,
+        marginBottom: 30,
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'center',
+    },
+    btnLigarMotorista: {
+        backgroundColor: colors.WHITE,
+        borderWidth: 2,
+        borderColor: colors.DEEPBLUE,
+        height: 45,
+        borderRadius: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: 250
+    },
+    btnCancelarCorrida: {
+        backgroundColor: colors.RED,
+        opacity: 0.5,
+        width: 50,
+        height: 50,
+        borderRadius: 100,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 30,
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 0 },
+        shadowOpacity: 0.4,
+        shadowRadius: 10,
+        elevation: 5,
+
+    },
+    txtLigarMotorista: {
+        fontFamily: 'Inter-Bold',
+        color: colors.DEEPBLUE,
+        fontSize: 19,
+    },
+    boxPlacaCarro: {
+        width: 150,
+        backgroundColor: colors.WHITE,
+        borderRadius: 50,
+        borderWidth: 1.5,
+        borderColor: colors.GREY2,
+        alignItems: 'center',
+        justifyContent: 'center',
+        opacity: 0.5,
+        marginTop: 10,
+    },
+    placaCarro: {
+        fontSize: 25,
+        fontFamily: 'Inter-Bold',
+        fontWeight: '500',
+
+    },
+    containerTxtCarro: {
+        marginTop: 7,
+        width: 150,
+    },
+    marcaCarro: {
+        fontFamily: 'Inter-Regular',
+        color: colors.BLACK,
+        fontSize: 18,
+        position: 'absolute',
+        right: 0
     },
 });

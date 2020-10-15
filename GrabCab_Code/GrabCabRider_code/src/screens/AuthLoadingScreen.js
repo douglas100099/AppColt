@@ -4,19 +4,22 @@ import {
   View,
   AsyncStorage,
   Dimensions,
-  ImageBackground,
-  ActivityIndicator,
-  Text
+  ImageBackground, Platform
 } from 'react-native';
 
 import * as firebase from 'firebase';
 import GetPushToken from '../common/GetPushToken';
 import languageJSON from '../common/language';
 
+import { google_map_key } from '../common/key';
+import * as Location from 'expo-location';
+import * as Permissions from 'expo-permissions';
+import Geocoder from 'react-native-geocoding';
 
 export class AuthLoadingScreen extends React.Component {
   constructor(props) {
     super(props);
+    Geocoder.init(google_map_key);
     this.bootstrapAsync();
   }
 
@@ -33,8 +36,43 @@ export class AuthLoadingScreen extends React.Component {
     }
   };
 
+  _getLocationAsync = async () => {
+    console.log("ENTROU NO GET LOCATION ASYNC")
+    let { status } = await Permissions.askAsync(Permissions.LOCATION);
+    if (status !== 'granted') {
+      alert("Para acessar sua localização, é necessária permissão!");
+    } else {
+      
+      let location = Platform.OS === 'android' ? await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 20000, }) : 
+      await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 2000, })
+      if (location) {
+        var pos = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        };
+        var curuser = firebase.auth().currentUser.uid;
+        if (pos) {
+          let latlng = pos.latitude + ',' + pos.longitude;
+          fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
+            .then((response) => response.json())
+            .then((responseJson) => {
+              //Setando a localização do usuario no firebase
+              firebase.database().ref('users/' + curuser + '/location').update({
+                add: responseJson.results[0].formatted_address,
+                lat: pos.latitude,
+                lng: pos.longitude
+              })
+            })
+            .catch((error) => {
+              console.error(error);
+            });
+        }
+      }
+    }
+  }
+
   // Fetch the token from storage then navigate to our appropriate place
-  bootstrapAsync = () => {
+  bootstrapAsync = async () => {
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
         if (user.displayName) {
@@ -43,7 +81,9 @@ export class AuthLoadingScreen extends React.Component {
             if (userData.val()) {
               if (userData.val().usertype == 'rider') {
                 GetPushToken();
+
                 this._setSettings();
+                this._getLocationAsync();
                 this.props.navigation.navigate('Root');
               }
               else {
@@ -85,7 +125,6 @@ export class AuthLoadingScreen extends React.Component {
           });
         }
       } else {
-
         this.props.navigation.navigate('Intro');
       }
     })

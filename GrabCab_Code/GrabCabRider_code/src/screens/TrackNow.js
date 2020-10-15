@@ -1,16 +1,16 @@
-
 import React from 'react';
 import {
     StyleSheet,
     Text,
     View,
-    TouchableWithoutFeedback,
+    TouchableOpacity,
     Platform,
+    Dimensions,
     Linking,
     Alert,
     AsyncStorage
 } from 'react-native';
-import { Header } from 'react-native-elements';
+import { Icon } from 'react-native-elements';
 import haversine from "haversine";
 import MapView, {
     Marker,
@@ -19,6 +19,7 @@ import MapView, {
 } from "react-native-maps";
 import { colors } from '../common/theme';
 import Polyline from '@mapbox/polyline';
+var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
@@ -27,6 +28,7 @@ export default class TrackNow extends React.Component {
 
     constructor(props) {
         super(props);
+        this._isMounted = true
         this.state = {
             latitude: null,
             longitude: null,
@@ -38,7 +40,7 @@ export default class TrackNow extends React.Component {
     }
 
     async componentDidMount() {
-
+        this._isMounted = true
         let keys = this.props.navigation.getParam('bId');
         const dat = firebase.database().ref('bookings/' + keys);
         dat.on('value', snapshot => {
@@ -58,7 +60,7 @@ export default class TrackNow extends React.Component {
         }, () => {
             this.getDirections();
         })
-    
+
 
         const coordinate = new AnimatedRegion({
             latitude: paramData.pickup.lat,
@@ -76,7 +78,10 @@ export default class TrackNow extends React.Component {
                     latitude,
                     longitude
                 };
-                coordinate.timing(newCoordinate).start();
+
+                coordinate.timing(newCoordinate, {
+                    useNativeDriver: true,
+                }).start();
 
                 this.setState({
                     latitude,
@@ -95,7 +100,6 @@ export default class TrackNow extends React.Component {
             }
         );
 
-
         if (this.props.navigation.getParam('data')) {
             let paramData = this.props.navigation.getParam('data');
             this.setState({
@@ -109,6 +113,7 @@ export default class TrackNow extends React.Component {
     }
 
     componentWillUnmount() {
+        this._isMounted = false
         navigator.geolocation.clearWatch(this.watchID);
     }
 
@@ -124,7 +129,6 @@ export default class TrackNow extends React.Component {
         longitudeDelta: 0.0134
     });
 
-    // find your origin and destination point coordinates and pass it to our method.
     async getDirections() {
         try {
             let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${this.state.startLoc}&destination=${this.state.destinationLoc}&key=${google_map_key}`)
@@ -142,7 +146,7 @@ export default class TrackNow extends React.Component {
                         edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
                         animated: true,
                     })
-                }, 1500);
+                }, 500);
 
             })
             return coords
@@ -157,7 +161,7 @@ export default class TrackNow extends React.Component {
         return (
 
             <View style={styles.container}>
-                <Header
+                {/*<Header
                     backgroundColor={colors.GREY.default}
                     leftComponent={{ icon: 'md-menu', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.toggleDrawer(); } }}
                     rightComponent={{
@@ -194,9 +198,9 @@ export default class TrackNow extends React.Component {
                     centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.track_cab}</Text>}
                     containerStyle={styles.headerStyle}
                     innerContainerStyles={styles.headerInnerStyle}
-                />
-                <View style={styles.innerContainer}>
+                />*/}
 
+                <View style={styles.innerContainer}>
                     {this.state.latitude ?
                         <MapView
                             ref={map => { this.map = map }}
@@ -206,12 +210,15 @@ export default class TrackNow extends React.Component {
                             followUserLocation
                             loadingEnabled
                             region={this.getMapRegion()}
+                            showsCompass={false}
+                            showsScale={false}
+                            rotateEnabled={false}
                         >
                             {this.state.coords ?
                                 <MapView.Polyline
                                     coordinates={this.state.coords}
-                                    strokeWidth={3}
-                                    strokeColor={colors.BLUE.default}
+                                    strokeWidth={2.5}
+                                    strokeColor={colors.DEEPBLUE}
                                 />
                                 : null}
                             {this.state.routeCoordinates ?
@@ -236,6 +243,7 @@ export default class TrackNow extends React.Component {
                                 <Marker
                                     image={require('../../assets/images/markerUser.png')}
                                     coordinate={{ latitude: this.state.allData.pickup.lat, longitude: this.state.allData.pickup.lng }}
+                                    anchor={{ x: 0.5, y: 0.5 }}
                                 >
                                 </Marker>
                                 : null}
@@ -249,6 +257,17 @@ export default class TrackNow extends React.Component {
 
                         </MapView>
                         : null}
+                    <TouchableOpacity style={styles.btnPanico}>
+                        <View>
+                            <Icon
+                                name="ios-sad"
+                                type="ionicon"
+                                // icon: 'chat', color: '#fff',
+                                size={30}
+                                color={colors.WHITE}
+                            />
+                        </View>
+                    </TouchableOpacity>
                 </View>
             </View>
         );
@@ -259,7 +278,6 @@ export default class TrackNow extends React.Component {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.WHITE,
         // marginTop: StatusBar.currentHeight,
     },
     innerContainer: {
@@ -267,7 +285,8 @@ const styles = StyleSheet.create({
         backgroundColor: colors.WHITE,
         justifyContent: "flex-end",
         alignItems: "center",
-
+        width: width,
+        height: height
     },
     headerStyle: {
         backgroundColor: colors.GREY.default,
@@ -283,29 +302,24 @@ const styles = StyleSheet.create({
         fontSize: 18
     },
     map: {
-        ...StyleSheet.absoluteFillObject
-
-    },
-    bubble: {
         flex: 1,
-        backgroundColor: "rgba(255,255,255,0.7)",
-        paddingHorizontal: 18,
-        paddingVertical: 12,
-        borderRadius: 20
+        ...StyleSheet.absoluteFillObject
     },
     latlng: {
         width: 200,
         alignItems: "stretch"
     },
-    button: {
-        width: 80,
-        paddingHorizontal: 12,
-        alignItems: "center",
-        marginHorizontal: 10
+    btnPanico: {
+        width: 50,
+        height: 50,
+        backgroundColor: colors.RED,
+        borderRadius: 100,
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        marginTop: 50,
+        marginRight: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    buttonContainer: {
-        flexDirection: "row",
-        marginVertical: 20,
-        backgroundColor: "transparent"
-    }
 });

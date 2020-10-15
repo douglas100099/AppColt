@@ -1,40 +1,40 @@
 import React from 'react';
-import {View, Text, Dimensions, ScrollView, KeyboardAvoidingView, Image, TouchableWithoutFeedback, LayoutAnimation, Platform} from 'react-native';
+import { View, Text, Dimensions, ScrollView, KeyboardAvoidingView, Image, TouchableWithoutFeedback, LayoutAnimation, Platform } from 'react-native';
 import { Icon, Button, Header, Input } from 'react-native-elements'
 import { colors } from '../common/theme';
-import  languageJSON  from '../common/language';
-var {  height } = Dimensions.get('window');
+import languageJSON from '../common/language';
+var { height } = Dimensions.get('window');
 import * as firebase from 'firebase'
 export default class EditUser extends React.Component {
-    
-     constructor(props){
-        super(props);
-        this.state={
-          fname:'',
-          lname:'',
-          email:'',
-          mobile:'',
-          fnameValid: true,
-          lnameValid: true,
-          mobileValid: true,
-          emailValid: true,
-          loginType:''
-        } 
-      }
 
-      async UNSAFE_componentWillMount() {
+    constructor(props) {
+        super(props);
+        this.state = {
+            fname: '',
+            lname: '',
+            email: '',
+            mobile: '',
+            fnameValid: true,
+            lnameValid: true,
+            mobileValid: true,
+            emailValid: true,
+            loginType: ''
+        }
+    }
+
+    async UNSAFE_componentWillMount() {
         var curuser = firebase.auth().currentUser;
-        const userData=firebase.database().ref('users/'+curuser.uid);
-        if(curuser.email) this.setState({loginType:'email'});
-        userData.once('value',userData=>{
+        const userData = firebase.database().ref('users/' + curuser.uid);
+        if (curuser.email) this.setState({ loginType: 'email' });
+        userData.once('value', userData => {
             this.setState({
-                fname:userData.val().firstName,
-                lname:userData.val().lastName,
-                email:userData.val().email,
-                mobile:userData.val().mobile
+                fname: userData.val().firstName,
+                lname: userData.val().lastName,
+                email: userData.val().email,
+                mobile: userData.val().mobile
             });
         })
-      }
+    }
 
 
     // first name validation
@@ -78,30 +78,30 @@ export default class EditUser extends React.Component {
         return emailValid;
     }
 
-    
+
     //register button press for validation
-    onPressRegister(){
+    onPressRegister() {
         const { onPressRegister } = this.props;
         LayoutAnimation.easeInEaseOut();
         const fnameValid = this.validateFirstName();
         const lnameValid = this.validateLastname();
         const mobileValid = this.validateMobile();
         const emailValid = this.validateEmail();
-        
-       if ( fnameValid && lnameValid && mobileValid && emailValid) {
-           //register function of smart component
-            onPressRegister( this.state.fname, this.state.lname, this.state.mobile, this.state.email);
-            this.setState({fname:'', lname:'', mobile:'', email: ''});
+
+        if (fnameValid && lnameValid && mobileValid && emailValid) {
+            //register function of smart component
+            onPressRegister(this.state.fname, this.state.lname, this.state.mobile, this.state.email);
+            this.setState({ fname: '', lname: '', mobile: '', email: '' });
         }
     }
 
-    render(){
-        const { onPressBack }=this.props
-        return(
-           <View style={styles.main}>
-                <Header 
+    render() {
+        const { onPressBack } = this.props
+        return (
+            <View style={styles.main}>
+                <Header
                     backgroundColor={colors.TRANSPARENT}
-                    leftComponent={{icon:'md-close', type:'ionicon', color:colors.BLACK, size: 35, component: TouchableWithoutFeedback,onPress: onPressBack }}
+                    leftComponent={{ icon: 'md-close', type: 'ionicon', color: colors.BLACK, size: 35, component: TouchableWithoutFeedback, onPress: onPressBack }}
                     containerStyle={styles.headerContainerStyle}
                     centerComponent={<Text style={styles.headerTitleStyle}>Atualizar perfil</Text>}
                     innerContainerStyles={styles.headerInnerContainer}
@@ -110,10 +110,10 @@ export default class EditUser extends React.Component {
                     {/* <View style={styles.logo}>
                         <Image source={require('../../assets/images/logo.png')} />
                     </View> */}
-                    <KeyboardAvoidingView behavior={Platform.OS=='ios'?"padding":"padding"} style={styles.form}> 
+                    <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? "padding" : "padding"} style={styles.form}>
                         <View style={styles.containerStyle}>
 
-                            <View style={styles.textInputContainerStyle}> 
+                            <View style={styles.textInputContainerStyle}>
                                 <Text style={styles.textInput}>NOME</Text>
                                 <Input
                                     ref={input => (this.fnameInput = input)}
@@ -124,16 +124,16 @@ export default class EditUser extends React.Component {
                                     value={this.state.fname}
                                     keyboardType={'email-address'}
                                     inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text)=>{this.setState({fname: text})}}
+                                    onChangeText={(text) => { this.setState({ fname: text }) }}
                                     errorMessage={this.state.fnameValid ? null : languageJSON.first_name_blank_error}
                                     secureTextEntry={false}
                                     blurOnSubmit={true}
-                                    onSubmitEditing={() => { this.validateFirstName(); this.lnameInput.focus()}}
+                                    onSubmitEditing={() => { this.validateFirstName(); this.lnameInput.focus() }}
                                     errorStyle={styles.errorMessageStyle}
                                     inputContainerStyle={styles.inputContainerStyle}
                                     containerStyle={styles.textInputStyle}
                                 />
-                            </View>  
+                            </View>
 
                             <View style={styles.textInputContainerStyle}>
                                 <Text style={styles.textInput}>SOBRENOME</Text>
@@ -146,11 +146,11 @@ export default class EditUser extends React.Component {
                                     value={this.state.lname}
                                     keyboardType={'email-address'}
                                     inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text)=>{this.setState({lname: text})}}
+                                    onChangeText={(text) => { this.setState({ lname: text }) }}
                                     errorMessage={this.state.lnameValid ? null : languageJSON.last_name_blank_error}
                                     secureTextEntry={false}
                                     blurOnSubmit={true}
-                                    onSubmitEditing={() => { this.validateLastname(); this.mobileInput.focus()}}
+                                    onSubmitEditing={() => { this.validateLastname(); this.mobileInput.focus() }}
                                     errorStyle={styles.errorMessageStyle}
                                     inputContainerStyle={styles.inputContainerStyle}
                                     containerStyle={styles.textInputStyle}
@@ -183,14 +183,14 @@ export default class EditUser extends React.Component {
                                 <Text style={styles.textInput}>E-MAIL</Text>
                                 <Input
                                     ref={input => (this.emailInput = input)}
-                                    editable={this.state.loginType!='email'?true:false}
+                                    editable={this.state.loginType != 'email' ? true : false}
                                     underlineColorAndroid={colors.TRANSPARENT}
                                     placeholder={languageJSON.email_placeholder}
                                     placeholderTextColor={colors.GREY.secondary}
                                     value={this.state.email}
                                     keyboardType={'email-address'}
                                     inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text)=>{this.setState({email: text})}}
+                                    onChangeText={(text) => { this.setState({ email: text }) }}
                                     errorMessage={this.state.emailValid ? null : languageJSON.valid_email_check}
                                     secureTextEntry={false}
                                     blurOnSubmit={true}
@@ -203,35 +203,35 @@ export default class EditUser extends React.Component {
 
                             <View style={styles.buttonContainer}>
                                 <Button
-                                    onPress={()=>{this.onPressRegister()}}
+                                    onPress={() => { this.onPressRegister() }}
                                     title='Atualizar'
                                     titleStyle={styles.buttonTitle}
                                     buttonStyle={styles.registerButton}
                                 />
-                            </View> 
-                            <View style={styles.gapView}/>
+                            </View>
+                            <View style={styles.gapView} />
                         </View>
                     </KeyboardAvoidingView>
                 </ScrollView>
-                </View>
-        ); 
+            </View>
+        );
     }
 };
 
-const styles={
-    main:{
-       // backgroundColor: colors.BLACK, 
+const styles = {
+    main: {
+        // backgroundColor: colors.BLACK, 
     },
-    headerContainerStyle: { 
-        backgroundColor: colors.TRANSPARENT, 
-        borderBottomWidth: 0 
+    headerContainerStyle: {
+        backgroundColor: colors.TRANSPARENT,
+        borderBottomWidth: 0
     },
     headerInnerContainer: {
-        marginLeft:10, 
+        marginLeft: 10,
         marginRight: 10
     },
     inputContainerStyle: {
-        borderWidth:1,
+        borderWidth: 1,
         borderColor: colors.GREY1,
         borderRadius: 15,
         backgroundColor: colors.GREY3,
@@ -239,22 +239,22 @@ const styles={
         marginTop: 10,
 
     },
-    textInputStyle:{
-        marginLeft:0,
+    textInputStyle: {
+        marginLeft: 0,
     },
     gapView: {
-        height:40,
-        width:'100%'
+        height: 40,
+        width: '100%'
     },
-    headerTitleStyle: { 
+    headerTitleStyle: {
         color: colors.BLACK,
-        fontFamily:'Inter-Bold',
+        fontFamily: 'Inter-Bold',
         fontSize: 20
     },
-    buttonContainer: { 
-        flexDirection:'row',
-        justifyContent:'center',
-        borderRadius:40
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        borderRadius: 40
     },
     registerButton: {
         backgroundColor: colors.DEEPBLUE,
@@ -262,46 +262,46 @@ const styles={
         height: 45,
         borderColor: colors.TRANSPARENT,
         borderWidth: 0,
-        marginTop:30,
-        borderRadius:8,
-        elevation:0
+        marginTop: 30,
+        borderRadius: 8,
+        elevation: 0
     },
-    buttonTitle: { 
-        fontSize:18 
+    buttonTitle: {
+        fontSize: 18
     },
     inputTextStyle: {
-        color:colors.BLACK,
-        fontSize:13,
-        marginLeft:7,
-        height:32,
+        color: colors.BLACK,
+        fontSize: 13,
+        marginLeft: 7,
+        height: 32,
     },
-    errorMessageStyle: { 
-        fontSize: 12, 
-        fontWeight:'bold',
-        marginLeft:0 
+    errorMessageStyle: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        marginLeft: 0
     },
-    containerStyle:{
-        flexDirection:'column',
-        marginTop:20
+    containerStyle: {
+        flexDirection: 'column',
+        marginTop: 20
     },
     form: {
         flex: 1,
     },
-    scrollViewStyle:{
+    scrollViewStyle: {
         height: height
     },
-    textInputContainerStyle:{
-        flexDirection:'column',  
-        marginLeft:20,
-        marginRight:20,
+    textInputContainerStyle: {
+        flexDirection: 'column',
+        marginLeft: 20,
+        marginRight: 20,
 
     },
-    headerStyle:{
-        fontSize:13,
-        color:colors.BLACK,
-        textAlign:'center',
-        flexDirection:'row',
-        marginTop:0
+    headerStyle: {
+        fontSize: 13,
+        color: colors.BLACK,
+        textAlign: 'center',
+        flexDirection: 'row',
+        marginTop: 0
     },
 
     textInput: {

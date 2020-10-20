@@ -15,12 +15,13 @@ import {
 import { Icon, Header } from 'react-native-elements';
 import ActionSheet from 'react-native-actionsheet';
 import { colors } from '../common/theme';
-import { Button } from '../components/Button';
 import * as Permissions from 'expo-permissions';
 import * as ImagePicker from 'expo-image-picker';
 import languageJSON from '../common/language';
 var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
+
+import AvatarUser from '../../assets/svg/AvatarUser';
 
 export default class ProfileScreen extends React.Component {
 
@@ -220,7 +221,7 @@ export default class ProfileScreen extends React.Component {
                                 {
                                     this.state.loader == true ? this.loader() : 
                                     <TouchableOpacity onPress={this.showActionSheet}>
-                                        <Image source={this.state.profile_image ? { uri: this.state.profile_image } : require('../../assets/images/profilePic.png')} style={{ borderRadius: 80 / 2, width: 80, height: 80 }} />
+                                        <AvatarUser/>
                                     </TouchableOpacity>
                                 }
                             </View>
@@ -239,21 +240,6 @@ export default class ProfileScreen extends React.Component {
                             </View>
                         </View>
                     </View>
-
-                    {/* {this.state.settings.wallet?
-                <View style={styles.scrollViewStyle} >
-                    <Text style={styles.profStyle}> {languageJSON.my_wallet_title} ( {this.state.settings.symbol} {this.state.walletBalance?parseFloat(this.state.walletBalance).toFixed(2):0.00})</Text>
-                    <Icon
-                    name='keyboard-arrow-right'
-                    type='MaterialIcons'
-                    color='#000'
-                    size={40}
-                    iconStyle={{ lineHeight: 48 }}
-                    onPress={() => this.goWallet()}
-                  /> 
-                </View>
-                :null} */}
-
 
                     <View style={styles.newViewStyle}>
                         <View style={styles.myViewStyle}>
@@ -405,17 +391,17 @@ const styles = StyleSheet.create({
     },
     imageParentView: {
         marginTop: 5,
-        borderRadius: 100 / 2,
-        width: 100,
-        height: 100,
+        borderRadius: 80 / 2,
+        width: 80,
+        height: 80,
         backgroundColor: colors.GREY.secondary,
         justifyContent: 'center',
         alignItems: 'center'
     },
     imageViewStyle: {
-        borderRadius: 90 / 2,
-        width: 90,
-        height: 90,
+        borderRadius: 80 / 2,
+        width: 80,
+        height: 80,
         backgroundColor: colors.BLACK,
         justifyContent: 'center',
         alignItems: 'center',

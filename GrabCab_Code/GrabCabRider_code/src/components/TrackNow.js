@@ -16,6 +16,9 @@ import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import distanceCalc from '../common/distanceCalc';
 
+import LocationUser from '../../assets/svg/LocationUser';
+import IconCarMap from '../../assets/svg/IconCarMap';
+
 
 export default class TrackNow extends React.Component {
 
@@ -207,17 +210,25 @@ export default class TrackNow extends React.Component {
                         {this.state.allData ?
                             <Marker
                                 coordinate={{ latitude: this.state.allData.wherelatitude, longitude: this.state.allData.wherelongitude }}
-                                anchor={{ x: 0.3, y: 0.3 }}
-                                image={require('../../assets/images/markerUser.png')}
+                                anchor={{ x: 0, y: 0 }}
+                                //image={require('../../assets/images/markerUser.png')}
                             >
+                            <LocationUser
+                                width={25}
+                                height={25}
+                            />
                             </Marker>
                             : null}
                         {this.state.latitude ?
                             <Marker
                                 coordinate={{ latitude: this.state.latitude, longitude: this.state.longitude }}
-                                anchor={{ x: 0.5, y: 0.5 }}
-                                image={require('../../assets/images/available_car.png')}
+                                anchor={{ x: 0, y: 0 }}
+                                //image={require('../../assets/images/available_car.png')}
                             >
+                                <IconCarMap
+                                width={20}
+                                height={49}
+                            />
                             </Marker>
                             : null}
 

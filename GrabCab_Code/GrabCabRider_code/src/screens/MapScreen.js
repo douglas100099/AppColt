@@ -24,12 +24,13 @@ import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import Geocoder from 'react-native-geocoding';
 import distanceCalc from '../common/distanceCalc';
+import { v4 as uuidv4 } from 'uuid';
 
 export default class MapScreen extends React.Component {
+    _isMounted = false;
     bonusAmmount = 0;
     constructor(props) {
         super(props);
-        this._isMounted = false;
         Geocoder.init(google_map_key);
         this.state = {
             loadingModal: false,
@@ -72,8 +73,8 @@ export default class MapScreen extends React.Component {
     }
 
     async UNSAFE_componentWillMount() {
-        console.log("O COMPONENTE WILLMOUNT")
 
+        console.log(uuidv4())
         if (Platform.OS === 'android' && !Constants.default.isDevice) {
             this.setState({
                 errorMessage: 'Ops, isso não funciona com Sketch no emulador Android. Tente usar em seu dispositivo!'
@@ -82,12 +83,14 @@ export default class MapScreen extends React.Component {
             if (!this.props.navigation.state.params) {
 
                 this.getLocationUser();
+                this.getNameUser();
                 //this._getLocationAsync();
             }
         }
 
         let searchObj = await this.props.navigation.getParam('searchObj') ? this.props.navigation.getParam('searchObj') : null;
         let allCarsParam = await this.props.navigation.getParam('allCars') ? this.props.navigation.getParam('allCars') : null;
+        let pinSearch = await this.props.navigation.getParam('pinSearch') ? this.props.navigation.getParam('pinSearch') : null;
 
         var minTimeEco;
         var minTimeCon;
@@ -119,7 +122,8 @@ export default class MapScreen extends React.Component {
                         minTimeEco: minTimeEco,
                         minTimeCon: minTimeCon,
                         dropText: languageJSON.map_screen_drop_input_text,
-                        updateFromText: false
+                        updateFromText: false,
+                        pinSearch: pinSearch
                     }, () => {
                         this.getDrivers()
                     })
@@ -209,7 +213,6 @@ export default class MapScreen extends React.Component {
         this._isMounted = true;
         this._retrieveSettings();
 
-        console.log("O COMPONENTE DIDMOUNT")
         this.intervalGetDrivers = setInterval(() => {
             if (this._isMounted) {
                 this.getLocationUser();
@@ -372,21 +375,6 @@ export default class MapScreen extends React.Component {
         });
     }
 
-    /*
-       Alert.alert(
-           languageJSON.no_driver_found_alert_title,
-           languageJSON.no_driver_found_alert_messege,
-           [
-               {
-                   text: languageJSON.no_driver_found_alert_OK_button,
-                   onPress: () => this.setState({ loadingModal: false }),
-               },
-               { text: languageJSON.no_driver_found_alert_TRY_AGAIN_button, onPress: () => { this._getLocationAsync() }, style: 'cancel', },
-           ],
-           { cancelable: true },
-       )
-    */
-
     onPressCancel() {
         this.setState({
             giftModal: false
@@ -433,6 +421,17 @@ export default class MapScreen extends React.Component {
         );
     }
 
+    getNameUser(){
+        var curuser = firebase.auth().currentUser.uid;
+        const userRoot = firebase.database().ref('users/' + curuser);
+        userRoot.once('value', userData => {
+            if (userData.val()) {
+                this.setState({
+                    nameUser: userData.val().firstName
+                })
+            }})
+    }
+
     onPressModal() {
         var curuser = firebase.auth().currentUser.uid;
         const userRoot = firebase.database().ref('users/' + curuser);
@@ -468,11 +467,8 @@ export default class MapScreen extends React.Component {
 
     tapAddress = (selection) => {
         if (selection == 'drop') {
-            this.props.navigation.navigate('Search', { from: "drop", locationUser: this.state.region, whereText: this.state.whereText, dropText: this.state.dropText, old: this.state.passData, allCars: this.state.allCars ? this.state.allCars : null });
-        } else if (selection == 'pickup') {
-            this.setState({ selected: "pickup" })
-            this.props.navigation.navigate('Search', { from: "where", locationUser: this.state.region, whereText: this.state.whereText, dropText: this.state.dropText, old: this.state.passData, allCars: this.state.allCars ? this.state.allCars : null });
-        }
+            this.props.navigation.navigate('Search', { from: "drop",  whereText: this.state.whereText, dropText: this.state.dropText, old: this.state.passData, allCars: this.state.allCars ? this.state.allCars : null });
+        } 
     };
 
 
@@ -488,7 +484,7 @@ export default class MapScreen extends React.Component {
                             mapRegion={this.state.region}
                             nearby={this.state.freeCars}
                             initialRegion={this.state.region}
-                            pickup={this.state.selected == 'pickup' ? this.state.region : null}
+                            pickup={this.state.pinSearch ? this.state.region : null}
                         />
                         :
                         <Modal
@@ -520,22 +516,13 @@ export default class MapScreen extends React.Component {
                             />
                         </TouchableOpacity>
                     </View>
-                    {this.state.geolocationFetchComplete ? 
-                    <View style={styles.viewStyleTop}>
+                </View>
 
-                        <View style={styles.inputPickup}>
-                            <TouchableOpacity onPress={() => this.tapAddress('pickup')} style={styles.contentStyle}>
-                                <View style={styles.textIconStyle}>
-                                    <Icon
-                                        name='gps-fixed'
-                                        color={colors.GREY2}
-                                        size={15}
-                                        containerStyle={{ flex: 1, bottom: 7, left: 6 }}
-                                    />
-                                    <Text numberOfLines={1} style={[styles.textStylePickup, { fontSize: 13, color: colors.GREY2 }]}>{this.state.whereText}</Text>
-                                </View>
-                            </TouchableOpacity>
-                        </View>
+                {this.state.geolocationFetchComplete ?
+                    <View style={styles.viewStyleTop}>
+                        <Text style={{ marginHorizontal: 20, fontFamily: 'Inter-Bold', fontSize: 16, margin: 5 }}> Olá
+                            <Text style={{ fontSize: 18 }}> {this.state.nameUser ? this.state.nameUser : null} </Text>, para onde vamos?
+                        </Text>
                         <View style={styles.inputDrop}>
                             <TouchableOpacity onPress={() => this.tapAddress('drop')}>
                                 <View style={styles.textIconStyle}>
@@ -553,7 +540,6 @@ export default class MapScreen extends React.Component {
 
                     </View>
                     : null}
-                </View>
 
                 {
                     this.bonusModal()
@@ -568,13 +554,11 @@ export default class MapScreen extends React.Component {
 
 const styles = StyleSheet.create({
     mapcontainer: {
-        height: height,
-        width: width,
         justifyContent: 'center',
         alignItems: 'center',
-        position: 'absolute'
+        flex: 3,
     },
-    textLoading:{
+    textLoading: {
         fontFamily: 'Inter-Bold',
         fontSize: 18,
         fontWeight: "600",
@@ -590,42 +574,39 @@ const styles = StyleSheet.create({
     },
     inputDrop: {
         backgroundColor: '#fff',
-        marginHorizontal: 40,
-        borderRadius: 30,
-        elevation: 10,
+        marginHorizontal: 20,
+        borderRadius: 10,
         height: 51,
         justifyContent: 'center',
-        top: -25,
-        shadowColor: '#000',
-        shadowOpacity: 0.2,
+        elevation: 10,
+        shadowColor: colors.GREY2,
+        shadowOpacity: 0.4,
         shadowOffset: { x: 0, y: 0 },
         shadowRadius: 15,
     },
     inputPickup: {
         backgroundColor: colors.GREY.secondary,
-        marginHorizontal: 40,
-        borderTopRightRadius: 30,
-        borderTopLeftRadius: 30,
         elevation: 0,
         shadowColor: '#000',
         shadowOpacity: 0.2,
         shadowOffset: { x: 0, y: 0 },
         shadowRadius: 15,
-        height: 60,
+        height: 40,
         justifyContent: 'center',
-        borderColor: colors.GREY.primary
+        marginHorizontal: 10,
+        //flexDirection: 'row',
+        borderColor: colors.GREY.primary,
+        marginTop: 10,
     },
     iconMenuStyle: {
         marginLeft: 6,
         marginBottom: 5,
     },
     viewStyleTop: {
-        position: 'absolute',
+        backgroundColor: colors.WHITE,
         //top: Platform.select({ ios: 60, android: 40 }),
-        marginHorizontal: 12,
         width: width,
-        bottom: 0,
-        marginBottom: 40
+        flex: 1
     },
     bordaIconeMenu2: {
         width: 37,

@@ -100,6 +100,7 @@ export default class SideMenu extends React.Component {
                                     bookingData[key].email = userData.val().email;
                                     bookingData[key].phonenumber = userData.val().mobile;
                                     this.props.navigation.navigate('CardDetails', { data: bookingData[key] });
+                                    console.log("ENTROU AQUI NO CARD DETAILS")
                                 }
                             }
                         }

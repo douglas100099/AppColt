@@ -2,15 +2,14 @@ import React from 'react';
 import { Text, View, Image,TouchableOpacity, Platform, StatusBar } from 'react-native';
 import { Icon } from 'react-native-elements'
 import { colors } from '../common/theme';
-//make a compontent
+
+import AvatarUser from '../../assets/svg/AvatarUser';
+
 const SideMenuHeader = ({headerStyle,userPhoto,userName,userEmail,userPhone}) =>{
    return (
         <View style={[styles.viewStyle,headerStyle]}>
             <TouchableOpacity style={styles.userImageView} >
-                 <Image 
-                    source={userPhoto == null?require('../../assets/images/profilePic.png'):{uri:userPhoto}}
-                    style={styles.imageStyle}
-                />
+                 <AvatarUser/>
             </TouchableOpacity>   
             <View style={styles.headerTextStyle}>
                 <Text style={styles.ProfileNameStyle}>{userName?userName.toUpperCase():""}</Text>

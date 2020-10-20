@@ -10,10 +10,7 @@ import {
     Modal,
     Linking,
 } from 'react-native';
-import { Icon, Button, Header } from 'react-native-elements';
-import Polyline from '@mapbox/polyline';
-import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
-import StarRating from 'react-native-star-rating';
+import { Icon, Button } from 'react-native-elements';
 import RadioForm from 'react-native-simple-radio-button';
 import { colors } from '../common/theme';
 import * as firebase from 'firebase';
@@ -24,9 +21,13 @@ import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import distanceCalc from '../common/distanceCalc';
 import { TrackNow } from '../components';
-import { color } from 'react-native-reanimated';
+
+import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
+import ColtConfortCar from '../../assets/svg/ColtConfortCar';
+import AvatarUser from '../../assets/svg/AvatarUser';
 
 export default class BookedCabScreen extends React.Component {
+    _isMounted = false;
     getParamData;
     constructor(props) {
         super(props);
@@ -41,7 +42,6 @@ export default class BookedCabScreen extends React.Component {
             driverSerach: true,
             bookingDataState: null,
         }
-        this._isMounted = false;
     }
 
     componentDidMount() {
@@ -96,7 +96,7 @@ export default class BookedCabScreen extends React.Component {
                         driverSerach: false
                     })
                 } else if (currUserBooking.status == "START") {
-                    this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId });
+                    this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId,  });
                 } else if (currUserBooking.status == "REJECTED") {
                     this.recalcularMotorista(this.getParamData.bokkingId);
                 }
@@ -358,16 +358,16 @@ export default class BookedCabScreen extends React.Component {
                             <View style={styles.radioContainer}>
                                 <RadioForm
                                     radio_props={this.state.radio_props ? this.state.radio_props : null}
-                                    initial = {5}
-                                    animation = {true}
-                                    buttonColor = {colors.GREY2}
-                                    selectedButtonColor = {colors.DEEPBLUE}
-                                    buttonSize = {10}
+                                    initial={5}
+                                    animation={true}
+                                    buttonColor={colors.GREY2}
+                                    selectedButtonColor={colors.DEEPBLUE}
+                                    buttonSize={10}
                                     buttonOuterSize={20}
-                                    style = {styles.radioContainerStyle}
-                                    labelStyle = {styles.radioText}
-                                    radioStyle = {styles.radioStyle}
-                                    onPress = {(value) => { this.setState({ value: value }) }}
+                                    style={styles.radioContainerStyle}
+                                    labelStyle={styles.radioText}
+                                    radioStyle={styles.radioStyle}
+                                    onPress={(value) => { this.setState({ value: value }) }}
                                 />
                             </View>
                             <View style={styles.cancelModalButtosContainer}>
@@ -485,12 +485,13 @@ export default class BookedCabScreen extends React.Component {
                 {/* Modal inferior */}
                 <View style={styles.containerBottom}>
                     <View style={styles.containerFoto}>
-                        <Image
-                            style={styles.ImageStyle}
-                            source={this.state.driverPic ? { uri: this.state.driverPic } : require('../../assets/images/profilePic.png')}
-                        />
+                        <View style={{ borderWidth: 1.5, borderColor: colors.DEEPBLUE, borderRadius: 100 }}>
+                            <AvatarUser
+                                style={{ margin: 3}}
+                            />
+                        </View>
 
-                        <Text style={styles.nameDriver}> {this.state.driverName ? this.state.driverName : null} </Text>
+                        <Text style={styles.nameDriver}> {this.state.driverName ? this.state.driverName.split(" ")[0] : null} </Text>
                         <View style={styles.rating}>
                             <Icon
                                 name="star"
@@ -505,10 +506,11 @@ export default class BookedCabScreen extends React.Component {
 
                     <View style={styles.containerCarDetails}>
                         <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                            <Image
-                                style={styles.carEconomico}
-                                source={require('../../assets/images/coltEconomicoEmpty.png')}
-                            />
+                            {this.state.carType == 'Colt econômico' ?
+                                <ColtEconomicoCar />
+                                :
+                                <ColtConfortCar />
+                            }
                             <Text style={{ fontSize: 18, fontFamily: 'Inter-Medium', fontWeight: "500", textAlign: 'center', marginBottom: 5 }}> {this.state.carType} </Text>
                         </View>
 
@@ -875,7 +877,7 @@ const styles = StyleSheet.create({
     containerCarDetails: {
         position: 'absolute',
         right: 20,
-        top: 20,
+        top: 0,
         flexDirection: 'column',
     },
     containerBtn: {

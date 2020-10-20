@@ -153,7 +153,7 @@ export default class OnlineChat extends Component {
                 msgTime: time,
                 source: "rider"
               })
-              this.sendPushNotification(this.state.carbookedInfo.driver, this.getParamData.bokkingId, 'Rider ' + this.state.carbookedInfo.customer_name + ', has sent a messege to you: \n' + inputmessage)
+              this.sendPushNotification(this.state.carbookedInfo.driver, 'O passageiro ' + this.state.carbookedInfo.customer_name + ', enviou uma mensagem: \n' + inputmessage)
             })
           }
         } else {
@@ -171,7 +171,7 @@ export default class OnlineChat extends Component {
                 msgTime: time,
                 source: "rider"
               })
-              this.sendPushNotification(this.state.carbookedInfo.driver, this.getParamData.bokkingId, 'Rider ' + this.state.carbookedInfo.customer_name + ', has sent a messege to you: \n' + inputmessage)
+              this.sendPushNotification(this.state.carbookedInfo.driver, 'O passageiro ' + this.state.carbookedInfo.customer_name + ', enviou uma mensagem: \n' + inputmessage)
             } else { }
 
           })
@@ -197,7 +197,7 @@ export default class OnlineChat extends Component {
           <Text style={styles.msgTextStyle}>{item ? item.message : languageJSON.chat_not_found}</Text>
           <Text style={styles.msgTimeStyle}>{item ? item.msgTime : null}</Text>
         </View>
-        : 
+        :
         <View style={styles.riderMsgStyle}>
           <Text style={styles.riderMsgText}>{item ? item.message : languageJSON.chat_not_found}</Text>
           <Text style={styles.riderMsgTime}>{item ? item.msgTime : null}</Text>
@@ -211,7 +211,7 @@ export default class OnlineChat extends Component {
         <Header
           backgroundColor={colors.DEEPBLUE}
           leftComponent={{ icon: 'angle-left', type: 'font-awesome', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.goBack(); } }}
-          centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.chat_title}</Text>}
+          centerComponent={<Text style={styles.headerTitleStyle}>{this.state.carbookedInfo.driver_name ? this.state.carbookedInfo.driver_name : Chat}</Text>}
           containerStyle={styles.headerStyle}
           innerContainerStyles={styles.inrContStyle}
           statusBarProps={{ barStyle: 'light-content' }}
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
   headerTitleStyle: {
     color: colors.WHITE,
-    fontSize: 18,
+    fontSize: 17,
     textAlign: 'center',
   },
   headerStyle: {
@@ -329,9 +329,10 @@ const styles = StyleSheet.create({
     marginRight: 10,
     marginLeft: 30,
     borderBottomLeftRadius: 50,
-    borderBottomRightRadius: 40,
     borderTopLeftRadius: 50,
-    
+    borderTopRightRadius: 50,
+    justifyContent: 'flex-end',
+
     elevation: 5,
     shadowOpacity: 0.1,
     shadowRadius: 5,

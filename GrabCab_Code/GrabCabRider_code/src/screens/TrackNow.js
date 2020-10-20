@@ -24,6 +24,12 @@ import * as firebase from 'firebase';
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 
+import LocationUser from '../../assets/svg/LocationUser';
+import LocationDrop from '../../assets/svg/LocationDrop';
+import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
+import ColtConfortCar from '../../assets/svg/ColtConfortCar';
+import AvatarUser from '../../assets/svg/AvatarUser';
+
 export default class TrackNow extends React.Component {
 
     constructor(props) {
@@ -161,45 +167,6 @@ export default class TrackNow extends React.Component {
         return (
 
             <View style={styles.container}>
-                {/*<Header
-                    backgroundColor={colors.GREY.default}
-                    leftComponent={{ icon: 'md-menu', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.toggleDrawer(); } }}
-                    rightComponent={{
-                        icon: 'ios-sad', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => {
-
-                            Alert.alert(
-                                languageJSON.panic_text,
-                                languageJSON.panic_question,
-                                [
-                                    {
-                                        text: languageJSON.cancel,
-                                        onPress: () => console.log('Cancel Pressed'),
-                                        style: 'cancel'
-                                    },
-                                    {
-                                        text: 'OK', onPress: async () => {
-                                            const value = await AsyncStorage.getItem('settings');
-                                            if (value !== null) {
-                                                let settings = JSON.parse(value);
-                                                if (Platform.OS === 'android') {
-                                                    phoneNumber = `tel:${settings.panic}`;
-                                                } else {
-                                                    phoneNumber = `telprompt:${settings.panic}`;
-                                                }
-                                                Linking.openURL(phoneNumber);
-                                            }
-                                        }
-                                    }
-                                ],
-                                { cancelable: false }
-                            );
-                        }
-                    }}
-                    centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.track_cab}</Text>}
-                    containerStyle={styles.headerStyle}
-                    innerContainerStyles={styles.headerInnerStyle}
-                />*/}
-
                 <View style={styles.innerContainer}>
                     {this.state.latitude ?
                         <MapView
@@ -239,36 +206,92 @@ export default class TrackNow extends React.Component {
                             >
                             </Marker.Animated>
 
-                            {this.state.allData ?
+                            {/*{this.state.allData ?
                                 <Marker
-                                    image={require('../../assets/images/markerUser.png')}
+                                    //image={require('../../assets/images/markerUser.png')}
                                     coordinate={{ latitude: this.state.allData.pickup.lat, longitude: this.state.allData.pickup.lng }}
-                                    anchor={{ x: 0.5, y: 0.5 }}
+                                    anchor={{ x: 0, y: 0 }}
                                 >
+                                <LocationUser/>
                                 </Marker>
-                                : null}
+                            : null}*/}
                             {this.state.allData ?
                                 <Marker
-                                    image={require('../../assets/images/marker.png')}
+                                    //image={require('../../assets/images/marker.png')}
                                     coordinate={{ latitude: this.state.allData.drop.lat, longitude: this.state.allData.drop.lng }}
                                 >
+                                    <LocationDrop />
                                 </Marker>
                                 : null}
 
                         </MapView>
                         : null}
-                    <TouchableOpacity style={styles.btnPanico}>
-                        <View>
-                            <Icon
-                                name="ios-sad"
-                                type="ionicon"
-                                // icon: 'chat', color: '#fff',
-                                size={30}
-                                color={colors.WHITE}
+                </View>
+
+                <View style={{ backgroundColor: colors.GREEN.light, height: 30, justifyContent: 'center', alignItems: 'center', opacity: 0.5 }}>
+                    <Text style={{ color: colors.GREY3, fontFamily: 'Inter-Bold' }}> A caminho do seu destino </Text>
+                </View>
+
+                {/* Modal inferior */}
+                <View style={styles.containerBottom}>
+                    <View style={styles.containerFoto}>
+                        <View style={{ borderWidth: 1.5, borderColor: colors.DEEPBLUE, borderRadius: 100 }}>
+                            <AvatarUser
+                                style={{ margin: 3 }}
                             />
                         </View>
-                    </TouchableOpacity>
+
+                        <Text style={styles.nameDriver}> {this.state.allData ? this.state.allData.driver_name : null} </Text>
+                        <View style={styles.rating}>
+                            <Icon
+                                name="star"
+                                type="feather"
+                                // icon: 'chat', color: '#fff',
+                                size={23}
+                                color={colors.YELLOW.secondary}
+                            />
+                            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 15, fontWeight: '600' }}> {this.state.allData ? this.state.allData.driverRating : null} </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.containerCarDetails}>
+                        <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                            {this.state.carType == 'Colt econômico' ?
+                                <ColtEconomicoCar />
+                                :
+                                <ColtConfortCar />
+                            }
+                            <Text style={{ fontSize: 18, fontFamily: 'Inter-Medium', fontWeight: "500", textAlign: 'center', marginBottom: 5 }}> {this.state.allData ? this.state.allData.carType : null} </Text>
+                        </View>
+
+                        <View style={styles.boxPlacaCarro}>
+                            <Text style={styles.placaCarro} > {this.state.allData ? this.state.allData.vehicle_number : null} </Text>
+                        </View>
+                        <View style={styles.containerTxtCarro}>
+                            <Text style={styles.marcaCarro}> {this.state.allData ? this.state.allData.vehicleModelName : null} </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.containerBtn}>
+                        <TouchableOpacity style={styles.btnLigarMotorista}>
+                            <View>
+                                <Text style={styles.txtLigarMotorista}> Ligar pro motorista </Text>
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+
                 </View>
+                <TouchableOpacity style={styles.btnPanico}>
+                    <View>
+                        <Icon
+                            name="ios-sad"
+                            type="ionicon"
+                            // icon: 'chat', color: '#fff',
+                            size={30}
+                            color={colors.WHITE}
+                        />
+                    </View>
+                </TouchableOpacity>
             </View>
         );
     }
@@ -281,7 +304,7 @@ const styles = StyleSheet.create({
         // marginTop: StatusBar.currentHeight,
     },
     innerContainer: {
-        flex: 1,
+        flex: 6,
         backgroundColor: colors.WHITE,
         justifyContent: "flex-end",
         alignItems: "center",
@@ -321,5 +344,107 @@ const styles = StyleSheet.create({
         marginRight: 20,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+
+    ////////////////////
+    containerBottom: {
+        width: width,
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+        elevation: 5,
+        backgroundColor: colors.WHITE,
+        flex: 3,
+        alignSelf: 'center',
+    },
+    containerFoto: {
+        position: 'absolute',
+        justifyContent: 'center',
+        alignItems: 'center',
+        left: 20,
+        top: 15,
+    },
+    ImageStyle: {
+        width: 90,
+        height: 90,
+        borderColor: colors.GREY1,
+        borderWidth: 2,
+        borderRadius: 100
+    },
+    nameDriver: {
+        fontFamily: 'Inter-Bold',
+        fontSize: 17,
+        fontWeight: "600",
+    },
+    reLocation: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.WHITE,
+        width: 60,
+        height: 60,
+        borderRadius: 100
+    },
+    rating: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    containerCarDetails: {
+        position: 'absolute',
+        right: 20,
+        top: 0,
+        flexDirection: 'column',
+    },
+    containerBtn: {
+        position: 'absolute',
+        bottom: 0,
+        marginBottom: 30,
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'center',
+    },
+    btnLigarMotorista: {
+        backgroundColor: colors.WHITE,
+        borderWidth: 2,
+        borderColor: colors.DEEPBLUE,
+        height: 45,
+        borderRadius: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: 250
+    },
+    txtLigarMotorista: {
+        fontFamily: 'Inter-Bold',
+        color: colors.DEEPBLUE,
+        fontSize: 19,
+    },
+    boxPlacaCarro: {
+        width: 150,
+        backgroundColor: colors.WHITE,
+        borderRadius: 50,
+        borderWidth: 1.5,
+        borderColor: colors.GREY2,
+        alignItems: 'center',
+        justifyContent: 'center',
+        opacity: 0.5,
+        marginTop: 10,
+    },
+    placaCarro: {
+        fontSize: 25,
+        fontFamily: 'Inter-Bold',
+        fontWeight: '500',
+
+    },
+    containerTxtCarro: {
+        marginTop: 7,
+        width: 150,
+    },
+    marcaCarro: {
+        fontFamily: 'Inter-Regular',
+        color: colors.BLACK,
+        fontSize: 18,
+        position: 'absolute',
+        right: 0
     },
 });

@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
+import IconCarMap from '../../assets/svg/IconCarMap';
+import LocationUser from '../../assets/svg/LocationUser';
 
 export default class MapComponent extends Component {
     constructor(props) {
@@ -31,9 +33,13 @@ export default class MapComponent extends Component {
                         <Marker.Animated
                             coordinate={{ latitude: item.location ? item.location.lat : 0.00, longitude: item.location ? item.location.lng : 0.00 }}
                             key={index}
-                            image={require('../../assets/images/available_car.png')}
+                            //image={require('../../assets/images/available_car.png')}
                             //tracksViewChanges={this.state.tracksViewChanges}
                         >
+                            <IconCarMap
+                                width={45}
+                                height={45}
+                            />
                         </Marker.Animated>
                     )
                 })
@@ -42,11 +48,15 @@ export default class MapComponent extends Component {
                 {pickup ?
                     <Marker
                         coordinate={{ latitude: (pickup.latitude), longitude: (pickup.longitude) }}
-                        image={require('../../assets/images/markerUser.png')}
+                        //image={require('../../assets/images/markerUser.png')}
                         anchor={{ x: 0, y: 0 }}
                     >
+                        <LocationUser
+                            width={25}
+                            height={25}
+                        />
                     </Marker>
-                    : null}
+                : null}
             </MapView.Animated>
         );
     }

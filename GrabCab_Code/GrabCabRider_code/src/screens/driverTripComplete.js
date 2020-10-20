@@ -22,6 +22,9 @@ import languageJSON from '../common/language';
 import dateStyle from '../common/dateStyle';
 import { NavigationActions, StackActions } from 'react-navigation';
 
+import CircleLineTriangle from '../../assets/svg/CircleLineTriangle';
+import Verified from '../../assets/svg/Verified';
+
 export default class DriverTripComplete extends React.Component {
     constructor(props) {
         super(props);
@@ -70,7 +73,6 @@ export default class DriverTripComplete extends React.Component {
         }
         this._retrieveSettings();
     }
-
 
     //rating
     onStarRatingPress(rating) {
@@ -183,42 +185,51 @@ export default class DriverTripComplete extends React.Component {
     render() {
         return (
             <View style={styles.mainViewStyle}>
-                <View style={styles.dateViewStyle}>
-                    <Text style={styles.dateViewTextStyle}>{this.state.getDetails && this.state.getDetails.tripdate ? new Date(this.state.getDetails.tripdate).toLocaleString(dateStyle) : null}</Text>
+                <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 65 }}>
+                    <Verified width={100} height={100} />
+                    <Text style={{ marginTop: 15, marginBottom: 15, fontFamily: 'Inter-Bold', fontSize: 16 }}> Sua corrida terminou! </Text>
                 </View>
-            
+
                 <View style={styles.addressViewStyle}>
+                    <View style={{ flexDirection: 'column', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 13 }}> {this.state.getDetails ?
+                            this.state.getDetails.trip_start_time[0] + this.state.getDetails.trip_start_time[1] + ':' +
+                            this.state.getDetails.trip_start_time[3] + this.state.getDetails.trip_start_time[4]
+                            : null} </Text>
+                        <CircleLineTriangle style={{ marginLeft: 25 }} />
+                        <Text style={{ fontSize: 13 }} > {this.state.getDetails ?
+                            this.state.getDetails.trip_end_time[0] + this.state.getDetails.trip_end_time[1] + ':' +
+                            this.state.getDetails.trip_end_time[3] + this.state.getDetails.trip_end_time[4]
+                            : null} </Text>
+                    </View>
                     <FlatList
                         data={this.state.pickAndDrop}
                         keyExtractor={(item) => item.key}
                         renderItem={({ item }) =>
                             <View style={styles.pickUpStyle}>
-                                {item.type == "pickup" ?
-                                    <View style={styles.greenDot}></View>
-                                    : <View style={styles.redDot}></View>
-                                }
                                 <Text style={styles.addressViewTextStyle}>{item.place}</Text>
                             </View>
                         }
+                        height={80}
                     />
                 </View>
-                        
+
                 <View style={styles.rateViewStyle}>
-                    <Text> {this.state.getDetails.payment_mode ? this.state.getDetails.payment_mode : null} </Text>
-                    <Text style={styles.rateViewTextStyle}>{this.state.settings.symbol}{this.state.getDetails ? this.state.getDetails.cashPaymentAmount > 0 ? this.state.getDetails.cashPaymentAmount : 0 : null}</Text>
+                    <Text style={styles.paymentMode}> {this.state.getDetails ? this.state.getDetails.paymentMode : null} </Text>
+                    <Text style={styles.rateViewTextStyle}>{this.state.settings.symbol}{this.state.getDetails ? this.state.getDetails.customer_paid > 0 ? this.state.getDetails.customer_paid : 0 : null}</Text>
                 </View>
 
                 <View style={styles.tripMainView}>
-                    <View style={{ flex: 3.2, justifyContent: 'center', alignItems: "center" }}>
+                    <View style={{ flex: 3, justifyContent: 'center', alignItems: "center" }}>
 
                         <View style={styles.tripSummaryStyle}>
                             <Text style={styles.summaryText}>{languageJSON.rate_ride} </Text>
                         </View>
 
-                        <View style={{ flex: 3, justifyContent: 'center', alignItems: "center" }}>
+                        <View style={{ flex: 2, justifyContent: 'center', alignItems: "center" }}>
                             {this.state.getDetails ?
-                                this.state.getDetails.driver_image != '' ? <Image source={{ uri: this.state.getDetails.driver_image }} style={{ height: 78, width: 78, borderRadius: 78 / 2 }} /> :
-                                    <Image source={require('../../assets/images/profilePic.png')} style={{ height: 78, width: 78, borderRadius: 78 / 2 }} />
+                                this.state.getDetails.driver_image != '' ? <Image source={{ uri: this.state.getDetails.driver_image }} style={{ height: 68, width: 68, borderRadius: 78 / 2 }} /> :
+                                    <Image source={require('../../assets/images/profilePic.png')} style={{ height: 68, width: 68, borderRadius: 78 / 2 }} />
                                 : null}
                         </View>
                         <View style={styles.tripSummaryStyle}>
@@ -251,7 +262,6 @@ export default class DriverTripComplete extends React.Component {
                         titleStyle={{ fontFamily: 'Inter-Bold', }}
                         onPress={() => this.submitNow()}
                         buttonStyle={styles.myButtonStyle}
-                    //disabled={this.state.starCount > 0 ? false : true}
                     />
                 </View>
                 {
@@ -280,26 +290,23 @@ const styles = StyleSheet.create({
         fontFamily: 'Roboto-Regular',
         fontSize: 16
     },
-    dateViewStyle: {
-        justifyContent: "center",
-        flex: 1,
-        marginTop: 20
-    },
-    dateViewTextStyle: {
-        fontFamily: 'Roboto-Regular',
-        color: colors.GREY.btnPrimary,
-        fontSize: 26,
-        textAlign: "center"
-    },
     rateViewStyle: {
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: colors.GREY1,
+        backgroundColor: colors.GREY3,
+        borderColor: colors.GREY1,
         borderRadius: 15,
         height: 75,
         marginHorizontal: 15,
         marginTop: 10,
         marginBottom: 10,
+    },
+    paymentMode: {
+        color: colors.BLACK,
+        fontFamily: 'Inter-Medium',
+        fontSize: 21,
+        position: 'absolute',
+        left: 20,
     },
     rateViewTextStyle: {
         fontSize: 25,
@@ -307,46 +314,25 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter-Bold',
         fontWeight: 'bold',
         position: 'absolute',
-        right: 0,
+        right: 20,
         marginRight: 10
     },
     addressViewStyle: {
-        flex: 2,
+        flex: 3,
         flexDirection: 'row',
-        paddingTop: 22,
-        paddingLeft: 15,
-        paddingRight: 15,
-        borderWidth: 2,
-        borderColor: colors.BLACK,
+        alignItems: 'center',
+        marginLeft: 15,
+        marginRight: 15,
+        borderWidth: 1,
+        borderColor: colors.GREY2,
         borderRadius: 10,
-        
     },
     addressViewTextStyle: {
         color: colors.BLACK,
-        fontSize: 16,
-        fontFamily: 'Inter-Bold',
-        marginLeft: 15,
+        fontSize: 14,
+        fontFamily: 'Inter-Medium',
         marginRight: 15,
-        //marginTop: 15,
-        lineHeight: 0, 
-    },
-    greenDot: {
-        backgroundColor: colors.BLACK,
-        width: 12,
-        height: 12,
-        borderRadius: 50
-    },
-    redDot: {
-        backgroundColor: colors.DEEPBLUE,
-        width: 12,
-        height: 12,
-        borderRadius: 50
-    },
-    divider: {
-        backgroundColor: colors.GREY.secondary,
-        width: '20%',
-        height: 1,
-        top: '2.7%'
+        marginTop: 15
     },
     summaryText: {
         color: colors.GREY.btnPrimary,
@@ -368,7 +354,6 @@ const styles = StyleSheet.create({
     pickUpStyle: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 15,
         marginLeft: 10,
         marginRight: 10,
     },
@@ -376,6 +361,7 @@ const styles = StyleSheet.create({
         flex: 6,
         flexDirection: "column",
         justifyContent: "center",
+        marginTop: 10,
     },
     ratingViewStyle: {
         flex: 1.8,
@@ -394,7 +380,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         elevation: 5,
         shadowColor: '#000',
-        shadowOpacity: 0.3,
+        shadowOpacity: 0.2,
         shadowOffset: { x: 0, y: 0 },
         shadowRadius: 15,
     },
@@ -402,7 +388,8 @@ const styles = StyleSheet.create({
         backgroundColor: colors.DEEPBLUE,
         width: 300,
         padding: 10,
-        borderRadius: 20,
+        borderRadius: 50,
+        height: 50,
     },
     contStyle: {
         marginTop: 0,

@@ -129,7 +129,7 @@ export default {
     chat_title:'Chat',
     send_button_text:'Enviar',
     chat_input_title:'Converse com o motorista...',
-    chat_not_found:'No chat history found',
+    chat_not_found:'Chat vazio!',
     card_payment_blank_error:'Please fill up all the details properly.',
     payment_amound_error:'Payment amount is too small.',
     invalid_card_details_error:'Card is not valid.',

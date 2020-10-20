@@ -25,6 +25,11 @@ import { RequestPushMsg } from '../common/RequestPushMsg';
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 
+import LocationUser from '../../assets/svg/LocationUser';
+import LocationDrop from '../../assets/svg/LocationDrop';
+import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
+import ColtConfortCar from '../../assets/svg/ColtConfortCar';
+
 export default class FareScreen extends React.Component {
     constructor(props) {
         super(props);
@@ -258,7 +263,7 @@ export default class FareScreen extends React.Component {
             bookingDate: today,
 
             cashPaymentAmount: cashPayment.toFixed(2),
-            paymentMode: this.state.metodoPagamento,
+            payment_mode: this.state.metodoPagamento,
             usedWalletMoney: this.state.usedWalletMoney,
             discount_amount: this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value : 0,
             promoCodeApplied: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : "",
@@ -590,12 +595,8 @@ export default class FareScreen extends React.Component {
 
     //Abre o modal de escolha de pagamento
     openModal = () => {
-        if (this.state.selected) {
-            this.state.openModalPayment ? setTimeout(() => { this.setState({ openModalPayment: false }) }, 100) :
-                this.setState({ openModalPayment: true });
-        } else {
-            alert("Não há motoristas disponíveis no momento!")
-        }
+        this.state.openModalPayment ? setTimeout(() => { this.setState({ openModalPayment: false }) }, 100) :
+            this.setState({ openModalPayment: true });
     }
 
     //Modal de escolha do metodo de pagamento
@@ -765,23 +766,28 @@ export default class FareScreen extends React.Component {
                             <Marker
                                 coordinate={{ latitude: (this.state.region.wherelatitude), longitude: (this.state.region.wherelongitude) }}
                                 //title={this.state.region.whereText}
-                                image={require('../../assets/images/markerUser.png')}
-                                anchor={{ x: 0, y: 0 }}
+                                centerOffset={{ x: 0.1, y: 0.1 }}
+                                anchor={{ x: 0.1, y: 0.1 }}
                             >
+                                <LocationUser
+                                    width={25}
+                                    height={25}
+                                />                                    
                                 <View style={styles.locationBoxDestino}>
-                                    <Text style={styles.locationText}> {this.state.region.whereText.split(",", 2)} </Text>
-                                </View>
+                                        <Text style={styles.locationText}> {this.state.region.whereText.split(",", 2)} </Text>
+                                    </View>
                             </Marker>
 
                             <Marker
                                 coordinate={{ latitude: (this.state.region.droplatitude), longitude: (this.state.region.droplongitude) }}
                                 //title={this.state.region.droptext}
-                                anchor={{ x: 0, y: 0 }}
-                                image={require('../../assets/images/marker.png')}
+                                centerOffset={{ x: 0.1, y: 0.1 }}
+                                anchor={{ x: 0.1, y: 0.1 }}
                             >
+                                <LocationDrop/>
                                 <View style={styles.locationBoxDestino}>
-                                    <Text style={styles.locationText}> {this.state.region.droptext.split(",", 2)} </Text>
-                                </View>
+                                        <Text style={styles.locationText}> {this.state.region.droptext.split(",", 2)} </Text>
+                                    </View>
                             </Marker>
 
                             {this.state.coords ?
@@ -841,14 +847,12 @@ export default class FareScreen extends React.Component {
                             <View style={[styles.cardInfo,
                             {
                                 borderWidth: this.state.selected == 0 ? 1 : 0,
-                                borderColor: this.state.selected == 0 ? colors.GREEN.light : colors.GREY3,
+                                borderColor: this.state.selected == 0 ? colors.BLACK : colors.GREY3,
                             }
                             ]} >
                                 <TouchableOpacity style={styles.touchCard1} onPress={() => this.selectCarType(this.state.minTimeEconomico, 0)}>
-                                    <Image
-                                        style={styles.carEconomico}
-                                        source={require('../../assets/images/coltEconomico.png')}
-                                    />
+
+                                    <ColtEconomicoCar />
                                     <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[0].name}</Text>
 
                                     <Text style={styles.price1}>{this.state.settings.symbol} <Text style={styles.price2}> {this.state.metodoPagamento === "Dinheiro/Carteira" ? (this.state.estimatePrice1 - this.state.walletBallance).toFixed(2) : this.state.estimatePrice1} </Text></Text>
@@ -871,14 +875,11 @@ export default class FareScreen extends React.Component {
                             <View style={[styles.cardInfo2,
                             {
                                 borderWidth: this.state.selected == 1 ? 1 : 0,
-                                borderColor: this.state.selected == 1 ? colors.DEEPBLUE : colors.GREY3,
+                                borderColor: this.state.selected == 1 ? colors.BLACK : colors.GREY3,
                             }
                             ]} >
                                 <TouchableOpacity style={styles.touchCard2} onPress={() => this.selectCarType(this.state.minTimeConfort, 1)}>
-                                    <Image
-                                        style={styles.carEconomico}
-                                        source={require('../../assets/images/coltConfort.png')}
-                                    />
+                                    <ColtConfortCar />
                                     <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[1].name}</Text>
                                     <Text style={styles.price1}>{this.state.settings.symbol} <Text style={styles.price2}>{this.state.metodoPagamento === "Dinheiro/Carteira" ? (this.state.estimatePrice2 - this.state.walletBallance).toFixed(2) : this.state.estimatePrice2} </Text></Text>
                                     <View style={[styles.timeBox, {
@@ -996,7 +997,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#FFF",
         borderRadius: 4,
         flexDirection: 'row',
-        marginTop: Platform.OS == 'ios' ? 19 : 10,
+        marginTop: Platform.OS == 'ios' ? 3 : 2,
         marginLeft: Platform.OS == 'android' ? 19 : null,
     },
     locationText: {
@@ -1251,9 +1252,9 @@ const styles = StyleSheet.create({
         top: 6,
         elevation: 4,
         shadowColor: '#000',
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.1,
         shadowOffset: { x: 0, y: 5 },
-        shadowRadius: 15,
+        shadowRadius: 10,
     },
     touchCard1: {
         alignItems: 'center',
@@ -1271,9 +1272,9 @@ const styles = StyleSheet.create({
         elevation: 4,
         alignItems: 'center',
         shadowColor: '#000',
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.1,
         shadowOffset: { x: 0, y: 5 },
-        shadowRadius: 15,
+        shadowRadius: 10,
     },
     carEconomico: {
         marginHorizontal: 20,

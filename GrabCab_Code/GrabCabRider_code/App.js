@@ -6,7 +6,8 @@ import Constants from 'expo-constants';
 import * as firebase from 'firebase';
 import * as Notifications from 'expo-notifications';
 import * as Updates from 'expo-updates';
-
+import { LogBox } from 'react-native';
+import _ from 'lodash';
 
 var firebaseConfig = Constants.manifest.extra.firebaseConfig;
 !firebase.apps.length ? firebase.initializeApp(firebaseConfig) : firebase.app();
@@ -19,11 +20,19 @@ Notifications.setNotificationHandler({
   }),
 });
 
+LogBox.ignoreLogs(['Setting a timer']);
+const _console = _.clone(console);
+console.warn = message => {
+  if (message.indexOf('Setting a timer') <= -1) {
+    _console.warn(message);
+  }
+};
+
 export default class App extends React.Component {
 
   constructor() {
     super();
-    console.disableYellowBox = true;
+    LogBox.ignoreAllLogs(true)
   }
 
   _loadResourcesAsync = async () => {

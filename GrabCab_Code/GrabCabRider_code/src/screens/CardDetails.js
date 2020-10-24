@@ -70,10 +70,10 @@ export default class CardDetailsScreen extends React.Component {
         loadingPayment: true,
         usedWalletAmmount: pdata.usedWalletMoney
       })
-      if (pdata.promoCodeApplied != "") {
-        this.addDetailsToPromo(pdata.promoCodeApplied, firebase.auth().currentUser.uid)
+      if (pdata.promoKey != "") {
+        //this.addDetailsToPromo(pdata.promoKey, firebase.auth().currentUser.uid)
       }
-    } 
+    }
     this.loadWalletCash()
   }
 
@@ -144,50 +144,25 @@ export default class CardDetailsScreen extends React.Component {
               })
             }
           }
+        }).then(() => {
+          let cancelData = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/cancell_details/')
+          cancelData.once('value', data =>{
+            if( data.val() ){
+              firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/cancell_details/').remove()
+            }
+          })
         })
-        setTimeout(() => {
-          alert(languageJSON.success_payment);
-        }, 1000)
-        this.props.navigation.navigate('ratingPage', { data: paramData });
+        this.props.navigation.replace('ratingPage', { data: paramData });
       })
     })
   }
 
-  loadingPaymentModal() {
-    return (
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={this.state.loadingPayment}
-        onRequestClose={() => {
-          this.setState({ loadingPayment: false })
-        }}
-      >
-        <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.4)", justifyContent: 'center', alignItems: 'center' }}>
-          <View style={{ width: '85%', backgroundColor: "#DBD7D9", borderRadius: 10, flex: 1, maxHeight: 80 }}>
-            <View style={{ alignItems: 'center', flexDirection: 'row', flex: 1, justifyContent: "center" }}>
-              <Image
-                style={{ width: 80, height: 80, backgroundColor: colors.TRANSPARENT }}
-                source={require('../../assets/images/loader.gif')}
-              />
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: "#000", fontSize: 16, }}> Processando seu pagamento, aguarde... </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    )
-  }
-
   render() {
-    return (
-      <View style={styles.mainView}>
-        {
-          this.loadingPaymentModal()
-        }
+    return(
+      <View>
+        <Text> TESTE </Text>
       </View>
-    );
+    )
   }
 }
 

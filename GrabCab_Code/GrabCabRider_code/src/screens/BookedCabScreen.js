@@ -6,8 +6,8 @@ import {
     Dimensions,
     TouchableOpacity,
     Text,
-    Platform,
     Modal,
+    AsyncStorage,
     Linking,
 } from 'react-native';
 import { Icon, Button } from 'react-native-elements';
@@ -21,10 +21,12 @@ import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import distanceCalc from '../common/distanceCalc';
 import { TrackNow } from '../components';
+import Polyline from '@mapbox/polyline';
 
 import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
 import ColtConfortCar from '../../assets/svg/ColtConfortCar';
 import AvatarUser from '../../assets/svg/AvatarUser';
+import { NavigationActions, StackActions } from 'react-navigation';
 
 export default class BookedCabScreen extends React.Component {
     _isMounted = false;
@@ -41,13 +43,19 @@ export default class BookedCabScreen extends React.Component {
             value: 0,
             driverSerach: true,
             bookingDataState: null,
+            punisherCancell: false,
+            embarque: false,
+            modalInfoVisible: false,
+            searchDisabled: false,
         }
     }
 
     componentDidMount() {
         this._isMounted = true;
         this.state.bookingDataState == null ? this.getParamData = this.props.navigation.getParam('passData') : this.getParamData = this.state.bookingDataState
-        this.setState({ driverUidRecent: this.props.navigation.getParam('DriverRecent') })
+        this.props.navigation.getParam('riderName') ? this.state.riderName = this.props.navigation.getParam('riderName') : null
+
+        this.searchDriver(this.getParamData.bokkingId)
 
         var curuser = firebase.auth().currentUser;
         let bookingResponse = firebase.database().ref(`users/` + curuser.uid + '/my-booking/' + this.getParamData.bokkingId);
@@ -71,6 +79,7 @@ export default class BookedCabScreen extends React.Component {
                     estimateTime: 0,
                     currentBookingId: this.getParamData.bokkingId,
                     currentUser: curuser,
+                    customer_name: currUserBooking.customer_name,
                     bookingStatus: currUserBooking.status,
                     carType: currUserBooking.carType,
                     driverUID: currUserBooking.driver,
@@ -82,6 +91,7 @@ export default class BookedCabScreen extends React.Component {
                     carNo: currUserBooking.vehicle_number,
                     starCount: currUserBooking.driverRating,
                     otp: currUserBooking.otp,
+
 
                     imageRider: currUserBooking.imageRider ? currUserBooking.imageRider : null,
                 }, () => {
@@ -95,10 +105,26 @@ export default class BookedCabScreen extends React.Component {
                         bookingStatus: currUserBooking.status,
                         driverSerach: false
                     })
+                    if (currUserBooking.status == "CANCELLED") {
+                        this.props
+                            .navigation
+                            .dispatch(StackActions.reset({
+                                index: 0,
+                                actions: [
+                                    NavigationActions.navigate({
+                                        routeName: 'Map',
+                                    }),
+                                ],
+                            }))
+                    }
+                    //AsyncStorage.setItem('startTripTime', new Date().getTime());
+                } else if (currUserBooking.status == "EMBARQUE") {
+                    this.setState({ embarque: true })
                 } else if (currUserBooking.status == "START") {
-                    this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId,  });
+                    
+                    this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
                 } else if (currUserBooking.status == "REJECTED") {
-                    this.recalcularMotorista(this.getParamData.bokkingId);
+                    this.searchDriver(this.getParamData.bokkingId);
                 }
             }
         })
@@ -109,37 +135,33 @@ export default class BookedCabScreen extends React.Component {
     }
 
     verificarRejected(driverUid, currentBooking) {
-        if (driverUid == this.state.driverUidRecent || driverUid == 0) {
-            return false
-        }
+        let checkRejected = true;
         const rejectedDrivers = firebase.database().ref('bookings/' + currentBooking + '/rejectedDrivers');
         rejectedDrivers.once('value', drivers => {
             if (drivers.val()) {
                 let rejectedDrivers = drivers.val();
                 for (reject in rejectedDrivers) {
                     if (reject == driverUid) {
-                        return false;
+                        checkRejected = false;
                     }
                 }
             }
         })
-        return true;
+        return checkRejected;
     }
 
-    recalcularMotorista(param) {
+    async searchDriver(param) {
         const userData = firebase.database().ref('users/');
         var driverUidnovo = 0;
         var distanciaValue = 10;
-        var arr = []
 
         userData.once('value', driverData => {
             if (driverData.val()) {
                 var allUsers = driverData.val();
-                for (key in allUsers) {
 
+                for (key in allUsers) {
                     //Verifica se o motorista rejeitou a corrida
                     if (this.verificarRejected(key, param) == true) {
-
                         if (allUsers[key].usertype == 'driver' && allUsers[key].approved == true && allUsers[key].queue == false && allUsers[key].driverActiveStatus == true) {
                             if (allUsers[key].location) {
                                 var location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];    //Rider Lat and Lang
@@ -147,7 +169,7 @@ export default class BookedCabScreen extends React.Component {
 
                                 //Calcula a distancia entre dois pontos
                                 var distance = distanceCalc(location1, location2);
-                                var originalDistance = (distance);
+                                var originalDistance = distance;
                                 if (originalDistance <= 5) { //5KM
 
                                     if (allUsers[key].carType == this.state.carType) {
@@ -163,28 +185,25 @@ export default class BookedCabScreen extends React.Component {
                     }
                 }
 
-                arr.push(driverUidnovo);
                 this.getBookingData(param)
-
                 let bookingData = {
                     bokkingId: param,
                     coords: this.state.coords,
                 }
 
-                setTimeout(() => {
-                    firebase.database().ref('users/' + driverUidnovo + '/waiting_riders_list/' + param + '/').set(this.state.bookingdataDetails);
-                    this.sendPushNotification(driverUidnovo, param, languageJSON.new_booking_request_push_notification)
+                if (driverUidnovo != 0) {
+                    setTimeout(() => {
+                        firebase.database().ref('users/' + driverUidnovo + '/waiting_riders_list/' + param + '/').set(this.state.bookingdataDetails);
+                        this.sendPushNotification(driverUidnovo, param, languageJSON.new_booking_request_push_notification)
 
-                    if (arr.length > 0) {
                         //Atualiza o Bookings do firebase com os dados do motorista selecionado
                         firebase.database().ref('bookings/' + param + '/').update({
-                            requestedDriver: arr
+                            requestedDriver: driverUidnovo
                         }).then((res) => {
                             this.setState({ bookingDataState: bookingData })
                         })
-                    }
-                }, 500)
-
+                    }, 500)
+                }
             }
         })
     }
@@ -210,8 +229,7 @@ export default class BookedCabScreen extends React.Component {
     }
 
     //Encontra seu ponto de origem e destinoo e passa pro metodo 
-    /*/async getDirections(startLoc, destinationLoc) {
-        console.log("GET DIRECTIONS USANDO")
+    /*async getDirections(startLoc, destinationLoc) {
         try {
             let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=${google_map_key}`)
             let respJson = await resp.json();
@@ -238,15 +256,30 @@ export default class BookedCabScreen extends React.Component {
         }
     }*/
 
-    //Cancel button press
-    onPressCancel() {
-        this.setState({
-            modalVisible: true,
-        });
+    //Cancell Button Press
+    async onPressCancellBtn() {
+        const value = await AsyncStorage.getItem('startTripTime');
+        firebase.database().ref(`/users/` + this.state.driverUID + '/my_bookings/' + this.state.currentBookingId + '/').on('value', curbookingData => {
+            if (curbookingData.val()) {
+                if (curbookingData.val().status == 'ACCEPTED' || curbookingData.val().status == 'EMBARQUE') {
+                    const timeCurrent = new Date().getTime();
+
+
+                    if (timeCurrent - value >= 30000) {
+                        this.setState({ modalInfoVisible: true })
+                    } else {
+                        this.setState({ modalVisible: true })
+                    }
+                }
+                else if (curbookingData.val().status == 'NEW') {
+                    this.onCancellSearchBooking()
+                }
+            }
+        })
     }
 
     dissMissCancel() {
-        this.setState({ modalVisible: false })
+        this.setState({ modalVisible: false, modalInfoVisible: false })
     }
 
     //Cancelar corrida antes do motorista ter aceito
@@ -259,20 +292,12 @@ export default class BookedCabScreen extends React.Component {
                 const requestedDriver = firebase.database().ref('bookings/' + this.state.currentBookingId + '/requestedDriver');
                 requestedDriver.once('value', drivers => {
                     if (drivers.val()) {
-                        let requetedDrivers = drivers.val();
-                        let count = 0;
-                        if (requetedDrivers) {
-                            for (let i = 0; i < requetedDrivers.length; i++) {
-                                var ref = firebase.database().ref(`/users/` + requetedDrivers[i] + '/waiting_riders_list/' + this.state.currentBookingId + '/')
-                                if (ref) {
-                                    ref.remove();
-                                }
-                                count = count + 1;
-                            }
-                            if (count == requetedDrivers.length) {
-                                firebase.database().ref('bookings/' + this.state.currentBookingId + '/requestedDriver/').remove();
-                            }
+                        let requestedDriver = drivers.val();
+                        var ref = firebase.database().ref(`/users/` + requestedDriver + '/waiting_riders_list/' + this.state.currentBookingId + '/')
+                        if (ref) {
+                            ref.remove();
                         }
+                        firebase.database().ref('bookings/' + this.state.currentBookingId + '/requestedDriver/').remove();
                     }
                 })
             })
@@ -281,7 +306,7 @@ export default class BookedCabScreen extends React.Component {
             status: 'CANCELLED',
         })
             .then(() => {
-                this.setState({ driverSerach: false }, () => { setTimeout(() => { this.props.navigation.replace('Map') }, 400) })
+                this.setState({ driverSerach: false }, () => { setTimeout(() => { this.props.navigation.goBack() }, 400) })
             })
     }
 
@@ -303,17 +328,26 @@ export default class BookedCabScreen extends React.Component {
                             firebase.database().ref(`/users/` + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
                                 status: 'CANCELLED',
                                 reason: this.state.radio_props[this.state.value].label
+                            }).then(() => {
+                                if (this.state.punisherCancell) {
+                                    firebase.database().ref(`/users/` + this.state.currentUser.uid + '/cancell_details/').update({
+                                        bookingId: this.state.currentBookingId,
+                                        data: new Date().toString(),
+                                        value: 6
+                                    })
+                                }
+                            }).then(() => {
+                                firebase.database().ref(`/users/` + this.state.driverUID + '/').update({ queue: false })
+                                this.sendPushNotification(curbookingData.val().driver, this.state.currentBookingId, this.state.riderName + ' cancelou a corrida atual!')
+                            }).then(() => {
+                                firebase.database().ref(`/users/` + this.state.driverUID + '/emCorrida').remove()
+                            }).then(() => {
+                                this.props.navigation.replace('Map')
                             })
-                                .then(() => {
-                                    firebase.database().ref(`/users/` + this.state.driverUID + '/').update({ queue: false })
-                                    this.setState({ alertModalVisible: true });
-                                    this.sendPushNotification(curbookingData.val().driver, this.state.currentBookingId, this.state.driverName + ' cancelou a corrida atual!')
-                                })
                         }
                     }
                 })
             })
-
     }
 
     //Botao ligar pro motorista
@@ -341,15 +375,14 @@ export default class BookedCabScreen extends React.Component {
     cancelModal() {
         return (
             <Modal
-                animationType='fade'
-                transparent={true}
+                animationType='slide'
+                transparent={false}
                 visible={this.state.modalVisible}
                 onRequestClose={() => {
                     this.setState({ modalVisible: false })
                 }}>
                 <View style={styles.cancelModalContainer}>
                     <View style={styles.cancelModalInnerContainer}>
-
                         <View style={styles.cancelContainer}>
                             <View style={styles.cancelReasonContainer}>
                                 <Text style={styles.cancelReasonText}>{languageJSON.cancel_reason_modal_title}</Text>
@@ -371,25 +404,15 @@ export default class BookedCabScreen extends React.Component {
                                 />
                             </View>
                             <View style={styles.cancelModalButtosContainer}>
-                                <Button
-                                    title={languageJSON.dont_cancel_text}
-                                    titleStyle={styles.signInTextStyle}
-                                    onPress={() => { this.dissMissCancel() }}
-                                    buttonStyle={styles.cancelModalButttonStyle}
-                                    containerStyle={styles.cancelModalButtonContainerStyle}
-                                />
-
-                                <View style={styles.buttonSeparataor} />
-
-                                <Button
-                                    title={languageJSON.no_driver_found_alert_OK_button}
-                                    titleStyle={styles.signInTextStyle}
-                                    onPress={() => { this.onCancelConfirm() }}
-                                    buttonStyle={styles.cancelModalButttonStyle}
-                                    containerStyle={styles.cancelModalButtonContainerStyle}
-                                />
+                                <TouchableOpacity onPress={() => this.onCancelConfirm()}>
+                                    <View style={{ width: width - 150, justifyContent: 'center', alignItems: 'center', height: 35, backgroundColor: colors.DEEPBLUE, borderRadius: 50 }}>
+                                        <Text style={{ fontFamily: "Inter-Bold", color: colors.WHITE, fontSize: 17 }}> Confirmar </Text>
+                                    </View>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => this.dissMissCancel()}>
+                                    <Text style={{ marginBottom: 15, marginTop: 15, fontFamily: 'Inter-Medium', color: colors.RED, fontSize: 17 }}> Voltar </Text>
+                                </TouchableOpacity>
                             </View>
-
                         </View>
 
 
@@ -400,48 +423,68 @@ export default class BookedCabScreen extends React.Component {
         )
     }
 
-    //Modal corrida cancelada com sucesso
-    alertModal() {
+    infoModal() {
         return (
             <Modal
-                animationType='slide'
-                transparent={true}
-                visible={this.state.alertModalVisible}
+                animationType="slide"
+                transparent={false}
+                visible={this.state.modalInfoVisible}
                 onRequestClose={() => {
-                    this.setState({ alertModalVisible: false })
-                }}>
-                <View style={styles.alertModalContainer}>
-                    <View style={styles.alertModalInnerContainer}>
-
-                        <View style={styles.alertContainer}>
-
-                            <Text style={styles.rideCancelText}>Conluído</Text>
-
-                            <View style={styles.horizontalLLine} />
-
-                            <View style={styles.msgContainer}>
-                                <Text style={styles.cancelMsgText}> Corrida cancelada com sucesso! </Text>
-                            </View>
-                            <View style={styles.okButtonContainer}>
-                                <Button
-                                    title={languageJSON.no_driver_found_alert_OK_button}
-                                    titleStyle={styles.signInTextStyle}
-                                    onPress={
-                                        () => {
-                                            this.setState({ alertModalVisible: false, currentBookingId: null },
-                                                () => { setTimeout(() => { this.props.navigation.replace('Map') }, 400) }
-                                            )
-                                        }}
-                                    buttonStyle={styles.okButtonStyle}
-                                    containerStyle={styles.okButtonContainerStyle}
-                                />
-                            </View>
-
+                    this.setState({ modalInfoVisible: false })
+                }}
+            >
+                <View style={{ flex: 1, backgroundColor: colors.BLACK, opacity: 0.5, width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ height: 400, backgroundColor: colors.WHITE, borderRadius: 25, marginHorizontal: 20 }}>
+                        <View style={{ flex: 2, flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                            <Icon
+                                name="ios-alert"
+                                type="ionicon"
+                                size={60}
+                                color={colors.RED}
+                            />
+                            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20 }}> Cuidado! </Text>
+                        </View>
+                        <View style={{ flex: 3, flexDirection: 'column', }}>
+                            <Text style={{ marginHorizontal: 10, fontSize: 15, textAlign: 'center', fontFamily: 'Inter-Medium' }}> Essa corrida já está em andamento e você já ultrapassou o tempo máximo de cancelamento. </Text>
+                            <Text style={{ marginHorizontal: 10, fontSize: 15, marginTop: 10, textAlign: 'center', fontFamily: 'Inter-Medium' }}> Ao cancelar, será cobrada uma taxa no valor de R$6,00 na próxima corrida! </Text>
                         </View>
 
+                        <View style={{}}>
+                            <Text style={{ marginHorizontal: 10, fontSize: 17, textAlign: "center", marginBottom: 10, fontFamily: 'Inter-Medium' }}> Deseja continuar? </Text>
+                            <TouchableOpacity onPress={() => { this.setState({ punisherCancell: true, modalVisible: true, modalInfoVisible: false }) }}>
+                                <View style={{ justifyContent: 'center', alignItems: 'center', backgroundColor: colors.RED, marginHorizontal: 30, height: 40, borderRadius: 50 }}>
+                                    <Text style={{ fontFamily: 'Inter-Bold', fontSize: 17, color: colors.WHITE }}> Continuar </Text>
+                                </View>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => this.dissMissCancel()}>
+                                <View style={{ marginTop: 15, flexDirection: 'column', alignItems: 'center' }}>
+                                    <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20, marginBottom: 15, color: colors.DEEPBLUE }}> Voltar </Text>
+                                </View>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
+            </Modal>
+        )
+    }
 
+    searchModal() {
+        return (
+            <Modal
+                animationType="fade"
+                transparent={false}
+                visible={this.state.driverSerach}
+                onRequestClose={() => {
+                    this.setState({ driverSerach: false })
+                }}
+            >
+                <View style={{ flex: 1, backgroundColor: colors.WHITE, width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
+                    <Image source={require('../../assets/images/searchDrivers.gif')} style={styles.styleGif} />
+                    <Text style={styles.textGif}> Procurando motoristas próximos </Text>
+                    <TouchableOpacity disabled={this.state.searchDisabled} style={styles.touchView} onPress={() => { this.setState({ searchDisabled: true }), this.onCancellSearchBooking() }}>
+                        <Text style={styles.textCancel}> Cancelar </Text>
+                    </TouchableOpacity>
+                </View>
             </Modal>
         )
     }
@@ -454,7 +497,7 @@ export default class BookedCabScreen extends React.Component {
         return (
             <View style={styles.mainContainer}>
                 <View style={styles.mapcontainer}>
-                    {this.state.driverUID && this.state.region && this.state.bookingStatus ?
+                    {this.state.driverUID && this.state.region && this.state.bookingStatus && this.state.driverSerach == false ?
                         <TrackNow duid={this.state.driverUID} alldata={this.state.region} bookingStatus={this.state.bookingStatus} />
                         : null}
 
@@ -468,12 +511,13 @@ export default class BookedCabScreen extends React.Component {
                         />
                     </TouchableOpacity>
 
-                    {/* Botao Chat */}
+
                     <TouchableOpacity style={styles.btnChatMotorista} onPress={() => this.chat()}>
                         <View>
                             <Text style={styles.txtChatMotorista}> Chat </Text>
                         </View>
                     </TouchableOpacity>
+
                 </View>
 
                 <View style={{ backgroundColor: colors.GREY2, opacity: 0.6, height: 20, justifyContent: 'center', alignItems: 'center' }}>
@@ -482,12 +526,19 @@ export default class BookedCabScreen extends React.Component {
                     </View>
                 </View>
 
-                {/* Modal inferior */}
-                <View style={styles.containerBottom}>
+                {this.state.embarque ?
+                    <View style={{ borderBottomWidth: 2, borderColor: colors.GREY.background, backgroundColor: colors.GREY3, opacity: 0.6, height: 60, justifyContent: 'center', alignItems: 'center' }}>
+                        <View style={styles.viewInfo}>
+                            <Text style={{ color: colors.BLACK, fontFamily: 'Inter-Medium', fontSize: 20, textAlign: 'center' }}> Encontre o motorista em {this.state.region.whereText.split("-")[0]} </Text>
+                        </View>
+                    </View>
+                    : null}
+
+                <View style={[styles.containerBottom, { flex: this.state.embarque ? 4.5 : 3.5 }]}>
                     <View style={styles.containerFoto}>
                         <View style={{ borderWidth: 1.5, borderColor: colors.DEEPBLUE, borderRadius: 100 }}>
                             <AvatarUser
-                                style={{ margin: 3}}
+                                style={{ margin: 3 }}
                             />
                         </View>
 
@@ -506,7 +557,7 @@ export default class BookedCabScreen extends React.Component {
 
                     <View style={styles.containerCarDetails}>
                         <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                            {this.state.carType == 'Colt econômico' ?
+                            {this.state.carType == "Colt econômico" ?
                                 <ColtEconomicoCar />
                                 :
                                 <ColtConfortCar />
@@ -523,12 +574,12 @@ export default class BookedCabScreen extends React.Component {
                     </View>
 
                     <View style={styles.containerBtn}>
-                        <TouchableOpacity style={styles.btnLigarMotorista} onPress={() => { this.onPressCall('tel:' + this.state.driverContact) }}>
+                        <TouchableOpacity style={styles.btnLigarMotorista} onPress={() => { this.onPressCall('tel: ' + this.state.driverContact) }}>
                             <View>
                                 <Text style={styles.txtLigarMotorista}> Ligar pro motorista </Text>
                             </View>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.btnCancelarCorrida} onPress={() => { this.onPressCancel() }}>
+                        <TouchableOpacity style={styles.btnCancelarCorrida} onPress={() => { this.onPressCancellBtn() }}>
                             <View style={styles.bordaIcon}>
                                 <Icon
                                     name="x"
@@ -541,30 +592,18 @@ export default class BookedCabScreen extends React.Component {
                         </TouchableOpacity>
                     </View>
 
+
                 </View>
 
-                {/* Booking Modal */}
-                <Modal
-                    animationType="fade"
-                    transparent={false}
-                    visible={this.state.driverSerach}
-                >
-                    <View style={{ flex: 1, backgroundColor: colors.WHITE, width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
-                        <Image source={require('../../assets/images/searchDrivers.gif')} style={styles.styleGif} />
-                        <Text style={styles.textGif}> Procurando motoristas próximos </Text>
-                        <TouchableOpacity style={styles.touchView} onPress={() => { this.onCancellSearchBooking() }}>
-                            <Text style={styles.textCancel}> Cancelar </Text>
-                        </TouchableOpacity>
-                    </View>
-                </Modal>
-
+                {
+                    this.infoModal()
+                }
+                {
+                    this.searchModal()
+                }
                 {
                     this.cancelModal()
                 }
-                {
-                    this.alertModal()
-                }
-
             </View>
         );
     }
@@ -743,11 +782,11 @@ const styles = StyleSheet.create({
     cancelModalContainer: {
         flex: 1,
         justifyContent: 'center',
-        backgroundColor: colors.GREY.background
+        backgroundColor: colors.BLACK,
     },
     cancelModalInnerContainer: {
-        height: 400,
-        width: width * 0.85,
+        height: 450,
+        width: width * 0.90,
         padding: 0,
         backgroundColor: colors.WHITE,
         alignItems: 'center',
@@ -786,34 +825,10 @@ const styles = StyleSheet.create({
         paddingBottom: 25
     },
     cancelModalButtosContainer: {
-        flex: 1,
-        flexDirection: 'row',
-        backgroundColor: colors.GREY.iconSecondary,
+        flex: 2,
+        flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center'
-    },
-    buttonSeparataor: {
-        height: height / 35,
-        width: 0.5,
-        backgroundColor: colors.WHITE,
-        alignItems: 'center',
-        marginTop: 3
-    },
-    cancelModalButttonStyle: {
-        backgroundColor: colors.GREY.iconSecondary,
-        borderRadius: 0
-    },
-    cancelModalButtonContainerStyle: {
-        flex: 1,
-        width: (width * 2) / 2,
-        backgroundColor: colors.GREY.iconSecondary,
-        alignSelf: 'center',
-        margin: 0
-    },
-    signInTextStyle: {
-        fontFamily: 'Roboto-Bold',
-        fontWeight: "700",
-        color: colors.WHITE
+        justifyContent: 'center',
     },
     floatButtonStyle: {
         borderWidth: 1,

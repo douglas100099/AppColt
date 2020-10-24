@@ -265,7 +265,7 @@ export default class RideDetails extends React.Component {
                                 <Avatar
                                     size="small"
                                     rounded
-                                    source={this.state.paramData.carImage ? { uri: this.state.paramData.carImage } : require('../../assets/images/microBlackCar.png')}
+                                    source={this.state.paramData.carImage ? { uri: this.state.paramData.carImage } : null}
                                     activeOpacity={0.7}
                                 />
                                 <View style={styles.userView}>

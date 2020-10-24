@@ -1,16 +1,16 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
     StyleSheet,
     View,
-    Image,
     Dimensions,
     TouchableOpacity,
+    ActivityIndicator,
     Text,
     Modal,
     Platform,
     AsyncStorage,
     Alert,
-    TouchableNativeFeedbackBase,
+    Animated
 } from 'react-native';
 import { Icon, Button, Input } from 'react-native-elements';
 import Polyline from '@mapbox/polyline';
@@ -29,6 +29,7 @@ import LocationUser from '../../assets/svg/LocationUser';
 import LocationDrop from '../../assets/svg/LocationDrop';
 import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
 import ColtConfortCar from '../../assets/svg/ColtConfortCar';
+import { VerifyCupom } from '../common/VerifyCupom';
 
 export default class FareScreen extends React.Component {
     constructor(props) {
@@ -49,8 +50,8 @@ export default class FareScreen extends React.Component {
                 otp_secure: false
             },
             buttonDisabled: false,
-            carType: 'Colt econômico',
-            carImage: "https://firebasestorage.googleapis.com/v0/b/app-colt.appspot.com/o/carImage%2FColt%20econ%C3%B4mico.png?alt=media&token=cc286e36-2dd6-40d4-b717-836616819ed9",
+            carType: '',
+            carImage: '',
             metodoPagamento: 'Dinheiro',
             openModalPayment: false,
             walletBallance: null,
@@ -58,15 +59,27 @@ export default class FareScreen extends React.Component {
             promoCode: null,
             promoCodeValid: true,
             usedWalletMoney: 0,
+            cancellValue: 0,
+            infoModal: false,
+            showViewInfo: true,
+            fadeAnim: new Animated.Value(0),
         }
     }
 
     async componentDidMount() {
         this._isMounted = true;
-        var getCroods = await this.props.navigation.getParam('data');
-        var minTimeEconomico = await this.props.navigation.getParam('minTimeEconomico');
-        var minTimeConfort = await this.props.navigation.getParam('minTimeConfort');
+        var getCroods = await this.props.navigation.getParam('data') ? await this.props.navigation.getParam('data') : null;
+        var minTimeEconomico = await this.props.navigation.getParam('minTimeEconomico') ? await this.props.navigation.getParam('minTimeEconomico') : null;
+        var minTimeConfort = await this.props.navigation.getParam('minTimeConfort') ? await this.props.navigation.getParam('minTimeConfort') : null;
         var arrayRates = [];
+
+        this.setState({
+            intervalDriversTime: setInterval(() => {
+                if (this._isMounted) {
+                    this.getDrivers()
+                }
+            }, 10000)
+        })
 
         const Data = firebase.database().ref('rates/');
         Data.once('value', rates => {
@@ -82,7 +95,8 @@ export default class FareScreen extends React.Component {
                     rateDetailsObjects: arrayRates,
                     region: getCroods,
                     curUID: firebase.auth().currentUser,
-                    buttonDisabled: minTimeEconomico == null && minTimeConfort == null ? true : false,
+                    buttonDisabled: false,
+                    selected: 0
                 }, () => {
                     this.getWalletBalance();
                     this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
@@ -96,6 +110,24 @@ export default class FareScreen extends React.Component {
 
         this._retrieveSettings();
     }
+
+    fadeIn(params){
+        this.setState({ showViewInfo: !this.state.showViewInfo })
+        if(params){
+            Animated.timing(this.state.fadeAnim, {
+                toValue: 1,
+                duration: 500,
+                useNativeDriver: false,
+            }).start();
+        } else { 
+            Animated.timing(this.state.fadeAnim, {
+                toValue: 0,
+                duration: 500,
+                useNativeDriver: false,
+            }).start();
+        }
+    };
+
 
     _retrieveSettings = async () => {
         try {
@@ -129,28 +161,18 @@ export default class FareScreen extends React.Component {
                     convenience_fees: fareCalculation ? parseFloat(fareCalculation.convenience_fees).toFixed(2) : 0
                 }
                 arrayDetails.push(detailsBooking);
-                i == 0 ? this.setState({ estimatePrice1: detailsBooking.estimateFare, estimatedTimeBooking: detailsBooking.estimateTime }) : this.setState({ estimatePrice2: detailsBooking.estimateFare, estimatedTimeBooking: detailsBooking.estimateTime })
+                i == 0 ? this.setState({ estimatePrice1: detailsBooking.estimateFare, estimatedTimeBooking: detailsBooking.estimateTime })
+                    : this.setState({ estimatePrice2: detailsBooking.estimateFare, estimatedTimeBooking: detailsBooking.estimateTime })
             }
+            this.getCancellValue()
             this.setState({
                 detailsBooking: arrayDetails,
+                selected: 0,
+                estimateFare: arrayDetails[0].estimateFare,
+                distance: arrayDetails[0].distance,
+                carType: this.state.rateDetailsObjects[0].name,
+                carImage: this.state.rateDetailsObjects[0].image
             })
-            if (this.state.minTimeEconomico != null) {
-                this.setState({
-                    selected: 0,
-                    estimateFare: this.state.detailsBooking[0].estimateFare,
-                    distance: this.state.detailsBooking[0].distance,
-                    carType: this.state.rateDetailsObjects[0].name,
-                    carImage: this.state.rateDetailsObjects[0].image
-                })
-            } else if (this.state.minTimeConfort != null) {
-                this.setState({
-                    selected: 1,
-                    estimateFare: this.state.detailsBooking[1].estimateFare,
-                    distance: this.state.detailsBooking[1].distance,
-                    carType: this.state.rateDetailsObjects[1].name,
-                    carImage: this.state.rateDetailsObjects[1].image
-                })
-            }
 
             var points = Polyline.decode(respJson.routes[0].overview_polyline.points);
             var coords = points.map((point) => {
@@ -194,11 +216,10 @@ export default class FareScreen extends React.Component {
     //Confirma corrida e começa a procurar motorista
     confirmarCorrida() {
         this.setState({ buttonDisabled: true });
-        var curuser = firebase.auth().currentUser.uid;
+        var curuser = this.state.curUID.uid;
 
         var pickUp = { lat: this.state.region.wherelatitude, lng: this.state.region.wherelongitude, add: this.state.region.whereText };
         var drop = { lat: this.state.region.droplatitude, lng: this.state.region.droplongitude, add: this.state.region.droptext };
-
         var cashPayment = this.state.selected == 0 ? this.state.estimatePrice1 - this.state.usedWalletMoney : this.state.estimatePrice2 - this.state.usedWalletMoney;
 
         if (this.state.settings.otp_secure)
@@ -213,6 +234,7 @@ export default class FareScreen extends React.Component {
             carType: this.state.carType,
             customer: curuser,
             customer_name: this.state.userDetails.firstName + ' ' + this.state.userDetails.lastName,
+            firstNameRider: this.state.userDetails.firstName,
             distance: this.state.distance,
             driver: "",
             driver_image: "",
@@ -237,7 +259,8 @@ export default class FareScreen extends React.Component {
             payment_mode: this.state.metodoPagamento,
             usedWalletMoney: this.state.usedWalletMoney,
             discount_amount: this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value : 0,
-            promoCodeApplied: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : "",
+            promoCodeApplied: this.state.payDetails ? this.state.payDetails.promo_details.promo_code : "",
+            promoKey: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : "",        
         }
 
         var MyBooking = {
@@ -266,116 +289,210 @@ export default class FareScreen extends React.Component {
             payment_mode: this.state.metodoPagamento,
             usedWalletMoney: this.state.usedWalletMoney,
             discount_amount: this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value : 0,
-            promoCodeApplied: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : "",
+            promoCodeApplied: this.state.payDetails ? this.state.payDetails.promo_details.promo_code : "",
+            promoKey: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : ""
         }
 
         firebase.database().ref('bookings/').push(data).then((res) => {
             var bookingKey = res.key;
             firebase.database().ref('users/' + curuser + '/my-booking/' + bookingKey + '/').set(MyBooking).then((res) => {
-                this.setState({ currentBookingId: bookingKey }, () => {
-                    var arr = [];
-                    const userData = firebase.database().ref('users/');
-                    var driverUidnovo = 0;
-                    var distancia = 10;
-                    userData.once('value', driverData => {
-                        if (driverData.val()) {
-                            var allUsers = driverData.val();
-                            for (key in allUsers) {
-                                if (allUsers[key].usertype == 'driver' && allUsers[key].approved == true && allUsers[key].queue == false && allUsers[key].driverActiveStatus == true) {
-                                    if (allUsers[key].location) {
-                                        var location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];    // rider lat and lng
-                                        var location2 = [allUsers[key].location.lat, allUsers[key].location.lng];   //Driver lat and lang
-                                        var distance = distanceCalc(location1, location2);
-                                        var originalDistance = (distance);
 
-                                        if (originalDistance <= 5) { //5KM 
-                                            if (allUsers[key].carType == this.state.carType) {
-                                                allUsers[key].driverUid = key;
-                                                if (originalDistance < distancia) {
-                                                    distancia = originalDistance
-                                                    driverUidnovo = allUsers[key].driverUid
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            arr.push(driverUidnovo);
-                            firebase.database().ref('users/' + driverUidnovo + '/waiting_riders_list/' + bookingKey + '/').set(data);
-                            this.sendPushNotification(driverUidnovo, bookingKey, languageJSON.new_booking_request_push_notification)
-
-                            let bookingData = {
-                                bokkingId: bookingKey,
-                                coords: this.state.coords,
-                            }
-
-                            setTimeout(() => {
-                                if (arr.length > 0) {
-                                    // set all requested drivers data to main booking node
-                                    firebase.database().ref('bookings/' + bookingKey + '/').update({
-                                        requestedDriver: arr
-                                    }).then((res) => {
-                                        this.setState({ buttonDisabled: false });
-                                        this.props.navigation.replace('BookedCab', { passData: bookingData, DriverRecent: driverUidnovo });
-                                    })
-                                }
-                            }, 300)
-                        }
+                let bookingData = {
+                    bokkingId: bookingKey,
+                    coords: this.state.coords,
+                }
+                setTimeout(() => {
+                    this.setState({ buttonDisabled: false }, () => {
+                        this.props.navigation.navigate('BookedCab', { passData: bookingData, riderName: data.customer_name });
                     })
-                })
+                }, 500)
             })
         })
     }
 
+    //Verifica se o passageiro tem taxa de cancelamento pendente
+    getCancellValue() {
+        const userData = firebase.database().ref('users/' + this.state.curUID.uid + '/cancell_details/');
+        userData.once('value', cancellValue => {
+            if (cancellValue.val()) {
+                let rate = cancellValue.val().value
+                this.setState({
+                    estimatePrice1: parseFloat(this.state.estimatePrice1) + parseFloat(rate),
+                    estimatePrice2: parseFloat(this.state.estimatePrice2) + parseFloat(rate),
+                    cancellValue: cancellValue.val().value
+                })
+            }
+        })
+    }
+
+    getDrivers() {
+        const userData = firebase.database().ref('users/');
+        userData.once('value', userData => {
+            if (userData.val()) {
+                let allUsers = userData.val();
+                this.prepareDrivers(allUsers);
+            }
+        })
+    }
+
+    //Pega o tempo dos motoristas mais proximos
+    async prepareDrivers(allUsers) {
+        let arr = {};
+        let riderLocation = [this.state.region.wherelatitude, this.state.region.wherelongitude];
+        let startLoc = '"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"';
+        for (let key in allUsers) {
+            let driver = allUsers[key];
+            if ((driver.usertype) && (driver.usertype == 'driver') && (driver.approved == true) && (driver.queue == false) && (driver.driverActiveStatus == true)) {
+                if (driver.location) {
+                    let driverLocation = [driver.location.lat, driver.location.lng];
+                    let distance = distanceCalc(riderLocation, driverLocation);
+
+                    if (distance < 5) {
+                        let destLoc = '"' + driver.location.lat + ', ' + driver.location.lng + '"';
+                        let carType = driver.carType;
+                        driver.arriveTime = await this.getDriverTime(startLoc, destLoc);
+
+                        if (carType == "Colt econômico") {
+                            if (this.state.minTimeEconomico == null) {
+                                this.setState({
+                                    minTimeEconomico: driver.arriveTime.time_in_secs
+                                })
+                            } else if (this.state.minTimeEconomico > driver.arriveTime.time_in_secs) {
+                                this.setState({
+                                    minTimeEconomico: driver.arriveTime.time_in_secs
+                                })
+                            }
+                        } else {
+                            if (this.state.minTimeConfort == null) {
+                                this.setState({
+                                    minTimeConfort: driver.arriveTime.time_in_secs
+                                })
+                            } else if (this.state.minTimeConfort > driver.arriveTime.time_in_secs) {
+                                this.setState({
+                                    minTimeConfort: driver.arriveTime.time_in_secs
+                                })
+                            }
+                        }
+
+                        if (arr[carType] && arr[carType].drivers) {
+                            arr[carType].drivers.push(driver);
+                            if (arr[carType].minDistance > distance) {
+                                arr[carType].minDistance = distance;
+                                arr[carType].minTime = driver.arriveTime.time_in_secs;
+                            }
+                        } else {
+                            arr[carType] = {};
+                            arr[carType].drivers = [];
+                            arr[carType].drivers.push(driver);
+                            arr[carType].minDistance = distance;
+                            arr[carType].minTime = driver.arriveTime.time_in_secs;
+                        }
+                    }
+                }
+            }
+        }
+
+        this.setState({
+            allCars: arr,
+        });
+    }
+
+    getDriverTime(startLoc, destLoc) {
+        return new Promise(function (resolve, reject) {
+            fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=${startLoc}&destinations=${destLoc}&key=${google_map_key}`)
+                .then((response) => response.json())
+                .then((res) =>
+                    resolve({
+                        distance_in_meter: res.rows[0].elements[0].distance.value,
+                        time_in_secs: res.rows[0].elements[0].duration.value,
+                        timein_text: res.rows[0].elements[0].duration.text
+                    })
+                )
+                .catch(error => {
+                    reject(error);
+                });
+        });
+    }
+
     //Seleciona o tipo de carro que vai ser a corrida
-    selectCarType(param, type) {
+    selectCarType(type) {
         if (type == 0) {
-            if (param != null) {
-                this.setState({ selected: 0, estimateFare: this.state.detailsBooking[0].estimateFare, distance: this.state.detailsBooking[0].distance, carType: this.state.rateDetailsObjects[0].name, carImage: this.state.rateDetailsObjects[0].image })
-            } else {
-                alert("Não há motoristas disponíveis no momento!")
-            }
+            this.setState({ selected: 0, estimateFare: this.state.detailsBooking[0].estimateFare, distance: this.state.detailsBooking[0].distance, carType: this.state.rateDetailsObjects[0].name, carImage: this.state.rateDetailsObjects[0].image })
         } else if (type == 1) {
-            if (param != null) {
-                this.setState({ selected: 1, estimateFare: this.state.detailsBooking[1].estimateFare, distance: this.state.detailsBooking[1].distance, carType: this.state.rateDetailsObjects[1].name, carImage: this.state.rateDetailsObjects[1].image })
-            } else {
-                alert("Não há motoristas disponíveis no momento!")
-            }
+            this.setState({ selected: 1, estimateFare: this.state.detailsBooking[1].estimateFare, distance: this.state.detailsBooking[1].distance, carType: this.state.rateDetailsObjects[1].name, carImage: this.state.rateDetailsObjects[1].image })
         }
     }
 
     //Verifica se o cupom digitado é valido
-    checkPromo() {
-        var promo = this.consultPromo()
-        console.log(promo)
-        if (promo != false) {
-            this.SelectCopupon(promo.promoData, promo.key);
+    async checkPromo(item, index) {
+        if (item != null && index != null) {
+            let verifyCupomData = {}
+            verifyCupomData = VerifyCupom(item, index, this.state.estimateFare);
+
+            setTimeout(() => {
+                if (verifyCupomData.promo_applied) {
+                    if (this.state.selected == 0) {
+                        this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice1: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
+
+                    } else {
+                        this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice2: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
+                    }
+                } else {
+                    alert(verifyCupomData)
+                }
+            }, 1000)
+        }
+        else if (this.state.promoCode != null) {
+            var promo = {}
+            promo = await this.consultPromo()
+            if (promo.key != undefined) {
+                let verifyCupomData = {}
+                verifyCupomData = VerifyCupom(promo.promoData, promo.key, this.state.estimateFare);
+
+                setTimeout(() => {
+                    if (verifyCupomData.promo_applied) {
+                        if (this.state.selected == 0) {
+                            this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice1: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
+
+                        } else {
+                            this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice2: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
+                        }
+                    } else {
+                        alert(verifyCupomData)
+                    }
+                }, 500)
+
+            } else {
+                this.setState({ checkPromoBtn: false })
+                alert("Código promocional inválido!")
+            }
         } else {
             this.setState({ checkPromoBtn: false })
+            alert("Código promocional inválido!")
         }
     }
 
     async consultPromo() {
         this.setState({ checkPromoBtn: true })
+        var promoDetails = {}
         const promoData = firebase.database().ref('offers/');
         await promoData.once('value', promoData => {
             if (promoData.val()) {
                 let promo = promoData.val();
-                for (key in promo) {
+                for (let key in promo) {
                     if (promo[key].promoCode) {
                         if (promo[key].promoCode == this.state.promoCode.toUpperCase()) {
-                            var promoDate = {
+                            promoDetails = {
                                 key: key,
                                 promoData: promo[key],
                             }
-                            return promoDate
+                            break
                         }
                     }
                 }
             }
         })
-        return false
+        return promoDetails
     }
 
     //Abre o modal de promoçao
@@ -441,156 +558,10 @@ export default class FareScreen extends React.Component {
                     <View style={{ justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
                         <Text style={{ fontFamily: 'Inter-Medium', fontSize: 15 }}> ou escolha uma das promoções abaixo. </Text>
                     </View>
-                    <PromoComp onPressButton={(item, index) => { this.SelectCopupon(item, index) }}></PromoComp>
+                    <PromoComp onPressButton={(item, index) => { this.checkPromo(item, index) }}></PromoComp>
                 </View>
             </Modal>
         )
-    }
-
-    //Validação do desconto
-    SelectCopupon(item, index) {
-        var toDay = new Date();
-        var promoValidity = item.promo_validity
-        var expiryDay = promoValidity.split('/')[0];
-        var em = promoValidity.split('/')[1];
-        var expiryMonth = em == 12 ? em - 1 : em
-        var expiryYear = promoValidity.split('/')[2];
-        var fexpDate = expiryMonth + '/' + expiryDay + '/' + expiryYear
-        var expDate = new Date(fexpDate)
-
-        if (this.state.estimateFare > item.min_order) {
-            var userAvail = item.user_avail
-
-            //Verifica se a promoção ja foi usada por alguem 
-            if (userAvail != undefined) {
-                if (toDay > expDate) {
-                    alert(languageJSON.promo_exp)
-                } else if (userAvail.count >= item.promo_usage_limit) {
-                    alert(languageJSON.promo_limit)
-                } else {
-                    let discounttype = item.promo_discount_type.toUpperCase();
-
-                    //Verifica se o tipo de desconto é porcentagem
-                    if (discounttype == 'PERCENTAGE') {
-                        let discount = this.state.estimateFare * item.promo_discount_value / 100; //Calculo de desconto
-                        if (discount > item.max_promo_discount_value) {
-                            let discount = item.max_promo_discount_value; //Atribuir o desconto maximo se o desconto for maior q o limite
-
-                            let data = {}
-                            data.discount = discount
-                            data.promo_applied = true
-                            data.promo_details = { promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
-                            data.payableAmmount = (this.state.estimateFare - discount) < 0 ? 0 : this.state.estimateFare - discount
-                            this.setState({
-                                payDetails: data,
-                                promoAplied: this.state.selected,
-                                estimatePrice1: this.state.selected == 0 ? data.payableAmmount.toFixed(2) : this.state.estimatePrice1,
-                                estimatePrice2: this.state.selected == 1 ? data.payableAmmount.toFixed(2) : this.state.estimatePrice2,
-                                metodoPagamento: "Dinheiro"
-                            }, () => {
-                                this.setState({ promodalVisible: false })
-                            })
-                        } else {
-                            let data = {}
-                            data.discount = discount
-                            data.promo_applied = true
-                            data.promo_details = { promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
-                            data.payableAmmount = (this.state.estimateFare - discount) < 0 ? 0 : this.state.estimateFare - discount
-                            this.setState({
-                                payDetails: data,
-                                promoAplied: this.state.selected,
-                                estimatePrice1: this.state.selected == 0 ? data.payableAmmount.toFixed(2) : this.state.estimatePrice1,
-                                estimatePrice2: this.state.selected == 1 ? data.payableAmmount.toFixed(2) : this.state.estimatePrice2,
-                                metodoPagamento: "Dinheiro"
-                            }, () => {
-                                this.setState({ promodalVisible: false })
-                            })
-                        }
-
-                        //Desconto tipo Flat
-                    } else {
-                        let discount = this.state.estimateFare - item.promo_discount_value;
-                        let data = {}
-                        data.discount = discount
-                        data.promo_applied = true
-                        data.promo_details = { promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
-                        data.payableAmmount = discount < 0 ? 0 : discount
-                        this.setState({
-                            payDetails: data,
-                            promoAplied: this.state.selected,
-                            estimatePrice1: this.state.selected == 0 ? data.payableAmmount.toFixed(2) : this.state.estimatePrice1,
-                            estimatePrice2: this.state.selected == 1 ? data.payableAmmount.toFixed(2) : this.state.estimatePrice2,
-                            metodoPagamento: "Dinheiro"
-                        }, () => {
-                            this.setState({ promodalVisible: false })
-                        })
-                    }
-                }
-            } else {
-                //Caso a promoção n tenha sido usada por ninguem
-                if (toDay > fexpDate) {
-                    alert(languageJSON.promo_exp)
-                } else {
-                    let discounttype = item.promo_discount_type.toUpperCase();
-                    if (discounttype == 'PERCENTAGE') {
-                        var discount = this.state.estimateFare * item.promo_discount_value / 100;
-                        if (discount > item.max_promo_discount_value) {
-                            let discount = item.max_promo_discount_value;
-
-                            let data = {}
-                            data.discount = discount
-                            data.promo_applied = true
-                            data.promo_details = { promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
-                            data.payableAmmount = (this.state.estimateFare - discount) < 0 ? 0 : this.state.estimateFare - discount
-                            this.setState({
-                                payDetails: data,
-                                promoAplied: this.state.selected,
-                                estimatePrice1: this.state.selected == 0 ? data.payableAmmount.toFixed(2) : this.state.estimatePrice1,
-                                estimatePrice2: this.state.selected == 1 ? data.payableAmmount.toFixed(2) : this.state.estimatePrice2,
-                                metodoPagamento: "Dinheiro"
-                            }, () => {
-                                this.setState({ promodalVisible: false })
-                            })
-                        } else {
-                            let data = {}
-                            data.discount = discount
-                            data.promo_applied = true
-                            data.promo_details = { promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
-                            data.payableAmmount = (this.state.estimateFare - discount) < 0 ? 0 : this.state.estimateFare - discount
-                            this.setState({
-                                payDetails: data,
-                                promoAplied: this.state.selected,
-                                estimatePrice1: this.state.selected == 0 ? data.payableAmmount.toFixed(2) : this.state.estimatePrice1,
-                                estimatePrice2: this.state.selected == 1 ? data.payableAmmount.toFixed(2) : this.state.estimatePrice2,
-                                metodoPagamento: "Dinheiro"
-                            }, () => {
-                                this.setState({ promodalVisible: false })
-                            })
-                        }
-                    } else {
-                        let discount = this.state.estimateFare - item.promo_discount_value;
-
-                        let data = {}
-                        data.discount = discount
-                        data.promo_applied = true
-                        data.promo_details = { promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
-                        data.payableAmmount = discount < 0 ? 0 : discount
-                        this.setState({
-                            payDetails: data,
-                            promoAplied: this.state.selected,
-                            estimatePrice1: this.state.selected == 0 ? data.payableAmmount.toFixed(2) : this.state.estimatePrice1,
-                            estimatePrice2: this.state.selected == 1 ? data.payableAmmount.toFixed(2) : this.state.estimatePrice2,
-                            metodoPagamento: "Dinheiro"
-                        }, () => {
-                            this.setState({ promodalVisible: false })
-                        })
-                    }
-                }
-            }
-            //Caso o valor da corrida seja menor que o valor limite da promoção
-        } else {
-            alert(languageJSON.promo_eligiblity)
-        }
     }
 
     //Abre o modal de escolha de pagamento
@@ -605,7 +576,7 @@ export default class FareScreen extends React.Component {
             <Modal
                 animationType="fade"
                 transparent={true}
-                visible={true}
+                visible={this.state.openModalPayment}
             >
                 <View style={styles.containerModalPayment}>
                     <View style={styles.backgroundModalPayment}>
@@ -616,8 +587,8 @@ export default class FareScreen extends React.Component {
                             <TouchableOpacity style={styles.boxMoney} onPress={() => this.onPressPayment("Dinheiro")}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                     <Icon
-                                        name="dollar-sign"
-                                        type="feather"
+                                        name='ios-cash'
+                                        type='ionicon'
                                         size={26}
                                         color={colors.GREEN.light}
                                         containerStyle={styles.iconMoney}
@@ -713,6 +684,22 @@ export default class FareScreen extends React.Component {
         );
     }
 
+    infoModal() {
+        return (
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={this.state.infoModal}
+            >
+                <View style={{ flex: 1 }}>
+                    <View style={{ position: 'absolute', bottom: 25, left: 10, width: width, backgroundColor: colors.WHITE, flexDirection: 'row', alignItems: 'center' }}>
+                        <Text> Você está pagando R$6,00 a mais nessa corrida por conta da taxa de cancelamento! </Text>
+                    </View>
+                </View>
+            </Modal>
+        )
+    }
+
     //Alerta de carteira sem nenhum saldo
     alertNoAmountWallet() {
         Alert.alert(
@@ -768,27 +755,32 @@ export default class FareScreen extends React.Component {
                                 //title={this.state.region.whereText}
                                 centerOffset={{ x: 0.1, y: 0.1 }}
                                 anchor={{ x: 0.1, y: 0.1 }}
+                                onPress={() => this.props.navigation.navigate('Search', { old: this.state.region })}
                             >
                                 <LocationUser
                                     width={25}
                                     height={25}
-                                />                                    
+                                />
                                 <View style={styles.locationBoxDestino}>
-                                        <Text style={styles.locationText}> {this.state.region.whereText.split(",", 2)} </Text>
-                                    </View>
+                                    <Text numberOfLines={1} style={styles.locationText}> {this.state.region.whereText.split(",", 2)} </Text>
+                                </View>
                             </Marker>
+
 
                             <Marker
                                 coordinate={{ latitude: (this.state.region.droplatitude), longitude: (this.state.region.droplongitude) }}
                                 //title={this.state.region.droptext}
                                 centerOffset={{ x: 0.1, y: 0.1 }}
                                 anchor={{ x: 0.1, y: 0.1 }}
+                                onPress={() => this.props.navigation.navigate('Search', { old: this.state.region })}
                             >
-                                <LocationDrop/>
+                                <LocationDrop />
+
                                 <View style={styles.locationBoxDestino}>
-                                        <Text style={styles.locationText}> {this.state.region.droptext.split(",", 2)} </Text>
-                                    </View>
+                                    <Text numberOfLines={1} style={styles.locationText}> {this.state.region.droptext.split(",", 2)} </Text>
+                                </View>
                             </Marker>
+
 
                             {this.state.coords ?
                                 <MapView.Polyline
@@ -802,7 +794,7 @@ export default class FareScreen extends React.Component {
 
                     {/* Botao Voltar */}
                     <View style={styles.bordaIconeVoltar}>
-                        <TouchableOpacity onPress={() => { this.props.navigation.navigate('Map') }}>
+                        <TouchableOpacity onPress={() => { this.props.navigation.replace('Map') }}>
                             <Icon
                                 name='chevron-left'
                                 type='MaterialIcons'
@@ -812,21 +804,41 @@ export default class FareScreen extends React.Component {
                     </View>
 
                     {/* Botao Cupom */}
-                    {this.state.minTimeEconomico != null || this.state.minTimeConfort != null ?
-                        <TouchableOpacity style={[styles.btnAddPromo, {
-                            borderColor: this.state.payDetails ? colors.GREEN.light : colors.GREY2,
-                            borderWidth: this.state.payDetails ? 2 : 1
-                        }]} onPress={() => this.openPromoModal()} >
+                    <TouchableOpacity style={[styles.btnAddPromo, {
+                        borderColor: this.state.payDetails ? colors.GREEN.light : colors.GREY2,
+                        borderWidth: this.state.payDetails ? 2 : 1
+                    }]} onPress={() => this.openPromoModal()} >
 
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <Icon
-                                    name='tag'
-                                    type='octicon'
-                                    size={20}
-                                    containerStyle={{ opacity: 0.4, marginTop: 3 }}
-                                />
-                                <Text style={styles.txtCupom}> {this.state.payDetails ? "-R$" + (this.state.payDetails.promo_details.promo_discount_value).toFixed(2) : "Cupom"} </Text>
-                            </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Icon
+                                name='ios-pricetag'
+                                type='ionicon'
+                                size={20}
+                                containerStyle={{ opacity: 0.2, marginTop: 3 }}
+                            />
+                            <Text style={styles.txtCupom}> {this.state.payDetails ? "-R$" + (this.state.payDetails.promo_details.promo_discount_value).toFixed(2) : "Cupom"} </Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    <Animated.View
+                        style={[
+                            styles.fadingContainer,
+                            {
+                                opacity: this.state.fadeAnim
+                            }
+                        ]}
+                    >
+                        <Text style={styles.fadingText}>Você está pagando R$6,00 a mais por conta da taixa de cancelamento!</Text>
+                    </Animated.View>
+
+                    {this.state.cancellValue != 0 ?
+                        <TouchableOpacity style={styles.btnCancellRate} onPress={() => this.fadeIn(this.state.showViewInfo) }>
+                            <Icon
+                                name="ios-alert"
+                                type="ionicon"
+                                size={23}
+                                color={colors.WHITE}
+                            />
                         </TouchableOpacity>
                         : null}
                 </View>
@@ -834,7 +846,7 @@ export default class FareScreen extends React.Component {
                 {/* View de alerta da promoçao aplicada */}
                 {this.state.payDetails ?
                     <View style={{ backgroundColor: colors.GREEN.light, height: 30, justifyContent: 'center', alignItems: 'center', opacity: 0.5 }}>
-                        <Text style={{ color: colors.GREY3, fontFamily: 'Inter-Bold' }}>{this.state.promoAplied == 0 ? "Promoção aplicada em " + this.state.rateDetailsObjects[0].name : "Promoção aplicada em " + this.state.rateDetailsObjects[1].name} </Text>
+                        <Text style={{ color: colors.GREY3, fontFamily: 'Inter-Bold' }}>Promoção aplicada</Text>
                     </View>
                     : null}
 
@@ -850,24 +862,24 @@ export default class FareScreen extends React.Component {
                                 borderColor: this.state.selected == 0 ? colors.BLACK : colors.GREY3,
                             }
                             ]} >
-                                <TouchableOpacity style={styles.touchCard1} onPress={() => this.selectCarType(this.state.minTimeEconomico, 0)}>
+                                <TouchableOpacity style={styles.touchCard1} onPress={() => this.selectCarType(0)}>
 
                                     <ColtEconomicoCar />
                                     <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[0].name}</Text>
 
                                     <Text style={styles.price1}>{this.state.settings.symbol} <Text style={styles.price2}> {this.state.metodoPagamento === "Dinheiro/Carteira" ? (this.state.estimatePrice1 - this.state.walletBallance).toFixed(2) : this.state.estimatePrice1} </Text></Text>
 
-                                    <View style={[styles.timeBox, {
-                                        width: this.state.minTimeEconomico == null ? 110 : 70,
-                                        backgroundColor: this.state.minTimeEconomico == null ? colors.RED : colors.GREY1,
-                                        opacity: this.state.minTimeEconomico == null ? 0.4 : null,
-                                    }]}>
-
-                                        <Text style={[styles.estimatedTime, {
-                                            fontSize: this.state.minTimeEconomico == null ? 14 : 17,
-                                        }]}>{this.state.minTimeEconomico == null ? 'Não disponível' : parseInt(this.state.minTimeEconomico / 60) + " min"} </Text>
-
-                                    </View>
+                                    {this.state.minTimeEconomico == null ?
+                                        <View style={[styles.timeBox, {
+                                            backgroundColor: 'transparent'
+                                        }]}>
+                                            <ActivityIndicator size="small" color={colors.DEEPBLUE} />
+                                        </View>
+                                        :
+                                        <View style={styles.timeBox}>
+                                            <Text style={styles.estimatedTime}>{parseInt(this.state.minTimeEconomico / 60) + " min"} </Text>
+                                        </View>
+                                    }
                                 </TouchableOpacity>
                             </View>
 
@@ -878,21 +890,22 @@ export default class FareScreen extends React.Component {
                                 borderColor: this.state.selected == 1 ? colors.BLACK : colors.GREY3,
                             }
                             ]} >
-                                <TouchableOpacity style={styles.touchCard2} onPress={() => this.selectCarType(this.state.minTimeConfort, 1)}>
+                                <TouchableOpacity style={styles.touchCard2} onPress={() => this.selectCarType(1)}>
                                     <ColtConfortCar />
                                     <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[1].name}</Text>
                                     <Text style={styles.price1}>{this.state.settings.symbol} <Text style={styles.price2}>{this.state.metodoPagamento === "Dinheiro/Carteira" ? (this.state.estimatePrice2 - this.state.walletBallance).toFixed(2) : this.state.estimatePrice2} </Text></Text>
-                                    <View style={[styles.timeBox, {
-                                        width: this.state.minTimeConfort == null ? 110 : 70,
-                                        backgroundColor: this.state.minTimeConfort == null ? colors.RED : colors.GREY1,
-                                        opacity: this.state.minTimeConfort == null ? 0.4 : null,
-                                    }]}>
 
-                                        <Text style={[styles.estimatedTime, {
-                                            fontSize: this.state.minTimeConfort == null ? 14 : 17,
-                                        }]}>{this.state.minTimeConfort == null ? 'Não disponível' : parseInt(this.state.minTimeConfort / 60) + " min"} </Text>
-
-                                    </View>
+                                    {this.state.minTimeConfort == null ?
+                                        <View style={[styles.timeBox, {
+                                            backgroundColor: 'transparent'
+                                        }]}>
+                                            <ActivityIndicator size="small" color={colors.DEEPBLUE} />
+                                        </View>
+                                        :
+                                        <View style={styles.timeBox}>
+                                            <Text style={styles.estimatedTime}>{parseInt(this.state.minTimeConfort / 60) + " min"} </Text>
+                                        </View>
+                                    }
                                 </TouchableOpacity>
                             </View>
 
@@ -909,9 +922,9 @@ export default class FareScreen extends React.Component {
                                     <TouchableOpacity style={styles.containerDinheiro} onPress={() => { this.openModal() }}>
                                         <View >
                                             <Icon
-                                                name='dollar-sign'
-                                                type='feather'
-                                                size={17}
+                                                name='ios-cash'
+                                                type='ionicon'
+                                                size={22}
                                                 color={colors.GREEN.light}
                                             />
                                         </View>
@@ -953,7 +966,9 @@ export default class FareScreen extends React.Component {
                         </View>
 
                         {/* Botao confirmar corrida */}
-                        <View style={styles.viewBotao}>
+                        <View style={[styles.viewBotao, {
+                            shadowOpacity: this.state.buttonDisabled ? 0 : 0.4
+                        }]}>
                             <Button
                                 title={languageJSON.confrim_booking}
                                 loading={false}
@@ -968,10 +983,13 @@ export default class FareScreen extends React.Component {
                     : null
                 }
                 {
-                    this.state.openModalPayment ? this.ModalPayment() : null
+                    this.infoModal()
                 }
                 {
-                    this.state.promodalVisible ? this.promoModal() : null
+                    this.ModalPayment()
+                }
+                {
+                    this.promoModal()
                 }
             </View>
         );
@@ -979,6 +997,21 @@ export default class FareScreen extends React.Component {
 }
 
 const styles = StyleSheet.create({
+    fadingContainer: {
+        width: "50%",
+        position: 'absolute',
+        left: 10,
+        borderRadius: 10,
+        bottom: 60,
+        backgroundColor: colors.REDCLEAN,
+        opacity: 0.7
+    },
+    fadingText: {
+        fontSize: 10,
+        margin: 10,
+        color: colors.WHITE,
+        fontFamily: 'Inter-Bold'
+    },
     container: {
         flex: 1,
         //marginTop: StatusBar.currentHeight
@@ -1004,7 +1037,7 @@ const styles = StyleSheet.create({
         flexWrap: "wrap",
         fontSize: 14,
         fontWeight: "500",
-        color: "#333",
+        color: colors.BLACK,
         marginRight: 4,
         marginTop: 4,
         marginLeft: 4,
@@ -1136,6 +1169,22 @@ const styles = StyleSheet.create({
         elevation: 5,
         opacity: 0.9,
     },
+    btnCancellRate: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'absolute',
+        bottom: 10,
+        left: 10,
+        height: 40,
+        width: 40,
+        borderRadius: 50,
+        backgroundColor: colors.RED,
+        shadowColor: colors.RED,
+        shadowOpacity: 0.5,
+        shadowOffset: { x: 0, y: 0 },
+        shadowRadius: 10,
+        elevation: 5
+    },
     txtCupom: {
         fontFamily: 'Inter-Bold',
         fontSize: 15,
@@ -1157,7 +1206,13 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
     },
     viewBotao: {
-        paddingTop: 5
+        paddingTop: 5,
+        justifyContent: 'center',
+        elevation: 5,
+        shadowColor: colors.DEEPBLUE,
+        shadowOpacity: 0.4,
+        shadowOffset: { x: 0, y: 0 },
+        shadowRadius: 10,
     },
     confirmButtonStyle: {
         justifyContent: 'center',
@@ -1166,11 +1221,6 @@ const styles = StyleSheet.create({
         height: 50,
         marginHorizontal: 30,
         borderRadius: 30,
-        elevation: 5,
-        shadowColor: colors.GREY1,
-        shadowOpacity: 0.8,
-        shadowOffset: { x: 0, y: 5 },
-        shadowRadius: 15,
     },
     estimatedTimeBooking: {
         paddingBottom: 10,

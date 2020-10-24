@@ -61,8 +61,9 @@ export default class TrackNow extends React.Component {
                 coordinate.timing(newCoordinate, {
                     toValue: 1,
                     duration: 500,
-                    useNativeDriver: true,
+                    useNativeDriver: false,
                 }).start();
+
                 this.setState({
                     latitude,
                     longitude,
@@ -93,7 +94,8 @@ export default class TrackNow extends React.Component {
                                 destinationLoc: paramData.wherelatitude + ',' + paramData.wherelongitude,
                                 startLoc: data.lat + ',' + data.lng,
                                 latitude: data.lat,
-                                longitude: data.lng
+                                longitude: data.lng,
+                                'angle': data.angle
                             }, () => {
                                 if (bookingStatus == 'ACCEPTED') {
                                     var location1 = [paramData.wherelatitude, paramData.wherelongitude];
@@ -205,49 +207,34 @@ export default class TrackNow extends React.Component {
                             />
                             : null}
                         {this.state.routeCoordinates ?
-                            <MapView.Polyline coordinates={this.state.routeCoordinates} strokeWidth={4} />
+                            <MapView.Polyline strokeColor={colors.DEEPBLUE} coordinates={this.state.routeCoordinates} strokeWidth={3} />
                             : null}
                         {this.state.allData ?
                             <Marker
                                 coordinate={{ latitude: this.state.allData.wherelatitude, longitude: this.state.allData.wherelongitude }}
                                 anchor={{ x: 0, y: 0 }}
-                                //image={require('../../assets/images/markerUser.png')}
                             >
-                            <LocationUser
-                                width={25}
-                                height={25}
-                            />
+                                <LocationUser
+                                    width={25}
+                                    height={25}
+                                />
                             </Marker>
                             : null}
                         {this.state.latitude ?
                             <Marker
                                 coordinate={{ latitude: this.state.latitude, longitude: this.state.longitude }}
                                 anchor={{ x: 0, y: 0 }}
-                                //image={require('../../assets/images/available_car.png')}
                             >
                                 <IconCarMap
-                                width={20}
-                                height={49}
-                            />
+                                    width={45}
+                                    height={45}
+                                    style={{ transform: [{ rotate: this.state.angle + "deg" }] }}
+                                />
                             </Marker>
                             : null}
 
                     </MapView>
-                    : <Modal
-                        animationType="fade"
-                        transparent={true}
-                        visible={true}
-                    >
-                        <View style={{ justifyContent: 'center', width: width, marginTop: 100 }}>
-                            <Image
-                                style={{ width: 200, height: 200, backgroundColor: colors.TRANSPARENT, alignSelf: 'center' }}
-                                source={require('../../assets/images/loadingCorrida.gif')}
-                            />
-                            <Text style={styles.textLoading}>Carregando sua corrida, aguarde...</Text>
-
-                        </View>
-
-                    </Modal>}
+                    : null}
             </View>
 
         );

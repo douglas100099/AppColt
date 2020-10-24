@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React from 'react';
 import {
     StyleSheet,
     View,
@@ -24,7 +24,7 @@ import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import Geocoder from 'react-native-geocoding';
 import distanceCalc from '../common/distanceCalc';
-import { v4 as uuidv4 } from 'uuid';
+
 
 export default class MapScreen extends React.Component {
     _isMounted = false;
@@ -33,9 +33,7 @@ export default class MapScreen extends React.Component {
         super(props);
         Geocoder.init(google_map_key);
         this.state = {
-            loadingModal: false,
             giftModal: false,
-            location: null,
             errorMessage: null,
             openModal: false,
             region: {
@@ -44,8 +42,6 @@ export default class MapScreen extends React.Component {
                 latitudeDelta: 0.0143,
                 longitudeDelta: 0.0134,
             },
-            whereText: languageJSON.map_screen_where_input_text,
-            dropText: languageJSON.map_screen_drop_input_text,
             backgroundColor: colors.WHITE,
             allRiders: [],
             passData: {
@@ -66,15 +62,11 @@ export default class MapScreen extends React.Component {
                 cash: false,
                 wallet: false
             },
-            selected: '',
-            updateFromText: true,
             geolocationFetchComplete: false,
         }
     }
 
     async UNSAFE_componentWillMount() {
-
-        console.log(uuidv4())
         if (Platform.OS === 'android' && !Constants.default.isDevice) {
             this.setState({
                 errorMessage: 'Ops, isso não funciona com Sketch no emulador Android. Tente usar em seu dispositivo!'
@@ -84,80 +76,13 @@ export default class MapScreen extends React.Component {
 
                 this.getLocationUser();
                 this.getNameUser();
+                this.getSavedLocations()
                 //this._getLocationAsync();
             }
         }
 
-        let searchObj = await this.props.navigation.getParam('searchObj') ? this.props.navigation.getParam('searchObj') : null;
-        let allCarsParam = await this.props.navigation.getParam('allCars') ? this.props.navigation.getParam('allCars') : null;
-        let pinSearch = await this.props.navigation.getParam('pinSearch') ? this.props.navigation.getParam('pinSearch') : null;
-
-        var minTimeEco;
-        var minTimeCon;
-        if (allCarsParam != null) {
-            for (key in allCarsParam) {
-                if (key == 0) {
-                    minTimeEco = allCarsParam[key].minTime != '' ? allCarsParam[key].minTime : null
-                } else if (key == 1) {
-                    minTimeCon = allCarsParam[key].minTime != '' ? allCarsParam[key].minTime : null
-                }
-            }
-        }
-
-        if (searchObj) {
-            if (searchObj.searchFrom == 'where') {
-                if (searchObj.searchDetails) {
-                    this.setState({
-                        region: {
-                            latitude: searchObj.searchDetails.geometry.location.lat,
-                            longitude: searchObj.searchDetails.geometry.location.lng,
-                            latitudeDelta: 0.0143,
-                            longitudeDelta: 0.0134,
-                        },
-                        whereText: searchObj.whereText,
-                        dropText: searchObj.dropText,
-                        passData: this.props.navigation.getParam('old'),
-                        selected: 'pickup',
-                        geolocationFetchComplete: true,
-                        minTimeEco: minTimeEco,
-                        minTimeCon: minTimeCon,
-                        dropText: languageJSON.map_screen_drop_input_text,
-                        updateFromText: false,
-                        pinSearch: pinSearch
-                    }, () => {
-                        this.getDrivers()
-                    })
-                }
-            } else if (searchObj.searchFrom == 'drop') {
-                if (searchObj.searchDetails) {
-
-                    this.setState({
-                        region: {
-                            latitude: searchObj.searchDetails.geometry.location.lat,
-                            longitude: searchObj.searchDetails.geometry.location.lng,
-                            latitudeDelta: 0.0143,
-                            longitudeDelta: 0.0134,
-                        },
-                        whereText: searchObj.whereText,
-                        dropText: searchObj.dropText,
-                        passData: this.props.navigation.getParam('old'),
-                        selected: 'drop',
-                        geolocationFetchComplete: true,
-                        minTimeEco: minTimeEco,
-                        minTimeCon: minTimeCon,
-                    }, () => {
-                        this.getDrivers()
-                    })
-
-                    this.allCarsData();
-                    this.onPressModal();
-
-                    this.goToFareScreen()
-                }
-            }
-        }
         this.allCarsData();
-        this.onPressModal();
+        //this.onPressModal();
     }
 
     getLocationUser() {
@@ -167,27 +92,42 @@ export default class MapScreen extends React.Component {
         userLocation.once('value', location => {
             if (location.val()) {
                 let loc = location.val();
-                if (this.state.updateFromText) {
+
+                this.setState({
+                    region: {
+                        latitude: loc.lat,
+                        longitude: loc.lng,
+                        latitudeDelta: 0.0143,
+                        longitudeDelta: 0.0134,
+                    },
+                    geolocationFetchComplete: true
+                }, () => {
+                    let obj = {}
+                    obj = this.state.passData;
+                    obj.wherelatitude = loc.lat
+                    obj.wherelongitude = loc.lng
+                    obj.whereText = loc.add;
                     this.setState({
-                        whereText: loc.add,
-                        region: {
-                            latitude: loc.lat,
-                            longitude: loc.lng,
-                            latitudeDelta: 0.0143,
-                            longitudeDelta: 0.0134,
-                        },
-                        geolocationFetchComplete: true
-                    }, () => {
-                        let obj = {}
-                        obj = this.state.passData;
-                        obj.wherelatitude = loc.lat
-                        obj.wherelongitude = loc.lng
-                        obj.whereText = loc.add;
-                        this.setState({
-                            passData: obj,
-                        })
+                        passData: obj,
                     })
-                }
+                    this.getDrivers()
+                })
+            }
+        })
+    }
+
+    getSavedLocations() {
+        var curuser = firebase.auth().currentUser.uid;
+        firebase.database().ref('users/' + curuser + '/savedLocations').once('value', snap => {
+            if (snap.val()) {
+                let locationCasa = {}
+                locationCasa.lat = snap.val().lat,
+                    locationCasa.lng = snap.val().lng,
+                    locationCasa.add = snap.val().add,
+
+                    this.setState({
+                        locationCasa: locationCasa
+                    })
             }
         })
     }
@@ -236,7 +176,6 @@ export default class MapScreen extends React.Component {
     }
 
     async prepareDrivers(allUsers) {
-        console.log("PREPARE DRIVERS")
         let availableDrivers = [];
         let freeCars = []; //Only for Ukraine Project
         let arr = {};
@@ -248,7 +187,6 @@ export default class MapScreen extends React.Component {
                 if (driver.location) {
                     let driverLocation = [driver.location.lat, driver.location.lng];
                     let distance = distanceCalc(riderLocation, driverLocation);
-                    console.log("DISTANCIA " + distance)
                     freeCars.push(driver);
                     if (distance < 5) {
                         let destLoc = '"' + driver.location.lat + ', ' + driver.location.lng + '"';
@@ -291,7 +229,6 @@ export default class MapScreen extends React.Component {
 
         this.setState({
             allCars: allCars,
-            loadingModal: false,
             nearby: availableDrivers,
             freeCars: freeCars,
         });
@@ -303,33 +240,6 @@ export default class MapScreen extends React.Component {
         console.log(" -------DESMONTOU-------- ")
     }
 
-    loading() {
-        return (
-            <Modal
-                animationType="fade"
-                transparent={true}
-                visible={this.state.loadingModal}
-                onRequestClose={() => {
-                    this.setState({ loadingModal: false })
-                }}
-            >
-                <View style={{ flex: 1, backgroundColor: "rgba(22,22,22,0.8)", justifyContent: 'center', alignItems: 'center' }}>
-                    <View style={{ width: '85%', backgroundColor: "#DBD7D9", borderRadius: 10, flex: 1, maxHeight: 70 }}>
-                        <View style={{ alignItems: 'center', flexDirection: 'row', flex: 1, justifyContent: "center" }}>
-                            <Image
-                                style={{ width: 80, height: 80, backgroundColor: colors.TRANSPARENT }}
-                                source={require('../../assets/images/loader.gif')}
-                            />
-                            <View style={{ flex: 1 }}>
-                                <Text style={{ color: "#000", fontSize: 16, }}>Carregando sua localização, aguarde...</Text>
-                            </View>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
-        )
-    }
-
     _retrieveSettings = async () => {
         try {
             const value = await AsyncStorage.getItem('settings');
@@ -338,7 +248,7 @@ export default class MapScreen extends React.Component {
                 });
             }
         } catch (error) {
-            //console.log("Asyncstorage issue 9");
+            console.log("Asyncstorage issue 9");
         }
     };
 
@@ -421,7 +331,7 @@ export default class MapScreen extends React.Component {
         );
     }
 
-    getNameUser(){
+    getNameUser() {
         var curuser = firebase.auth().currentUser.uid;
         const userRoot = firebase.database().ref('users/' + curuser);
         userRoot.once('value', userData => {
@@ -429,9 +339,11 @@ export default class MapScreen extends React.Component {
                 this.setState({
                     nameUser: userData.val().firstName
                 })
-            }})
+            }
+        })
     }
 
+    //Verificação de cadastro via referal ID
     onPressModal() {
         var curuser = firebase.auth().currentUser.uid;
         const userRoot = firebase.database().ref('users/' + curuser);
@@ -466,10 +378,34 @@ export default class MapScreen extends React.Component {
     }
 
     tapAddress = (selection) => {
-        if (selection == 'drop') {
-            this.props.navigation.navigate('Search', { from: "drop",  whereText: this.state.whereText, dropText: this.state.dropText, old: this.state.passData, allCars: this.state.allCars ? this.state.allCars : null });
-        } 
+        this.props.navigation.navigate('Search', { old: this.state.passData, allCars: this.state.allCars ? this.state.allCars : null });
     };
+
+    goToFareByMap() {
+        let dataDetails = {}
+        var minTimeEco = null
+        var minTimeCon = null
+
+        dataDetails.droplatitude = this.state.locationCasa.lat
+        dataDetails.droplongitude = this.state.locationCasa.lng
+        dataDetails.droptext = this.state.locationCasa.add
+
+        dataDetails.wherelatitude = this.state.passData.wherelatitude
+        dataDetails.wherelongitude = this.state.passData.wherelongitude
+        dataDetails.whereText = this.state.passData.whereText
+
+        if (this.state.allCars != null) {
+            for (key in this.state.allCars) {
+                if (key == 0) {
+                    minTimeEco = this.state.allCars[key].minTime != '' ? this.state.allCars[key].minTime : null
+                } else if (key == 1) {
+                    minTimeCon = this.state.allCars[key].minTime != '' ? this.state.allCars[key].minTime : null
+                }
+            }
+        }
+
+        this.props.navigation.replace('FareDetails', { data: dataDetails, minTimeEconomico: minTimeEco, minTimeConfort: minTimeCon });
+    }
 
 
     render() {
@@ -483,7 +419,7 @@ export default class MapScreen extends React.Component {
                             mapStyle={styles.map}
                             mapRegion={this.state.region}
                             nearby={this.state.freeCars}
-                            initialRegion={this.state.region}
+                            //initialRegion={this.state.region}
                             pickup={this.state.pinSearch ? this.state.region : null}
                         />
                         :
@@ -520,32 +456,50 @@ export default class MapScreen extends React.Component {
 
                 {this.state.geolocationFetchComplete ?
                     <View style={styles.viewStyleTop}>
-                        <Text style={{ marginHorizontal: 20, fontFamily: 'Inter-Bold', fontSize: 16, margin: 5 }}> Olá
-                            <Text style={{ fontSize: 18 }}> {this.state.nameUser ? this.state.nameUser : null} </Text>, para onde vamos?
+                        <View>
+                            <Text style={{ marginHorizontal: 15, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 13 : 15, margin: 10 }}> Olá
+                            <Text style={{ fontSize: width < 375 ? 17 : 18 }}> {this.state.nameUser ? this.state.nameUser : null}</Text>, que bom te ver novamente.
                         </Text>
-                        <View style={styles.inputDrop}>
-                            <TouchableOpacity onPress={() => this.tapAddress('drop')}>
-                                <View style={styles.textIconStyle}>
-                                    <Icon
-                                        name='search'
-                                        type='feather'
-                                        color={colors.GREY.iconSecondary}
-                                        size={18}
-                                        containerStyle={{ flex: 1, left: 8, top: 3 }}
-                                    />
-                                    <Text numberOfLines={1} style={[styles.textStyleDrop, { fontSize: 17, color: colors.GREY.iconSecondary }]}>{this.state.dropText}</Text>
+                            <TouchableOpacity style={{ height: 63 }} onPress={() => this.tapAddress()}>
+                                <View style={styles.inputDrop}>
+                                    <View style={styles.textIconStyle}>
+                                        <Icon
+                                            name='search'
+                                            type='feather'
+                                            color={colors.DEEPBLUE}
+                                            size={18}
+                                            containerStyle={{ left: 10, opacity: 0.8 }}
+                                        />
+                                        <Text numberOfLines={1} style={[styles.textStyleDrop, { fontSize: 18, color: colors.GREY.iconSecondary }]}>Para onde vamos?</Text>
+                                    </View>
                                 </View>
                             </TouchableOpacity>
                         </View>
 
+                        {this.state.locationCasa ?
+
+                            <TouchableOpacity onPress={() => this.goToFareByMap()}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', height: width < 375 ? 50 : 60, width: width }}>
+                                    <View style={{ left: 12, flex: 0.2 }}>
+                                        <Icon
+                                            name='ios-home'
+                                            type='ionicon'
+                                            color={colors.GREY2}
+                                            size={25}
+                                            containerStyle={{ opacity: 0.4 }}
+                                        />
+                                    </View>
+                                    <View style={{ left: 12, flex: 2 }}>
+                                        <Text style={{ fontFamily: 'Inter-Medium', fontSize: width < 375 ? 17 : 19 }}> Casa </Text>
+                                        <Text numberOfLines={1} style={{ paddingTop: 3, opacity: 0.4, maxWidth: width - 60, fontFamily: 'Inter-Medium', fontSize: width < 375 ? 13 : 14 }}> {this.state.locationCasa.add.split('-')[0]} </Text>
+                                    </View>
+                                </View>
+                            </TouchableOpacity>
+                            : null}
                     </View>
                     : null}
-
                 {
                     this.bonusModal()
-                }
-                {
-                    this.loading()
                 }
             </View>
         );
@@ -574,15 +528,15 @@ const styles = StyleSheet.create({
     },
     inputDrop: {
         backgroundColor: '#fff',
-        marginHorizontal: 20,
-        borderRadius: 10,
+        marginHorizontal: 10,
+        borderRadius: 6,
         height: 51,
+        elevation: 2,
         justifyContent: 'center',
-        elevation: 10,
-        shadowColor: colors.GREY2,
-        shadowOpacity: 0.4,
+        shadowColor: colors.BLACK,
+        shadowOpacity: 0.3,
         shadowOffset: { x: 0, y: 0 },
-        shadowRadius: 15,
+        shadowRadius: 2,
     },
     inputPickup: {
         backgroundColor: colors.GREY.secondary,
@@ -606,7 +560,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.WHITE,
         //top: Platform.select({ ios: 60, android: 40 }),
         width: width,
-        flex: 1
+        flex: width < 375 ? 1.4 : 1.2
     },
     bordaIconeMenu2: {
         width: 37,
@@ -674,20 +628,16 @@ const styles = StyleSheet.create({
     },
     textIconStyle: {
         // flex: 1, 
-        justifyContent: 'center',
+
         alignItems: 'center',
         flexDirection: 'row'
     },
     textStyleDrop: {
-        flex: 9,
         fontFamily: 'Inter-Medium',
-        fontWeight: '400',
         color: colors.BLACK,
-        left: 9,
-        top: 3,
-        marginTop: 10,
-        marginBottom: 10,
-        marginEnd: 15,
+        marginEnd: 10,
+        opacity: 0.5,
+        left: 15
     },
     textStylePickup: {
         flex: 9,

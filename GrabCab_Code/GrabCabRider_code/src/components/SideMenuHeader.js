@@ -7,7 +7,7 @@ import AvatarUser from '../../assets/svg/AvatarUser';
 
 const SideMenuHeader = ({headerStyle,userPhoto,userName,userEmail,userPhone}) =>{
    return (
-        <View style={[styles.viewStyle,headerStyle]}>
+        <View style={[styles.viewStyle, headerStyle]}>
             <TouchableOpacity style={styles.userImageView} >
                  <AvatarUser/>
             </TouchableOpacity>   
@@ -83,9 +83,9 @@ const styles = {
 
     },
     emailStyle:{
-        fontFamily: 'Inter-Regular',
+        fontFamily: 'Inter-Medium',
         color: colors.WHITE, 
-        fontSize: 13,
+        fontSize: 14,
         marginLeft: 4,
         justifyContent: 'center',
         alignItems: 'center',

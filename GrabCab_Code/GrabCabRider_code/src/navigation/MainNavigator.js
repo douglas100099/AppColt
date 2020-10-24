@@ -16,7 +16,6 @@ import {
     TrackNow,
     AboutPage,
     OnlineChat,
-    PrepareSearchScreen,
     WalletDetails,
     AddMoneyScreen,
     SelectGatewayPage,
@@ -121,13 +120,6 @@ export const AppStack = {
     },
     addMoney: {
         screen: AddMoneyScreen,
-        navigationOptions: {
-            headerShown: false
-        }
-    },
-
-    PrepareSearch:{
-        screen: PrepareSearchScreen,
         navigationOptions: {
             headerShown: false
         }

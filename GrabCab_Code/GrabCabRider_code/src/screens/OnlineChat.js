@@ -211,7 +211,7 @@ export default class OnlineChat extends Component {
         <Header
           backgroundColor={colors.DEEPBLUE}
           leftComponent={{ icon: 'angle-left', type: 'font-awesome', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.goBack(); } }}
-          centerComponent={<Text style={styles.headerTitleStyle}>{this.state.carbookedInfo.driver_name ? this.state.carbookedInfo.driver_name : Chat}</Text>}
+          centerComponent={<Text style={styles.headerTitleStyle}>{this.state.carbookedInfo.driver_name ? this.state.carbookedInfo.driver_name : "Chat"}</Text>}
           containerStyle={styles.headerStyle}
           innerContainerStyles={styles.inrContStyle}
           statusBarProps={{ barStyle: 'light-content' }}
@@ -227,7 +227,7 @@ export default class OnlineChat extends Component {
           renderItem={this.renderItem}
           inverted
         />
-        <KeyboardAvoidingView behavior="padding">
+        <KeyboardAvoidingView behavior='padding'>
           <View style={styles.footer}>
             <TextInput
               value={this.state.inputmessage}
@@ -237,8 +237,15 @@ export default class OnlineChat extends Component {
               onChangeText={text => this.setState({ inputmessage: text })}
             />
 
-            <TouchableOpacity onPress={() => this.sendMessege(this.state.inputmessage)}>
-              <Text style={styles.send}>{languageJSON.send_button_text}</Text>
+            <TouchableOpacity style={{ right: 25 }} onPress={() => this.sendMessege(this.state.inputmessage)}>
+              <Icon
+                name='ios-paper-plane'
+                type='ionicon'
+                color={colors.DEEPBLUE}
+                size={30}
+                containerStyle={{ opacity: 0.5 }}
+              />
+              {/*<Text style={styles.send}>{languageJSON.send_button_text}</Text>*/}
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -251,7 +258,7 @@ export default class OnlineChat extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.GREY.btnSecondary,
+    backgroundColor: colors.WHITE,
     //marginTop: StatusBar.currentHeight,
   },
   container1: {
@@ -308,7 +315,12 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: 'row',
-    backgroundColor: '#eee'
+    backgroundColor: colors.WHITE,
+    marginBottom: 25,
+    height: 40,
+    alignItems: 'center',
+    borderTopWidth: 2,
+    borderColor: colors.GREY.background,
   },
   input: {
     paddingHorizontal: 20,
@@ -330,13 +342,13 @@ const styles = StyleSheet.create({
     marginLeft: 30,
     borderBottomLeftRadius: 50,
     borderTopLeftRadius: 50,
-    borderTopRightRadius: 50,
+    borderTopRightRadius: 30,
     justifyContent: 'flex-end',
 
     elevation: 5,
     shadowOpacity: 0.1,
     shadowRadius: 5,
-    shadowColor: "#000",
+    shadowColor: "#fff",
     shadowOffset: { height: 1, width: 0 },
   },
   msgTextStyle: {
@@ -362,8 +374,9 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginRight: 30,
     marginLeft: 10,
-    borderBottomLeftRadius: 40,
+    borderBottomLeftRadius: 50,
     borderBottomRightRadius: 50,
+    borderTopLeftRadius: 50,
     borderTopRightRadius: 50,
     shadowOpacity: 0.75,
     shadowRadius: 5,

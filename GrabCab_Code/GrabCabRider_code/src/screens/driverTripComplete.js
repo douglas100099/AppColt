@@ -4,22 +4,19 @@ import {
     View,
     Text,
     FlatList,
-    TouchableWithoutFeedback,
     Platform,
     Image,
     Modal,
     Dimensions,
     AsyncStorage,
-    TextComponent
 } from 'react-native';
-import { Divider, Button, Header } from 'react-native-elements';
+import { Button, } from 'react-native-elements';
 import StarRating from 'react-native-star-rating';
 import { colors } from '../common/theme';
 var { width } = Dimensions.get('window');
 import * as firebase from 'firebase';
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import languageJSON from '../common/language';
-import dateStyle from '../common/dateStyle';
 import { NavigationActions, StackActions } from 'react-navigation';
 
 import CircleLineTriangle from '../../assets/svg/CircleLineTriangle';
@@ -37,7 +34,8 @@ export default class DriverTripComplete extends React.Component {
                 symbol: '',
                 cash: false,
                 wallet: false
-            }
+            },
+            btnSubmit: false,
         }
     }
 
@@ -82,6 +80,7 @@ export default class DriverTripComplete extends React.Component {
     }
 
     submitNow() {
+        this.setState({ btnSubmit: true })
         firebase.database().ref('users/' + this.state.getDetails.driver + '/ratings/details').push({
             user: firebase.auth().currentUser.uid,
             rate: this.state.starCount > 0 ? this.state.starCount : 5
@@ -118,20 +117,10 @@ export default class DriverTripComplete extends React.Component {
         })
     }
 
-    sendPushNotification(customerUID, bookingId, msg) {
-        const customerRoot = firebase.database().ref('users/' + customerUID);
-        customerRoot.once('value', customerData => {
-            if (customerData.val()) {
-                let allData = customerData.val()
-                RequestPushMsg(allData.pushToken ? allData.pushToken : null, msg)
-            }
-        })
-    }
-
     alertModal() {
         return (
             <Modal
-                animationType="none"
+                animationType="fade"
                 transparent={true}
                 visible={this.state.alertModalVisible}
                 onRequestClose={() => {
@@ -141,8 +130,6 @@ export default class DriverTripComplete extends React.Component {
                     <View style={styles.alertModalInnerContainer}>
 
                         <View style={styles.alertContainer}>
-
-                            <Text style={styles.rideCancelText}>{languageJSON.no_driver_found_alert_title}</Text>
 
                             <View style={styles.horizontalLLine} />
 
@@ -215,8 +202,8 @@ export default class DriverTripComplete extends React.Component {
                 </View>
 
                 <View style={styles.rateViewStyle}>
-                    <Text style={styles.paymentMode}> {this.state.getDetails ? this.state.getDetails.paymentMode : null} </Text>
-                    <Text style={styles.rateViewTextStyle}>{this.state.settings.symbol}{this.state.getDetails ? this.state.getDetails.customer_paid > 0 ? this.state.getDetails.customer_paid : 0 : null}</Text>
+                    <Text style={styles.paymentMode}> {this.state.getDetails ? this.state.getDetails.payment_mode : null} </Text>
+                    <Text style={styles.rateViewTextStyle}>{this.state.settings.symbol}{this.state.getDetails ? this.state.getDetails.customer_paid > 0 ? this.state.getDetails.customer_paid.toFixed(2) : 0 : null}</Text>
                 </View>
 
                 <View style={styles.tripMainView}>
@@ -256,12 +243,15 @@ export default class DriverTripComplete extends React.Component {
                     </View>
                 </View>
 
-                <View style={styles.confBtnStyle}>
+                <View style={[styles.confBtnStyle, {
+                    shadowOpacity: this.state.btnSubmit ? 0 : 0.2,
+                }]}>
                     <Button
                         title={"Confirmar"}
                         titleStyle={{ fontFamily: 'Inter-Bold', }}
                         onPress={() => this.submitNow()}
                         buttonStyle={styles.myButtonStyle}
+                        disabled={this.state.btnSubmit}
                     />
                 </View>
                 {
@@ -304,9 +294,9 @@ const styles = StyleSheet.create({
     paymentMode: {
         color: colors.BLACK,
         fontFamily: 'Inter-Medium',
-        fontSize: 21,
+        fontSize: 16,
         position: 'absolute',
-        left: 20,
+        left: 15,
     },
     rateViewTextStyle: {
         fontSize: 25,
@@ -405,8 +395,7 @@ const styles = StyleSheet.create({
     alertModalContainer: {
         flex: 1,
         justifyContent: 'center',
-        backgroundColor:
-            colors.GREY.background
+        backgroundColor: colors.GREY.background
     },
     alertModalInnerContainer: {
         height: 200,

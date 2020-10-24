@@ -37,14 +37,13 @@ export class AuthLoadingScreen extends React.Component {
   };
 
   _getLocationAsync = async () => {
-    console.log("ENTROU NO GET LOCATION ASYNC")
     let { status } = await Permissions.askAsync(Permissions.LOCATION);
     if (status !== 'granted') {
       alert("Para acessar sua localização, é necessária permissão!");
     } else {
-      
-      let location = Platform.OS === 'android' ? await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 20000, }) : 
-      await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 2000, })
+
+      let location = Platform.OS === 'android' ? await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 20000, }) :
+        await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 2000, })
       if (location) {
         var pos = {
           latitude: location.coords.latitude,
@@ -80,6 +79,7 @@ export class AuthLoadingScreen extends React.Component {
           userData.once('value', userData => {
             if (userData.val()) {
               if (userData.val().usertype == 'rider') {
+                //Token notifications
                 GetPushToken();
 
                 this._setSettings();

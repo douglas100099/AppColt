@@ -29,6 +29,7 @@ import LocationDrop from '../../assets/svg/LocationDrop';
 import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
 import ColtConfortCar from '../../assets/svg/ColtConfortCar';
 import AvatarUser from '../../assets/svg/AvatarUser';
+import IconCarMap from '../../assets/svg/IconCarMap';
 
 export default class TrackNow extends React.Component {
 
@@ -53,7 +54,7 @@ export default class TrackNow extends React.Component {
             var data = snapshot.val()
             if (data.current) {
                 let data = snapshot.val();
-                this.setState({ latitude: data.current.lat, longitude: data.current.lng });
+                this.setState({ angle: data.current.angle, latitude: data.current.lat, longitude: data.current.lng });
             }
         })
 
@@ -181,6 +182,7 @@ export default class TrackNow extends React.Component {
                             showsScale={false}
                             rotateEnabled={false}
                         >
+
                             {this.state.coords ?
                                 <MapView.Polyline
                                     coordinates={this.state.coords}
@@ -189,14 +191,14 @@ export default class TrackNow extends React.Component {
                                 />
                                 : null}
                             {this.state.routeCoordinates ?
-                                <MapView.Polyline coordinates={this.state.routeCoordinates} strokeWidth={3} />
+                                <MapView.Polyline coordinates={this.state.routeCoordinates} strokeColor={colors.BLACK} strokeWidth={3} />
                                 : null}
 
                             <Marker.Animated
                                 ref={marker => {
                                     this.marker = marker;
                                 }}
-                                image={require('../../assets/images/available_car.png')}
+                                useNativeDriver={false}
                                 coordinate={new AnimatedRegion({
                                     latitude: this.state.latitude,
                                     longitude: this.state.longitude,
@@ -204,6 +206,18 @@ export default class TrackNow extends React.Component {
                                     longitudeDelta: 0.009
                                 })}
                             >
+                                <IconCarMap
+                                    width={45}
+                                    height={45}
+                                    style={{
+                                        transform: [{ rotate: this.state.angle + "deg" }],
+                                        shadowColor: colors.BLACK,
+                                        shadowOpacity: 0.2,
+                                        shadowOffset: { x: 0, y: 0 },
+                                        shadowRadius: 5,
+                                        elevation: 3
+                                    }}
+                                />
                             </Marker.Animated>
 
                             {/*{this.state.allData ?
@@ -217,7 +231,6 @@ export default class TrackNow extends React.Component {
                             : null}*/}
                             {this.state.allData ?
                                 <Marker
-                                    //image={require('../../assets/images/marker.png')}
                                     coordinate={{ latitude: this.state.allData.drop.lat, longitude: this.state.allData.drop.lng }}
                                 >
                                     <LocationDrop />
@@ -256,10 +269,11 @@ export default class TrackNow extends React.Component {
 
                     <View style={styles.containerCarDetails}>
                         <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                            {this.state.carType == 'Colt econômico' ?
+                            {this.state.allData ? this.state.allData.carType == "Colt econômico" ?
                                 <ColtEconomicoCar />
                                 :
                                 <ColtConfortCar />
+                                : null
                             }
                             <Text style={{ fontSize: 18, fontFamily: 'Inter-Medium', fontWeight: "500", textAlign: 'center', marginBottom: 5 }}> {this.state.allData ? this.state.allData.carType : null} </Text>
                         </View>
@@ -275,7 +289,7 @@ export default class TrackNow extends React.Component {
                     <View style={styles.containerBtn}>
                         <TouchableOpacity style={styles.btnLigarMotorista}>
                             <View>
-                                <Text style={styles.txtLigarMotorista}> Ligar pro motorista </Text>
+                                <Text style={styles.txtLigarMotorista}>  </Text>
                             </View>
                         </TouchableOpacity>
                     </View>

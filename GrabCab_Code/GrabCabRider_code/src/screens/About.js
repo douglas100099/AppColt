@@ -13,6 +13,7 @@ import {
 var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
 import languageJSON from '../common/language';
+
 export default class AboutPage extends React.Component {
 
     constructor(props) {
@@ -33,12 +34,11 @@ export default class AboutPage extends React.Component {
     }
 
     press() {
-        this.state.open ? setTimeout(() => { this.setState({ open: false })  }, 100) : 
-        this.setState({
-            open: true,
-        });
+        this.state.open ? setTimeout(() => { this.setState({ open: false }) }, 100) :
+            this.setState({
+                open: true,
+            });
     }
-
 
     render() {
         return (
@@ -50,8 +50,9 @@ export default class AboutPage extends React.Component {
                     centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.about_us_menu}</Text>}
                     containerStyle={styles.headerStyle}
                     innerContainerStyles={{ marginLeft: 10, marginRight: 10 }}
-                //onPress={() => { this.setState({ driverSerach: true }) }}
+                    onPress={this.showActionSheet}
                 />
+
                 {/*<View>
                     <ScrollView styles={{ marginTop: 10 }}>
                         <Text style={styles.aboutTitleStyle}>{this.state.heading ? this.state.heading : null}</Text>
@@ -76,73 +77,6 @@ export default class AboutPage extends React.Component {
                     </ScrollView>
                 </View>
                 */}
-                {this.state.open ?
-                    <Modal
-                        animationType="slide"
-                        transparent={true}
-                        visible={true}
-                        onRequestClose={() => {
-                            this.setState({ open: false })
-                        }}
-                    >
-                        <View style={styles.containerModalPayment}>
-                            <View style={styles.backgroundModalPayment}>
-                                <View>
-                                    <View style={{ marginLeft: 20, marginTop: 20 }}>
-                                        <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', fontWeight: "700" }}> Método de pagamento</Text>
-                                    </View>
-                                    <TouchableOpacity style={styles.boxMoney} onPress={() => this.press()}>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                            <Icon
-                                                name="dollar-sign"
-                                                type="feather"
-                                                // icon: 'chat', color: '#fff',
-                                                size={26}
-                                                color={colors.GREEN.light}
-                                                containerStyle={styles.iconMoney}
-                                            />
-                                            <Text style={styles.textMoney}> Dinheiro </Text>
-                                        </View>
-                                        <Icon
-                                            name='chevron-right'
-                                            type='MaterialIcons'
-                                            color={colors.GREY1}
-                                            size={40}
-                                            containerStyle={{ position: 'absolute', right: 0, marginRight: 10 }}
-                                        />
-                                    </TouchableOpacity>
-
-                                    <TouchableOpacity style={styles.boxCard} onPress={() => this.press()}>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                            <Icon
-                                                name="wallet"
-                                                type="simple-line-icon"
-                                                // icon: 'chat', color: '#fff',
-                                                size={26}
-                                                color={colors.DEEPBLUE}
-                                                containerStyle={styles.iconMoney}
-                                            />
-                                            <Text style={styles.textMoney}> Carteira Colt </Text>
-                                        </View>
-                                        <Icon
-                                            name='chevron-right'
-                                            type='MaterialIcons'
-                                            color={colors.GREY1}
-                                            size={40}
-                                            containerStyle={{ position: 'absolute', right: 0, marginRight: 10 }}
-                                        />
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        </View>
-                    </Modal>
-                    : null}
-
-                <View>
-                    <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center' }} onPress={() => { this.press() }}>
-                        <Text style={{ fontSize: 20 }}> BOTAO </Text>
-                    </TouchableOpacity>
-                </View>
 
             </View>
         );

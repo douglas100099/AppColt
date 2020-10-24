@@ -18,7 +18,6 @@ import AddMoneyScreen from './AddMoney';
 import SelectGatewayPage from './SelectGatewayScreen';
 import EmailLoginScreen from './EmailLoginScreen';
 import IntroScreen from './IntroScreen';
-import PrepareSearchScreen from './PrepareSearchScreen';
 
 export {
     MapScreen,
@@ -41,5 +40,4 @@ export {
     SelectGatewayPage,
     EmailLoginScreen,
     IntroScreen,
-    PrepareSearchScreen
 };

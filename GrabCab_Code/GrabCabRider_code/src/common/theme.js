@@ -25,7 +25,7 @@ export const colors = {
     btnSecondary: "#ababab",
     iconPrimary: "#c8c8c8",
     iconSecondary: "#3d3d3d",
-    background: "rgba(22,22,22,0.05)",
+    background: "rgba(22,22,22,0.04)",
     Smoke_Grey:"#dcdcdc",
     Trolley_Grey:"#808080",
     border:"#d6d6d6",
@@ -53,6 +53,8 @@ export const colors = {
   },
 
   DEEPBLUE: '#1152FD',
+
+  REDCLEAN: "rgba(233,30,38,1)",
 
   BLACK: '#3E4958',
 

@@ -21,6 +21,7 @@ const LONGITUDE_DELTA = 0.009;
 const LATITUDE = 22.6107983;
 const LONGITUDE = 88.4429171;
 import  languageJSON  from '../common/language';
+import CarMakerSVG from '../SVG/CarMarkerSVG';
 export default class TrackNow extends React.Component {
     
 constructor(props) {
@@ -195,7 +196,6 @@ render() {
                     ref={marker => {
                     this.marker = marker;
                     }}
-                    image={require('../../assets/images/track_Car.png')}
                     coordinate={new AnimatedRegion({
                         latitude: this.state.latitude,
                         longitude: this.state.longitude,
@@ -203,6 +203,10 @@ render() {
                         longitudeDelta: LONGITUDE_DELTA
                     })}
                     >
+                        <CarMakerSVG
+                            width={45}
+                            height={45}
+                        />
                 </Marker.Animated>
 
                 <Marker

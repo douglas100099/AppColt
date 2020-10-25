@@ -8,18 +8,18 @@ import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase'
-var { height } = Dimensions.get('window');
 import ActionSheet from 'react-native-actionsheet';
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import distanceCalc from '../common/distanceCalc';
-import IconMenuSVG from '../SVG/IconMenuSVG';
 import { Pulse } from 'react-native-animated-spinkit'
 import Geocoder from 'react-native-geocoding';
-import IconCloseSVG from '../SVG/IconCloseSVG';
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import { Audio } from 'expo-av';
 import * as IntentLauncher from 'expo-intent-launcher';
+
+import IconMenuSVG from '../SVG/IconMenuSVG';
+import IconCloseSVG from '../SVG/IconCloseSVG';
 import CarMakerSVG from '../SVG/CarMarkerSVG';
 
 const LATITUDE_DELTA = 0.0143
@@ -182,7 +182,7 @@ export default class DriverTripAccept extends React.Component {
         } catch (err) {
             console.warn("Couldn't Play audio", err)
         }
-        console.log( this.audioPlayer.getStatusAsync() + "STATUS DO AUDIO AO INICIAR")
+        console.log(this.audioPlayer.getStatusAsync() + "STATUS DO AUDIO AO INICIAR")
     }
 
     stopAudio = async () => {
@@ -192,13 +192,15 @@ export default class DriverTripAccept extends React.Component {
         } catch (err) {
             console.warn("Couldn't Stop audio", err)
         }
-        console.log( this.audioPlayer.getStatusAsync() + "STATUS DO AUDIO AO TENTAR PARAR")
+        console.log(this.audioPlayer.getStatusAsync() + "STATUS DO AUDIO AO TENTAR PARAR")
     }
 
     async componentDidMount() {
         const { status } = await Permissions.askAsync(Permissions.LOCATION);
+        //const granted = await Permissions.askAsync(Permissions.CAMERA_ROLL);
         const gpsActived = await Location.hasServicesEnabledAsync()
         console.log(gpsActived)
+        console.log(status + "STATUS")
         if (status === "granted" && gpsActived) {
             this._getLocationAsync();
         } else {
@@ -621,64 +623,65 @@ export default class DriverTripAccept extends React.Component {
 
                 {/* MAPA */}
                 {this.state.chegouCorrida ? null :
-                    <View style={{ flex: 1, height: height, width: width }}>
-                        <MapView
-                            ref={map => { this.map = map }}
-                            style={styles.map}
-                            rotateEnabled={false}
-                            provider={PROVIDER_GOOGLE}
-                            showsUserLocation={false}
-                            showsCompass={true}
-                            showsScale={true}
-                            showsMyLocationButton={false}
-                            region={region}
-                        >
+                    <View style={{ flex: 1 }}>
+                        <View style={{ flex: 1 }}>
+                            <MapView
+                                ref={map => { this.map = map }}
+                                style={styles.map}
+                                rotateEnabled={false}
+                                provider={PROVIDER_GOOGLE}
+                                showsUserLocation={false}
+                                showsCompass={false}
+                                showsScale={false}
+                                showsMyLocationButton={false}
+                                region={region}
+                            >
+                                {region ?
+                                    <Marker.Animated
+                                        coordinate={{ latitude: region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
+                                        anchor={{ x: 0, y: 0 }}
+                                        style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
+                                    >
+                                        <CarMakerSVG
+                                            height={45}
+                                            width={45}
+                                        />
+                                    </Marker.Animated>
+                                    : null}
+                            </MapView>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                                {/* BOTÃO MENU VOLTAR */}
+                                <TouchableOpacity style={styles.touchaVoltar} onPress={() => { this.props.navigation.toggleDrawer(); }}>
+                                    <IconMenuSVG height={28} width={28} />
+                                </TouchableOpacity>
+
+
+                                {/* BOTÃO GANHOS CENTRO */}
+                                <TouchableOpacity style={styles.touchaGanhos} disabled={this.state.loaderBtn} onPress={() => { this.carteira() }}>
+                                    <Text style={styles.touchaValor}>R$ {this.state.today ? parseFloat(this.state.today).toFixed(2) : '0'}</Text>
+                                </TouchableOpacity>
+
+                                {/* BOTÃO FOTOS */}
+                                <TouchableOpacity style={styles.touchaFoto} disabled={this.state.loaderBtn} onPress={() => { this.photoPerfil() }}>
+                                    <Image source={this.state.photoDriver ? { uri: this.state.photoDriver } : require('../../assets/images/profilePic.png')} style={styles.imagemPerfil} />
+                                </TouchableOpacity>
+                            </View>
                             {region ?
-                                <Marker.Animated
-                                    coordinate={{ latitude: region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
-                                    anchor={{ x: 0, y: 0 }}
-                                    style={{ transform: [{ rotate: this.state.region.angle+"deg" }]}}
-                                >
-                                    <CarMakerSVG
-                                        height={45}
-                                        width={45}
+                                <TouchableOpacity style={styles.touchaVoltar2} onPress={() => { this.centerFollowMap() }}>
+                                    <Icon
+                                        name='crosshair'
+                                        type='feather'
+                                        size={25}
+                                        color={colors.BLACK}
                                     />
-                                </Marker.Animated>
+                                </TouchableOpacity>
                                 : null}
-                        </MapView>
-
-                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
-                            {/* BOTÃO MENU VOLTAR */}
-                            <TouchableOpacity style={styles.touchaVoltar} onPress={() => { this.props.navigation.toggleDrawer(); }}>
-                                <IconMenuSVG height={28} width={28} />
-                            </TouchableOpacity>
-
-
-                            {/* BOTÃO GANHOS CENTRO */}
-                            <TouchableOpacity style={styles.touchaGanhos} disabled={this.state.loaderBtn} onPress={() => { this.carteira() }}>
-                                <Text style={styles.touchaValor}>R$ {this.state.today ? parseFloat(this.state.today).toFixed(2) : '0'}</Text>
-                            </TouchableOpacity>
-
-                            {/* BOTÃO FOTOS */}
-                            <TouchableOpacity style={styles.touchaFoto} disabled={this.state.loaderBtn} onPress={() => { this.photoPerfil() }}>
-                                <Image source={this.state.photoDriver ? { uri: this.state.photoDriver } : require('../../assets/images/profilePic.png')} style={styles.imagemPerfil} />
-                            </TouchableOpacity>
                         </View>
-                        {region ?
-                            <TouchableOpacity style={styles.touchaVoltar2} onPress={() => { this.centerFollowMap() }}>
-                                <Icon
-                                    name='crosshair'
-                                    type='feather'
-                                    size={25}
-                                    color={colors.BLACK}
-                                />
-                            </TouchableOpacity>
-                            : null}
 
                         {/* BOTÃO LIGAR E DESLIGAR */}
                         {this.state.chegouCorrida == false ?
                             (this.state.statusDetails ?
-                                <View style={{ alignItems: 'center', flex: 1, }}>
+                                <View style={{ alignItems: 'center', }}>
                                     <TouchableOpacity style={styles.btnOnOff} onPress={() => { this.onChangeFunction(this.state.driverActiveStatus); }}>
                                         <Pulse size={150} color="#49c33b" style={{ position: 'absolute' }} />
                                         <Icon
@@ -694,7 +697,7 @@ export default class DriverTripAccept extends React.Component {
                                 :
 
                                 <View>
-                                    <View style={{ alignItems: 'center', flex: 1, }}>
+                                    <View style={{ alignItems: 'center', }}>
                                         <TouchableOpacity style={styles.btnOnOff2} onPress={() => { this.onChangeFunction(this.state.driverActiveStatus); }}>
                                             <Icon
                                                 name='navigation-2'
@@ -771,9 +774,12 @@ export default class DriverTripAccept extends React.Component {
                                             >
                                                 <Marker.Animated
                                                     coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
-                                                    image={require('../../assets/images/available_car.png')}
                                                     anchor={{ x: 0, y: 0 }}
                                                 >
+                                                    <CarMakerSVG
+                                                        width={45}
+                                                        height={45}
+                                                    />
                                                 </Marker.Animated>
                                                 <Marker
                                                     coordinate={{ latitude: item.pickup.lat, longitude: item.pickup.lng }}
@@ -1230,7 +1236,7 @@ const styles = StyleSheet.create({
     map: {
         flex: 1,
         ...StyleSheet.absoluteFillObject,
-        overflow: 'hidden'
+        overflow: 'hidden',
     },
     triangle: {
         width: 0,
@@ -1263,7 +1269,5 @@ const styles = StyleSheet.create({
 
     mainViewStyle: {
         flex: 1,
-        height: height,
-        width: width,
     },
 });

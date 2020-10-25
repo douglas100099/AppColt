@@ -53,6 +53,7 @@ export class AuthLoadingScreen extends React.Component {
   async StartBackgroundLocation() {
     const { status } = await Location.requestPermissionsAsync();
     let verificarGPS = await Location.hasServicesEnabledAsync();
+    console.log("STATUS " + status)
     if (status === 'granted') {
       console.log('Setando update do background')
       await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {

@@ -108,9 +108,6 @@ export default class EditUser extends React.Component {
                     innerContainerStyles={styles.headerInnerContainer}
                 />
                 <ScrollView style={styles.scrollViewStyle}>
-                    {/* <View style={styles.logo}>
-                        <Image source={require('../../assets/images/logo.png')} />
-                    </View> */}
                     <KeyboardAvoidingView behavior={Platform.OS=='ios'?"padding":"padding"} style={styles.form}> 
                         <View style={styles.containerStyle}>
 

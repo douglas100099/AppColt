@@ -26,8 +26,9 @@ import * as firebase from 'firebase';
 import distanceCalc from '../common/distanceCalc';
 import languageJSON from '../common/language';
 import CellphoneSVG from '../SVG/CellphoneSVG'
-import ChatSVG from '../SVG/ChatSVG'
-import IconCloseSVG from '../SVG/IconCloseSVG'
+import CarMarkerSVG from '../SVG/CarMarkerSVG';
+import ChatSVG from '../SVG/ChatSVG';
+import IconCloseSVG from '../SVG/IconCloseSVG';
 var { width, height } = Dimensions.get('window');
 import { google_map_key } from '../common/key';
 import dateStyle from '../common/dateStyle';
@@ -601,8 +602,11 @@ export default class DriverStartTrip extends React.Component {
                     >
                         <Marker.Animated
                             coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
-                            image={require('../../assets/images/available_car.png')}
                         >
+                            <CarMarkerSVG
+                                width={45}
+                                height={45}
+                            />
                         </Marker.Animated>
                         <Marker
                             coordinate={{ latitude: this.state.rideDetails.pickup.lat, longitude: this.state.rideDetails.pickup.lng, }}

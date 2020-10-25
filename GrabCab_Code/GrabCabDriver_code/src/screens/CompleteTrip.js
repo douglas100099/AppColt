@@ -22,6 +22,7 @@ import * as Permissions from 'expo-permissions';
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import { google_map_key } from '../common/key';
 import dateStyle from '../common/dateStyle';
+import CarMakerSVG from '../SVG/CarMarkerSVG';
 
 export default class DriverCompleteTrip extends React.Component {
 
@@ -501,8 +502,11 @@ export default class DriverCompleteTrip extends React.Component {
                     >
                         <Marker.Animated
                             coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
-                            image={require('../../assets/images/available_car.png')}
                         >
+                            <CarMakerSVG
+                                width={45}
+                                height={45}
+                            />
                         </Marker.Animated>
                         <Marker
                             coordinate={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng, }}

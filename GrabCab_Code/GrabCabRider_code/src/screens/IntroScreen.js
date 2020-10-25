@@ -15,11 +15,13 @@ import * as Facebook from 'expo-facebook';
 import languageJSON from '../common/language';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from "expo-crypto";
-import { TouchableOpacity } from "react-native-gesture-handler";
-import { 
+import { colors } from '../common/theme';
+import { TouchableOpacity, TouchableWithoutFeedback } from "react-native-gesture-handler";
+var { width, height } = Dimensions.get('window');
+import {
     facebook_id,
     iosStandaloneAppClientId,
-    androidStandaloneAppClientId 
+    androidStandaloneAppClientId
 } from '../common/key';
 import * as Google from 'expo-google-app-auth';
 
@@ -159,21 +161,51 @@ export default class IntroScreen extends Component {
     render() {
 
         return (
-            <ImageBackground
-                source={require("../../assets/images/intro.jpg")}
-                resizeMode="stretch"
-                style={styles.imagebg}
-            >
-                <View style={styles.topSpace}></View>
+            <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ flex: 1,  justifyContent: 'center', alignItems: 'center', marginTop: Platform.OS == 'ios' ? 120 : 80}} >
+                        <Image
+                            source={require('../../assets/images/iconLogin.png')}
+                            style={{ width: 250, height: 80 }}
+                        />
+                    </View>
+                    <View style={{ flex: 2 }} >
+                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: 25 }}> Seja bem vindo </Text>
+                    </View>
+                </View>
+
+                <View style={{ flex: 1, marginTop: 20 }}>
+                    <TouchableWithoutFeedback style={{ elevation: 5, borderRadius: 5, marginHorizontal: 20, backgroundColor: colors.DEEPBLUE, height: 50, justifyContent: 'center', alignItems: 'center' }} onPress={() => this.onPressLoginEmail()}>
+                        <View>
+                            <Text style={{ color: colors.WHITE, fontFamily: 'Inter-Bold', fontSize: 18 }}> Login com email </Text>
+                        </View>
+                    </TouchableWithoutFeedback>
+
+                    <TouchableWithoutFeedback style={{ elevation: 5, marginTop: 15, borderRadius: 5, marginHorizontal: 20, backgroundColor: colors.DEEPBLUE, height: 50, justifyContent: 'center', alignItems: 'center' }} onPress={this.onPressLoginMobile}>
+                        <View >
+                            <Text style={{ color: colors.WHITE, fontFamily: 'Inter-Bold', fontSize: 18 }} > Login com celular </Text>
+                        </View>
+                    </TouchableWithoutFeedback>
+                </View>
+
+
+                {/*<View style={styles.topSpace}></View>
                 <MaterialButtonDark
                     onPress={() => this.onPressLoginEmail()}
                     style={styles.materialButtonDark}
-                >{languageJSON.email_login}</MaterialButtonDark>
+                >
+                    {languageJSON.email_login}
+                </MaterialButtonDark>
+
                 <MaterialButtonDark
                     onPress={this.onPressLoginMobile}
                     style={styles.materialButtonDark2}
-                >{languageJSON.login_title}</MaterialButtonDark>
-                <View style={styles.seperator}>
+                >
+                    {languageJSON.login_title}
+                </MaterialButtonDark>
+                */}
+
+                {/*<View style={styles.seperator}>
                     <View style={styles.lineLeft}></View>
                     <View style={styles.lineLeftFiller}>
                         <Text style={styles.sepText}>{languageJSON.spacer_message}</Text>
@@ -196,22 +228,13 @@ export default class IntroScreen extends Component {
                             style={styles.socialIconImage}
                         ></Image>
                     </TouchableOpacity>
-                    {/*{Platform.OS == 'ios' ?
-                        <TouchableOpacity style={styles.socialIcon} onPress={() => { this.appleSigin() }}>
-                            <Image
-                                source={require("../../assets/images/image_apple.png")}
-                                resizeMode="contain"
-                                style={styles.socialIconImage}
-                            ></Image>
-                        </TouchableOpacity>
-                    : null}*/}
                 </View>
                 <View>
                     <TouchableOpacity style={styles.terms} onPress={() => this.openTerms()}>
                         <Text style={styles.actionText}>{languageJSON.terms}</Text>
                     </TouchableOpacity>
-                </View>
-            </ImageBackground>
+            </View>*/}
+            </View>
         );
     }
 }
@@ -247,7 +270,7 @@ const styles = StyleSheet.create({
         marginLeft: 35,
         marginRight: 35,
         backgroundColor: "#3b3b3b",
-    },    
+    },
     actionLine: {
         height: 20,
         flexDirection: "row",
@@ -262,7 +285,7 @@ const styles = StyleSheet.create({
     },
     actionText: {
         fontSize: 15,
-        fontFamily: "Roboto-Regular",
+        fontFamily: "Inter-Regular",
         fontWeight: 'bold'
     },
     seperator: {
@@ -281,7 +304,7 @@ const styles = StyleSheet.create({
     sepText: {
         color: "#000",
         fontSize: 16,
-        fontFamily: "Roboto-Regular"
+        fontFamily: "Inter-Regular"
     },
     lineLeftFiller: {
         flex: 1,

@@ -14,6 +14,8 @@ import MaterialButtonDark from "../components/MaterialButtonDark";
 import * as firebase from 'firebase'
 import languageJSON from '../common/language';
 import { TouchableOpacity } from "react-native-gesture-handler";
+import { Icon } from 'react-native-elements';
+import { colors } from '../common/theme';
 import SegmentedControlTab from 'react-native-segmented-control-tab';
 
 export default class EmailLoginScreen extends Component {
@@ -143,21 +145,24 @@ export default class EmailLoginScreen extends Component {
     render() {
 
         return (
-            <KeyboardAvoidingView behavior={"position"} style={styles.container}>
-                <ImageBackground
-                    source={require("../../assets/images/bg.png")}
-                    resizeMode="stretch"
-                    style={styles.imagebg}
-                >
-                    <View style={styles.topBar}>
-                        <TouchableOpacity style={styles.backButton} onPress={() => { this.props.navigation.navigate('Intro') }}>
-                            <Image
-                                source={require("../../assets/images/ios-back.png")}
-                                resizeMode="contain"
-                                style={styles.backButtonImage}
-                            ></Image>
+            <View style={styles.container}>
+                <View style={styles.topBar}>
+                    <View style={styles.btnVoltar}>
+                        <TouchableOpacity style={{ marginLeft: 10 }} onPress={() => { this.props.navigation.goBack(); }}>
+                            <Icon
+                                name='chevron-left'
+                                type='MaterialIcons'
+                                color={colors.BLACK}
+                                size={50}
+                            />
                         </TouchableOpacity>
                     </View>
+                    <View style={{ flex: 3, }}>
+                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: 16 }}> Cadastre-se ou faça login </Text>
+                    </View>
+                </View>
+
+                <View style={{ flex: 5 }}>
                     <SegmentedControlTab
                         values={[languageJSON.email_login, languageJSON.register_email]}
                         selectedIndex={this.state.customStyleIndex}
@@ -170,7 +175,7 @@ export default class EmailLoginScreen extends Component {
                             borderColor: 'transparent',
                         }}
                         activeTabStyle={{ borderBottomColor: '#212121', backgroundColor: 'transparent', borderBottomWidth: 2, marginTop: 2 }}
-                        tabTextStyle={{ color: '#fff', fontWeight: 'bold' }}
+                        tabTextStyle={{ color: colors.GREY2, fontSize: 17, fontFamily: 'Inter-Bold' }}
                         activeTabTextStyle={{ color: '#212121' }}
                     />
 
@@ -205,10 +210,13 @@ export default class EmailLoginScreen extends Component {
                             />
                         </View>
                         : null}
-                    <MaterialButtonDark
-                        onPress={this.onAction}
-                        style={styles.materialButtonDark}
-                    >{this.state.customStyleIndex == 0 ? languageJSON.login_button : languageJSON.register_link}</MaterialButtonDark>
+
+                    <TouchableOpacity onPress={this.onAction} style={styles.materialButtonDark}>
+                        <View>
+                            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 18, color: colors.WHITE }}>{this.state.customStyleIndex == 0 ? languageJSON.login_button : languageJSON.register_link}</Text>
+                        </View>
+                    </TouchableOpacity>
+
                     {this.state.customStyleIndex == 0 ?
                         <View style={styles.linkBar}>
                             <TouchableOpacity style={styles.barLinks} onPress={() => this.Forgot_Password(this.state.email)}>
@@ -216,15 +224,16 @@ export default class EmailLoginScreen extends Component {
                             </TouchableOpacity>
                         </View>
                         : null}
-                </ImageBackground>
-            </KeyboardAvoidingView>
+                </View>
+            </View>
         );
     }
 }
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1
+        flex: 1,
+        backgroundColor: colors.WHITE
     },
     imagebg: {
         position: 'absolute',
@@ -234,10 +243,16 @@ const styles = StyleSheet.create({
         height: Dimensions.get('window').height,
     },
     topBar: {
-        marginTop: 0,
-        marginLeft: 0,
-        marginRight: 0,
-        height: Dimensions.get('window').height * 0.52
+        marginTop: Platform.OS == "ios" ? 30 : 20,
+        justifyContent: 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1
+    },
+    btnVoltar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1
     },
     backButton: {
         height: 40,
@@ -253,7 +268,7 @@ const styles = StyleSheet.create({
     segmentcontrol: {
         color: "rgba(255,255,255,1)",
         fontSize: 18,
-        fontFamily: "Roboto-Regular",
+        fontFamily: "Inter-Regular",
         marginTop: 0,
         alignSelf: "center",
         height: 50,
@@ -289,12 +304,16 @@ const styles = StyleSheet.create({
     textInput: {
         color: "#121212",
         fontSize: 18,
-        fontFamily: "Roboto-Regular",
+        fontFamily: "Inter-Regular",
         textAlign: "left",
         marginTop: 8,
         marginLeft: 5
     },
     materialButtonDark: {
+        backgroundColor: colors.DEEPBLUE,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 5,
         height: 35,
         marginTop: 22,
         marginLeft: 35,
@@ -314,8 +333,7 @@ const styles = StyleSheet.create({
     },
     linkText: {
         fontSize: 16,
-        fontWeight: 'bold',
-        color: '#fff',
-        fontFamily: "Roboto-Bold",
+        color: colors.DEEPBLUE,
+        fontFamily: "Inter-Bold",
     }
 });

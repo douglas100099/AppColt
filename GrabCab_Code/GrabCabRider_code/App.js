@@ -30,6 +30,10 @@ console.warn = message => {
 
 export default class App extends React.Component {
 
+  state = {
+    assetsLoaded: false,
+  };
+
   constructor() {
     super();
     LogBox.ignoreAllLogs(true)
@@ -62,12 +66,16 @@ export default class App extends React.Component {
   };
 
   async componentDidMount() {
-    await this._loadResourcesAsync();
+    this._loadResourcesAsync().then(() => {
+      this.setState({ assetsLoaded: true })
+    })
   }
 
   render() {
     return (
-      <AppContainer />
+      this.state.assetsLoaded ?
+        <AppContainer />
+        : null
     )
   }
 }

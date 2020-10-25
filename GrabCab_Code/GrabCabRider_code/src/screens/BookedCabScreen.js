@@ -121,7 +121,7 @@ export default class BookedCabScreen extends React.Component {
                 } else if (currUserBooking.status == "EMBARQUE") {
                     this.setState({ embarque: true })
                 } else if (currUserBooking.status == "START") {
-                    
+
                     this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
                 } else if (currUserBooking.status == "REJECTED") {
                     this.searchDriver(this.getParamData.bokkingId);
@@ -306,7 +306,7 @@ export default class BookedCabScreen extends React.Component {
             status: 'CANCELLED',
         })
             .then(() => {
-                this.setState({ driverSerach: false }, () =>this.props.navigation.goBack() )
+                this.setState({ driverSerach: false }, () => this.props.navigation.goBack())
             })
     }
 
@@ -342,7 +342,17 @@ export default class BookedCabScreen extends React.Component {
                             }).then(() => {
                                 firebase.database().ref(`/users/` + this.state.driverUID + '/emCorrida').remove()
                             }).then(() => {
-                                this.props.navigation.replace('Map')
+                                this.props
+                                    .navigation
+                                    .dispatch(StackActions.reset({
+                                        index: 0,
+                                        actions: [
+                                            NavigationActions.navigate({
+                                                routeName: 'Map',
+                                            }),
+                                        ],
+                                    }))
+                                //this.props.navigation.replace('Map')
                             })
                         }
                     }
@@ -501,30 +511,35 @@ export default class BookedCabScreen extends React.Component {
                         <TrackNow duid={this.state.driverUID} alldata={this.state.region} bookingStatus={this.state.bookingStatus} />
                         : null}
 
-                    <TouchableOpacity style={styles.btnTeste}>
-                        <Icon
-                            name="navigation"
-                            type="feather"
-                            // icon: 'chat', color: '#fff',
-                            size={23}
-                            color={colors.DEEPBLUE}
-                        />
-                    </TouchableOpacity>
-
-
-                    <TouchableOpacity style={styles.btnChatMotorista} onPress={() => this.chat()}>
+                    {this.state.driverSerach == false ?
                         <View>
-                            <Text style={styles.txtChatMotorista}> Chat </Text>
+                            <TouchableOpacity style={styles.btnTeste}>
+                                <Icon
+                                    name="navigation"
+                                    type="feather"
+                                    // icon: 'chat', color: '#fff',
+                                    size={23}
+                                    color={colors.DEEPBLUE}
+                                />
+                            </TouchableOpacity>
+
+
+                            <TouchableOpacity style={styles.btnChatMotorista} onPress={() => this.chat()}>
+                                <View>
+                                    <Text style={styles.txtChatMotorista}> Chat </Text>
+                                </View>
+                            </TouchableOpacity>
                         </View>
-                    </TouchableOpacity>
-
+                        : null}
                 </View>
 
-                <View style={{ backgroundColor: colors.GREY2, opacity: 0.6, height: 20, justifyContent: 'center', alignItems: 'center' }}>
-                    <View style={styles.viewInfo}>
-                        <Text style={{ color: colors.WHITE, fontFamily: 'Inter-Bold', fontSize: 14, alignSelf: 'center' }}> Confira as informações e a placa do carro!</Text>
+                {this.state.driverSerach == false ?
+                    <View style={{ backgroundColor: colors.GREY2, opacity: 0.6, height: 20, justifyContent: 'center', alignItems: 'center' }}>
+                        <View style={styles.viewInfo}>
+                            <Text style={{ color: colors.WHITE, fontFamily: 'Inter-Bold', fontSize: 14, alignSelf: 'center' }}> Confira as informações e a placa do carro!</Text>
+                        </View>
                     </View>
-                </View>
+                    : null}
 
                 {this.state.embarque ?
                     <View style={{ borderBottomWidth: 2, borderColor: colors.GREY.background, backgroundColor: colors.GREY3, opacity: 0.6, height: 60, justifyContent: 'center', alignItems: 'center' }}>
@@ -534,64 +549,66 @@ export default class BookedCabScreen extends React.Component {
                     </View>
                     : null}
 
-                <View style={[styles.containerBottom, { flex: this.state.embarque ? 4.5 : 3.5 }]}>
-                    <View style={styles.containerFoto}>
-                        <View style={{ borderWidth: 1.5, borderColor: colors.DEEPBLUE, borderRadius: 100 }}>
-                            <AvatarUser
-                                style={{ margin: 3 }}
-                            />
-                        </View>
-
-                        <Text style={styles.nameDriver}> {this.state.driverName ? this.state.driverName.split(" ")[0] : null} </Text>
-                        <View style={styles.rating}>
-                            <Icon
-                                name="star"
-                                type="feather"
-                                // icon: 'chat', color: '#fff',
-                                size={23}
-                                color={colors.YELLOW.secondary}
-                            />
-                            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 15, fontWeight: '600' }}> {this.state.starCount ? this.state.starCount : null} </Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.containerCarDetails}>
-                        <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                            {this.state.carType == "Colt econômico" ?
-                                <ColtEconomicoCar />
-                                :
-                                <ColtConfortCar />
-                            }
-                            <Text style={{ fontSize: 18, fontFamily: 'Inter-Medium', fontWeight: "500", textAlign: 'center', marginBottom: 5 }}> {this.state.carType} </Text>
-                        </View>
-
-                        <View style={styles.boxPlacaCarro}>
-                            <Text style={styles.placaCarro} > {this.state.carNo ? this.state.carNo : null} </Text>
-                        </View>
-                        <View style={styles.containerTxtCarro}>
-                            <Text style={styles.marcaCarro}> {this.state.carModel ? this.state.carModel : null} </Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.containerBtn}>
-                        <TouchableOpacity style={styles.btnLigarMotorista} onPress={() => { this.onPressCall('tel: ' + this.state.driverContact) }}>
-                            <View>
-                                <Text style={styles.txtLigarMotorista}> Ligar pro motorista </Text>
-                            </View>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.btnCancelarCorrida} onPress={() => { this.onPressCancellBtn() }}>
-                            <View style={styles.bordaIcon}>
-                                <Icon
-                                    name="x"
-                                    type="feather"
-                                    // icon: 'chat', color: '#fff',
-                                    size={35}
-                                    color={colors.WHITE}
+                {this.state.driverSerach == false ?
+                    <View style={[styles.containerBottom, { flex: this.state.embarque ? 4.5 : 3.5 }]}>
+                        <View style={styles.containerFoto}>
+                            <View style={{ borderWidth: 1.5, borderColor: colors.DEEPBLUE, borderRadius: 100 }}>
+                                <AvatarUser
+                                    style={{ margin: 3 }}
                                 />
                             </View>
-                        </TouchableOpacity>
+
+                            <Text style={styles.nameDriver}> {this.state.driverName ? this.state.driverName.split(" ")[0] : null} </Text>
+                            <View style={styles.rating}>
+                                <Icon
+                                    name="star"
+                                    type="feather"
+                                    // icon: 'chat', color: '#fff',
+                                    size={23}
+                                    color={colors.YELLOW.secondary}
+                                />
+                                <Text style={{ fontFamily: 'Inter-Bold', fontSize: 15, fontWeight: '600' }}> {this.state.starCount ? this.state.starCount : null} </Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.containerCarDetails}>
+                            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                                {this.state.carType == "Colt econômico" ?
+                                    <ColtEconomicoCar />
+                                    :
+                                    <ColtConfortCar />
+                                }
+                                <Text style={{ fontSize: 18, fontFamily: 'Inter-Medium', fontWeight: "500", textAlign: 'center', marginBottom: 5 }}> {this.state.carType} </Text>
+                            </View>
+
+                            <View style={styles.boxPlacaCarro}>
+                                <Text style={styles.placaCarro} > {this.state.carNo ? this.state.carNo : null} </Text>
+                            </View>
+                            <View style={styles.containerTxtCarro}>
+                                <Text style={styles.marcaCarro}> {this.state.carModel ? this.state.carModel : null} </Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.containerBtn}>
+                            <TouchableOpacity style={styles.btnLigarMotorista} onPress={() => { this.onPressCall('tel: ' + this.state.driverContact) }}>
+                                <View>
+                                    <Text style={styles.txtLigarMotorista}> Ligar pro motorista </Text>
+                                </View>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.btnCancelarCorrida} onPress={() => { this.onPressCancellBtn() }}>
+                                <View style={styles.bordaIcon}>
+                                    <Icon
+                                        name="x"
+                                        type="feather"
+                                        // icon: 'chat', color: '#fff',
+                                        size={35}
+                                        color={colors.WHITE}
+                                    />
+                                </View>
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                </View>
+                : null}
 
                 {
                     this.infoModal()

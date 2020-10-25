@@ -755,7 +755,7 @@ export default class FareScreen extends React.Component {
                                 //title={this.state.region.whereText}
                                 centerOffset={{ x: 0.1, y: 0.1 }}
                                 anchor={{ x: 0.1, y: 0.1 }}
-                                onPress={() => this.props.navigation.navigate('Search', { old: this.state.region })}
+                                onPress={() => this.props.navigation.replace('Search', { old: this.state.region })}
                             >
                                 <LocationUser
                                     width={25}
@@ -772,7 +772,7 @@ export default class FareScreen extends React.Component {
                                 //title={this.state.region.droptext}
                                 centerOffset={{ x: 0.1, y: 0.1 }}
                                 anchor={{ x: 0.1, y: 0.1 }}
-                                onPress={() => this.props.navigation.navigate('Search', { old: this.state.region })}
+                                onPress={() => this.props.navigation.replace('Search', { old: this.state.region })}
                             >
                                 <LocationDrop />
 

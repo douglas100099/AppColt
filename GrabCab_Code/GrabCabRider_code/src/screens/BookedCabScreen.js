@@ -591,8 +591,6 @@ export default class BookedCabScreen extends React.Component {
                             </View>
                         </TouchableOpacity>
                     </View>
-
-
                 </View>
 
                 {

@@ -68,9 +68,6 @@
       },
       "useNextNotificationsApi": true
     },
-    "facebookScheme": "fbXXXXXXXXXXXXXXX",
-    "facebookAppId": "XXXXXXXXXXXXXX",
-    "facebookDisplayName": "GrabCab",
     "extra":{
       "firebaseConfig":{
         "apiKey": "AIzaSyA_ulfyKW-NDZzvix7jaCSgL-uqElZkq0k",

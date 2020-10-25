@@ -11,7 +11,6 @@ import {
 } from "react-native";
 import MaterialButtonDark from "../components/MaterialButtonDark";
 import * as firebase from 'firebase'
-import * as Facebook from 'expo-facebook';
 import languageJSON from '../common/language';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from "expo-crypto";
@@ -19,7 +18,6 @@ import { colors } from '../common/theme';
 import { TouchableOpacity, TouchableWithoutFeedback } from "react-native-gesture-handler";
 var { width, height } = Dimensions.get('window');
 import {
-    facebook_id,
     iosStandaloneAppClientId,
     androidStandaloneAppClientId
 } from '../common/key';
@@ -64,7 +62,7 @@ export default class IntroScreen extends Component {
         }
     }
 
-    async FbLogin() {
+    /*async FbLogin() {
 
         try {
             await Facebook.initializeAsync(facebook_id);
@@ -98,7 +96,7 @@ export default class IntroScreen extends Component {
         } catch ({ message }) {
             alert(languageJSON.facebook_login_auth_error`${message}`);
         }
-    }
+    }*/
 
     appleSigin = async () => {
 

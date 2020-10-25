@@ -242,7 +242,7 @@ export default class TrackNow extends React.Component {
                 </View>
 
                 <View style={{ backgroundColor: colors.GREEN.light, height: 30, justifyContent: 'center', alignItems: 'center', opacity: 0.5 }}>
-                    <Text style={{ color: colors.GREY3, fontFamily: 'Inter-Bold' }}> A caminho do seu destino </Text>
+                    <Text style={{ color: colors.DEEPBLUE, fontFamily: 'Inter-Bold' }}> A caminho do seu destino </Text>
                 </View>
 
                 {/* Modal inferior */}

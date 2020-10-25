@@ -12,7 +12,7 @@ import { Button, Icon } from 'react-native-elements';
 import { colors } from '../common/theme';
 import * as firebase from 'firebase'
 import { farehelper } from '../common/fareCalculator';
-import ActionSheet from 'react-native-actionsheet';
+import ActionSheet, { ActionSheetCustom } from 'react-native-actionsheet';
 import Polyline from '@mapbox/polyline';
 import distanceCalc from '../common/distanceCalc';
 import * as Location from 'expo-location';
@@ -241,7 +241,7 @@ export default class DriverCompleteTrip extends React.Component {
         this.setState({ rideDetails: item },
             () => {
                 var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
-                var location2 = [this.state.rideDetails.pickup.lat, this.state.rideDetails.pickup.lng];   //Driver lat and lang
+                var location2 = [this.state.rideDetails.drop.lat, this.state.rideDetails.drop.lng];   //Driver lat and lang
                 //calculate the distance of two locations
                 var distance = distanceCalc(location1, location2);
                 var originalDistance = (distance);
@@ -470,7 +470,7 @@ export default class DriverCompleteTrip extends React.Component {
         return (
             <View style={styles.containerView}>
                 <View>
-                    <ActionSheet
+                    <ActionSheetCustom
                         ref={o => this.ActionSheet = o}
                         style={styles}
                         title={<Text style={{ color: colors.BLACK, fontSize: 20, fontFamily: 'Inter-Bold' }}>Longe do destino</Text>}

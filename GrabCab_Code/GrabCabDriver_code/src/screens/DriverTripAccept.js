@@ -8,7 +8,7 @@ import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase'
-import ActionSheet from 'react-native-actionsheet';
+import ActionSheet, { ActionSheetCustom } from 'react-native-actionsheet';
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import distanceCalc from '../common/distanceCalc';
 import { Pulse } from 'react-native-animated-spinkit'
@@ -70,6 +70,7 @@ export default class DriverTripAccept extends React.Component {
             isBlocked: false,
             loaderBtn: false,
             chegouCorrida: false,
+            acceptBtnDisable: false
         }
         //this.getLocationDriver();
     }
@@ -174,7 +175,7 @@ export default class DriverTripAccept extends React.Component {
 
 
     alertAudio = async (params) => {
-        if( params ){
+        if (params) {
             await soundObject.stopAsync()
             await soundObject.unloadAsync()
         }
@@ -244,12 +245,11 @@ export default class DriverTripAccept extends React.Component {
                 })
                 this.setState({ coords: coords }, () => {
                     if (this.state.chegouCorrida) {
-                        setTimeout(() => {
-                            this.map2.fitToCoordinates([{ latitude: pickuplat, longitude: pickuplng }, { latitude: droplat, longitude: droplng }], {
-                                edgePadding: { top: 80, right: 65, bottom: 50, left: 50 },
-                                animated: true,
-                            })
-                        }, 500);
+                        this.map2.fitToCoordinates([{ latitude: pickuplat, longitude: pickuplng }, { latitude: droplat, longitude: droplng }], {
+                            edgePadding: { top: 80, right: 65, bottom: 50, left: 50 },
+                            animated: true,
+                        })
+                        this.setState({ acceptBtnDisable: false })
                     }
                 })
                 return coords
@@ -423,15 +423,15 @@ export default class DriverTripAccept extends React.Component {
                     for (let key in waiting_riderData) {
                         waiting_riderData[key].bookingId = key;
                         jobs.push(waiting_riderData[key]);
-                        setTimeout(() => {
-                            this.getDirections('"' + waiting_riderData[key].pickup.lat + ',' + waiting_riderData[key].pickup.lng + '"', '"' + this.state.region.latitude + ',' + this.state.region.longitude + '"',
-                                waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng, this.state.region.latitude, this.state.region.longitude)
-                        }, 500)
+
+                        this.getDirections('"' + waiting_riderData[key].pickup.lat + ',' + waiting_riderData[key].pickup.lng + '"', '"' + this.state.region.latitude + ',' + this.state.region.longitude + '"',
+                            waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng, this.state.region.latitude, this.state.region.longitude)
+
                         var location1 = [waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng];
                         var location2 = [this.state.region.latitude, this.state.region.longitude];
                         var distancee = distanceCalc(location1, location2);
                         console.log(distancee);
-                        this.setState({ distance: distancee })
+                        this.setState({ distance: distancee, acceptBtnDisable: true })
                     }
                     this.setState({ chegouCorrida: true })
                     this.alertAudio();
@@ -558,10 +558,9 @@ export default class DriverTripAccept extends React.Component {
 
     }
 
-    showActionSheet = () => {
-        this.ActionSheet.show()
+    showActionSheet() {
+        this.RefActionSheet.show()
     }
-
 
     //ignore button press function
     onPressIgnore(item) {
@@ -572,8 +571,7 @@ export default class DriverTripAccept extends React.Component {
             firebase.database().ref('bookings/' + item.bookingId + '/').once('value', data => {
                 if (data.val()) {
                     let mainBookingData = data.val();
-                    console.log(mainBookingData)
-                    if (mainBookingData.requestedDriver) {
+                    if (mainBookingData.rejectedDrivers) {
                         arr = mainBookingData.rejectedDrivers
                         arr.push(this.state.curUid)
                         firebase.database().ref(`bookings/` + item.bookingId + '/').update({
@@ -593,7 +591,30 @@ export default class DriverTripAccept extends React.Component {
                                 userDbRef.update({
                                     status: "REJECTED",
                                 });
-                                //this.sendPushNotification(item.customer, item.bookingId, languageJSON.booking_request_rejected)
+                                this.props.navigation.navigate('BookingCancel', { allDetails: item })
+                                this.setState({ loader: false, chegouCorrida: false });
+                            })
+
+                        firebase.database().ref('bookings/' + item.bookingId + '/requestedDriver/').remove();
+                    } else {
+                        arr.push(this.state.curUid)
+                        firebase.database().ref(`bookings/` + item.bookingId + '/').update({
+                            rejectedDrivers: arr,
+                            status: "REJECTED",
+                            //requestDriver: [],
+                        }).then(() => {
+                            firebase.database().ref('users/' + this.state.curUid + '/driverActiveStatus').set(false);
+                        }).then(() => {
+                            firebase.database().ref('users/' + this.state.curUid + '/in_reject_progress').update({
+                                punido: false,
+                            })
+                        })
+
+                            .then(() => {
+                                let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/');
+                                userDbRef.update({
+                                    status: "REJECTED",
+                                });
                                 this.props.navigation.navigate('BookingCancel', { allDetails: item })
                                 this.setState({ loader: false, chegouCorrida: false });
                             })
@@ -608,6 +629,22 @@ export default class DriverTripAccept extends React.Component {
             });
         }
 
+    }
+
+    cancelModal() {
+        return (
+            <Modal
+                animationType='slide'
+                transparent={false}
+                visible={this.state.cancelModal}
+                onRequestClose={() => {
+                    this.setState({ cancelModal: false })
+                }}>
+                <View style={{ flex: 1 }}>
+
+                </View>
+            </Modal>
+        )
     }
 
     sendPushNotification(customerUID, bookingId, msg) {
@@ -649,8 +686,8 @@ export default class DriverTripAccept extends React.Component {
                                         }}
                                     >
                                         <View>
-                                            <ActionSheet
-                                                ref={o => this.ActionSheet = o}
+                                            <ActionSheetCustom
+                                                ref={o => this.RefActionSheet = o}
                                                 style={styles}
                                                 title={<Text style={{ color: colors.RED, fontSize: 20, fontFamily: 'Inter-Bold' }}>Rejeitar corrida?</Text>}
                                                 message={<Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Regular', textAlign: 'center' }}>Rejeitar essa corrida poderá afetar sua taxa de cancelamento</Text>}
@@ -739,7 +776,7 @@ export default class DriverTripAccept extends React.Component {
                                                         </View>
                                                     </View>
                                                     <View style={styles.viewBtnRejeitar}>
-                                                        <TouchableOpacity style={styles.btnRejeitar} onPress={() => { this.ActionSheet.show() }}>
+                                                        <TouchableOpacity style={styles.btnRejeitar} onPress={() => { this.showActionSheet() }}>
                                                             <IconCloseSVG height={25} width={25} />
                                                         </TouchableOpacity>
                                                     </View>
@@ -783,7 +820,7 @@ export default class DriverTripAccept extends React.Component {
                                                 </View>
                                                 <View style={styles.viewmainBtn}>
                                                     <View style={styles.viewBtn}>
-                                                        <TouchableOpacity style={styles.btnAceitar} onPress={() => { this.onPressAccept(item) }} disabled={this.state.loader}>
+                                                        <TouchableOpacity style={styles.btnAceitar} onPress={() => { this.onPressAccept(item) }} disabled={this.state.loader || this.state.acceptBtnDisable}>
                                                             <Text style={styles.txtBtnAceitar}>Aceitar</Text>
                                                             <ActivityIndicator animating={this.state.loader} size="large" color={colors.WHITE} style={{ position: 'absolute', right: 35 }} />
                                                         </TouchableOpacity>
@@ -1133,7 +1170,7 @@ const styles = StyleSheet.create({
     tempoCorrida: {
         flexDirection: 'row',
         alignItems: 'center',
-        width: 70,
+        paddingRight: 10,
         borderRadius: 50,
         height: 25,
         backgroundColor: colors.GREY1,
@@ -1154,17 +1191,16 @@ const styles = StyleSheet.create({
         opacity: 0.6,
         marginLeft: 5,
         fontSize: 12,
-        paddingHorizontal: 5
     },
 
     tempoKM: {
         marginLeft: 12,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 5,
         borderRadius: 50,
         height: 25,
         backgroundColor: colors.GREY1,
+        paddingRight: 10,
     },
 
     viewBtnRejeitar: {

@@ -1,6 +1,6 @@
 import React from 'react';
 import AppContainer from './src/navigation/AppNavigator';
-import {Asset} from 'expo-asset';
+import { Asset } from 'expo-asset';
 import * as Font from 'expo-font';
 import * as firebase from 'firebase'
 import Constants from 'expo-constants';
@@ -43,15 +43,15 @@ export default class App extends React.Component {
 
   state = {
     assetsLoaded: false,
-    updateMsg:''
+    updateMsg: ''
   };
 
-  constructor(){
+  constructor() {
     super();
     LogBox.ignoreAllLogs(true)
   }
 
-//resource load at the time of app loading
+  //resource load at the time of app loading
   _loadResourcesAsync = async () => {
     return Promise.all([
       Asset.loadAsync([
@@ -100,21 +100,13 @@ export default class App extends React.Component {
       }
     }
   }
-  
+
   render() {
     return (
-        this.state.assetsLoaded ?
-          <AppContainer/>
+      this.state.assetsLoaded ?
+        <AppContainer />
         :
-        <View style={[styles.container]}>
-          <Image
-              source={require("./assets/images/splash.png")}
-              style={styles.imagebg}
-          />
-            <ActivityIndicator/>
-            <Text style={{paddingBottom:100}}>{this.state.updateMsg}</Text>
-
-        </View>
+        null
     );
   }
 }

@@ -17,7 +17,7 @@ export default class CancelBooking extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            loader: true,
+            loader: false,
             blocked: false,
             motivo: "",
             numeroPorcentagem: '0%',
@@ -34,7 +34,7 @@ export default class CancelBooking extends React.Component {
             curUid: firebase.auth().currentUser.uid
         })
 
-        const userDetails = firebase.database().ref('users/' + this.state.curUid + '/');
+        const userDetails = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/');
         userDetails.once('value', customerData => {
             let userDetails = customerData.val()
             if(userDetails) {
@@ -75,7 +75,7 @@ export default class CancelBooking extends React.Component {
                             if (countAnteriorRecente + 1 == 3) {
                                 //Aqui entra o bloqueio do motorista
                                 this.bloquearDriver(this.motivo2)
-                                this.setState({ loader: false, motivo: this.motivo2 })
+                                this.setState({ loader: false })
 
                             } else if (countAnterior + 1 == 7) {
                                 //Aqui entra o bloqueio caso ele cancelou 6 no dia Bleu bleu
@@ -90,7 +90,7 @@ export default class CancelBooking extends React.Component {
                                     data: new Date().toString()
 
                                 }).then(() => {
-                                    firebase.database().ref('users/' + this.state.curUid + '/in_reject_progress').update({
+                                    firebase.database().ref('users/' + this.state.curUid + '/in_reject_progress/').update({
                                         punido: true,
                                     })
                                 }).then(() => { this.verifiedCancell(countTotal) })
@@ -104,7 +104,7 @@ export default class CancelBooking extends React.Component {
                             countRecentes: 1,
                             data: new Date().toString(),
                         }).then(() => {
-                            firebase.database().ref('users/' + this.state.curUid + '/in_reject_progress').update({
+                            firebase.database().ref('users/' + this.state.curUid + '/in_reject_progress/').update({
                                 punido: true,
                             })
                         })
@@ -116,7 +116,7 @@ export default class CancelBooking extends React.Component {
                         countRecentes: 1,
                         data: new Date().toString(),
                     }).then(() => {
-                        firebase.database().ref('users/' + this.state.curUid + '/in_reject_progress').update({
+                        firebase.database().ref('users/' + this.state.curUid + '/in_reject_progress/').update({
                             punido: true,
                         })
                     })
@@ -173,6 +173,7 @@ export default class CancelBooking extends React.Component {
         }).then(() => {
             this.setState({
                 blocked: true,
+                motivo: param
             })
         }).then(
             firebase.database().ref('users/' + this.state.curUid + '/in_reject_progress').update({
@@ -185,7 +186,7 @@ export default class CancelBooking extends React.Component {
         firebase.database().ref(`/users/` + this.state.curUid + '/').update({
             driverActiveStatus: true
         }).then(() => {
-            firebase.database().ref('users/' + this.state.curUid + '/in_reject_progress').remove()
+            firebase.database().ref('users/' + this.state.curUid + '/in_reject_progress/').remove()
         }).then(() => {
             this.props
                 .navigation
@@ -204,7 +205,7 @@ export default class CancelBooking extends React.Component {
         firebase.database().ref(`/users/` + this.state.curUid + '/').update({
             driverActiveStatus: false
         }).then(() => {
-            firebase.database().ref('users/' + this.state.curUid + '/in_reject_progress').remove()
+            firebase.database().ref('users/' + this.state.curUid + '/in_reject_progress/').remove()
         }).then(() => {
             this.props
                 .navigation
@@ -222,7 +223,7 @@ export default class CancelBooking extends React.Component {
     render() {
         return (
             <View style={styles.mainView}>
-                <View style={{ height: 300, marginHorizontal: 0, borderBottomRightRadius: 20, borderBottomLeftRadius: 20, backgroundColor: colors.DEEPBLUE, flex: 1 }}>
+                <View style={{ flex: 1, marginHorizontal: 0, borderBottomRightRadius: 20, borderBottomLeftRadius: 20, backgroundColor: colors.DEEPBLUE}}>
                     <View style={{ marginTop: 50, justifyContent: 'center', alignItems: 'center' }}>
                         <View>
                             <Icon
@@ -240,7 +241,8 @@ export default class CancelBooking extends React.Component {
                         </View>
                     </View>
                 </View>
-                <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 30, marginHorizontal: 10, flex: 1 }}>
+
+                <View style={{ flex:1, flexDirection: 'row', justifyContent: 'center', marginTop: 30, marginHorizontal: 10}}>
                     <View style={{ alignItems: 'center', justifyContent: 'center', width: 250, height: 150, backgroundColor: colors.WHITE, borderWidth: 0.6, borderColor: colors.GREY1, borderRadius: 15 }}>
                         <Text style={{ fontSize: 16, fontFamily: 'Inter-Regular', color: colors.BLACK }}>Taxa de cancelamento</Text>
                         <View style={{ flexDirection: 'row', marginTop: 5, }}>

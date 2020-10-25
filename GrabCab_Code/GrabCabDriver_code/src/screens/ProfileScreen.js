@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { Icon, Header } from 'react-native-elements';
 import { NavigationActions, StackActions } from 'react-navigation';
-import ActionSheet from 'react-native-actionsheet';
+import ActionSheet, { ActionSheetCustom } from 'react-native-actionsheet';
 
 import { colors } from '../common/theme';
 
@@ -112,7 +112,7 @@ export default class ProfileScreen extends React.Component {
     uploadImage() {
         return (
             <View>
-                <ActionSheet
+                <ActionSheetCustom
                     ref={o => this.ActionSheet = o}
                     title={languageJSON.photo_upload_action_sheet_title}
                     options={[languageJSON.camera, languageJSON.galery, languageJSON.cancel]}
@@ -275,7 +275,7 @@ export default class ProfileScreen extends React.Component {
                         </TouchableOpacity>
                     </View>
                     <View style={{ position: 'absolute', marginTop: Platform.select({ ios: 55, android: 45 }), zIndex: 999, right: 20, }}>
-                        <TouchableOpacity onPress={() => { this.showActionSheet() }}
+                        <TouchableOpacity 
                             disabled={this.state.loaderBtn}
                         >
                             <Icon

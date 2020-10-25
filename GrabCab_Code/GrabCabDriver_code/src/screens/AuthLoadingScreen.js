@@ -118,7 +118,7 @@ export class AuthLoadingScreen extends React.Component {
 
                     }
                   })
-                } else if (userData.val().emCorrida == null) {
+                } else if (userData.val().emCorrida == null && userData.val().in_reject_progress == null) {
                   console.log('ENTROU NA INTRO')
                   this.props.navigation.navigate('DriverRoot');
                 } else if (userData.val().emCorrida == null && userData.val().in_reject_progress) {

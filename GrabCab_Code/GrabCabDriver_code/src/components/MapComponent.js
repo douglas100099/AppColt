@@ -14,10 +14,10 @@ export default class MapComponent extends Component {
             <MapView
                 provider={PROVIDER_GOOGLE}
                 showsUserLocation={true}
-                showsMyLocationButton={true}
+                showsMyLocationButton={false}
                 style={[mapStyle,{ marginBottom: this.state.marginBottom }]}
                 region={mapRegion}
-                onMapReady={() => this.setState({ marginBottom: 1 })}
+                onMapReady={() => this.setState({ marginBottom: 0 })}
             >
                 <Marker
                     coordinate={markerCord}

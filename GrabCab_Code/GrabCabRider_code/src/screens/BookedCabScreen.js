@@ -405,7 +405,7 @@ export default class BookedCabScreen extends React.Component {
                             </View>
                             <View style={styles.cancelModalButtosContainer}>
                                 <TouchableOpacity onPress={() => this.onCancelConfirm()}>
-                                    <View style={{ width: width - 150, justifyContent: 'center', alignItems: 'center', height: 35, backgroundColor: colors.DEEPBLUE, borderRadius: 50 }}>
+                                    <View style={{ width: width - 150, justifyContent: 'center', alignItems: 'center', height: 40, backgroundColor: colors.DEEPBLUE, borderRadius: 50 }}>
                                         <Text style={{ fontFamily: "Inter-Bold", color: colors.WHITE, fontSize: 17 }}> Confirmar </Text>
                                     </View>
                                 </TouchableOpacity>
@@ -433,7 +433,7 @@ export default class BookedCabScreen extends React.Component {
                     this.setState({ modalInfoVisible: false })
                 }}
             >
-                <View style={{ flex: 1, backgroundColor: colors.BLACK, opacity: 0.5, width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ flex: 1, backgroundColor: colors.BLACK, opacity: 0.1, width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
                     <View style={{ height: 400, backgroundColor: colors.WHITE, borderRadius: 25, marginHorizontal: 20 }}>
                         <View style={{ flex: 2, flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                             <Icon
@@ -700,7 +700,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
     textGif: {
-        color: "#fff",
+        color: '#fff',
         top: 55,
         position: 'absolute',
         fontSize: 20,
@@ -813,9 +813,9 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     radioText: {
-        fontSize: 15,
+        fontSize: 14,
         fontFamily: 'Inter-Medium',
-        color: colors.DARK,
+        color: colors.BLACK,
     },
     radioContainerStyle: {
         paddingTop: 30,

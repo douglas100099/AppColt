@@ -5,9 +5,10 @@ import {
     View,
     Text,
     StatusBar,
+    TouchableOpacity,
     TouchableWithoutFeedback
   } from 'react-native';
-import { Header } from 'react-native-elements';
+import { Header, Icon } from 'react-native-elements';
 import { colors } from '../common/theme';
 import * as firebase from 'firebase';
 import  languageJSON  from '../common/language';
@@ -41,12 +42,12 @@ export default class RideListPage extends React.Component {
         if(item && item.trip_cost >0){
             item.roundoffCost = Math.round(item.trip_cost).toFixed(2);
             item.roundoff = (Math.round(item.roundoffCost)-item.trip_cost).toFixed(2)
-            this.props.navigation.push('RideDetails',{data:item});
+            this.props.navigation.replace('RideDetails',{data:item});
         
         }else{
             item.roundoffCost = Math.round(item.estimate).toFixed(2);
             item.roundoff = (Math.round(item.roundoffCost)-item.estimate).toFixed(2)
-            this.props.navigation.push('RideDetails',{data:item});
+            this.props.navigation.replace('RideDetails',{data:item});
         }
         
     }
@@ -55,13 +56,19 @@ export default class RideListPage extends React.Component {
     render() {
         return (
             <View style={styles.mainView}>
-                <Header
-                    backgroundColor={colors.WHITE}
-                    leftComponent={{ icon: 'chevron-left', type: 'MaterialIcons', color: colors.BLACK, size: 35, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.goBack(); } }}
-                    centerComponent={<Text style={styles.headerTitleStyle}>Histórico de corridas</Text>}
-                    containerStyle={styles.headerStyle}
-                    innerContainerStyles={{ marginLeft: 10, marginRight: 10 }}
-                />
+                <View style={styles.header}>
+                    <Text style={{fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK, textAlign: 'center'}}>Histórico de corridas</Text>
+                    <View style={{position: 'absolute', zIndex: 999, left: 20}}>
+                        <TouchableOpacity style={{height: 35, width: 35, borderRadius: 100, backgroundColor: colors.WHITE, elevation: 4,}} onPress={() => { this.props.navigation.goBack();}}>
+                            <Icon
+                                name='ios-arrow-dropleft-circle'
+                                size={35}
+                                type='ionicon'
+                                color={colors.BLACK}
+                            />
+                        </TouchableOpacity>
+                    </View>
+                </View>
                 <RideList data={this.state.allBookings} onPressButton={(item, index) => {this.goDetails(item, index)}}></RideList>
             </View>
             );
@@ -74,6 +81,14 @@ const styles = StyleSheet.create({
         backgroundColor: colors.WHITE, 
         borderBottomWidth: 0 
     },
+    header: {
+        backgroundColor: colors.WHITE,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 25,
+        marginTop: Platform.select({ ios: 55, android: 45 })
+    },
+
     headerTitleStyle: { 
         color: colors.BLACK,
         fontFamily:'Inter-Bold',

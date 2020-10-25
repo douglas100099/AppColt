@@ -9,6 +9,7 @@ import RideDetails from './RideDetails';
 import DriverRegistrationPage from './DriverRegistration';
 import EditProfilePage from './EditProfile';
 import AboutPage from './AboutScreen';
+import CancelBooking from './CancelBooking';
 import DriverIncomePage from './DriverIncomeScreen';
 import OnlineChat from './OnlineChat';
 import EmailLoginScreen from './EmailLoginScreen';
@@ -20,6 +21,7 @@ export {
     DriverTripCompleteSreen,
     RideListPage,
     ProfileScreen,
+    CancelBooking,
     RideDetails,
     DriverStartTrip,
     DriverCompleteTrip,

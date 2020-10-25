@@ -1,5 +1,5 @@
 export default {
-    about_us:'SOBRE',
+    about_us:'SUPORTE',
     contact_details:'Contact Details',
     email:'Email',
     phone:'Phone',

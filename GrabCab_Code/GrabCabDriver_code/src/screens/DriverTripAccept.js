@@ -24,6 +24,7 @@ import CarMakerSVG from '../SVG/CarMarkerSVG';
 
 const LATITUDE_DELTA = 0.0143
 const LONGITUDE_DELTA = 0.0134
+const soundObject = new Audio.Sound();
 Geocoder.init(google_map_key);
 
 export default class DriverTripAccept extends React.Component {
@@ -70,7 +71,6 @@ export default class DriverTripAccept extends React.Component {
             loaderBtn: false,
             chegouCorrida: false,
         }
-        this.audioPlayer = new Audio.Sound()
         //this.getLocationDriver();
     }
 
@@ -173,27 +173,33 @@ export default class DriverTripAccept extends React.Component {
     }
 
 
-    alertAudio = async () => {
-        try {
-            await this.audioPlayer.unloadAsync()
-            await this.audioPlayer.loadAsync(require('../../assets/sounds/alerta.mp3'));
-            await this.audioPlayer.playAsync();
-            await this.audioPlayer.setIsLoopingAsync(true);
-        } catch (err) {
-            console.warn("Couldn't Play audio", err)
+    alertAudio = async (params) => {
+        if( params ){
+            await soundObject.stopAsync()
+            await soundObject.unloadAsync()
         }
-        console.log(this.audioPlayer.getStatusAsync() + "STATUS DO AUDIO AO INICIAR")
+        else if (this.state.chegouCorrida) {
+            await soundObject.unloadAsync()
+            await soundObject.loadAsync(require('../../assets/sounds/alerta.mp3'));
+            await soundObject.playAsync();
+            await soundObject.setIsLoopingAsync(true);
+
+        } else if (this.state.chegouCorrida == false) {
+            await soundObject.stopAsync()
+            await soundObject.unloadAsync()
+            console.log("STOPOU")
+        }
     }
 
-    stopAudio = async () => {
+    /* = async () => {
         try {
             await this.audioPlayer.unloadAsync()
             await this.audioPlayer.stopAsync()
         } catch (err) {
+            this.stopAudio()
             console.warn("Couldn't Stop audio", err)
         }
-        console.log(this.audioPlayer.getStatusAsync() + "STATUS DO AUDIO AO TENTAR PARAR")
-    }
+    }*/
 
     async componentDidMount() {
         const { status } = await Permissions.askAsync(Permissions.LOCATION);
@@ -237,12 +243,14 @@ export default class DriverTripAccept extends React.Component {
                     }
                 })
                 this.setState({ coords: coords }, () => {
-                    setTimeout(() => {
-                        this.map2.fitToCoordinates([{ latitude: pickuplat, longitude: pickuplng }, { latitude: droplat, longitude: droplng }], {
-                            edgePadding: { top: 80, right: 65, bottom: 50, left: 50 },
-                            animated: true,
-                        })
-                    }, 500);
+                    if (this.state.chegouCorrida) {
+                        setTimeout(() => {
+                            this.map2.fitToCoordinates([{ latitude: pickuplat, longitude: pickuplng }, { latitude: droplat, longitude: droplng }], {
+                                edgePadding: { top: 80, right: 65, bottom: 50, left: 50 },
+                                animated: true,
+                            })
+                        }, 500);
+                    }
                 })
                 return coords
             }
@@ -404,34 +412,36 @@ export default class DriverTripAccept extends React.Component {
     //get nearby riders function
     getRiders() {
         if (this._isMounted) {
-            var jobs;
             var curuid = firebase.auth().currentUser.uid;
             this.setState({ curUid: firebase.auth().currentUser.uid })
             let ref = firebase.database().ref('users/' + curuid + '/');
             ref.on('value', (snapshot) => {
                 this.setState({ driverDetails: snapshot.val() })
-                if (snapshot.val() && snapshot.val().waiting_riders_list && this.state.chegouCorrida == false) {
+                var jobs = [];
+                if (snapshot.val() && snapshot.val().waiting_riders_list) {
                     let waiting_riderData = snapshot.val().waiting_riders_list;
                     for (let key in waiting_riderData) {
-                        console.log("ENTROU NO FOR DO WAITING RIDER")
                         waiting_riderData[key].bookingId = key;
-                        jobs = waiting_riderData[key];
+                        jobs.push(waiting_riderData[key]);
+                        setTimeout(() => {
+                            this.getDirections('"' + waiting_riderData[key].pickup.lat + ',' + waiting_riderData[key].pickup.lng + '"', '"' + this.state.region.latitude + ',' + this.state.region.longitude + '"',
+                                waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng, this.state.region.latitude, this.state.region.longitude)
+                        }, 500)
                         var location1 = [waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng];
                         var location2 = [this.state.region.latitude, this.state.region.longitude];
-                        var dist = distanceCalc(location1, location2);
-                        this.setState({ distance: dist })
+                        var distancee = distanceCalc(location1, location2);
+                        console.log(distancee);
+                        this.setState({ distance: distancee })
                     }
                     this.setState({ chegouCorrida: true })
                     this.alertAudio();
+                } else if (this.state.chegouCorrida == true) {
+                    this.setState({ chegouCorrida: false })
+                    this.alertAudio()
                 }
-                this.setState({ tasklist: jobs });
+                this.setState({ tasklist: jobs.reverse() });
+                this.jobs = jobs;
             });
-            setTimeout(() => {
-                if (jobs != null && this.state.chegouCorrida) {
-                    this.getDirections('"' + jobs.pickup.lat + ',' + jobs.pickup.lng + '"', '"' + this.state.region.latitude + ',' + this.state.region.longitude + '"',
-                        jobs.pickup.lat, jobs.pickup.lng, this.state.region.latitude, this.state.region.longitude)
-                }
-            }, 500)
         }
     }
 
@@ -522,7 +532,7 @@ export default class DriverTripAccept extends React.Component {
                                 firebase.database().ref('users/' + requestedDriver + '/waiting_riders_list/' + item.bookingId + '/').remove().then(() => {
                                     this.setState({ loader: false, chegouCorrida: false })
                                 }).then(() => {
-                                    this.stopAudio();
+                                    this.alertAudio(true);
                                 }).then(() => {
                                     this.props.navigation.replace('DriverTripStart', { allDetails: item })
                                 })
@@ -621,103 +631,7 @@ export default class DriverTripAccept extends React.Component {
                 {/*<StatusBar barStyle='dark-content' backgroundColor={colors.DEEPBLUE} />*/}
                 {/* AQUI ENTRA TODOS OS BOTÕES FLUTUANTES DO MENU */}
 
-                {/* MAPA */}
-                {this.state.chegouCorrida ? null :
-                    <View style={{ flex: 1 }}>
-                        <View style={{ flex: 1 }}>
-                            <MapView
-                                ref={map => { this.map = map }}
-                                style={styles.map}
-                                rotateEnabled={false}
-                                provider={PROVIDER_GOOGLE}
-                                showsUserLocation={false}
-                                showsCompass={false}
-                                showsScale={false}
-                                showsMyLocationButton={false}
-                                region={region}
-                            >
-                                {region ?
-                                    <Marker.Animated
-                                        coordinate={{ latitude: region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
-                                        anchor={{ x: 0, y: 0 }}
-                                        style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
-                                    >
-                                        <CarMakerSVG
-                                            height={45}
-                                            width={45}
-                                        />
-                                    </Marker.Animated>
-                                    : null}
-                            </MapView>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                                {/* BOTÃO MENU VOLTAR */}
-                                <TouchableOpacity style={styles.touchaVoltar} onPress={() => { this.props.navigation.toggleDrawer(); }}>
-                                    <IconMenuSVG height={28} width={28} />
-                                </TouchableOpacity>
-
-
-                                {/* BOTÃO GANHOS CENTRO */}
-                                <TouchableOpacity style={styles.touchaGanhos} disabled={this.state.loaderBtn} onPress={() => { this.carteira() }}>
-                                    <Text style={styles.touchaValor}>R$ {this.state.today ? parseFloat(this.state.today).toFixed(2) : '0'}</Text>
-                                </TouchableOpacity>
-
-                                {/* BOTÃO FOTOS */}
-                                <TouchableOpacity style={styles.touchaFoto} disabled={this.state.loaderBtn} onPress={() => { this.photoPerfil() }}>
-                                    <Image source={this.state.photoDriver ? { uri: this.state.photoDriver } : require('../../assets/images/profilePic.png')} style={styles.imagemPerfil} />
-                                </TouchableOpacity>
-                            </View>
-                            {region ?
-                                <TouchableOpacity style={styles.touchaVoltar2} onPress={() => { this.centerFollowMap() }}>
-                                    <Icon
-                                        name='crosshair'
-                                        type='feather'
-                                        size={25}
-                                        color={colors.BLACK}
-                                    />
-                                </TouchableOpacity>
-                                : null}
-                        </View>
-
-                        {/* BOTÃO LIGAR E DESLIGAR */}
-                        {this.state.chegouCorrida == false ?
-                            (this.state.statusDetails ?
-                                <View style={{ alignItems: 'center', }}>
-                                    <TouchableOpacity style={styles.btnOnOff} onPress={() => { this.onChangeFunction(this.state.driverActiveStatus); }}>
-                                        <Pulse size={150} color="#49c33b" style={{ position: 'absolute' }} />
-                                        <Icon
-                                            name='navigation-2'
-                                            type='feather'
-                                            size={25}
-                                            color={colors.WHITE}
-                                        />
-                                        <Text style={styles.textConectar}>ONLINE</Text>
-                                    </TouchableOpacity>
-                                </View>
-
-                                :
-
-                                <View>
-                                    <View style={{ alignItems: 'center', }}>
-                                        <TouchableOpacity style={styles.btnOnOff2} onPress={() => { this.onChangeFunction(this.state.driverActiveStatus); }}>
-                                            <Icon
-                                                name='navigation-2'
-                                                type='feather'
-                                                size={25}
-                                                color={colors.WHITE}
-                                            />
-                                            <Text style={styles.textConectar2}>OFFLINE</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-                            )
-                            :
-                            null
-                        }
-                    </View>
-                }
-
                 {/* MODAL ACEITAR E REJEITAR */}
-
                 {this.state.chegouCorrida ?
                     <View style={{ flex: 1 }}>
                         <FlatList
@@ -864,7 +778,7 @@ export default class DriverTripAccept extends React.Component {
                                                                 color={colors.DEEPBLUE}
                                                             />
                                                         </View>
-                                                        <Text style={styles.txtTempo}>{item.metodoPagamento}</Text>
+                                                        <Text style={styles.txtTempo}>{item.payment_mode}</Text>
                                                     </View>
                                                 </View>
                                                 <View style={styles.viewmainBtn}>
@@ -884,7 +798,101 @@ export default class DriverTripAccept extends React.Component {
                         />
 
                     </View>
-                    : null}
+
+                    :
+                    //ESSA PARTE APARECE SE N HOUVER CORRIDA
+                    <View style={{ flex: 1 }}>
+                        <View style={{ flex: 1 }}>
+                            <MapView
+                                ref={map => { this.map = map }}
+                                style={styles.map}
+                                rotateEnabled={false}
+                                provider={PROVIDER_GOOGLE}
+                                showsUserLocation={false}
+                                showsCompass={false}
+                                showsScale={false}
+                                showsMyLocationButton={false}
+                                region={region}
+                            >
+                                {region ?
+                                    <Marker.Animated
+                                        coordinate={{ latitude: region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
+                                        anchor={{ x: 0, y: 0 }}
+                                        style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
+                                    >
+                                        <CarMakerSVG
+                                            height={45}
+                                            width={45}
+                                        />
+                                    </Marker.Animated>
+                                    : null}
+                            </MapView>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                                {/* BOTÃO MENU VOLTAR */}
+                                <TouchableOpacity style={styles.touchaVoltar} onPress={() => { this.props.navigation.toggleDrawer(); }}>
+                                    <IconMenuSVG height={28} width={28} />
+                                </TouchableOpacity>
+
+
+                                {/* BOTÃO GANHOS CENTRO */}
+                                <TouchableOpacity style={styles.touchaGanhos} disabled={this.state.loaderBtn} onPress={() => { this.carteira() }}>
+                                    <Text style={styles.touchaValor}>R$ {this.state.today ? parseFloat(this.state.today).toFixed(2) : '0'}</Text>
+                                </TouchableOpacity>
+
+                                {/* BOTÃO FOTOS */}
+                                <TouchableOpacity style={styles.touchaFoto} disabled={this.state.loaderBtn} onPress={() => { this.photoPerfil() }}>
+                                    <Image source={this.state.photoDriver ? { uri: this.state.photoDriver } : require('../../assets/images/profilePic.png')} style={styles.imagemPerfil} />
+                                </TouchableOpacity>
+                            </View>
+                            {region ?
+                                <TouchableOpacity style={styles.touchaVoltar2} onPress={() => { this.centerFollowMap() }}>
+                                    <Icon
+                                        name='crosshair'
+                                        type='feather'
+                                        size={25}
+                                        color={colors.BLACK}
+                                    />
+                                </TouchableOpacity>
+                                : null}
+                        </View>
+
+                        {/* BOTÃO LIGAR E DESLIGAR */}
+                        {this.state.chegouCorrida == false ?
+                            (this.state.statusDetails ?
+                                <View style={{ alignItems: 'center', }}>
+                                    <TouchableOpacity style={styles.btnOnOff} onPress={() => { this.onChangeFunction(this.state.driverActiveStatus); }}>
+                                        <Pulse size={150} color="#49c33b" style={{ position: 'absolute' }} />
+                                        <Icon
+                                            name='navigation-2'
+                                            type='feather'
+                                            size={25}
+                                            color={colors.WHITE}
+                                        />
+                                        <Text style={styles.textConectar}>ONLINE</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                :
+
+                                <View>
+                                    <View style={{ alignItems: 'center', }}>
+                                        <TouchableOpacity style={styles.btnOnOff2} onPress={() => { this.onChangeFunction(this.state.driverActiveStatus); }}>
+                                            <Icon
+                                                name='navigation-2'
+                                                type='feather'
+                                                size={25}
+                                                color={colors.WHITE}
+                                            />
+                                            <Text style={styles.textConectar2}>OFFLINE</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            )
+                            :
+                            null
+                        }
+                    </View>
+                }
             </View>
 
         )
@@ -1146,6 +1154,7 @@ const styles = StyleSheet.create({
         opacity: 0.6,
         marginLeft: 5,
         fontSize: 12,
+        paddingHorizontal: 5
     },
 
     tempoKM: {

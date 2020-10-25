@@ -1,4 +1,4 @@
-export function farehelper(distance,time,rateDetails,discount,checkDistance){
+export function farehelper(distance,time,rateDetails){
     let ratePerKm = rateDetails.rate_per_kilometer; // 1,13
     let ratePerHour = rateDetails.rate_per_hour; // 16,8
     let tarifabase = rateDetails.tafira_base;
@@ -7,7 +7,7 @@ export function farehelper(distance,time,rateDetails,discount,checkDistance){
     let DistanceInKM = parseFloat(distance/1000).toFixed(2); // 9,22
     let estimateRateForKM =parseFloat(DistanceInKM*ratePerKm).toFixed(2)*1; // 10,41
     let estimateRateForhour = parseFloat(time*ratePerSecond).toFixed(2); // 0,0736
-    let total = (parseFloat(estimateRateForKM)+parseFloat(estimateRateForhour)) > minFare?(parseFloat(estimateRateForKM)+parseFloat(estimateRateForhour) + tarifabase ): minFare;
+    let total = (parseFloat(estimateRateForKM)+parseFloat(estimateRateForhour)) > minFare ? (parseFloat(estimateRateForKM)+parseFloat(estimateRateForhour) + parseFloat( tarifabase) ) : minFare;
 
     console.log('--- FARE CALCULATOR ---')
     console.log('Rate por KM ' + ratePerKm)
@@ -24,7 +24,6 @@ export function farehelper(distance,time,rateDetails,discount,checkDistance){
     
 
     let grandtotal = parseFloat(total)+parseFloat(convenienceFee);
-    console.log(discount)
     let calculateData = {
         distaceRate:estimateRateForKM,
         timeRate:estimateRateForhour,

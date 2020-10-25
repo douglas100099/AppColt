@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Text,
   View,
+  Image,
   LogBox,
   ImageBackground,
   Dimensions
@@ -105,15 +106,14 @@ export default class App extends React.Component {
         this.state.assetsLoaded ?
           <AppContainer/>
         :
-        <View style={[styles.container, styles.horizontal]}>
-          <ImageBackground
+        <View style={[styles.container]}>
+          <Image
               source={require("./assets/images/splash.png")}
-              resizeMode="stretch"
               style={styles.imagebg}
-          >
+          />
             <ActivityIndicator/>
             <Text style={{paddingBottom:100}}>{this.state.updateMsg}</Text>
-          </ImageBackground>
+
         </View>
     );
   }
@@ -131,7 +131,6 @@ const styles = StyleSheet.create({
     top: 0,
     width: Dimensions.get('window').width,
     height: Dimensions.get('window').height,
-    justifyContent: "flex-end",
     alignItems: 'center'
   }
 });

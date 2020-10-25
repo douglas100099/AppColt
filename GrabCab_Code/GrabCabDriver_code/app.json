@@ -14,10 +14,11 @@
     "version": "1.3",
     "orientation": "portrait",
     "icon": "./assets/images/appIcon.png",
+ 
     "splash": {
       "image": "./assets/images/splash.png",
-      "resizeMode": "cover",
-      "backgroundColor": "#ffffff"
+      "resizeMode": "contain",
+      "backgroundColor": "#1152FD"
     },
     "updates": {
       "fallbackToCacheTimeout": 0
@@ -43,11 +44,15 @@
       "config": {
         "googleMapsApiKey": "AIzaSyDALefKQ3xFjRRvw56_mRdPClMap41XAbM"
       },
-      "buildNumber": "1.3"
+      "buildNumber": "1.0"
     },
     "android": {
       "package": "com.myth.appcoltmotorista",
-      "versionCode": 13,
+      "versionCode": 10,
+      "adaptiveIcon":{
+        "foregroundImage": "./assets/images/appIcon.png",
+        "backgroundColor": "#1152FD"
+      },
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",

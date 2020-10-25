@@ -20,6 +20,7 @@ import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import { Audio } from 'expo-av';
 import * as IntentLauncher from 'expo-intent-launcher';
+import CarMakerSVG from '../SVG/CarMarkerSVG';
 
 const LATITUDE_DELTA = 0.0143
 const LONGITUDE_DELTA = 0.0134
@@ -627,17 +628,21 @@ export default class DriverTripAccept extends React.Component {
                             rotateEnabled={false}
                             provider={PROVIDER_GOOGLE}
                             showsUserLocation={false}
-                            showsCompass={false}
-                            showsScale={false}
+                            showsCompass={true}
+                            showsScale={true}
                             showsMyLocationButton={false}
                             region={region}
                         >
                             {region ?
                                 <Marker.Animated
                                     coordinate={{ latitude: region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
-                                    image={require('../../assets/images/available_car.png')}
                                     anchor={{ x: 0, y: 0 }}
+                                    style={{ transform: [{ rotate: this.state.region.angle+"deg" }]}}
                                 >
+                                    <CarMakerSVG
+                                        height={45}
+                                        width={45}
+                                    />
                                 </Marker.Animated>
                                 : null}
                         </MapView>

@@ -297,7 +297,7 @@ export default class ProfileScreen extends React.Component {
                                         type='ionicon'
                                         color={colors.BLACK}
                                     />
-                                    <Text style={{ fontSize: 12, fontFamily: 'Inter-Bold', color: colors.BLACK }}>{this.state.ratings.userrating}</Text>
+                                    <Text style={{ fontSize: 12, fontFamily: 'Inter-Bold', color: colors.BLACK }}>{this.state.ratings.userrating == 0 ? " 5.0" : this.state.ratings.userrating }</Text>
                                 </View>
                             </View>
                             <View style={{ flex: 0.8, alignItems: 'center', justifyContent: 'flex-start' }}>
@@ -308,7 +308,7 @@ export default class ProfileScreen extends React.Component {
                             </View>
                             <View style={styles.detaisDriver}>
                                 <View style={styles.viewCorridas}>
-                                    <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK }}>{this.state.myBooking.length >= 0 ? this.state.myBooking.length : '0'}</Text>
+                                    <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK }}>{this.state.myBooking  ? this.state.myBooking.length : '0'}</Text>
                                     <Text style={{ fontSize: 14, fontFamily: 'Inter-Regular', color: colors.BLACK }}>Total de corridas</Text>
                                 </View>
                                 <View style={{ width: 1, height: '50%', backgroundColor: colors.GREY1 }}></View>

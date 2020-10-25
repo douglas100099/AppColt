@@ -8,6 +8,10 @@ export function farehelper(distance,time,rateDetails){
     let estimateRateForhour = parseFloat(time*ratePerSecond).toFixed(2);
     let total = (parseFloat(estimateRateForKM)+parseFloat(estimateRateForhour))>minFare?(parseFloat(estimateRateForKM)+parseFloat(estimateRateForhour)):minFare;
 
+    if( distance >= 50000 ){
+        total = total + ( total * 0.10 )
+    }
+
     let convenienceFee = (total*rateDetails.convenience_fees/100);
     
 

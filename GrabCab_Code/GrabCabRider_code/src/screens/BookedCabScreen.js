@@ -306,7 +306,7 @@ export default class BookedCabScreen extends React.Component {
             status: 'CANCELLED',
         })
             .then(() => {
-                this.setState({ driverSerach: false }, () => { setTimeout(() => { this.props.navigation.goBack() }, 400) })
+                this.setState({ driverSerach: false }, () =>this.props.navigation.goBack() )
             })
     }
 
@@ -737,7 +737,7 @@ const styles = StyleSheet.create({
         flex: 1,
         top: 15,
         color: colors.BLACK,
-        fontFamily: 'Roboto-Bold',
+        fontFamily: 'Inter-Bold',
         fontSize: 20,
         alignSelf: 'center'
     },
@@ -754,7 +754,7 @@ const styles = StyleSheet.create({
     },
     cancelMsgText: {
         color: colors.BLACK,
-        fontFamily: 'Roboto-Regular',
+        fontFamily: 'Inter-Bold',
         fontSize: 15,
         alignSelf: 'center',
         textAlign: 'center'

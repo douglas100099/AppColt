@@ -10,7 +10,7 @@ import {
     Modal,
     AsyncStorage,
 } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { TouchableOpacity, TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { MapComponent } from '../components';
 import { Icon, Button, Avatar } from 'react-native-elements';
 import { colors } from '../common/theme';
@@ -155,9 +155,9 @@ export default class MapScreen extends React.Component {
 
         this.intervalGetDrivers = setInterval(() => {
             if (this._isMounted) {
-                this.getLocationUser();
+                //this.getLocationUser();
                 if (this.state.passData && this.state.passData.wherelatitude) {
-                    this.getDrivers();
+                    //this.getDrivers();
                 }
             }
         }, 5000)
@@ -460,7 +460,7 @@ export default class MapScreen extends React.Component {
                             <Text style={{ marginHorizontal: 15, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 13 : 15, margin: 10 }}> Olá
                             <Text style={{ fontSize: width < 375 ? 17 : 18 }}> {this.state.nameUser ? this.state.nameUser : null}</Text>, que bom te ver novamente.
                         </Text>
-                            <TouchableOpacity style={{ height: 63 }} onPress={() => this.tapAddress()}>
+                            <TouchableWithoutFeedback style={{ height: 63 }} onPress={() => this.tapAddress()}>
                                 <View style={styles.inputDrop}>
                                     <View style={styles.textIconStyle}>
                                         <Icon
@@ -473,7 +473,7 @@ export default class MapScreen extends React.Component {
                                         <Text numberOfLines={1} style={[styles.textStyleDrop, { fontSize: 18, color: colors.GREY.iconSecondary }]}>Para onde vamos?</Text>
                                     </View>
                                 </View>
-                            </TouchableOpacity>
+                            </TouchableWithoutFeedback>
                         </View>
 
                         {this.state.locationCasa ?

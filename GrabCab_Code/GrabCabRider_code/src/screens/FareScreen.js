@@ -1202,7 +1202,7 @@ const styles = StyleSheet.create({
         shadowRadius: 10,
         backgroundColor: colors.WHITE,
         elevation: 5,
-        flex: 1.5,
+        flex: width < 375 ? 2 : 1.5,
         alignSelf: 'center',
     },
     viewBotao: {
@@ -1340,7 +1340,7 @@ const styles = StyleSheet.create({
         color: colors.WHITE,
     },
     timeBox: {
-        top: 14,
+        top: Platform.OS == "android" ? 10 : 14,
         backgroundColor: colors.GREY1,
         width: 70,
         height: 25,

@@ -263,11 +263,13 @@ export default class DriverTripAccept extends React.Component {
                 })
                 this.setState({ coords: coords }, () => {
                     if (this.state.chegouCorrida) {
-                        this.map2.fitToCoordinates([{ latitude: pickuplat, longitude: pickuplng }, { latitude: droplat, longitude: droplng }], {
-                            edgePadding: { top: 80, right: 65, bottom: 50, left: 50 },
-                            animated: true,
-                        })
-                        this.setState({ acceptBtnDisable: false })
+                        setTimeout(() => {
+                            this.map2.fitToCoordinates([{ latitude: pickuplat, longitude: pickuplng }, { latitude: droplat, longitude: droplng }], {
+                                edgePadding: { top: 80, right: 65, bottom: 50, left: 50 },
+                                animated: true,
+                            })
+                            this.setState({ acceptBtnDisable: false })
+                        },500)
                     }
                 })
                 return coords
@@ -439,8 +441,8 @@ export default class DriverTripAccept extends React.Component {
                         waiting_riderData[key].bookingId = key;
                         jobs.push(waiting_riderData[key]);
 
-                        this.getDirections('"' + waiting_riderData[key].pickup.lat + ',' + waiting_riderData[key].pickup.lng + '"', '"' + this.state.region.latitude + ',' + this.state.region.longitude + '"',
-                            waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng, this.state.region.latitude, this.state.region.longitude)
+                        /*this.getDirections('"' + waiting_riderData[key].pickup.lat + ',' + waiting_riderData[key].pickup.lng + '"', '"' + this.state.region.latitude + ',' + this.state.region.longitude + '"',
+                            waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng, this.state.region.latitude, this.state.region.longitude)*/
 
                         var location1 = [waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng];
                         var location2 = [this.state.region.latitude, this.state.region.longitude];

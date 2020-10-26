@@ -16,7 +16,7 @@
     "icon": "./assets/images/appIcon.png",
  
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/logoIcon.png",
       "resizeMode": "contain",
       "backgroundColor": "#1152fd"
     },
@@ -50,7 +50,7 @@
       "package": "com.myth.appcoltmotorista",
       "versionCode": 10,
       "adaptiveIcon":{
-        "foregroundImage": "./assets/images/appIcon.png",
+        "foregroundImage": "./assets/images/logoIcon.png",
         "backgroundColor": "#1152fd"
       },
       "permissions": [

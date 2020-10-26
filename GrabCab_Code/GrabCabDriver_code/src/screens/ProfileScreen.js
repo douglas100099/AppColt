@@ -248,7 +248,7 @@ export default class ProfileScreen extends React.Component {
     resetarPilha() {
         this.setState({ loaderBtn: true })
 
-        this.props.navigation.replace('DriverTripAccept')
+        this.props.navigation.goBack()
 
     }
 

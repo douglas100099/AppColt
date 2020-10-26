@@ -170,7 +170,7 @@ export default class DriverTripAccept extends React.Component {
 
     photoPerfil = () => {
         this.setState({ loaderBtn: true })
-        this.props.navigation.replace('Profile');
+        this.props.navigation.navigate('Profile');
     }
 
     carteira = () => {
@@ -548,7 +548,7 @@ export default class DriverTripAccept extends React.Component {
                                 }).then(() => {
                                     this.alertAudio(true);
                                 }).then(() => {
-                                    this.props.navigation.replace('DriverTripStart', { allDetails: item })
+                                    this.props.navigation.navigate('DriverTripStart', { allDetails: item })
                                 })
                             }
                         })

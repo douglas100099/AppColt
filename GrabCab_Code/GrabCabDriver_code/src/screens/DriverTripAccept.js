@@ -441,8 +441,8 @@ export default class DriverTripAccept extends React.Component {
                         waiting_riderData[key].bookingId = key;
                         jobs.push(waiting_riderData[key]);
 
-                        /*this.getDirections('"' + waiting_riderData[key].pickup.lat + ',' + waiting_riderData[key].pickup.lng + '"', '"' + this.state.region.latitude + ',' + this.state.region.longitude + '"',
-                            waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng, this.state.region.latitude, this.state.region.longitude)*/
+                        this.getDirections('"' + waiting_riderData[key].pickup.lat + ',' + waiting_riderData[key].pickup.lng + '"', '"' + this.state.region.latitude + ',' + this.state.region.longitude + '"',
+                            waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng, this.state.region.latitude, this.state.region.longitude)
 
                         var location1 = [waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng];
                         var location2 = [this.state.region.latitude, this.state.region.longitude];
@@ -550,7 +550,7 @@ export default class DriverTripAccept extends React.Component {
                                 }).then(() => {
                                     this.alertAudio(true);
                                 }).then(() => {
-                                    this.props.navigation.navigate('DriverTripStart', { allDetails: item })
+                                    this.props.navigation.replace('DriverTripStart', { allDetails: item, regionUser: this.state.region })
                                 })
                             }
                         })

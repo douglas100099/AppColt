@@ -91,7 +91,7 @@ export default class DriverStartTrip extends React.Component {
         this.getCancelReasons();
         if (this.state.rideDetails && this._isMounted) {
             setTimeout(() => {
-                this.getDirectionss('"' + this.state.region.latitude + ',' + this.state.region.longitude + '"', '"' + this.state.rideDetails.pickup.lat + ',' + this.state.rideDetails.pickup.lng + '"')
+                //this.getDirectionss('"' + this.state.region.latitude + ',' + this.state.region.longitude + '"', '"' + this.state.rideDetails.pickup.lat + ',' + this.state.rideDetails.pickup.lng + '"')
             }, 500)
         }
     }

@@ -447,7 +447,7 @@ export default class DriverTripAccept extends React.Component {
                         var location1 = [waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng];
                         var location2 = [this.state.region.latitude, this.state.region.longitude];
                         var distancee = distanceCalc(location1, location2);
-                        this.setState({ distance: distancee, acceptBtnDisable: true })
+                        this.setState({ distance: distancee, acceptBtnDisable: false })
                     }
                     this.setState({ chegouCorrida: true })
                     this.alertAudio();

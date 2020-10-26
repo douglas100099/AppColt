@@ -8,7 +8,7 @@ import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase'
-import ActionSheet, { ActionSheetCustom } from 'react-native-actionsheet';
+import { ActionSheetCustom } from 'react-native-actionsheet';
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import distanceCalc from '../common/distanceCalc';
 import { Pulse } from 'react-native-animated-spinkit'
@@ -21,9 +21,8 @@ import * as IntentLauncher from 'expo-intent-launcher';
 import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
 import CarMakerSVG from '../SVG/CarMarkerSVG';
+import MarkerPicSVG from '../SVG/MarkerPicSVG';
 
-const LATITUDE_DELTA = 0.0143
-const LONGITUDE_DELTA = 0.0134
 const soundObject = new Audio.Sound();
 Geocoder.init(google_map_key);
 
@@ -70,7 +69,8 @@ export default class DriverTripAccept extends React.Component {
             isBlocked: false,
             loaderBtn: false,
             chegouCorrida: false,
-            acceptBtnDisable: false
+            acceptBtnDisable: false,
+            intervalCheckGps: null
         }
         //this.getLocationDriver();
     }
@@ -90,8 +90,6 @@ export default class DriverTripAccept extends React.Component {
         }
     }
 
-
-
     // ESSE .ON AI PEGA E LER O VALOR DO BANCO QUANDO CHAMADO, E FICA ATUALIZANDO
     getStatusDetails() {
         if (this._isMounted) {
@@ -106,6 +104,7 @@ export default class DriverTripAccept extends React.Component {
 
     async onChangeFunction() {
         let verificarGPS = await Location.hasServicesEnabledAsync();
+        const { status } = await Permissions.askAsync(Permissions.LOCATION);
         const checkarBlock = firebase.database().ref('users/' + this.state.curUid + '/');
         checkarBlock.once('value', customerData => {
             let checkBlock = customerData.val()
@@ -135,21 +134,38 @@ export default class DriverTripAccept extends React.Component {
                         driverActiveStatus: false
                     }).then(() => {
                         this.setState({ driverActiveStatus: false });
+                        this.checkingGps();
                     })
                 } else {
-                    if (this.state.statusDetails == false && verificarGPS) {
-                        firebase.database().ref(`/users/` + this.state.curUid + '/').update({
-                            driverActiveStatus: true
-                        }).then(() => {
-                            this.setState({ driverActiveStatus: true });
-                            //this.getLocationDriver();
-                        })
+                    if (status === "granted") {
+                        if (this.state.statusDetails == false && verificarGPS) {
+                            if (this.location == null) {
+                                this._getLocationAsync();
+                            }
+                            firebase.database().ref(`/users/` + this.state.curUid + '/').update({
+                                driverActiveStatus: true
+                            }).then(() => {
+                                this.setState({ driverActiveStatus: true, alertIsOpen: false, requestPermission: false });
+                                //clearInterval(this.state.intervalCheckGps);
+                            })
+                        } else {
+                            if (this.state.intervalCheckGps == null) {
+                                this.openAlert()
+                                this.checkingGps()
+                            }
+                        }
                     } else {
-                        this.openAlert()
+                        console.log("ENTROU NO ELSE DO GRANTED")
+                        this.requestPermission()
                     }
                 }
             }
         })
+    }
+
+    async requestPermission() {
+        this.setState({ requestPermission: true })
+        await Location.requestPermissionsAsync();
     }
 
     photoPerfil = () => {
@@ -172,7 +188,6 @@ export default class DriverTripAccept extends React.Component {
             })
         }
     }
-
 
     alertAudio = async (params) => {
         if (params) {
@@ -204,15 +219,17 @@ export default class DriverTripAccept extends React.Component {
 
     async componentDidMount() {
         const { status } = await Permissions.askAsync(Permissions.LOCATION);
-        //const granted = await Permissions.askAsync(Permissions.CAMERA_ROLL);
         const gpsActived = await Location.hasServicesEnabledAsync()
-        console.log(gpsActived)
-        console.log(status + "STATUS")
+
         if (status === "granted" && gpsActived) {
             this._getLocationAsync();
         } else {
             this.setState({ error: "Locations services needed" });
-            this.openAlert()
+            this.openAlert();
+            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/driverActiveStatus').set(false);
+            if (this.state.intervalCheckGps == null) {
+                this.checkingGps();
+            }
         }
         this._isMounted = true;
         await this.getRiders();
@@ -227,6 +244,7 @@ export default class DriverTripAccept extends React.Component {
             console.log('REMOVEU O WATCH')
             this.location.remove()
         }
+        clearInterval(this.state.intervalCheckGps);
         console.log('DESMONTOU')
     }
 
@@ -311,22 +329,22 @@ export default class DriverTripAccept extends React.Component {
     }
 
     openAlert() {
+        this.setState({ alertIsOpen: true })
         Alert.alert(
             'Localização necessária',
             'Para receber corrida e ficar online, precisamos de sua localização ativa, por favor ative-a em configurações.',
             [{
                 text: "Cancelar",
-                onPress: () => console.log("Cancel Pressed"),
+                onPress: () => this.setState({ alertIsOpen: false }),
                 style: "cancel"
             },
-            { text: 'IR PARA CONFIGURAÇÕES', onPress: () => { IntentLauncher.startActivityAsync(IntentLauncher.ACTION_LOCATION_SOURCE_SETTINGS) } }
+            { text: 'IR PARA CONFIGURAÇÕES', onPress: () => { this.setState({ alertIsOpen: false }), IntentLauncher.startActivityAsync(IntentLauncher.ACTION_LOCATION_SOURCE_SETTINGS) } }
             ],
             { cancelable: false }
         );
     }
 
     // NOVA FORMA DE PEGAR A LOCALIZAÇÃO DO USUARIO
-
     _getLocationAsync = async () => {
         this.location = await Location.watchPositionAsync({
             accuracy: Location.Accuracy.Highest,
@@ -371,43 +389,41 @@ export default class DriverTripAccept extends React.Component {
             });
     }
 
-    /*async getLocationDriver() {
-        try {
-            let { status } = await Permissions.askAsync(Permissions.LOCATION);
-            let verificarGPS = await Location.hasServicesEnabledAsync();
-            if (status === 'granted' && verificarGPS) {
-                var uid = firebase.auth().currentUser.uid;
-                const driverlocation = firebase.database().ref('users/' + uid + '/location');
-                driverlocation.on('value', location => {
-                    if (location.val()) {
-                        let loc = location.val()
-                        if (this._isMounted && this.state.statusDetails) {
-                            console.log(loc)
-                            this.setState({
-                                region: {
-                                    latitude: loc.lat,
-                                    longitude: loc.lng,
-                                    latitudeDelta: 0.0143,
-                                    longitudeDelta: 0.0134,
-                                },
-                                geolocationFetchComplete: true
-                            })
+    checkingGps() {
+        this.setState({
+            intervalCheckGps: setInterval(async () => {
+                console.log('VERIFICANDO O GPS')
+                let verificarGPS = await Location.hasServicesEnabledAsync();
+                const { status } = await Permissions.askAsync(Permissions.LOCATION);
+                if (status == "granted") {
+                    if (!verificarGPS) {
+                        if (!this.state.alertIsOpen) {
+                            this.openAlert();
+                        }
+                        if (this.location != null) {
+                            this.location.remove()
+                            this.location = null
+                        }
+                        if (this.state.driverActiveStatus) {
+                            if (this.state.curUid) {
+                                firebase.database().ref('users/' + this.state.curUid + '/driverActiveStatus').set(false);
+                            }
                         }
                     }
-                    //console.log(this.state.region)
-                })
-            } else {
-                console.log('i am called')
-                this.setState({
-                    errorMessage: 'Permission to access location was denied',
-                });
-                this.openAlert();
-            }
-        } catch {
-            alert(error)
-            return error
-        }
-    }*/
+                } else {
+                    if (this.state.driverActiveStatus) {
+                        if (this.state.curUid) {
+                            firebase.database().ref('users/' + this.state.curUid + '/driverActiveStatus').set(false);
+                        }
+                    }
+                    if (!this.state.requestPermission) {
+                        this.setState({ requestPermission: true })
+                        await Location.requestPermissionsAsync();
+                    }
+                }
+            }, 5000),
+        })
+    }
 
     //get nearby riders function
     getRiders() {
@@ -430,7 +446,6 @@ export default class DriverTripAccept extends React.Component {
                         var location1 = [waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng];
                         var location2 = [this.state.region.latitude, this.state.region.longitude];
                         var distancee = distanceCalc(location1, location2);
-                        console.log(distancee);
                         this.setState({ distance: distancee, acceptBtnDisable: true })
                     }
                     this.setState({ chegouCorrida: true })
@@ -734,8 +749,9 @@ export default class DriverTripAccept extends React.Component {
                                                 </Marker.Animated>
                                                 <Marker
                                                     coordinate={{ latitude: item.pickup.lat, longitude: item.pickup.lng }}
-                                                    image={require('../../assets/images/BaxFOmg.png')}
-                                                />
+                                                >
+                                                    <MarkerPicSVG />
+                                                </Marker>
 
                                                 {this.state.coords ?
                                                     <MapView.Polyline
@@ -931,12 +947,8 @@ export default class DriverTripAccept extends React.Component {
                     </View>
                 }
             </View>
-
         )
     }
-
-
-
 }
 
 //Screen Styling
@@ -956,7 +968,6 @@ const styles = StyleSheet.create({
         left: 12,
 
     },
-
     touchaVoltar2: {
         position: 'absolute',
         alignItems: 'center',
@@ -1275,7 +1286,6 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
 
-
     // FIM DO NOVO CSS // -------
 
     map: {
@@ -1283,35 +1293,6 @@ const styles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
         overflow: 'hidden',
     },
-    triangle: {
-        width: 0,
-        height: 0,
-        backgroundColor: colors.TRANSPARENT,
-        borderStyle: 'solid',
-        borderLeftWidth: 9,
-        borderRightWidth: 9,
-        borderBottomWidth: 10,
-        borderLeftColor: colors.TRANSPARENT,
-        borderRightColor: colors.TRANSPARENT,
-        borderBottomColor: colors.YELLOW.secondary,
-        transform: [
-            { rotate: '180deg' }
-        ]
-    },
-
-    greenDot: {
-        backgroundColor: colors.GREEN.default,
-        width: 10,
-        height: 10,
-        borderRadius: 50
-    },
-    redDot: {
-        backgroundColor: colors.DEEPBLUE,
-        width: 10,
-        height: 10,
-        borderRadius: 50
-    },
-
     mainViewStyle: {
         flex: 1,
     },

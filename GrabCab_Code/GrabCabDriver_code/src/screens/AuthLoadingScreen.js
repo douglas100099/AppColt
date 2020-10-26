@@ -52,9 +52,7 @@ export class AuthLoadingScreen extends React.Component {
 
   async StartBackgroundLocation() {
     const { status } = await Location.requestPermissionsAsync();
-    let verificarGPS = await Location.hasServicesEnabledAsync();
-    console.log("STATUS " + status)
-    if (status === 'granted') {
+    if (status === 'granted' ) {
       console.log('Setando update do background')
       await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
         accuracy: Location.Accuracy.Highest,
@@ -64,6 +62,7 @@ export class AuthLoadingScreen extends React.Component {
       let verificar = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME)
       console.log(verificar)
     } else {
+      firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/driverActiveStatus').set(false);
       alert('Localização desativada, habilite sua localização')
     }
   }
@@ -80,8 +79,7 @@ export class AuthLoadingScreen extends React.Component {
                 GetPushToken();
                 firebase.database().ref('users/' + user.uid + '/driverActiveStatus').on('value', status => {
                   let activeStatus = status.val();
-                  let verificarGPS = Location.hasServicesEnabledAsync();
-                  if (activeStatus && verificarGPS) {
+                  if (activeStatus) {
                     this.StartBackgroundLocation();
                   }
                   else {

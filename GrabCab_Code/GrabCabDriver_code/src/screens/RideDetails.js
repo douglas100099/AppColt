@@ -22,6 +22,7 @@ import { colors } from '../common/theme';
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 var { width } = Dimensions.get('window');
+import ProfileSVG from '../SVG/ProfileSVG';
 
 export default class RideDetails extends React.Component {
     constructor(props) {
@@ -137,8 +138,7 @@ export default class RideDetails extends React.Component {
                     </View>
                 </View>
                 <View style={styles.mainMap}>
-                    <Text style={{}}>{this.state.paramData ? this.dataAtualFormatada()
-                        : null}</Text>
+                    <Text style={{ marginLeft: 20 }}>{this.state.paramData ? this.dataAtualFormatada() : null}</Text>
                     <View style={styles.viewEndereco}>
                         <View style={styles.endereco}>
                             <View style={styles.partida}>
@@ -171,7 +171,13 @@ export default class RideDetails extends React.Component {
                     <View style={styles.viewInfoPassageiro}>
                         <View style={styles.viewSubInfo}>
                             <View style={styles.photoPassageiro}>
-                                <Image source={this.state.paramData ? { uri: this.state.paramData.imageRider } : require('../../assets/images/profilePic.png')} style={styles.imagemPerfil} />
+                                {this.state.paramData ? this.state.paramData.imageRider ? 
+                                    <Image source={{ uri: this.state.paramData.imageRider }} style={styles.imagemPerfil} />
+                                : 
+                                    <ProfileSVG/>
+                                :
+                                    <ProfileSVG/>
+                                }
                             </View>
                             <View style={styles.infoPassageiro}>
                                 <Text style={styles.txtNomePassageiro}>{this.state.paramData ? this.state.paramData.customer_name : null}</Text>
@@ -201,7 +207,7 @@ export default class RideDetails extends React.Component {
                                     type='ionicon'
                                     color={colors.DEEPBLUE}
                                 />
-                                <Text style={styles.txtMetodo}>{this.state.paramData ? this.state.paramData.metodoPagamento : 'Indefinido'}</Text>
+                                <Text style={styles.txtMetodo}>{this.state.paramData ? this.state.paramData.payment_mode ? this.state.paramData.payment_mode : 'Indefinido' : 'Indefinido'}</Text>
                             </View>
                             <Text style={styles.txtDinheiro}>R$ {this.state.paramData ? this.state.paramData.trip_cost : ' 0'}</Text>
                         </View>
@@ -412,217 +418,4 @@ const styles = StyleSheet.create({
         backgroundColor: colors.DEEPBLUE,
     },
 
-
-
-
-    /*
-    headerStyle: { 
-        backgroundColor: colors.GREY.default, 
-        borderBottomWidth: 0 
-    },
-    headerTitleStyle: { 
-        color: colors.WHITE,
-        fontFamily:'Roboto-Bold',
-        fontSize: 20
-    },
-    containerView:{ 
-        flex:1 
-    },
-    textContainer:{
-        textAlign:"center"
-    },
-    mapView: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: 160,
-        marginBottom: 15
-    },
-    mapcontainer: {
-        flex: 7,
-        width: width,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    map: {
-        flex: 1,
-        ...StyleSheet.absoluteFillObject,
-    },
-    triangle: {
-        width: 0,
-        height: 0,
-        backgroundColor: colors.TRANSPARENT,
-        borderStyle: 'solid',
-        borderLeftWidth: 9,
-        borderRightWidth: 9,
-        borderBottomWidth: 10,
-        borderLeftColor: colors.TRANSPARENT,
-        borderRightColor: colors.TRANSPARENT,
-        borderBottomColor: colors.YELLOW.secondary,
-        transform: [
-            {rotate: '180deg'}
-          ]
-    },
-    rideDesc: {
-        flexDirection: 'column'
-    },
-    userDesc: {
-        flexDirection: 'row',
-        paddingHorizontal: 10,
-        alignItems: 'center'
-    },
-    userView: {
-        flexDirection: 'column',
-        paddingLeft: 28,
-    },
-    locationView: {
-        flexDirection: 'column',
-        paddingHorizontal: 10,
-        marginVertical: 14
-    },
-    location: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        marginVertical: 6
-    },
-    greenDot: {
-        backgroundColor: colors.GREEN.default,
-        width: 10,
-        height: 10,
-        borderRadius: 50,
-        alignSelf: 'flex-start',
-        marginTop: 5
-    },
-    redDot: {
-        backgroundColor: colors.RED,
-        width: 10,
-        height: 10,
-        borderRadius: 50,
-        alignSelf: 'flex-start',
-        marginTop: 5
-    },
-    address: {
-        flexDirection: 'row', 
-        flexGrow: 1, 
-        justifyContent: 'flex-start', 
-        alignItems: 'flex-start', 
-        width: 0, 
-        marginLeft: 6
-    },
-    billView: {
-        marginVertical: 5
-    },
-    billTitle: {
-        fontSize: 20,
-        color: colors.GREY.default,
-        fontFamily: 'Roboto-Bold'
-    },
-    billOptions: {
-        marginHorizontal: 10,
-        marginVertical: 15
-    },
-    billItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginVertical: 10
-    },
-    billName: {
-        fontSize: 16,
-        fontFamily: 'Roboto-Regular',
-        color: colors.GREY.default
-    },
-    billAmount: {
-        fontSize: 16,
-        fontFamily: 'Roboto-Medium',
-        color: colors.GREY.default
-    },
-    payDetails: {
-        fontSize: 16,
-        fontFamily: 'Roboto-Medium',
-        color: colors.GREY.default,
-        marginBottom:6
-    },
-    backgroundImage: {
-        flex: 1,
-        width: '100%',
-        height: 2,
-    },
-    carNoStyle:{
-        fontSize: 18, 
-        fontWeight: 'bold', 
-        fontFamily: 'Roboto-Bold'
-    },
-    textStyle:{
-        fontSize: 18, 
-        fontWeight: 'bold', 
-        fontFamily: 'Roboto-Bold'
-    },
-    mainView:{ 
-        flex:1, 
-        backgroundColor: colors.WHITE, 
-    },
-    personStyle:{
-        fontSize: 18, 
-        fontWeight: 'bold', 
-        color: colors.BLACK, 
-        fontFamily: 'Roboto-Bold'
-    },
-    personTextView:{
-        flexDirection: 'row', 
-        alignItems: 'center'
-    },
-    ratingText:{
-        fontSize: 16, 
-        color: colors.GREY.iconSecondary, 
-        marginRight: 8, 
-        fontFamily: 'Roboto-Regular'
-    },
-    avatarView:{
-        marginVertical: 15
-    },
-    timeStyle:{
-        fontFamily: 'Roboto-Regular', 
-        fontSize: 16, 
-        marginTop: 1
-    },
-    adressStyle:{
-        marginLeft: 6, 
-        fontSize: 15, 
-        lineHeight: 20
-    },
-    billView:{
-        paddingHorizontal: 14
-    },
-    billText:{
-        fontFamily: 'Roboto-Bold'
-    },
-    taxColor:{
-        color: colors.GREY.default
-    },
-    paybleAmtView:{
-        flexDirection: 'row', 
-        alignItems: 'center', 
-        justifyContent: 'space-between', 
-        paddingHorizontal: 10
-    },
-    iosView:{
-        paddingVertical: 10
-    },
-    dashView:{
-        width:width, height:1
-    },
-    paymentTextView:{
-        paddingHorizontal: 10
-    },
-
-    myButtonStyle:{
-        alignSelf: "center",
-        elevation: 0,
-        backgroundColor: colors.GREEN.default,
-        width: 300,
-        padding: 7,
-        borderColor: colors.TRANSPARENT,
-        borderWidth: 0,
-        borderRadius: 10
-    }, */
 });

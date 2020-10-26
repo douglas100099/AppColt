@@ -202,16 +202,7 @@ export default class DriverIncomePage extends React.Component {
 
     resetarPilha() {
         this.setState({ loaderBtn: true })
-        this.props
-            .navigation
-            .dispatch(StackActions.reset({
-                index: 0,
-                actions: [
-                    NavigationActions.navigate({
-                        routeName: 'DriverTripAccept',
-                    }),
-                ],
-            }))
+        this.props.navigation.replace('DriverTripAccept')
     }
 
     render() {

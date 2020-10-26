@@ -170,12 +170,12 @@ export default class DriverTripAccept extends React.Component {
 
     photoPerfil = () => {
         this.setState({ loaderBtn: true })
-        this.props.navigation.push('Profile');
+        this.props.navigation.replace('Profile');
     }
 
     carteira = () => {
         this.setState({ loaderBtn: true })
-        this.props.navigation.push('MyEarning');
+        this.props.navigation.replace('MyEarning');
     }
 
     getPhotoDriver() {
@@ -392,7 +392,6 @@ export default class DriverTripAccept extends React.Component {
     checkingGps() {
         this.setState({
             intervalCheckGps: setInterval(async () => {
-                console.log('VERIFICANDO O GPS')
                 let verificarGPS = await Location.hasServicesEnabledAsync();
                 const { status } = await Permissions.askAsync(Permissions.LOCATION);
                 if (status == "granted") {

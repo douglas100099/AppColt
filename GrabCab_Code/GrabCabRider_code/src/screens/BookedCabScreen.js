@@ -876,7 +876,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         justifyContent: 'center',
         alignItems: 'center',
-        left: 20,
+        left: 40,
         top: 15,
     },
     ImageStyle: {
@@ -906,7 +906,7 @@ const styles = StyleSheet.create({
     },
     containerCarDetails: {
         position: 'absolute',
-        right: 20,
+        right: 40,
         top: 0,
         flexDirection: 'column',
     },

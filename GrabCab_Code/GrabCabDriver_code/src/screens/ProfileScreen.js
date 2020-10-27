@@ -250,6 +250,8 @@ export default class ProfileScreen extends React.Component {
 
         this.props.navigation.goBack()
 
+        this.setState({ loaderBtn: false })
+
     }
 
     render() {

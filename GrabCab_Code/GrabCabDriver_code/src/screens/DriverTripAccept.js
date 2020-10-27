@@ -182,11 +182,13 @@ export default class DriverTripAccept extends React.Component {
     photoPerfil = () => {
         this.setState({ loaderBtn: true })
         this.props.navigation.navigate('Profile');
+        this.setState({ loaderBtn: false })
     }
 
     carteira = () => {
         this.setState({ loaderBtn: true })
-        this.props.navigation.replace('MyEarning');
+        this.props.navigation.navigate('MyEarning');
+        this.setState({ loaderBtn: false })
     }
 
     getPhotoDriver() {

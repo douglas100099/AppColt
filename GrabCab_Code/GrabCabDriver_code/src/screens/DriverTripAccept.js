@@ -17,11 +17,14 @@ import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import { Audio } from 'expo-av';
 import * as IntentLauncher from 'expo-intent-launcher';
+import { useKeepAwake } from 'expo-keep-awake';
 
 import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
 import CarMakerSVG from '../SVG/CarMarkerSVG';
 import MarkerPicSVG from '../SVG/MarkerPicSVG';
+
+import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 
 const soundObject = new Audio.Sound();
 Geocoder.init(google_map_key);
@@ -74,6 +77,14 @@ export default class DriverTripAccept extends React.Component {
         }
         //this.getLocationDriver();
     }
+
+    _activate = () => {
+        activateKeepAwake();
+    };
+
+    _deactivate = () => {
+        deactivateKeepAwake();
+    };
 
     //checking booking status
     checking() {
@@ -189,24 +200,6 @@ export default class DriverTripAccept extends React.Component {
         }
     }
 
-    alertAudio = async (params) => {
-        if (params) {
-            await soundObject.stopAsync()
-            await soundObject.unloadAsync()
-        }
-        else if (this.state.chegouCorrida) {
-            await soundObject.unloadAsync()
-            await soundObject.loadAsync(require('../../assets/sounds/alerta.mp3'));
-            await soundObject.playAsync();
-            await soundObject.setIsLoopingAsync(true);
-
-        } else if (this.state.chegouCorrida == false) {
-            await soundObject.stopAsync()
-            await soundObject.unloadAsync()
-            console.log("STOPOU")
-        }
-    }
-
     /* = async () => {
         try {
             await this.audioPlayer.unloadAsync()
@@ -236,6 +229,7 @@ export default class DriverTripAccept extends React.Component {
         await this.getPhotoDriver();
         await this.getStatusDetails();
         this.getInfoEraning();
+        this._activate();
     }
 
     async componentWillUnmount() {
@@ -263,19 +257,17 @@ export default class DriverTripAccept extends React.Component {
                 })
                 this.setState({ coords: coords }, () => {
                     if (this.state.chegouCorrida) {
-                        setTimeout(() => {
-                            this.map2.fitToCoordinates([{ latitude: pickuplat, longitude: pickuplng }, { latitude: droplat, longitude: droplng }], {
-                                edgePadding: { top: 80, right: 65, bottom: 50, left: 50 },
-                                animated: true,
-                            })
-                            this.setState({ acceptBtnDisable: false })
-                        },500)
+                        this.map2.fitToCoordinates([{ latitude: pickuplat, longitude: pickuplng }, { latitude: droplat, longitude: droplng }], {
+                            edgePadding: { top: 80, right: 65, bottom: 50, left: 50 },
+                            animated: true,
+                        })
+                        this.setState({ acceptBtnDisable: false })
                     }
                 })
                 return coords
             }
             catch (error) {
-                alert(error)
+                alert('Ops, tivemos um ao marcar a direção no mapa.')
                 return error
             }
         }
@@ -388,6 +380,7 @@ export default class DriverTripAccept extends React.Component {
                 }
             }).catch((error) => {
                 console.error(error);
+                alert('Ops, tivemos um problema.')
             });
     }
 
@@ -450,10 +443,9 @@ export default class DriverTripAccept extends React.Component {
                         this.setState({ distance: distancee, acceptBtnDisable: false })
                     }
                     this.setState({ chegouCorrida: true })
-                    this.alertAudio();
                 } else if (this.state.chegouCorrida == true) {
                     this.setState({ chegouCorrida: false })
-                    this.alertAudio()
+
                 }
                 this.setState({ tasklist: jobs.reverse() });
                 this.jobs = jobs;
@@ -489,6 +481,7 @@ export default class DriverTripAccept extends React.Component {
                 driver: this.state.curUid,
                 driver_image: this.state.driverDetails.profile_image ? this.state.driverDetails.profile_image : "",
                 driver_name: this.state.driverDetails.firstName + ' ' + this.state.driverDetails.lastName,
+                driver_firstName: this.state.driverDetails.firstName,
                 driver_contact: this.state.driverDetails.mobile,
                 vehicle_number: this.state.driverDetails.vehicleNumber,
                 vehicleModelName: this.state.driverDetails.vehicleModel,
@@ -515,6 +508,7 @@ export default class DriverTripAccept extends React.Component {
                 driver: this.state.curUid,
                 driver_image: this.state.driverDetails.profile_image ? this.state.driverDetails.profile_image : "",
                 driver_name: this.state.driverDetails.firstName + ' ' + this.state.driverDetails.lastName,
+                driver_firstName: this.state.driverDetails.firstName,
                 driver_contact: this.state.driverDetails.mobile,
                 vehicle_number: this.state.driverDetails.vehicleNumber,
                 vehicleModelName: this.state.driverDetails.vehicleModel,
@@ -548,8 +542,6 @@ export default class DriverTripAccept extends React.Component {
                                 firebase.database().ref('users/' + requestedDriver + '/waiting_riders_list/' + item.bookingId + '/').remove().then(() => {
                                     this.setState({ loader: false, chegouCorrida: false })
                                 }).then(() => {
-                                    this.alertAudio(true);
-                                }).then(() => {
                                     this.props.navigation.replace('DriverTripStart', { allDetails: item, regionUser: this.state.region })
                                 })
                             }
@@ -557,9 +549,12 @@ export default class DriverTripAccept extends React.Component {
                     })
                     this.setState({ currentBId: item.bookingId }, () => {
                         this.checking();
-                        this.sendPushNotification(item.customer, item.bookingId, riderData.driver_name + 'aceitou seu chamado, aguarde')
+                        this.sendPushNotification(item.customer, item.driver_firstName + ' aceitou seu chamado, aguarde')
                     })
-                }).catch((error) => { console.log(error) })
+                }).catch((error) => {
+                    console.log(error)
+                    alert('Ops, tivemos um problema.')
+                })
 
 
                 let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/'); userDbRef.update(riderData);
@@ -663,7 +658,7 @@ export default class DriverTripAccept extends React.Component {
         )
     }
 
-    sendPushNotification(customerUID, bookingId, msg) {
+    sendPushNotification(customerUID, msg) {
         const customerRoot = firebase.database().ref('users/' + customerUID);
         customerRoot.once('value', customerData => {
             if (customerData.val()) {
@@ -739,9 +734,11 @@ export default class DriverTripAccept extends React.Component {
                                                 }}
 
                                             >
+
                                                 <Marker.Animated
                                                     coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
                                                     anchor={{ x: 0, y: 0 }}
+                                                    style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
                                                 >
                                                     <CarMakerSVG
                                                         width={45}
@@ -750,8 +747,12 @@ export default class DriverTripAccept extends React.Component {
                                                 </Marker.Animated>
                                                 <Marker
                                                     coordinate={{ latitude: item.pickup.lat, longitude: item.pickup.lng }}
+                                                    anchor={{ x: 0, y: 0 }}
                                                 >
-                                                    <MarkerPicSVG />
+                                                    <MarkerPicSVG
+                                                        width={45}
+                                                        height={45}
+                                                    />
                                                 </Marker>
 
                                                 {this.state.coords ?

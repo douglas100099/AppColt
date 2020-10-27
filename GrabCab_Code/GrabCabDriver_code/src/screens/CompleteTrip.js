@@ -23,6 +23,8 @@ import { RequestPushMsg } from '../common/RequestPushMsg';
 import { google_map_key } from '../common/key';
 import dateStyle from '../common/dateStyle';
 import CarMakerSVG from '../SVG/CarMarkerSVG';
+import MarkerDropSVG from '../SVG/MarkerDropSVG';
+import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 
 export default class DriverCompleteTrip extends React.Component {
 
@@ -33,15 +35,31 @@ export default class DriverCompleteTrip extends React.Component {
         this.state = {
             coords: [],
             loadingModal: false,
-            region: null,
+            region: {
+                latitude: 0,
+                longitude: 0,
+                latitudeDelta: 0.0143,
+                longitudeDelta: 0.0134,
+                angle: 0,
+            },
             followMap: true,
         }
     }
 
+    _activate = () => {
+        activateKeepAwake();
+    };
+
+    _deactivate = () => {
+        deactivateKeepAwake();
+    };
+
     async UNSAFE_componentWillMount() {
         const allDetails = this.props.navigation.getParam('allDetails')
+        const regionUser = this.props.navigation.getParam('regionUser')
         this.setState({
             rideDetails: allDetails,
+            region: regionUser,
             curUid: firebase.auth().currentUser.uid
         }, () => {
             //checking status
@@ -91,6 +109,8 @@ export default class DriverCompleteTrip extends React.Component {
         })
 
         firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/queue').set(true);
+
+        this._activate();
     }
 
     componentWillUnmount() {
@@ -165,6 +185,7 @@ export default class DriverCompleteTrip extends React.Component {
                 }
             }).catch((error) => {
                 console.error(error);
+                alert('Ops, tivemos um problema.');
             });
     }
 
@@ -232,7 +253,7 @@ export default class DriverCompleteTrip extends React.Component {
             return coords
         }
         catch (error) {
-            alert(error)
+            alert('Ops, tivemos um ao marcar a direção no mapa.')
             return error
         }
     }
@@ -366,8 +387,8 @@ export default class DriverCompleteTrip extends React.Component {
                 let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/');
                 userDbRef.update(riderData).then(() => {
                     this.setState({ loadingModal: false })
-                    this.props.navigation.navigate('DriverFare', { allDetails: item, trip_cost: data.trip_cost, trip_end_time: data.trip_end_time })
-                    this.sendPushNotification(item.customer, item.bookingId)
+                    this.props.navigation.replace('DriverFare', { allDetails: item, trip_cost: data.trip_cost, trip_end_time: data.trip_end_time })
+                    this.sendPushNotification(item.customer)
                 })
             })
         })
@@ -381,12 +402,12 @@ export default class DriverCompleteTrip extends React.Component {
             lng: location.lng
         })
     }
-    sendPushNotification(customerUID, bookingId) {
+    sendPushNotification(customerUID) {
         const customerRoot = firebase.database().ref('users/' + customerUID);
         customerRoot.once('value', customerData => {
             if (customerData.val()) {
                 let allData = customerData.val()
-                RequestPushMsg(allData.pushToken ? allData.pushToken : null, 'O motorista chegou ao local de destino' + bookingId)
+                RequestPushMsg(allData.pushToken ? allData.pushToken : null, 'O motorista chegou ao local de destino')
             }
         })
     }
@@ -502,16 +523,23 @@ export default class DriverCompleteTrip extends React.Component {
                     >
                         <Marker.Animated
                             coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
+                            style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
+                            anchor={{ x: 0, y: 0 }}
                         >
                             <CarMakerSVG
                                 width={45}
                                 height={45}
                             />
                         </Marker.Animated>
-                        <Marker
+                        <Marker.Animated
                             coordinate={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng, }}
-                            image={require('../../assets/images/positionRider.png')}
-                        />
+                            anchor={{ x: 0, y: 0 }}
+                        >
+                            <MarkerDropSVG
+                                width={45}
+                                height={45} 
+                            />
+                        </Marker.Animated>
                         <MapView.Polyline
                             coordinates={this.state.coords}
                             strokeWidth={3}

@@ -18,9 +18,11 @@ import languageJSON from '../common/language';
 import * as firebase from 'firebase'
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import { NavigationActions, StackActions } from 'react-navigation';
+import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 var { width } = Dimensions.get('window');
 
 export default class DriverTripComplete extends React.Component {
+
     constructor(props) {
         super(props);
         this.state = {
@@ -35,6 +37,14 @@ export default class DriverTripComplete extends React.Component {
         this._retrieveCurrency();
     }
 
+    _activate = () => {
+        activateKeepAwake();
+    };
+
+    _deactivate = () => {
+        deactivateKeepAwake();
+    };
+
     _retrieveCurrency = async () => {
         try {
             const value = await AsyncStorage.getItem('currency');
@@ -42,7 +52,7 @@ export default class DriverTripComplete extends React.Component {
                 this.setState({ currency: JSON.parse(value) });
             }
         } catch (error) {
-            console.log("Asyncstorage issue 4");
+            alert('Ops, tivemos um problema.')
         }
     };
 
@@ -62,6 +72,7 @@ export default class DriverTripComplete extends React.Component {
             trip_cost: trip_cost,
             trip_end_time: trip_end_time
         })
+        this._activate();
 
     }
 
@@ -195,7 +206,6 @@ export default class DriverTripComplete extends React.Component {
 
     submitNow() {
         this.setState({ loader: true })
-        console.log('SETANDO STAR')
         firebase.database().ref('users/' + this.state.rideDetails.customer + '/ratings/details').push({
             user: this.state.curUid,
             rate: this.state.starCount > 0 ? this.state.starCount : 5,
@@ -223,7 +233,6 @@ export default class DriverTripComplete extends React.Component {
                     }
                 }
             })
-            console.log('SETEI O STAR')
         }).then(() => {
             this.onPressDone(this.state.rideDetails)
         })

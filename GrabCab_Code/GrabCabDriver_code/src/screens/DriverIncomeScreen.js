@@ -50,6 +50,7 @@ export default class DriverIncomePage extends React.Component {
             }
         } catch (error) {
             console.log("Asyncstorage issue 3");
+            alert('Ops, tivemos um problema.');
         }
     };
 

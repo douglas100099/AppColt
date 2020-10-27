@@ -49,7 +49,7 @@ export default class IntroScreen extends Component {
                         );
                         this.setState({ verificationId: verificationId });
                     } catch (error) {
-                        alert(error.message);
+                        alert('Ops, tivemos um problema.');
                     }
                 } else {
                     alert('Insira um número válido.');

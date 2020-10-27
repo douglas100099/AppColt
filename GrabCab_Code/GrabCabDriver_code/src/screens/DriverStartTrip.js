@@ -28,11 +28,13 @@ import languageJSON from '../common/language';
 import CellphoneSVG from '../SVG/CellphoneSVG'
 import CarMarkerSVG from '../SVG/CarMarkerSVG';
 import ChatSVG from '../SVG/ChatSVG';
+import MarkerPicSVG from '../SVG/MarkerPicSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
 var { width, height } = Dimensions.get('window');
 import { google_map_key } from '../common/key';
 import dateStyle from '../common/dateStyle';
 import * as IntentLauncher from 'expo-intent-launcher';
+import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 import RadioForm from 'react-native-simple-radio-button';
 const LOCATION_TASK_NAME = 'background-location-task';
 
@@ -48,6 +50,7 @@ export default class DriverStartTrip extends React.Component {
                 longitude: 0,
                 latitudeDelta: 0.0143,
                 longitudeDelta: 0.0134,
+                angle: 0,
             },
             mediaSelectModal: false,
             allData: "",
@@ -66,11 +69,21 @@ export default class DriverStartTrip extends React.Component {
 
     }
 
+    _activate = () => {
+        activateKeepAwake();
+    };
+
+    _deactivate = () => {
+        deactivateKeepAwake();
+    };
+
     async UNSAFE_componentWillMount() {
         const allDetails = this.props.navigation.getParam('allDetails')
+        const regionUser = this.props.navigation.getParam('regionUser')
         console.log(allDetails);
         this.setState({
             rideDetails: allDetails,
+            region: regionUser,
             curUid: firebase.auth().currentUser.uid
         }, () => {
             this.checkStatus()
@@ -84,6 +97,7 @@ export default class DriverStartTrip extends React.Component {
             this.setState({ error: "Locations services needed" });
             this.openAlert()
         }
+        this._activate();
     }
 
     componentDidMount() {
@@ -161,6 +175,7 @@ export default class DriverStartTrip extends React.Component {
                 }
             }).catch((error) => {
                 console.error(error);
+                alert('Ops, tivemos um problema.');
             });
     }
 
@@ -240,7 +255,7 @@ export default class DriverStartTrip extends React.Component {
             return coords
         }
         catch (error) {
-            alert(error)
+            alert('Ops, tivemos um ao marcar a direção no mapa.')
             return error
         }
     }
@@ -310,7 +325,10 @@ export default class DriverStartTrip extends React.Component {
                         } else {
                             return Linking.openURL('tel:' + customerPhoneNo);
                         }
-                    }).catch(err => console.error('An error occurred', err));
+                    }).catch(err => { 
+                        console.error('An error occurred', err)
+                        alert('Ops, tivemos um problema.')
+                    });
                 } else {
                     alert(languageJSON.mobile_no_found)
                 }
@@ -348,9 +366,9 @@ export default class DriverStartTrip extends React.Component {
                                 console.log(startTime + ' Start Time da tela Start trip')
                                 this.setState({ notificarChegada: false })
                                 this.setState({ loader: false })
-                                this.props.navigation.navigate('DriverTripComplete', { allDetails: this.state.allData, startTime: startTime });
+                                this.props.navigation.replace('DriverTripComplete', { allDetails: this.state.allData, startTime: startTime, regionUser: this.state.region });
 
-                                this.sendPushNotification(this.state.allData.customer);
+                                this.sendPushNotification(this.state.allData.customer, this.state.allData.driver_firstName);
                             })
                         })
                     })
@@ -376,17 +394,17 @@ export default class DriverStartTrip extends React.Component {
         }
     }
 
-    sendPushNotification(customerUID) {
+    sendPushNotification(customerUID, firstName) {
         const customerRoot = firebase.database().ref('users/' + customerUID);
         customerRoot.once('value', customerData => {
             if (customerData.val()) {
                 let allData = customerData.val()
-                RequestPushMsg(allData.pushToken ? allData.pushToken : null, ' o motorista iniciou sua corrida')
+                RequestPushMsg(allData.pushToken ? allData.pushToken : null, firstName + ' o motorista iniciou sua corrida')
             }
         })
     }
 
-    sendPushNotification2(customerUID, bookingId, msg) {
+    sendPushNotification2(customerUID, msg) {
         const customerRoot = firebase.database().ref('users/' + customerUID);
         customerRoot.once('value', customerData => {
             if (customerData.val()) {
@@ -456,7 +474,7 @@ export default class DriverStartTrip extends React.Component {
             firebase.database().ref(`/users/` + this.state.rideDetails.customer + '/my-booking/' + this.state.allData.bookingId + '/').update({
                 status: 'EMBARQUE',
             })
-            this.sendPushNotification2(this.state.rideDetails.customer, this.state.allData.bookingId, this.state.rideDetails.driver_name + ' chegou ao local de embarque.')
+            this.sendPushNotification2(this.state.rideDetails.customer, this.state.rideDetails.driver_firstName + ' chegou ao local de embarque.')
             this.setState({ loader: false })
         })
     }
@@ -489,7 +507,7 @@ export default class DriverStartTrip extends React.Component {
                     cancelledByDriver: true,
                 }).then(() => {
                     firebase.database().ref(`/users/` + this.state.curUid + '/').update({ queue: false })
-                    this.sendPushNotification2(this.state.rideDetails.customer, this.state.rideDetails.bookingId, this.state.rideDetails.driver_name + ' cancelou a corrida atual!')
+                    this.sendPushNotification2(this.state.rideDetails.customer, this.state.rideDetails.driver_firstName + ' cancelou a corrida atual!')
                 }).then(() => {
                     firebase.database().ref(`/users/` + this.state.curUid + '/emCorrida').remove()
                 })
@@ -600,18 +618,27 @@ export default class DriverStartTrip extends React.Component {
                         showsMyLocationButton={false}
                         region={this.checkMap()}
                     >
+                        {/* O RABO DE SETA ESTAVA AQUI, PROBLEMA ENCONTRADO DO MODO PRODUÇÃO, MARKER NO AIRMAP */}
+
                         <Marker.Animated
                             coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
+                            style={{ transform: [{ rotate: this.state.region ? this.state.region.angle : 0 + "deg" }] }}
+                            anchor={{ x: 0, y: 0 }}
                         >
                             <CarMarkerSVG
                                 width={45}
                                 height={45}
                             />
                         </Marker.Animated>
-                        <Marker
+                        <Marker.Animated
                             coordinate={{ latitude: this.state.rideDetails.pickup.lat, longitude: this.state.rideDetails.pickup.lng, }}
-                            image={require('../../assets/images/BaxFOmg.png')}
-                        />
+                            anchor={{ x: 0, y: 0 }}
+                        >
+                            <MarkerPicSVG
+                                width={45}
+                                height={45}
+                            />
+                        </Marker.Animated>
                         {this.state.coords ?
                         <MapView.Polyline
                             coordinates={this.state.coords}

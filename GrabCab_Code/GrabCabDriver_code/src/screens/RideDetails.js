@@ -51,6 +51,7 @@ export default class RideDetails extends React.Component {
             }
         } catch (error) {
             console.log("Asyncstorage issue 5");
+            alert('Ops, tivemos um problema.')
         }
     };
 
@@ -69,33 +70,10 @@ export default class RideDetails extends React.Component {
                 payButtonShow: (this.getRideDetails.payment_status == 'DUE' || this.getRideDetails.payment_status == 'IN_PROGRESS' || this.getRideDetails.status == 'ACCEPTED') ? true : false
             }, () => {
                 //console.log(this.state.paramData.rating);
-                this.getDirections('"' + this.state.paramData.pickup.lat + ',' + this.state.paramData.pickup.lng + '"', '"' + this.state.paramData.drop.lat + ',' + this.state.paramData.drop.lng + '"');
                 this.forceUpdate();
             })
 
 
-        }
-    }
-
-
-    // find your origin and destination point coordinates and pass it to our method.
-    async getDirections(startLoc, destinationLoc) {
-        try {
-            let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=${google_map_key}`)
-            let respJson = await resp.json();
-            let points = Polyline.decode(respJson.routes[0].overview_polyline.points);
-            let coords = points.map((point, index) => {
-                return {
-                    latitude: point[0],
-                    longitude: point[1]
-                }
-            })
-            this.setState({ coords: coords })
-            return coords
-        }
-        catch (error) {
-            alert(error)
-            return error
         }
     }
 

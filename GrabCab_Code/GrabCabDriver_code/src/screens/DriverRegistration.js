@@ -70,6 +70,7 @@ export default class DriverRegistrationPage extends React.Component {
         }
       }).catch((error) => {
         console.log(error);
+        alert('Ops, tivemos um problema.');
       });
     });
 
@@ -107,6 +108,7 @@ export default class DriverRegistrationPage extends React.Component {
         this.uploadmultimediaCnh(fname, lname, mobile, email, vehicleNum, vehicleName, dwnldurlCrlv, urlCnh, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam);
       }).catch(error=>{
         console.log(error);
+        alert('Ops, tivemos um problema.');
       });
     }
 
@@ -142,6 +144,7 @@ export default class DriverRegistrationPage extends React.Component {
         this.clickRegister(fname, lname, mobile, email, vehicleNum, vehicleName, urlCrlv, dwnldurlCnh, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam);
       }).catch(error=>{
         console.log(error);
+        alert('Ops, tivemos um problema.');
       });
     }
 

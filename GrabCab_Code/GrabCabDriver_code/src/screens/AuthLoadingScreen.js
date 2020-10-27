@@ -20,6 +20,7 @@ const LOCATION_TASK_NAME = 'background-location-task';
 TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data: { locations }, error }) => {
   if (error) {
     console.log("Task Error");
+    alert('Ops, tivemos um problema.');
     return;
   }
   let location = locations[locations.length - 1];
@@ -40,6 +41,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data: { locations }, error }
       }
     }).catch((error) => {
       console.error(error);
+      alert('Ops, tivemos um problema ao gerar localização em segundo plano.')
     });
 });
 

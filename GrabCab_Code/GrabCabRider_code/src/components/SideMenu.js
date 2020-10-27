@@ -7,6 +7,7 @@ import SideMenuHeader from './SideMenuHeader';
 import { colors } from '../common/theme';
 var { width, height } = Dimensions.get('window');
 import languageJSON from '../common/language';
+import AvatarUser from '../../assets/svg/AvatarUser';
 
 export default class SideMenu extends React.Component {
     constructor(props) {

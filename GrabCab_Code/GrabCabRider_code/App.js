@@ -45,6 +45,7 @@ export default class App extends React.Component {
         require('./assets/images/background.png'),
         require('./assets/images/logo.png'),
         require('./assets/images/bg.png'),
+        require('./assets/images/searchDrivers.gif'),
       ]),
 
       Font.loadAsync({

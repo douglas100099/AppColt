@@ -111,15 +111,15 @@ export default class FareScreen extends React.Component {
         this._retrieveSettings();
     }
 
-    fadeIn(params){
+    fadeIn(params) {
         this.setState({ showViewInfo: !this.state.showViewInfo })
-        if(params){
+        if (params) {
             Animated.timing(this.state.fadeAnim, {
                 toValue: 1,
                 duration: 500,
                 useNativeDriver: false,
             }).start();
-        } else { 
+        } else {
             Animated.timing(this.state.fadeAnim, {
                 toValue: 0,
                 duration: 500,
@@ -255,12 +255,13 @@ export default class FareScreen extends React.Component {
             bookingDate: today,
 
             imageRider: this.state.userDetails.profile_image ? this.state.userDetails.profile_image : null,
+            ratingRider: this.state.userDetails.ratings ? this.state.userDetails.ratings.userrating : null,
             cashPaymentAmount: cashPayment.toFixed(2),
             payment_mode: this.state.metodoPagamento,
             usedWalletMoney: this.state.usedWalletMoney,
             discount_amount: this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value : 0,
             promoCodeApplied: this.state.payDetails ? this.state.payDetails.promo_details.promo_code : "",
-            promoKey: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : "",        
+            promoKey: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : "",
         }
 
         var MyBooking = {
@@ -303,7 +304,7 @@ export default class FareScreen extends React.Component {
                 }
                 setTimeout(() => {
                     this.setState({ buttonDisabled: false }, () => {
-                        this.props.navigation.navigate('BookedCab', { passData: bookingData, riderName: data.customer_name });
+                        this.props.navigation.replace('BookedCab', { passData: bookingData, riderName: data.customer_name });
                     })
                 }, 500)
             })
@@ -574,7 +575,7 @@ export default class FareScreen extends React.Component {
     ModalPayment() {
         return (
             <Modal
-                animationType="fade"
+                animationType="slide"
                 transparent={true}
                 visible={this.state.openModalPayment}
             >
@@ -613,7 +614,10 @@ export default class FareScreen extends React.Component {
                                         color={colors.DEEPBLUE}
                                         containerStyle={styles.iconMoney}
                                     />
+                                    <View style={{ flexDirection: 'column' }}>
                                     <Text style={styles.textMoney}> Carteira Colt </Text>
+                                    <Text style={{ fontFamily: 'Inter-Bold', color: colors.GREY2, fontSize: 15, marginLeft: 10 }}> Saldo: R${parseFloat(this.state.walletBallance).toFixed(2)} </Text>
+                                    </View>
                                 </View>
                                 <Icon
                                     name='chevron-right'
@@ -832,7 +836,7 @@ export default class FareScreen extends React.Component {
                     </Animated.View>
 
                     {this.state.cancellValue != 0 ?
-                        <TouchableOpacity style={styles.btnCancellRate} onPress={() => this.fadeIn(this.state.showViewInfo) }>
+                        <TouchableOpacity style={styles.btnCancellRate} onPress={() => this.fadeIn(this.state.showViewInfo)}>
                             <Icon
                                 name="ios-alert"
                                 type="ionicon"
@@ -867,7 +871,9 @@ export default class FareScreen extends React.Component {
                                     <ColtEconomicoCar />
                                     <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[0].name}</Text>
 
-                                    <Text style={styles.price1}>{this.state.settings.symbol} <Text style={styles.price2}> {this.state.metodoPagamento === "Dinheiro/Carteira" ? (this.state.estimatePrice1 - this.state.walletBallance).toFixed(2) : this.state.estimatePrice1} </Text></Text>
+                                    {this.state.estimatePrice1 ?
+                                        <Text style={styles.price1}>{this.state.settings.symbol} <Text style={styles.price2}> {this.state.metodoPagamento === "Dinheiro/Carteira" ? (this.state.estimatePrice1 - this.state.walletBallance).toFixed(2) : parseFloat(this.state.estimatePrice1).toFixed(2)} </Text></Text>
+                                        : null}
 
                                     {this.state.minTimeEconomico == null ?
                                         <View style={[styles.timeBox, {
@@ -893,7 +899,10 @@ export default class FareScreen extends React.Component {
                                 <TouchableOpacity style={styles.touchCard2} onPress={() => this.selectCarType(1)}>
                                     <ColtConfortCar />
                                     <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[1].name}</Text>
-                                    <Text style={styles.price1}>{this.state.settings.symbol} <Text style={styles.price2}>{this.state.metodoPagamento === "Dinheiro/Carteira" ? (this.state.estimatePrice2 - this.state.walletBallance).toFixed(2) : this.state.estimatePrice2} </Text></Text>
+
+                                    {this.state.estimatePrice2 ?
+                                        <Text style={styles.price1}>{this.state.settings.symbol} <Text style={styles.price2}>{this.state.metodoPagamento === "Dinheiro/Carteira" ? (this.state.estimatePrice2 - this.state.walletBallance).toFixed(2) : parseFloat(this.state.estimatePrice2).toFixed(2)} </Text></Text>
+                                        : null}
 
                                     {this.state.minTimeConfort == null ?
                                         <View style={[styles.timeBox, {
@@ -945,7 +954,7 @@ export default class FareScreen extends React.Component {
                                                 </View>
                                                 <Text style={styles.metodoPagamento}> Carteira Colt </Text>
                                             </View>
-                                            <Text style={{ fontFamily: 'Inter-Bold', opacity: 0.4 }} >SALDO: R${this.state.walletBallance} </Text>
+                                            <Text style={{ fontFamily: 'Inter-Bold', opacity: 0.4 }} >SALDO: R${parseFloat(this.state.walletBallance).toFixed(2 )} </Text>
                                         </TouchableOpacity>
                                     </View>
                                     : <View style={styles.containerDinheiro}>
@@ -1124,7 +1133,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginHorizontal: 20,
         backgroundColor: colors.WHITE,
-        height: 55,
+        height: 60,
         marginTop: 16,
         borderRadius: 10,
         elevation: 5,

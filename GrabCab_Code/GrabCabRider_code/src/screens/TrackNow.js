@@ -6,9 +6,7 @@ import {
     TouchableOpacity,
     Platform,
     Dimensions,
-    Linking,
-    Alert,
-    AsyncStorage
+    Image
 } from 'react-native';
 import { Icon } from 'react-native-elements';
 import haversine from "haversine";
@@ -30,6 +28,7 @@ import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
 import ColtConfortCar from '../../assets/svg/ColtConfortCar';
 import AvatarUser from '../../assets/svg/AvatarUser';
 import IconCarMap from '../../assets/svg/IconCarMap';
+import CircleLineTriangle from '../../assets/svg/CircleLineTriangle';
 
 export default class TrackNow extends React.Component {
 
@@ -54,7 +53,11 @@ export default class TrackNow extends React.Component {
             var data = snapshot.val()
             if (data.current) {
                 let data = snapshot.val();
-                this.setState({ angle: data.current.angle, latitude: data.current.lat, longitude: data.current.lng });
+                this.setState({
+                    angle: data.current.angle,
+                    latitude: data.current.lat,
+                    longitude: data.current.lng,
+                });
             }
         })
 
@@ -237,75 +240,85 @@ export default class TrackNow extends React.Component {
                                 </Marker>
                                 : null}
 
+
                         </MapView>
                         : null}
+                    <TouchableOpacity style={styles.btnPanico}>
+                        <Icon
+                            name="ios-shield-checkmark"
+                            type="ionicon"
+                            size={23}
+                            color={colors.DEEPBLUE}
+                        />
+                    </TouchableOpacity>
                 </View>
 
-                <View style={{ backgroundColor: colors.GREEN.light, height: 30, justifyContent: 'center', alignItems: 'center', opacity: 0.5 }}>
-                    <Text style={{ color: colors.DEEPBLUE, fontFamily: 'Inter-Bold' }}> A caminho do seu destino </Text>
+                <View style={{ backgroundColor: colors.DEEPBLUE, height: 30, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ color: colors.WHITE, fontSize: 17, fontFamily: 'Inter-Bold' }}> A caminho do seu destino </Text>
                 </View>
 
                 {/* Modal inferior */}
                 <View style={styles.containerBottom}>
-                    <View style={styles.containerFoto}>
-                        <View style={{ borderWidth: 1.5, borderColor: colors.DEEPBLUE, borderRadius: 100 }}>
-                            <AvatarUser
-                                style={{ margin: 3 }}
-                            />
-                        </View>
-
-                        <Text style={styles.nameDriver}> {this.state.allData ? this.state.allData.driver_name : null} </Text>
-                        <View style={styles.rating}>
-                            <Icon
-                                name="star"
-                                type="feather"
-                                // icon: 'chat', color: '#fff',
-                                size={23}
-                                color={colors.YELLOW.secondary}
-                            />
-                            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 15, fontWeight: '600' }}> {this.state.allData ? this.state.allData.driverRating : null} </Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.containerCarDetails}>
-                        <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                            {this.state.allData ? this.state.allData.carType == "Colt econômico" ?
-                                <ColtEconomicoCar />
-                                :
-                                <ColtConfortCar />
-                                : null
-                            }
-                            <Text style={{ fontSize: 18, fontFamily: 'Inter-Medium', fontWeight: "500", textAlign: 'center', marginBottom: 5 }}> {this.state.allData ? this.state.allData.carType : null} </Text>
-                        </View>
-
-                        <View style={styles.boxPlacaCarro}>
-                            <Text style={styles.placaCarro} > {this.state.allData ? this.state.allData.vehicle_number : null} </Text>
-                        </View>
-                        <View style={styles.containerTxtCarro}>
-                            <Text style={styles.marcaCarro}> {this.state.allData ? this.state.allData.vehicleModelName : null} </Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.containerBtn}>
-                        <TouchableOpacity style={styles.btnLigarMotorista}>
-                            <View>
-                                <Text style={styles.txtLigarMotorista}>  </Text>
+                    <View style={{ flex: 2, flexDirection: 'row' }}>
+                        <View style={styles.containerFoto}>
+                            <View style={{ borderWidth: 1.5, width: 80, height: 80, justifyContent: 'center', alignItems: 'center', borderColor: colors.DEEPBLUE, borderRadius: 100 }}>
+                                {this.state.allData ?
+                                    <Image
+                                        source={this.state.allData ? { uri: this.state.allData.driver_image } : null}
+                                        style={{ width: 72, height: 72, borderRadius: 50 }}
+                                    />
+                                    :
+                                    <AvatarUser
+                                        style={{ margin: 3 }} />
+                                }
                             </View>
-                        </TouchableOpacity>
+
+                            <Text style={styles.nameDriver}> {this.state.allData ? this.state.allData.driver_firstName : null} </Text>
+                            <View style={styles.rating}>
+                                <Icon
+                                    name="ios-star"
+                                    type="ionicon"
+                                    size={20}
+                                    color={colors.YELLOW.secondary}
+                                />
+                                <Text style={{ fontFamily: 'Inter-Bold', alignSelf: 'center', marginTop: 2, fontSize: 15, fontWeight: '600' }}> {this.state.allData ? this.state.allData.driverRating : null} </Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.containerCarDetails}>
+                            <View style={{ justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+                                {this.state.allData ? this.state.allData.carType == "Colt econômico" ?
+                                    <ColtEconomicoCar />
+                                    :
+                                    <ColtConfortCar />
+                                    : null
+                                }
+                                <Text style={{ fontSize: 18, fontFamily: 'Inter-Medium', fontWeight: "500", textAlign: 'center', marginBottom: 5 }}> {this.state.allData ? this.state.allData.carType : null} </Text>
+                            </View>
+
+                            <View style={{ flex: 1 }}>
+                                <View style={styles.boxPlacaCarro}>
+                                    <Text style={styles.placaCarro} > {this.state.allData ? this.state.allData.vehicle_number : null} </Text>
+                                </View>
+                                <View style={styles.containerTxtCarro}>
+                                    <Text style={styles.marcaCarro}> {this.state.allData ? this.state.allData.vehicleModelName : null} </Text>
+                                </View>
+                            </View>
+                        </View>
+
+                    </View>
+                    <View style={{ flex: 1.6, marginLeft: 25 }}>
+                        <View style={{ flexDirection: 'row', marginTop: 15 }}>
+                            <CircleLineTriangle style={{}} />
+                            <View style={{ justifyContent: 'space-around' }}>
+                                <Text style={{ fontFamily: 'Inter-Medium' }}> {this.state.allData ? this.state.allData.pickup.add.split(',')[0] : null} </Text>
+                                <Text style={{ fontFamily: 'Inter,Medium' }}> {this.state.allData ? this.state.allData.drop.add.split(',')[0] : null} </Text>
+                            </View>
+                        </View>
                     </View>
 
                 </View>
-                <TouchableOpacity style={styles.btnPanico}>
-                    <View>
-                        <Icon
-                            name="ios-sad"
-                            type="ionicon"
-                            // icon: 'chat', color: '#fff',
-                            size={30}
-                            color={colors.WHITE}
-                        />
-                    </View>
-                </TouchableOpacity>
+
             </View>
         );
     }
@@ -347,37 +360,37 @@ const styles = StyleSheet.create({
         alignItems: "stretch"
     },
     btnPanico: {
-        width: 50,
-        height: 50,
-        backgroundColor: colors.RED,
-        borderRadius: 100,
         position: 'absolute',
-        top: 0,
-        right: 0,
-        marginTop: 50,
-        marginRight: 20,
+        backgroundColor: colors.WHITE,
+        width: 40,
+        height: 40,
+        borderRadius: 50,
+        bottom: 20,
+        right: 20,
+        elevation: 5,
+        marginTop: 40,
         justifyContent: 'center',
         alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
     },
 
     ////////////////////
     containerBottom: {
-        width: width,
         shadowColor: '#000',
         shadowOffset: { x: 0, y: 5 },
         shadowOpacity: 0.2,
         shadowRadius: 10,
         elevation: 5,
         backgroundColor: colors.WHITE,
-        flex: 3,
-        alignSelf: 'center',
+        flex: 4,
     },
     containerFoto: {
-        position: 'absolute',
-        justifyContent: 'center',
         alignItems: 'center',
-        left: 20,
-        top: 15,
+        flex: 1,
+        marginTop: 25,
     },
     ImageStyle: {
         width: 90,
@@ -402,37 +415,19 @@ const styles = StyleSheet.create({
     },
     rating: {
         flexDirection: 'row',
-        alignItems: 'center',
-    },
-    containerCarDetails: {
-        position: 'absolute',
-        right: 20,
-        top: 0,
-        flexDirection: 'column',
-    },
-    containerBtn: {
-        position: 'absolute',
-        bottom: 0,
-        marginBottom: 30,
-        flexDirection: 'row',
-        alignItems: 'center',
-        alignSelf: 'center',
-    },
-    btnLigarMotorista: {
+        width: 70,
         backgroundColor: colors.WHITE,
-        borderWidth: 2,
-        borderColor: colors.DEEPBLUE,
-        height: 45,
         borderRadius: 50,
         justifyContent: 'center',
+        borderWidth: 1,
+        marginTop: 5
+    },
+    containerCarDetails: {
+        flexDirection: 'column',
         alignItems: 'center',
-        width: 250
+        flex: 1,
     },
-    txtLigarMotorista: {
-        fontFamily: 'Inter-Bold',
-        color: colors.DEEPBLUE,
-        fontSize: 19,
-    },
+
     boxPlacaCarro: {
         width: 150,
         backgroundColor: colors.WHITE,
@@ -442,13 +437,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         opacity: 0.5,
-        marginTop: 10,
     },
     placaCarro: {
         fontSize: 25,
         fontFamily: 'Inter-Bold',
         fontWeight: '500',
-
     },
     containerTxtCarro: {
         marginTop: 7,
@@ -458,7 +451,6 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter-Regular',
         color: colors.BLACK,
         fontSize: 18,
-        position: 'absolute',
-        right: 0
+
     },
 });

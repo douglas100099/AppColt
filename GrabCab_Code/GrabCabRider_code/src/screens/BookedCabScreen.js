@@ -306,7 +306,7 @@ export default class BookedCabScreen extends React.Component {
             status: 'CANCELLED',
         })
             .then(() => {
-                this.setState({ driverSerach: false }, () => this.props.navigation.goBack())
+                this.setState({ driverSerach: false }, () => this.props.navigation.replace('FareDetails', this.state.region))
             })
     }
 
@@ -340,7 +340,7 @@ export default class BookedCabScreen extends React.Component {
                                 firebase.database().ref(`/users/` + this.state.driverUID + '/').update({ queue: false })
                                 this.sendPushNotification(curbookingData.val().driver, this.state.currentBookingId, this.state.riderName + ' cancelou a corrida atual!')
                             }).then(() => {
-                                firebase.database().ref(`/users/` + this.state.driverUID + '/emCorrida').remove()
+                                firebase.database().ref(`/users/` + this.state.driverUID + '/emCorrida/').remove()
                             }).then(() => {
                                 this.props
                                     .navigation

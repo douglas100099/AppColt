@@ -253,7 +253,7 @@ export default class DriverCompleteTrip extends React.Component {
             return coords
         }
         catch (error) {
-            alert('Ops, tivemos um ao marcar a direção no mapa.')
+            alert('Ops, tivemos um problema ao marcar a direção no mapa.')
             return error
         }
     }

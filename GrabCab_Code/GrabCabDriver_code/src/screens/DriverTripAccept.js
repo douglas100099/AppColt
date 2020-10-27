@@ -17,7 +17,6 @@ import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import { Audio } from 'expo-av';
 import * as IntentLauncher from 'expo-intent-launcher';
-import { useKeepAwake } from 'expo-keep-awake';
 
 import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
@@ -240,7 +239,10 @@ export default class DriverTripAccept extends React.Component {
             console.log('REMOVEU O WATCH')
             this.location.remove()
         }
-        clearInterval(this.state.intervalCheckGps);
+        if(this.state.intervalCheckGps){
+            clearInterval(this.state.intervalCheckGps);
+            console.log('REMOVEU CHECK GPS INTERVAL')
+        }
         console.log('DESMONTOU')
     }
 

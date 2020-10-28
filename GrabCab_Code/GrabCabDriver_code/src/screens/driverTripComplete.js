@@ -79,29 +79,20 @@ export default class DriverTripComplete extends React.Component {
     //done button press function
     onPressDone(item) {
         if (item.booking_type_web) {
-            let cost = parseFloat(item.trip_cost).toFixed(2);
-            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my_bookings/' + item.bookingId + '/').update({
+            let cost = parseFloat(item.pagamento.trip_cost).toFixed(2);
+            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my_bookings/' + item.bookingId + '/pagamento/').update({
                 payment_status: "PAID",
-                //payment_mode: "Cash",
                 customer_paid: cost,
-                //discount_amount: 0,
-                //usedWalletMoney: 0,
                 cashPaymentAmount: cost
             }).then(() => {
-                firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/').update({
+                firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/pagamento/').update({
                     payment_status: "PAID",
-                    //payment_mode: "Cash",
                     customer_paid: cost,
-                    //discount_amount: 0,
-                    //usedWalletMoney: 0,
                     cashPaymentAmount: cost
                 }).then(() => {
-                    firebase.database().ref('bookings/' + item.bookingId + '/').update({
+                    firebase.database().ref('bookings/' + item.bookingId + '/pagamento/').update({
                         payment_status: "PAID",
-                        //payment_mode: "Cash",
                         customer_paid: cost,
-                        //discount_amount: 0,
-                        //usedWalletMoney: 0,
                         cashPaymentAmount: cost
                     }).then(() => {
                         firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/').update({
@@ -132,10 +123,10 @@ export default class DriverTripComplete extends React.Component {
                 payment_status: "WAITING",
             };
             //var bookingId = item.bookingId?item.bookingId:item.bookingUid;
-            let dbRef = firebase.database().ref('users/' + this.state.curUid + '/my_bookings/' + item.bookingId + '/');
+            let dbRef = firebase.database().ref('users/' + this.state.curUid + '/my_bookings/' + item.bookingId + '/pagamento/');
             dbRef.update(data).then(() => {
-                firebase.database().ref('bookings/' + item.bookingId + '/').update(data).then(() => {
-                    let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/')
+                firebase.database().ref('bookings/' + item.bookingId + '/pagamento/').update(data).then(() => {
+                    let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/pagamento/')
                     userDbRef.update(riderData).then(() => {
 
                         // Remove a corrida recente (AS VEZES, TEM VEZ QUE TEM QUE SER NA MÃO)
@@ -288,7 +279,7 @@ export default class DriverTripComplete extends React.Component {
                                 <Text style={styles.nomePassageiro}>{this.state.rideDetails.customer_name}</Text>
                             </View>
                             <View style={styles.footerPgt}>
-                                <Text style={styles.txtFormapgt}>{this.state.rideDetails.metodoPagameto ? this.state.rideDetails.metodoPagameto : 'Dinheiro'}</Text>
+                                <Text style={styles.txtFormapgt}>{this.state.rideDetails.pagamento ? this.state.rideDetails.pagamento.payment_mode : 'Dinheiro'}</Text>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', }}>
                                     <Icon
                                         name='dollar-sign'

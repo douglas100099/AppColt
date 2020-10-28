@@ -53,6 +53,7 @@ export default class DiverReg extends React.Component {
             vehicleNameValid: true,
             imageCnhValid: true,
             imageCrlvValid: true,
+            loaderBtn: false,
         }
     }
 
@@ -257,6 +258,7 @@ export default class DiverReg extends React.Component {
 
     //register button press for validation
     onPressRegister() {
+        this.setState({ loaderBtn: true })
         const { onPressRegister } = this.props;
         LayoutAnimation.easeInEaseOut();
         const fnameValid = this.validateFirstName();
@@ -277,6 +279,7 @@ export default class DiverReg extends React.Component {
         if (fnameValid && lnameValid && mobileValid && emailValid && vehicleNumValid && vehicleNameValid && imageCnhValid && imageCrlvValid && cpfNumValid && renavamValid && dataValidadeValid && OrgaoEmissorValid && cnhValid && this.state.carType) {
             onPressRegister(this.state.fname, this.state.lname, this.state.mobile, this.state.email, this.state.vehicleNum, this.state.vehicleName, this.state.imageCrlv, this.state.imageCnh, this.state.carType, this.state.cpfNum, this.state.cnh, this.state.dataValidade, this.state.orgaoEmissor, this.state.renavam);
         }
+        this.setState({ loaderBtn: false })
     }
 
     render() {
@@ -655,6 +658,7 @@ export default class DiverReg extends React.Component {
                             <Button
                                 onPress={() => { this.onPressRegister() }}
                                 title='Cadastrar'
+                                disabled={this.state.loaderBtn}
                                 loading={loading}
                                 titleStyle={styles.buttonTitle}
                                 buttonStyle={styles.registerButton}

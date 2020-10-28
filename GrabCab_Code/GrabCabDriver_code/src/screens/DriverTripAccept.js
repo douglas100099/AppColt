@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal, Image, Platform, Alert, ActivityIndicator } from 'react-native';
 import { Icon } from 'react-native-elements';
 import Polyline from '@mapbox/polyline';
-import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
+import MapView, { PROVIDER_GOOGLE, Marker, AnimatedRegion, ProviderPropType } from 'react-native-maps';
 import { colors } from '../common/theme';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
@@ -17,16 +17,22 @@ import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import { Audio } from 'expo-av';
 import * as IntentLauncher from 'expo-intent-launcher';
+import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 
 import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
 import CarMakerSVG from '../SVG/CarMarkerSVG';
 import MarkerPicSVG from '../SVG/MarkerPicSVG';
 
-import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
-
 const soundObject = new Audio.Sound();
 Geocoder.init(google_map_key);
+
+const screen = Dimensions.get('window');
+const ASPECT_RATIO = screen.width / screen.height;
+const LATITUDE = 37.78825;
+const LONGITUDE = -122.4324;
+const LATITUDE_DELTA = 0.0922;
+const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
 export default class DriverTripAccept extends React.Component {
 
@@ -47,34 +53,21 @@ export default class DriverTripAccept extends React.Component {
         this.state = {
             region: null,
             starCount: 5,
-            geolocationFetchComplete: false,
             modalVisible: false,
-            alertModalVisible: false,
-            alertasom: false,
             coords: [],
-            radio_props: [
-                { label: languageJSON.cancel_reson_1, value: 0 },
-                { label: languageJSON.cancel_reson_2, value: 1 },
-                { label: languageJSON.cancel_reson_3, value: 2 },
-                { label: languageJSON.cancel_reson_4, value: 3 },
-                { label: languageJSON.cancel_reson_5, value: 4 }
-            ],
             value: 0,
             tasklist: [],
-            myLocation: {},
             driverDetails: null,
             curUid: '',
             id: 0,
             loader: false,
             distance: 0,
-            gotAddress: false,
             isBlocked: false,
             loaderBtn: false,
             chegouCorrida: false,
             acceptBtnDisable: false,
             intervalCheckGps: null
         }
-        //this.getLocationDriver();
     }
 
     _activate = () => {
@@ -165,7 +158,6 @@ export default class DriverTripAccept extends React.Component {
                             }
                         }
                     } else {
-                        console.log("ENTROU NO ELSE DO GRANTED")
                         this.requestPermission()
                     }
                 }
@@ -239,7 +231,7 @@ export default class DriverTripAccept extends React.Component {
             console.log('REMOVEU O WATCH')
             this.location.remove()
         }
-        if(this.state.intervalCheckGps){
+        if (this.state.intervalCheckGps) {
             clearInterval(this.state.intervalCheckGps);
             console.log('REMOVEU CHECK GPS INTERVAL')
         }
@@ -367,6 +359,7 @@ export default class DriverTripAccept extends React.Component {
         return this.location
     };
 
+    // SALVA NO BANCO A NOVA LOCALIZAÇÃO
     setLocationDB(lat, lng, angle) {
         let uid = firebase.auth().currentUser.uid;
         var latlng = lat + ',' + lng;
@@ -476,6 +469,11 @@ export default class DriverTripAccept extends React.Component {
             Alert.alert('Ops, essa corrida foi cancelada pelo passageiro')
             this.setState({ loader: false })
         } else {
+            var pagamentoObj = {
+                estimate: item.pagamento.estimate,
+                trip_cost: item.pagamento.trip_cost,
+                payment_mode: item.pagamento.payment_mode ? item.pagamento.payment_mode : null,
+            }
             var data = {
                 carType: item.carType,
                 customer: item.customer,
@@ -493,16 +491,14 @@ export default class DriverTripAccept extends React.Component {
                 drop: item.drop,
                 pickup: item.pickup,
                 imageRider: item.imageRider ? item.imageRider : null,
-                estimate: item.estimate,
                 estimateDistance: item.estimateDistance,
                 serviceType: item.serviceType,
                 status: "ACCEPTED",
                 total_trip_time: item.total_trip_time,
-                trip_cost: item.trip_cost,
                 trip_end_time: item.trip_end_time,
                 trip_start_time: item.trip_start_time,
                 tripdate: item.tripdate,
-                metodoPagamento: item.metodoPagamento ? item.metodoPagamento : null,
+                pagamento: pagamentoObj,
             }
 
             var riderData = {
@@ -520,21 +516,15 @@ export default class DriverTripAccept extends React.Component {
                 drop: item.drop,
                 otp: item.otp,
                 pickup: item.pickup,
-                estimate: item.estimate,
                 estimateDistance: item.estimateDistance,
                 serviceType: item.serviceType,
                 status: "ACCEPTED",
                 total_trip_time: item.total_trip_time,
-                trip_cost: item.trip_cost,
                 trip_end_time: item.trip_end_time,
                 trip_start_time: item.trip_start_time,
                 tripdate: item.tripdate,
-                metodoPagamento: item.metodoPagamento ? item.metodoPagamento : null,
+                pagamento: pagamentoObj,
             }
-            console.log('Distancia: ' + data.distance)
-            console.log('Trip cost: ' + data.trip_cost)
-            console.log('Preço estimado: ' + data.estimate)
-            console.log('Distancia estimada: ' + data.estimateDistance)
 
             if (this._isMounted) {
                 let dbRef = firebase.database().ref('users/' + this.state.curUid + '/my_bookings/' + item.bookingId + '/');
@@ -676,6 +666,7 @@ export default class DriverTripAccept extends React.Component {
         this.map.animateToRegion(this.state.region, 1000)
     }
 
+
     render() {
         const { region } = this.state;
         return (
@@ -740,6 +731,7 @@ export default class DriverTripAccept extends React.Component {
                                             >
 
                                                 <Marker.Animated
+                                                    ref={marker => { this.marker = marker }}
                                                     coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
                                                     anchor={{ x: 0, y: 0 }}
                                                     style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
@@ -837,7 +829,7 @@ export default class DriverTripAccept extends React.Component {
                                                                 color={colors.DEEPBLUE}
                                                             />
                                                         </View>
-                                                        <Text style={styles.txtTempo}>{item.payment_mode}</Text>
+                                                        <Text style={styles.txtTempo}>{item.pagamento.payment_mode}</Text>
                                                     </View>
                                                 </View>
                                                 <View style={styles.viewmainBtn}>
@@ -875,13 +867,14 @@ export default class DriverTripAccept extends React.Component {
                             >
                                 {region ?
                                     <Marker.Animated
-                                        coordinate={{ latitude: region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
+                                        ref={marker => { this.marker = marker }}
+                                        coordinate={{ latitude: region ? this.state.region.latitude : 0.00, longitude: region ? this.state.region.longitude : 0.00 }}
                                         anchor={{ x: 0, y: 0 }}
                                         style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
                                     >
                                         <CarMakerSVG
-                                            height={45}
-                                            width={45}
+                                            height={40}
+                                            width={40}
                                         />
                                     </Marker.Animated>
                                     : null}
@@ -956,6 +949,10 @@ export default class DriverTripAccept extends React.Component {
         )
     }
 }
+
+DriverTripAccept.propTypes = {
+    provider: ProviderPropType,
+};
 
 //Screen Styling
 const styles = StyleSheet.create({
@@ -1257,7 +1254,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         marginRight: 15,
         alignItems: 'center',
-        width: 100,
+        paddingHorizontal: 15,
         borderRadius: 50,
         height: 25,
         backgroundColor: colors.GREY1,

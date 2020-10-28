@@ -91,9 +91,6 @@ export default class DriverIncomePage extends React.Component {
 
     }
 
-
-
-
     eraningCalculation() {
         if (this.state.myBooking) {
             let today = new Date();
@@ -209,6 +206,9 @@ export default class DriverIncomePage extends React.Component {
         return (
 
             <View style={styles.mainView}>
+
+                {/* GANHOS MENSAIS E SEMANAIS, FLEX: 1*/}
+
                 <View style={styles.view1}>
                     <View style={styles.header}>
                         <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.WHITE, textAlign: 'center' }}>Carteira</Text>
@@ -268,22 +268,8 @@ export default class DriverIncomePage extends React.Component {
                     </View>
                 </View>
 
-                {/*<View style={styles.view2}>
-                    <View style={styles.headerView2}>
-                        <View style={{ marginHorizontal: 20, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', }}>
-                            <Text style={styles.selecDia}>Selecionar dia: 10/02/2020</Text>
-                            <Icon
-                                name="search"
-                                type="feather"
-                                size={20}
-                                color={colors.WHITE}
-                            />
-                        </View>
-                    </View>
-                    <View style={styles.viewModal}>
-                        <RideList data={this.state.myBooking} onPressButton={(item, index) => { this.goDetails(item, index) }}></RideList>
-                    </View>
-                </View>*/}
+                {/* EXIBIÇÃO DO CHARTS, FLEX: 1 */}
+
                 <View style={{ flex: 1 }}>
                     <BarChart
                         data={{
@@ -316,22 +302,30 @@ export default class DriverIncomePage extends React.Component {
                     />
 
                 </View>
-                <ScrollView style={{ flex: 1 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: 5, marginBottom: 10, height: 50, backgroundColor: colors.GREY3 }}>
-                        <Icon
-                            name='ios-wallet'
-                            type='ionicon'
-                            color='#32db64'
-                        />
+
+                {/* SCROLLVIEW, FLEX: 1 */}
+
+                <ScrollView style={{flex: 0.5}}>
+                <View style={{justifyContent: 'center'}}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: 5, marginBottom: 10, marginTop: 15, height: 50, backgroundColor: colors.GREY3 }}>
+                        <View style={{marginLeft: 15}}>
+                            <Icon
+                                name='ios-wallet'
+                                type='ionicon'
+                                color='#32db64'
+                            />
+                        </View>
                         <Text style={{ marginLeft: 10, fontSize: 16, fontFamily: 'Inter-Regular', color: colors.BLACK }}>Saldo disponível:</Text>
                         <Text style={{ marginLeft: 5, fontSize: 16, fontFamily: 'Inter-Bold', color: '#32db64' }}>R$451,00</Text>
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: 5, marginBottom: 20, height: 50, backgroundColor: colors.GREY3 }}>
-                        <Icon
-                            name='ios-trending-down'
-                            type='ionicon'
-                            color={colors.RED}
-                        />
+                        <View style={{marginLeft: 15}}>
+                            <Icon
+                                name='ios-trending-down'
+                                type='ionicon'
+                                color={colors.RED}
+                            />
+                        </View>
                         <Text style={{ marginLeft: 10, fontSize: 16, fontFamily: 'Inter-Regular', color: colors.BLACK }}>Saldo de corridas:</Text>
                         <Text style={{ marginLeft: 5, fontSize: 16, fontFamily: 'Inter-Bold', color: colors.RED }}>-R$251,00</Text>
                     </View>
@@ -344,40 +338,8 @@ export default class DriverIncomePage extends React.Component {
                             <Text style={{ marginLeft: 5, fontSize: 16, fontFamily: 'Inter-Bold', color: colors.WHITE }}>Sacar saldo</Text>
                         </TouchableOpacity>
                     </View>
+                </View>
                 </ScrollView>
-
-
-
-
-
-                {/*
-                <View style={styles.bodyContainer}>
-                    <View style={styles.todaysIncomeContainer}>
-                       <Text style={styles.todayEarningHeaderText}>Hoje</Text>
-                       <Text style={styles.todayEarningMoneyText}>R$ {this.state.today?parseFloat(this.state.today).toFixed(2):'0'}</Text>
-                    </View>
-                    <View style={styles.listContainer2}>
-                      <View style={styles.totalEarning}>
-                        <Text style={styles.todayEarningHeaderText2}>Corridas hoje</Text>
-                        <Text style={styles.todayEarningMoneyText2}>R$ {this.state.thisMothh?parseFloat(this.state.thisMothh).toFixed(2):'0'}</Text>
-                      </View>
-                      <View style={styles.thismonthEarning}>
-                        <Text style={styles.todayEarningHeaderText2}>Corridas no mês</Text>
-                        <Text style={styles.todayEarningMoneyText2}>{this.state.qtdCorridas? '' : '0'}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.listContainer}>
-                      <View style={styles.totalEarning}>
-                        <Text style={styles.todayEarningHeaderText2}>Ganhos esse mês</Text>
-                        <Text style={styles.todayEarningMoneyText2}>R$ {this.state.thisMothh?parseFloat(this.state.thisMothh).toFixed(2):'0'}</Text>
-                      </View>
-                      <View style={styles.thismonthEarning}>
-                        <Text style={styles.todayEarningHeaderText2}>Ganhos no total</Text>
-                        <Text style={styles.todayEarningMoneyText2}>R$ {this.state.totalEarning?parseFloat(this.state.totalEarning).toFixed(2):'0'}</Text>
-                      </View>
-                    </View>
-               </View>
-               */}
             </View>
 
         );

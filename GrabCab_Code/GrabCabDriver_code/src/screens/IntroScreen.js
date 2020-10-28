@@ -31,7 +31,8 @@ export default class IntroScreen extends Component {
             phoneNumber: null,
             verificationId: null,
             verificationCode: null,
-            countryCode: '+55'
+            countryCode: '+55',
+            loaderBtn: false
         }
     }
 
@@ -47,7 +48,7 @@ export default class IntroScreen extends Component {
                             formattedNum,
                             this.recaptchaVerifier
                         );
-                        this.setState({ verificationId: verificationId });
+                        this.setState({ verificationId: verificationId, loaderBtn: true });
                     } catch (error) {
                         alert('Ops, tivemos um problema.');
                     }
@@ -60,6 +61,7 @@ export default class IntroScreen extends Component {
         } else {
             alert('Código do país inválido');
         }
+        this.setState({loaderBtn: false})
     }
 
     onSignIn = async () => {
@@ -83,7 +85,8 @@ export default class IntroScreen extends Component {
         this.setState({
             phoneNumber: null,
             verificationId: null,
-            verificationCode: null
+            verificationCode: null,
+            loaderBtn: false,
         });
     }
 
@@ -160,6 +163,7 @@ export default class IntroScreen extends Component {
                     {!!this.state.verificationId ?
                         <TouchableOpacity
                             onPress={() => this.onSignIn()}
+                            disabled={this.state.loaderBtn}
                             style={styles.materialButtonDark}
                         >
                             <Text style={styles.txtBtn}>Continuar</Text>

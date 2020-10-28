@@ -189,44 +189,6 @@ export default class DriverCompleteTrip extends React.Component {
             });
     }
 
-    //save track history
-    /*async getLocationDriver() {
-        try {
-            let { status } = await Permissions.askAsync(Permissions.LOCATION);
-            let verificarGPS = await Location.hasServicesEnabledAsync();
-            if (status === 'granted' && verificarGPS) {
-                var uid = firebase.auth().currentUser.uid;
-                const driverlocation = firebase.database().ref('users/' + uid + '/location');
-                driverlocation.on('value', location => {
-                    if (location.val()) {
-                        let loc = location.val()
-                        this.setState({
-                            region: {
-                                latitude: loc.lat,
-                                longitude: loc.lng,
-                                latitudeDelta: 0.0143,
-                                longitudeDelta: 0.0134,
-                            },
-                        })
-                        var keys = this.state.rideDetails.bookingId
-                        firebase.database().ref('bookings/' + keys + '/current/').update({
-                            lat: loc.lat,
-                            lng: loc.lng
-                        })
-                    }
-                })
-            } else {
-                this.setState({
-                    errorMessage: 'Permission to access location was denied',
-                });
-                this.openAlert();
-            }
-        } catch {
-            alert(error)
-            return error
-        }
-    } */
-
     openAlert() {
         Alert.alert(
             'Localização necessária',
@@ -305,16 +267,16 @@ export default class DriverCompleteTrip extends React.Component {
             var distance = distanceCalc(location1, location2);
             var originalDistance = (distance);
             if (originalDistance <= 0.8) {
-                let convenienceFee = (this.state.rideDetails.estimate*this.state.rateDetails.convenience_fees/100);
-                this.finalCostStore(item, this.state.rideDetails.estimate, pos, respJson.routes[0].legs[0].distance.value, convenienceFee, 
-                this.state.rideDetails.discount_amount ? this.state.rideDetails.discount_amount: 0, 
-                this.state.rideDetails.usedWalletMoney ? this.state.rideDetails.usedWalletMoney: 0)
+                let convenienceFee = (this.state.rideDetails.pagamento.estimate*this.state.rateDetails.convenience_fees/100);
+                this.finalCostStore(item, this.state.rideDetails.pagamento.estimate, pos, respJson.routes[0].legs[0].distance.value, convenienceFee, 
+                this.state.rideDetails.pagamento.discount_amount ? this.state.rideDetails.pagamento.discount_amount: 0, 
+                this.state.rideDetails.pagamento.usedWalletMoney ? this.state.rideDetails.pagamento.usedWalletMoney: 0)
             } else {
                 var fareCalculation = farehelper(respJson.routes[0].legs[0].distance.value, totalTimeTaken, this.state.rateDetails ? this.state.rateDetails : 1);
                 if (fareCalculation) {
                     this.finalCostStore(item, fareCalculation.grandTotal, pos, respJson.routes[0].legs[0].distance.value, fareCalculation.convenience_fees,
-                        this.state.rideDetails.discount_amount ? this.state.rideDetails.discount_amount : 0,
-                        this.state.rideDetails.usedWalletMoney ? this.state.rideDetails.usedWalletMoney : 0)
+                        this.state.rideDetails.pagamento.discount_amount ? this.state.rideDetails.pagamento.discount_amount : 0,
+                        this.state.rideDetails.pagamento.usedWalletMoney ? this.state.rideDetails.pagamento.usedWalletMoney : 0)
                 }
             }
         } else {
@@ -329,34 +291,37 @@ export default class DriverCompleteTrip extends React.Component {
 
     //driver current location fetching
     finalCostStore(item, finalFare, pos, distance, convenience_fees, discount, wallet) {
+        let tripCost = finalFare;
+        let customerPaid = (finalFare - discount);
+        let cashPaymentAmount = (finalFare - discount - wallet);
         let driverShare = (finalFare - convenience_fees);
-        let tripCost = (finalFare - discount - wallet)
+        
+        var pagamentoObj = {
+            trip_cost: tripCost > 0 ? parseFloat(tripCost).toFixed(2) : 0,
+            convenience_fees: parseFloat(convenience_fees).toFixed(2), 
+            customer_paid: customerPaid > 0 ? customerPaid.toFixed(2) : 0,
+            payment_status: "IN_PROGRESS",
+            driver_share: driverShare.toFixed(2),
+            cashPaymentAmount: cashPaymentAmount > 0 ? cashPaymentAmount.toFixed(2) : 0,
+        }
         var data = {
             status: "END",
-            payment_status: "IN_PROGRESS",
-            trip_cost: tripCost > 0 ? tripCost : 0,
             trip_end_time: new Date().toLocaleTimeString(dateStyle),
             finaldistance: distance,
-            convenience_fees: convenience_fees,
-            driver_share: driverShare,
-            customer_paid: tripCost > 0 ? tripCost : 0,
+            pagamento: pagamentoObj,
         }
         var riderData = {
             status: "END",
-            payment_status: "IN_PROGRESS",
-            trip_cost: tripCost > 0 ? tripCost : 0,
             trip_end_time: new Date().toLocaleTimeString(dateStyle),
             finaldistance: distance,
-            convenience_fees: convenience_fees,
-            customer_paid: tripCost > 0 ? tripCost : 0,
-
+            pagamento: pagamentoObj,
         }
 
         console.log('Distancia Final: ' + data.finaldistance)
-        console.log('Trip cost: ' + data.trip_cost)
-        console.log('Motorista ganhou: ' + data.driver_share)
-        console.log('Taxa: ' + data.convenience_fees)
-        console.log('Valor Pago: ' + data.customer_paid)
+        console.log('Trip cost: ' + pagamentoObj.trip_cost)
+        console.log('Motorista ganhou: ' + pagamentoObj.driver_share)
+        console.log('Taxa: ' + pagamentoObj.convenience_fees)
+        console.log('Valor Pago: ' + pagamentoObj.customer_paid)
 
         this.locationAdd(pos).then((response) => response.json()).then((responseJson) => {
             data.drop = { add: responseJson.results[0].formatted_address, lat: pos.latitude, lng: pos.longitude };
@@ -373,8 +338,43 @@ export default class DriverCompleteTrip extends React.Component {
             ganho: data.driver_share,
             hora: new Date().toLocaleTimeString(dateStyle),
             data: new Date().toString(),
-            taxa: data.convenience_fees,
+            taxa: pagamentoObj.convenience_fees,
         })
+        
+        // Cadastra a carteira no perfil do usuario
+        /*if(this.rideDetails.payment_mode){
+            // Armazena a TAXA, dinheiro, desconto e carteira da corrida
+            let taxaCorrida = convenience_fees;
+            let dinheiroCorrida = driverShare;
+            let descontoCorrida = discount ? discount : 0;
+            let carteiraCorrida = this.rideDetails.usedWalletMoney ? this.rideDetails.usedWalletMoney : 0;
+
+            // Verifica se existe carteira criada no banco de dados
+            let ref = firebase.database().ref('users/' + curUid + '/carteira/');
+            ref.on('value', carteiraData => {
+                let dataCarteira = carteiraData.val()
+                if(dataCarteira){
+                    // Armazena o valor que estava dentro de saldo
+                    let saldoAnterior = dataCarteira;
+
+                    if (this.rideDetails.payment_mode === 'Dinheiro'){
+                        firebase.database().ref('users/' + curUid + '/carteira/' + bookingId + '/').update({
+                            saldo: (saldoAnterior - taxaCorrida) + descontoCorrida
+                        })
+                    } else if (this.rideDetails.payment_mode === 'Carteira'){
+                        firebase.database().ref('users/' + curUid + '/carteira/' + bookingId + '/').update({
+                            saldo: saldoAnterior + dinheiroCorrida
+                        })
+                    } else if (this.rideDetails.payment_mode === 'Dinheiro/Carteira'){
+                        
+                    }
+                }else {
+                    firebase.database().ref('users/' + curUid + '/carteira/' + bookingId + '/').update({
+                        saldo: taxaCorrida
+                    })
+                }
+            })
+        }*/
         AsyncStorage.removeItem('startTime');
 
     }
@@ -387,7 +387,7 @@ export default class DriverCompleteTrip extends React.Component {
                 let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/');
                 userDbRef.update(riderData).then(() => {
                     this.setState({ loadingModal: false })
-                    this.props.navigation.replace('DriverFare', { allDetails: item, trip_cost: data.trip_cost, trip_end_time: data.trip_end_time })
+                    this.props.navigation.replace('DriverFare', { allDetails: item, trip_cost: data.pagamento.trip_cost, trip_end_time: data.trip_end_time })
                     this.sendPushNotification(item.customer)
                 })
             })

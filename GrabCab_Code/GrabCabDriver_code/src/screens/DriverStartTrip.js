@@ -179,41 +179,6 @@ export default class DriverStartTrip extends React.Component {
             });
     }
 
-    /*async getLocationDriver() {
-        try {
-            let { status } = await Permissions.askAsync(Permissions.LOCATION);
-            let verificarGPS = await Location.hasServicesEnabledAsync();
-            if (status === 'granted' && verificarGPS) {
-                var uid = firebase.auth().currentUser.uid;
-                const driverlocation = firebase.database().ref('users/' + uid + '/location');
-                driverlocation.on('value', location => {
-                    if (location.val()) {
-                        let loc = location.val()
-                        console.log(loc)
-                        this.setState({
-                            region: {
-                                latitude: loc.lat,
-                                longitude: loc.lng,
-                                latitudeDelta: 0.0143,
-                                longitudeDelta: 0.0134,
-                            },
-                            geolocationFetchComplete: true
-                        })
-                    }
-                    //console.log(this.state.region)
-                })
-            } else {
-                this.setState({
-                    errorMessage: 'Permission to access location was denied',
-                });
-                this.openAlert();
-            }
-        } catch {
-            alert(error)
-            return error
-        }
-    }*/
-
     checkStatus() {
         let tripRef = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my_bookings/' + this.state.rideDetails.bookingId + '/');
         tripRef.on('value', (snap) => {
@@ -622,7 +587,7 @@ export default class DriverStartTrip extends React.Component {
 
                         <Marker.Animated
                             coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
-                            style={{ transform: [{ rotate: this.state.region ? this.state.region.angle : 0 + "deg" }] }}
+                            style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
                             anchor={{ x: 0, y: 0 }}
                         >
                             <CarMarkerSVG

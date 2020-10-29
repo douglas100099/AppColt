@@ -106,8 +106,8 @@ export default class RideList extends React.Component {
                             </View>
                         </View>
                         <View style={styles.viewDinheiro}>
-                            <Text style={styles.txtMetodopgt}>{item.metodoPagamento ? item.metodoPagamento : 'Dinheiro'}</Text>
-                            <Text style={styles.txtDinheiro}>R$ {item.trip_cost ? parseFloat(item.trip_cost).toFixed(2) : '0'}</Text>
+                            <Text style={styles.txtMetodopgt}>{item.pagamento.payment_mode ? item.pagamento.payment_mode : 'Dinheiro'}</Text>
+                            <Text style={styles.txtDinheiro}>R$ {item.pagamento.trip_cost ? parseFloat(item.pagamento.trip_cost).toFixed(2) : '0'}</Text>
                         </View>
                     </View>
                 </View>

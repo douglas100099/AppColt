@@ -445,7 +445,7 @@ export default class DriverStartTrip extends React.Component {
     }
 
     getCancelReasons() {
-        const reasonListPath = firebase.database().ref('/cancel_reason/');
+        const reasonListPath = firebase.database().ref('/cancel_reason_driver/');
         reasonListPath.on('value', reasons => {
             if (reasons.val()) {
                 this.setState({

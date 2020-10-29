@@ -3,8 +3,6 @@ import {
     StyleSheet,
     View,
     Text,
-    TouchableWithoutFeedback,
-    ImageBackground,
     ScrollView,
     Dimensions,
     TouchableOpacity,
@@ -12,16 +10,10 @@ import {
     Platform,
     AsyncStorage
 } from 'react-native';
-import Polyline from '@mapbox/polyline';
-var { height } = Dimensions.get('window');
-import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
-import { Header, Rating, Avatar, Button, Icon } from 'react-native-elements';
-import Dash from 'react-native-dash';
+var { height, width } = Dimensions.get('window');
+import { Icon } from 'react-native-elements';
 import * as firebase from 'firebase';
 import { colors } from '../common/theme';
-import { google_map_key } from '../common/key';
-import languageJSON from '../common/language';
-var { width } = Dimensions.get('window');
 import ProfileSVG from '../SVG/ProfileSVG';
 
 export default class RideDetails extends React.Component {
@@ -115,8 +107,9 @@ export default class RideDetails extends React.Component {
                         </TouchableOpacity>
                     </View>
                 </View>
+                <ScrollView>
                 <View style={styles.mainMap}>
-                    <Text style={{ marginLeft: 20 }}>{this.state.paramData ? this.dataAtualFormatada() : null}</Text>
+                    <Text style={{ marginRight: 20, fontSize: 14, fontFamily: 'Inter-Bold', color: colors.BLACK, alignSelf: 'flex-end' }}>{this.state.paramData ? this.dataAtualFormatada() : null}</Text>
                     <View style={styles.viewEndereco}>
                         <View style={styles.endereco}>
                             <View style={styles.partida}>
@@ -185,19 +178,59 @@ export default class RideDetails extends React.Component {
                                     type='ionicon'
                                     color={colors.DEEPBLUE}
                                 />
-                                <Text style={styles.txtMetodo}>{this.state.paramData ? this.state.paramData.payment_mode ? this.state.paramData.payment_mode : 'Indefinido' : 'Indefinido'}</Text>
+                                <Text style={styles.txtMetodo}>{this.state.paramData ? this.state.paramData.pagamento.payment_mode ? this.state.paramData.pagamento.payment_mode : 'Indefinido' : 'Indefinido'}</Text>
                             </View>
-                            <Text style={styles.txtDinheiro}>R$ {this.state.paramData ? this.state.paramData.trip_cost : ' 0'}</Text>
+                            <Text style={styles.txtDinheiro}>R$ {this.state.paramData ? parseFloat(this.state.paramData.pagamento.trip_cost).toFixed(2) : ' 0'}</Text>
                         </View>
                     </View>
                 </View>
+                <View style={{marginTop: 10}}>
+                    <View style={{marginLeft: 15}}>
+                        <Text style={styles.txtPagamento}>Detalhes</Text>
+                    </View>
+                    <View style={{ marginTop: 5, backgroundColor: colors.GREY1, paddingVertical: 20, borderRadius: 15, marginHorizontal: 15,}}>
+                        <Text style={styles.itemDetalhes}>Preço da corrida: R$ {this.state.paramData && this.state.paramData.pagamento.trip_cost ? parseFloat(this.state.paramData.pagamento.trip_cost).toFixed(2) : ' 0'}</Text>
+                        <Text style={styles.itemDetalhes}>Preço estimado da corrida: R$ {this.state.paramData && this.state.paramData.pagamento.estimate ? parseFloat(this.state.paramData.pagamento.estimate).toFixed(2) : ' 0'}</Text>
+
+                        {this.state.paramData ?
+                        (this.state.paramData.pagamento.discount_amount > 0 ?
+                        <Text style={styles.itemDetalhes}>Desconto aplicado: R$ {parseFloat(this.state.paramData.pagamento.discount_amount).toFixed(2)}</Text>
+                        : null)
+                        : null}
+
+                        {this.state.paramData ?
+                        (this.state.paramData.pagamento.cashPaymentAmount > 0 ?
+                        <Text style={styles.itemDetalhes}>Valor pago dinheiro: R$ {parseFloat(this.state.paramData.pagamento.cashPaymentAmount).toFixed(2)}</Text>
+                        : null)
+                        : null}
+
+                        {this.state.paramData ?
+                        (this.state.paramData.pagamento.usedWalletMoney > 0 ?
+                        <Text style={styles.itemDetalhes}>Valor pago carteira: R$ {parseFloat(this.state.paramData.pagamento.usedWalletMoney).toFixed(2)}</Text>
+                        : null)
+                        : null}
+
+                        {this.state.paramData ?
+                        (this.state.paramData.pagamento.customer_paid > 0 ?
+                        <Text style={styles.itemDetalhes}>Pago pelo passageiro: R$ {parseFloat(this.state.paramData.pagamento.customer_paid).toFixed(2)}</Text>
+                        : null)
+                        : null}
+                           
+                        <Text style={styles.itemDetalhes}>Método de pagamento: {this.state.paramData && this.state.paramData.pagamento.payment_mode ? parseFloat(this.state.paramData.pagamento.payment_mode).toFixed(2) : 'Dinheiro'}</Text>
+
+                        <Text style={styles.itemDetalhes}>Ganho do motorista: R$ {this.state.paramData && this.state.paramData.pagamento.driver_share ? parseFloat(this.state.paramData.pagamento.driver_share).toFixed(2) : ' 0'}</Text>
+                        
+                        <Text style={styles.itemDetalhes}>Taxa do Colt: R$ {this.state.paramData && this.state.paramData.pagamento.convenience_fees ? parseFloat(this.state.paramData.pagamento.convenience_fees).toFixed(2) : ' 0'}</Text>
+                    </View>
+                </View>
                 <View style={styles.viewBtn}>
-                    <View style={{ flex: 0.8, justifyContent: 'flex-end' }}>
+                    <View style={{justifyContent: 'flex-end' }}>
                         <TouchableOpacity style={styles.btn}>
                             <Text style={{ fontSize: 16, color: colors.WHITE, fontFamily: 'Inter-Bold' }}>Relatar problema</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
+                </ScrollView>
             </View>
         )
     }
@@ -229,16 +262,18 @@ const styles = StyleSheet.create({
     },
 
     mainMap: {
-        flex: 0.5,
+        //flex: 2,
+        height: 180,
+        marginBottom: 15,
     },
 
     viewEndereco: {
-        flex: 0.8,
+        flex: 2,
         justifyContent: 'center',
     },
 
     endereco: {
-        flex: 0.7,
+        flex: 1,
         borderRadius: 15,
         marginHorizontal: 15,
         borderWidth: 1,
@@ -277,11 +312,12 @@ const styles = StyleSheet.create({
     },
 
     viewDriver: {
-        flex: 0.4,
+        height: 120,
+        marginBottom: 15,
     },
 
     viewPassageiro: {
-        flex: 0.2,
+        flex: 0.4,
         justifyContent: 'center',
     },
 
@@ -293,7 +329,7 @@ const styles = StyleSheet.create({
     },
 
     viewInfoPassageiro: {
-        flex: 0.5,
+        flex: 1,
         justifyContent: 'center',
     },
 
@@ -315,8 +351,8 @@ const styles = StyleSheet.create({
     },
 
     imagemPerfil: {
-        height: 70,
-        width: 70,
+        height: 60,
+        width: 60,
         borderWidth: 2,
         borderColor: colors.GREY2,
         borderRadius: 100,
@@ -338,15 +374,12 @@ const styles = StyleSheet.create({
     },
 
     viewPgt: {
-        flex: 0.3,
-
+        height: 110,
+        justifyContent: 'center',
     },
 
     viewPagamento: {
-        flex: 0.2,
-        marginBottom: 15,
         marginLeft: 15,
-
     },
 
     txtPagamento: {
@@ -356,8 +389,9 @@ const styles = StyleSheet.create({
     },
 
     viewInfosPgt: {
-        flex: 0.5,
+        flex: 0.7,
         marginHorizontal: 15,
+        marginTop: 5,
         borderRadius: 15,
         backgroundColor: colors.GREY1,
     },
@@ -384,16 +418,26 @@ const styles = StyleSheet.create({
     },
 
     viewBtn: {
-        flex: 0.4,
+        marginTop: 20,
+        paddingBottom: 10,
         justifyContent: 'flex-end',
     },
 
     btn: {
-        flex: 0.5,
-        maxHeight: 60,
+        height: 60,
+        borderRadius: 15,
+        marginHorizontal: 15,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: colors.DEEPBLUE,
     },
+
+    itemDetalhes: {
+        fontFamily: 'Inter-Regular',
+        marginBottom: 5,
+        fontSize: 14,
+        color: colors.BLACK,
+        marginLeft: 15,
+    }
 
 });

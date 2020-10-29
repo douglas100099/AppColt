@@ -39,14 +39,14 @@ export default class RideListPage extends React.Component {
 
     //go to ride details page
     goDetails(item, index){
-        if(item && item.trip_cost >0){
+        if(item && item.pagamento.trip_cost >0){
             item.roundoffCost = Math.round(item.trip_cost).toFixed(2);
-            item.roundoff = (Math.round(item.roundoffCost)-item.trip_cost).toFixed(2)
+            item.roundoff = (Math.round(item.roundoffCost)-item.pagamento.trip_cost).toFixed(2)
             this.props.navigation.replace('RideDetails',{data:item});
         
         }else{
-            item.roundoffCost = Math.round(item.estimate).toFixed(2);
-            item.roundoff = (Math.round(item.roundoffCost)-item.estimate).toFixed(2)
+            item.roundoffCost = Math.round(item.pagamento.estimate).toFixed(2);
+            item.roundoff = (Math.round(item.roundoffCost)-item.pagamento.estimate).toFixed(2)
             this.props.navigation.replace('RideDetails',{data:item});
         }
         

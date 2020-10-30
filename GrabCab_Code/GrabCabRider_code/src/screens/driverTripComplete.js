@@ -1,46 +1,50 @@
 import React from 'react';
-import { StyleSheet,
+import {
+    StyleSheet,
     View,
     Text,
     FlatList,
-    TouchableWithoutFeedback,
     Platform,
     Image,
     Modal,
     Dimensions,
-    AsyncStorage
+    AsyncStorage,
 } from 'react-native';
-import {Divider,Button, Header} from 'react-native-elements';
+import { Button, } from 'react-native-elements';
 import StarRating from 'react-native-star-rating';
 import { colors } from '../common/theme';
-var { width} = Dimensions.get('window');
+var { width } = Dimensions.get('window');
 import * as firebase from 'firebase';
 import { RequestPushMsg } from '../common/RequestPushMsg';
-import  languageJSON  from '../common/language';
-import dateStyle from '../common/dateStyle';
+import languageJSON from '../common/language';
+import { NavigationActions, StackActions } from 'react-navigation';
+
+import CircleLineTriangle from '../../assets/svg/CircleLineTriangle';
+import Verified from '../../assets/svg/Verified';
 
 export default class DriverTripComplete extends React.Component {
-    constructor(props){
+    constructor(props) {
         super(props);
         this.state = {
             starCount: 0,
-            title: '', 
-            alertModalVisible:false,
-            settings:{
-                code:'',
-                symbol:'',
-                cash:false,
-                wallet:false
-            }
+            title: '',
+            alertModalVisible: false,
+            settings: {
+                code: '',
+                symbol: '',
+                cash: false,
+                wallet: false
+            },
+            btnSubmit: false,
         }
     }
 
     _retrieveSettings = async () => {
         try {
-          const value = await AsyncStorage.getItem('settings');
-          if (value !== null) {
-            this.setState({settings:JSON.parse(value)});
-          }
+            const value = await AsyncStorage.getItem('settings');
+            if (value !== null) {
+                this.setState({ settings: JSON.parse(value) });
+            }
         } catch (error) {
             console.log("Asyncstorage issue 7");
         }
@@ -48,190 +52,175 @@ export default class DriverTripComplete extends React.Component {
 
     componentDidMount() {
         var pdata = this.props.navigation.getParam('data');
-        if(pdata){
+        if (pdata) {
+            address = [{
+                key: 'pickup',
+                place: pdata.pickup.add,
+                type: 'pickup'
+            }, {
+                key: 'drop',
+                place: pdata.drop.add,
+                type: 'drop'
+            }]
+            this.setState({
+                getDetails: pdata,
+                pickAndDrop: address
+            }, () => {
 
-         address=[{
-             key:'pickup',
-             place:pdata.pickup.add,
-             type:'pickup'
-         },{
-            key:'drop',
-            place:pdata.drop.add,
-            type:'drop'
-         }]
-         this.setState({
-             getDetails:pdata,
-             pickAndDrop:address
-         },()=>{
-
-         })
+            })
         }
         this._retrieveSettings();
     }
 
-
     //rating
     onStarRatingPress(rating) {
         this.setState({
-          starCount: rating
+            starCount: rating
         })
     }
-      
-    skipRating(){
-        firebase.database().ref('users/'+firebase.auth().currentUser.uid+'/my-booking/'+this.state.getDetails.bookingKey +'/').update({
-            skip:true,
-            rating_queue:false
-        }).then(()=>{
-            this.props.navigation.navigate('Map');
-        });
-    }
 
-
-    submitNow(){
-        if(this.state.starCount>0){
-            firebase.database().ref('users/'+this.state.getDetails.driver+'/ratings/details').push({
-                user:firebase.auth().currentUser.uid,
-                rate:this.state.starCount
-            }).then((res)=>{
-                let path = firebase.database().ref('users/'+this.state.getDetails.driver+'/ratings/');
-                    path.once('value',snapVal=>{
-                      if(snapVal.val()){
-                          // rating calculation
-                          let ratings = snapVal.val().details;
-                          var total = 0;
-                          var count = 0;
-                          for(let key in ratings){
-                              count = count+1;
-                              total = total + ratings[key].rate;
-                          }
-                         let fRating = total/count;
-                         if(fRating){
-                             //avarage Rating submission
-                             firebase.database().ref('users/'+this.state.getDetails.driver+'/ratings/').update({userrating:parseFloat(fRating).toFixed(1)}).then(()=>{
-                                this.setState({alertModalVisible:true}); 
-                                //Rating for perticular booking 
-                                firebase.database().ref('users/'+this.state.getDetails.driver+'/my_bookings/'+this.state.getDetails.bookingKey +'/').update({
-                                    rating:this.state.starCount,
-                                }).then(()=>{
-                                    firebase.database().ref('users/'+firebase.auth().currentUser.uid+'/my-booking/'+this.state.getDetails.bookingKey +'/').update({
-                                        skip:true,
-                                        rating_queue:false
-                                    })
-                                    this.sendPushNotification(this.state.getDetails.driver,this.state.getDetails.bookingKey,'you got '+this.state.starCount+' start rating ')
-                                });
-                             })
-                         }
-                      }
-                    }) 
-            }) 
-        }else{}
-        
-    }
-
-    sendPushNotification(customerUID,bookingId,msg){
-        const customerRoot=firebase.database().ref('users/'+customerUID);
-        customerRoot.once('value',customerData=>{
-            if(customerData.val()){
-                let allData = customerData.val()
-                RequestPushMsg(allData.pushToken?allData.pushToken:null,msg)
-            }
+    submitNow() {
+        this.setState({ btnSubmit: true })
+        firebase.database().ref('users/' + this.state.getDetails.driver + '/ratings/details').push({
+            user: firebase.auth().currentUser.uid,
+            rate: this.state.starCount > 0 ? this.state.starCount : 5
+        }).then((res) => {
+            let path = firebase.database().ref('users/' + this.state.getDetails.driver + '/ratings/');
+            path.once('value', snapVal => {
+                if (snapVal.val()) {
+                    // rating calculation
+                    let ratings = snapVal.val().details;
+                    var total = 0;
+                    var count = 0;
+                    for (let key in ratings) {
+                        count = count + 1;
+                        total = total + ratings[key].rate;
+                    }
+                    let fRating = total / count;
+                    if (fRating) {
+                        //avarage Rating submission
+                        firebase.database().ref('users/' + this.state.getDetails.driver + '/ratings/').update({ userrating: parseFloat(fRating).toFixed(1) }).then(() => {
+                            this.setState({ alertModalVisible: true });
+                            //Rating for perticular booking 
+                            firebase.database().ref('users/' + this.state.getDetails.driver + '/my_bookings/' + this.state.getDetails.bookingKey + '/').update({
+                                rating: this.state.starCount > 0 ? this.state.starCount : 5,
+                            }).then(() => {
+                                firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my-booking/' + this.state.getDetails.bookingKey + '/').update({
+                                    skip: true,
+                                    rating_queue: false
+                                })
+                            });
+                        })
+                    }
+                }
+            })
         })
     }
 
     alertModal() {
-        return(
-          <Modal
-              animationType="none"
-              transparent={true}
-              visible={this.state.alertModalVisible}
-              onRequestClose={() => {
-              this.setState({alertModalVisible:false})
-          }}>
-          <View style={styles.alertModalContainer}>
-            <View style={styles.alertModalInnerContainer}>
-  
-              <View style={styles.alertContainer}>
-              
-                  <Text style={styles.rideCancelText}>{languageJSON.no_driver_found_alert_title}</Text>
-  
-                  <View style={styles.horizontalLLine}/>
-                  
-                  <View style={styles.msgContainer}>
-                      <Text style={styles.cancelMsgText}>{languageJSON.thanks}</Text>
-                  </View>
-                  <View style={styles.okButtonContainer}>
-                      <Button
-                          title={languageJSON.no_driver_found_alert_OK_button}
-                          titleStyle={styles.signInTextStyle}
-                          onPress={()=>{this.setState({alertModalVisible: false,currentBookingId:null},()=>{this.props.navigation.navigate('Map')})}}
-                          buttonStyle={styles.okButtonStyle}
-                          containerStyle={styles.okButtonContainerStyle}
-                      />
-                  </View>
-  
-              </View>
-              
-            </View>
-          </View>
-  
-        </Modal>
+        return (
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={this.state.alertModalVisible}
+                onRequestClose={() => {
+                    this.setState({ alertModalVisible: false })
+                }}>
+                <View style={styles.alertModalContainer}>
+                    <View style={styles.alertModalInnerContainer}>
+
+                        <View style={styles.alertContainer}>
+
+                            <View style={styles.horizontalLLine} />
+
+                            <View style={styles.msgContainer}>
+                                <Text style={styles.cancelMsgText}>{languageJSON.thanks}</Text>
+                            </View>
+                            <View style={styles.okButtonContainer}>
+                                <Button
+                                    title={languageJSON.no_driver_found_alert_OK_button}
+                                    titleStyle={styles.signInTextStyle}
+                                    onPress={() => {
+                                        this.setState({ alertModalVisible: false, currentBookingId: null },
+                                            () => {
+                                                this.props
+                                                    .navigation
+                                                    .dispatch(StackActions.reset({
+                                                        index: 0,
+                                                        actions: [
+                                                            NavigationActions.navigate({
+                                                                routeName: 'Map',
+                                                            }),
+                                                        ],
+                                                    }))
+                                            })
+                                    }}
+                                    buttonStyle={styles.okButtonStyle}
+                                    containerStyle={styles.okButtonContainerStyle}
+                                />
+                            </View>
+
+                        </View>
+
+                    </View>
+                </View>
+
+            </Modal>
         )
     }
 
-    render(){
-        return(
+    render() {
+        return (
             <View style={styles.mainViewStyle}>
-                <Header 
-                    backgroundColor={colors.GREY.default}
-                    leftComponent={{icon:'md-menu', type:'ionicon', color:colors.WHITE, size: 30, component: TouchableWithoutFeedback,onPress: ()=>{this.props.navigation.toggleDrawer();} }}
-                    centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.receipt}</Text>}
-                    rightComponent={<Text style={styles.headerskip} onPress={()=>{this.skipRating()}}>{languageJSON.skip}</Text>} 
-                    containerStyle={styles.headerStyle}
-                    innerContainerStyles={styles.headerInnerStyle}
-                />
-                <View style={styles.dateViewStyle}>
-                        <Text style={styles.dateViewTextStyle}>{this.state.getDetails && this.state.getDetails.tripdate? new Date(this.state.getDetails.tripdate).toLocaleString(dateStyle):null}</Text>
-                </View>
-
-                <View style={styles.rateViewStyle}>
-        <Text style={styles.rateViewTextStyle}>{this.state.settings.symbol}{this.state.getDetails?this.state.getDetails.customer_paid>0?parseFloat(this.state.getDetails.customer_paid).toFixed(2):0:null}</Text>
+                <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 65 }}>
+                    <Verified width={100} height={100} />
+                    <Text style={{ marginTop: 15, marginBottom: 15, fontFamily: 'Inter-Bold', fontSize: 16 }}> Sua corrida terminou! </Text>
                 </View>
 
                 <View style={styles.addressViewStyle}>
+                    <View style={{ flexDirection: 'column', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 13 }}> {this.state.getDetails ?
+                            this.state.getDetails.trip_start_time[0] + this.state.getDetails.trip_start_time[1] + ':' +
+                            this.state.getDetails.trip_start_time[3] + this.state.getDetails.trip_start_time[4]
+                            : null} </Text>
+                        <CircleLineTriangle style={{ marginLeft: 25 }} />
+                        <Text style={{ fontSize: 13 }} > {this.state.getDetails ?
+                            this.state.getDetails.trip_end_time[0] + this.state.getDetails.trip_end_time[1] + ':' +
+                            this.state.getDetails.trip_end_time[3] + this.state.getDetails.trip_end_time[4]
+                            : null} </Text>
+                    </View>
                     <FlatList
                         data={this.state.pickAndDrop}
                         keyExtractor={(item) => item.key}
-                        renderItem={({item}) => 
+                        renderItem={({ item }) =>
                             <View style={styles.pickUpStyle}>
-                            {item.type == "pickup" ? 
-                                <View style={styles.greenDot}></View>
-                                :<View style={styles.redDot}></View>
-                            }
                                 <Text style={styles.addressViewTextStyle}>{item.place}</Text>
                             </View>
                         }
+                        height={80}
                     />
                 </View>
 
+                <View style={styles.rateViewStyle}>
+                    <Text style={styles.paymentMode}> {this.state.getDetails ? this.state.getDetails.payment_mode : null} </Text>
+                    <Text style={styles.rateViewTextStyle}>{this.state.settings.symbol}{this.state.getDetails ? this.state.getDetails.customer_paid > 0 ? this.state.getDetails.customer_paid.toFixed(2) : 0 : null}</Text>
+                </View>
+
                 <View style={styles.tripMainView}>
-                    <View style={{ flex:3.2, justifyContent:'center', alignItems:"center"}}>  
+                    <View style={{ flex: 3, justifyContent: 'center', alignItems: "center" }}>
+
                         <View style={styles.tripSummaryStyle}>
-                            <Divider style={[styles.divider, styles.summaryStyle]} />
                             <Text style={styles.summaryText}>{languageJSON.rate_ride} </Text>
-                            <Divider style={[styles.divider,styles.dividerStyle]} />
                         </View>
-                        <View style={{flex:3, justifyContent:'center',alignItems:"center"}}>
-                            {this.state.getDetails?
-                            
-                            this.state.getDetails.driver_image != ''?<Image source={{uri:this.state.getDetails.driver_image}} style={{height:78, width:78,borderRadius:78/2}} /> :
-                          
-                            <Image source={require('../../assets/images/profilePic.png')} style={{height:78, width:78,borderRadius:78/2}} />
-                        
-                        :null}
-                            </View>
+
+                        <View style={{ flex: 2, justifyContent: 'center', alignItems: "center" }}>
+                            {this.state.getDetails ?
+                                this.state.getDetails.driver_image != '' ? <Image source={{ uri: this.state.getDetails.driver_image }} style={{ height: 68, width: 68, borderRadius: 78 / 2 }} /> :
+                                    <Image source={require('../../assets/images/profilePic.png')} style={{ height: 68, width: 68, borderRadius: 78 / 2 }} />
+                                : null}
+                        </View>
                         <View style={styles.tripSummaryStyle}>
-                            <Text style={styles.Drivername}>{this.state.getDetails?this.state.getDetails.driver_name:null}</Text>
-                           
+                            <Text style={styles.Drivername}>{this.state.getDetails ? this.state.getDetails.driver_name : null}</Text>
                         </View>
                     </View>
                     <View style={styles.ratingViewStyle}>
@@ -241,180 +230,229 @@ export default class DriverTripComplete extends React.Component {
                             starSize={40}
                             fullStar={'ios-star'}
                             halfStar={'ios-star-half'}
-                            emptyStar={'ios-star-outline'}
+                            emptyStar={'ios-star'}
                             iconSet={'Ionicons'}
-                            fullStarColor={colors.YELLOW.primary}
-                            emptyStarColor={colors.YELLOW.primary}
+                            fullStarColor={colors.DEEPBLUE}
+                            emptyStarColor={colors.GREY1}
                             halfStarColor={colors.YELLOW.primary}
                             rating={this.state.starCount}
                             selectedStar={(rating) => this.onStarRatingPress(rating)}
-                            buttonStyle={{padding:20}}
+                            buttonStyle={{ padding: 10 }}
                             containerStyle={styles.contStyle}
                         />
                     </View>
                 </View>
 
-                <View style={styles.confBtnStyle}>
-                    <Button 
-                        title={languageJSON.submit_rating}
-                        titleStyle={{fontFamily: 'Roboto-Bold',}}
+                <View style={[styles.confBtnStyle, {
+                    shadowOpacity: this.state.btnSubmit ? 0 : 0.2,
+                }]}>
+                    <Button
+                        title={"Confirmar"}
+                        titleStyle={{ fontFamily: 'Inter-Bold', }}
                         onPress={() => this.submitNow()}
                         buttonStyle={styles.myButtonStyle}
-                        disabled ={this.state.starCount>0 ? false:true}
-
+                        disabled={this.state.btnSubmit}
                     />
                 </View>
                 {
-                  this.alertModal()
+                    this.alertModal()
                 }
             </View>
         )
     }
 }
 const styles = StyleSheet.create({
-    headerStyle: { 
-        backgroundColor: colors.GREY.default, 
-        borderBottomWidth: 0 
+    headerStyle: {
+        backgroundColor: colors.GREY.default,
+        borderBottomWidth: 0
     },
     headerInnerStyle: {
-        marginLeft:10,
+        marginLeft: 10,
         marginRight: 10
     },
-    headerTitleStyle: { 
+    headerTitleStyle: {
         color: colors.WHITE,
-        fontFamily:'Roboto-Bold',
+        fontFamily: 'Roboto-Bold',
         fontSize: 20
     },
-    headerskip:{
+    headerskip: {
         color: colors.WHITE,
-        fontFamily:'Roboto-Regular',
-        fontSize: 16
-    },
-    dateViewStyle: {        
-        justifyContent:"center", 
-        flex:1,
-        marginTop: 20
-    },
-    dateViewTextStyle: {
         fontFamily: 'Roboto-Regular',
-        color: colors.GREY.btnPrimary, 
-        fontSize: 26,
-        textAlign:"center"
+        fontSize: 16
     },
     rateViewStyle: {
         alignItems: 'center',
-        flex:2
+        justifyContent: 'center',
+        backgroundColor: colors.GREY3,
+        borderColor: colors.GREY1,
+        borderRadius: 15,
+        height: 75,
+        marginHorizontal: 15,
+        marginTop: 10,
+        marginBottom: 10,
+    },
+    paymentMode: {
+        color: colors.BLACK,
+        fontFamily: 'Inter-Medium',
+        fontSize: 16,
+        position: 'absolute',
+        left: 15,
     },
     rateViewTextStyle: {
-        fontSize: 60,
+        fontSize: 25,
         color: colors.BLACK,
-        fontFamily: 'Roboto-Bold',
+        fontFamily: 'Inter-Bold',
         fontWeight: 'bold',
-        textAlign:"center"
+        position: 'absolute',
+        right: 20,
+        marginRight: 10
     },
     addressViewStyle: {
-        flex:3,
+        flex: 3,
         flexDirection: 'row',
-        paddingTop: 22,
-        paddingLeft: 10,
-        paddingRight: 10
+        alignItems: 'center',
+        marginLeft: 15,
+        marginRight: 15,
+        borderWidth: 1,
+        borderColor: colors.GREY2,
+        borderRadius: 10,
     },
     addressViewTextStyle: {
-        color: colors.GREY.secondary,
-        fontSize: 19,
-        fontFamily: 'Roboto-Regular',
-        marginLeft:15, 
-        marginRight:15,
-        marginTop: 15, 
-        lineHeight: 24
-    },
-    greenDot: {
-        backgroundColor: colors.GREEN.default,
-        width: 12,
-        height: 12,
-        borderRadius: 50
-    },
-    redDot: {
-        backgroundColor: colors.RED,
-        width: 12,
-        height: 12,
-        borderRadius: 50
-    },
-    divider:{
-        backgroundColor: colors.GREY.secondary, 
-        width:'20%',
-        height: 1,
-        top:'2.7%'
+        color: colors.BLACK,
+        fontSize: 14,
+        fontFamily: 'Inter-Medium',
+        marginRight: 15,
+        marginTop: 15
     },
     summaryText: {
         color: colors.GREY.btnPrimary,
         fontSize: 18,
-        textAlign:"center",
+        textAlign: "center",
         fontFamily: 'Roboto-Regular',
     },
     Drivername: {
-        color: colors.GREY.btnPrimary,
+        color: colors.BLACK,
         fontSize: 22,
-        textAlign:"center",
-        fontFamily: 'Roboto-Regular',
+        textAlign: "center",
+        fontFamily: 'Inter-Bold',
     },
-    mainViewStyle:{
-        flex: 1, 
-        backgroundColor: colors.WHITE, 
-        flexDirection: 'column', 
-        //marginTop: StatusBar.currentHeight
+    mainViewStyle: {
+        flex: 1,
+        backgroundColor: colors.WHITE,
+        flexDirection: 'column',
     },
-    pickUpStyle:{
-        flexDirection: 'row', 
-        alignItems: 'center'
+    pickUpStyle: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginLeft: 10,
+        marginRight: 10,
     },
-    tripMainView:{
-        flex:6,
-        flexDirection:"column", 
-        justifyContent:"center",
+    tripMainView: {
+        flex: 6,
+        flexDirection: "column",
+        justifyContent: "center",
+        marginTop: 10,
     },
-    ratingViewStyle:{
-        flex:1.8,
-        flexDirection:"row", 
-        justifyContent:"center"
+    ratingViewStyle: {
+        flex: 1.8,
+        flexDirection: "row",
+        justifyContent: "center"
     },
-    tripSummaryStyle:{
-        flex:1, 
-        flexDirection:"row", 
-        justifyContent:'center',
+    tripSummaryStyle: {
+        flex: 1,
+        flexDirection: "row",
+        justifyContent: 'center',
     },
-    confBtnStyle:{
-        flex:2, 
-        justifyContent:"flex-end",
-        marginBottom:'5%', 
-        alignItems: 'center'
+    confBtnStyle: {
+        flex: 2,
+        justifyContent: "flex-end",
+        marginBottom: '10%',
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
+        shadowOffset: { x: 0, y: 0 },
+        shadowRadius: 15,
     },
-    myButtonStyle:{
-        backgroundColor: colors.GREEN.default,
+    myButtonStyle: {
+        backgroundColor: colors.DEEPBLUE,
         width: 300,
         padding: 10,
-        borderColor: colors.TRANSPARENT,
-        borderWidth: 0,
-        borderRadius: 10
+        borderRadius: 50,
+        height: 50,
     },
-    contStyle:{
-        marginTop: 0, 
-        paddingBottom: Platform.OS=='android'?5:0
-    },summaryStyle:{
-        justifyContent:"flex-end" 
+    contStyle: {
+        marginTop: 0,
+        paddingBottom: Platform.OS == 'android' ? 5 : 0
     },
-    dividerStyle:{
-        justifyContent:"flex-start" 
+    summaryStyle: {
+        justifyContent: "flex-end"
+    },
+    dividerStyle: {
+        justifyContent: "flex-start"
     },
     //alert modal
-    alertModalContainer: {flex:1, justifyContent:'center', backgroundColor: colors.GREY.background},
-    alertModalInnerContainer: {height:200, width:(width*0.85), backgroundColor:colors.WHITE, alignItems:'center', alignSelf:'center', borderRadius:7},
-    alertContainer: {flex:2, justifyContent:'space-between', width: (width-100) },
-    rideCancelText: { flex:1,top:15, color:colors.BLACK, fontFamily: 'Roboto-Bold', fontSize:20, alignSelf: 'center'},
-    horizontalLLine: {width:(width-110), height:0.5, backgroundColor:colors.BLACK, alignSelf: 'center',},
-    msgContainer: {flex:2.5,alignItems:'center',justifyContent:'center'},
-    cancelMsgText: { color:colors.BLACK, fontFamily: 'Roboto-Regular', fontSize:15, alignSelf: 'center', textAlign: 'center'},
-    okButtonContainer:  {flex:1,width:(width*0.85),flexDirection:'row',backgroundColor:colors.GREY.iconSecondary, alignSelf:'center'},
-    okButtonStyle: {flexDirection:'row',backgroundColor:colors.GREY.iconSecondary, alignItems: 'center', justifyContent:'center'},
-    okButtonContainerStyle: {flex:1,width:(width*0.85),backgroundColor:colors.GREY.iconSecondary,},
+    alertModalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        backgroundColor: colors.GREY.background
+    },
+    alertModalInnerContainer: {
+        height: 200,
+        width: (width * 0.85),
+        backgroundColor: colors.WHITE,
+        alignItems: 'center',
+        alignSelf: 'center',
+        borderRadius: 7
+    },
+    alertContainer: {
+        flex: 2,
+        justifyContent: 'space-between',
+        width: (width - 100)
+    },
+    rideCancelText: {
+        flex: 1,
+        top: 15,
+        color: colors.BLACK,
+        fontFamily: 'Roboto-Bold',
+        fontSize: 20,
+        alignSelf: 'center'
+    },
+    horizontalLLine: {
+        width: (width - 110),
+        height: 0.5,
+        backgroundColor:
+            colors.BLACK,
+        alignSelf: 'center',
+    },
+    msgContainer: {
+        flex: 2.5,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    cancelMsgText: {
+        color: colors.BLACK,
+        fontFamily: 'Roboto-Regular',
+        fontSize: 15,
+        alignSelf: 'center',
+        textAlign: 'center'
+    },
+    okButtonContainer: {
+        flex: 1,
+        width: (width * 0.85),
+        flexDirection: 'row',
+        backgroundColor: colors.GREY.iconSecondary,
+        alignSelf: 'center'
+    },
+    okButtonStyle: {
+        flexDirection: 'row',
+        backgroundColor: colors.GREY.iconSecondary,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    okButtonContainerStyle: {
+        flex: 1,
+        width: (width * 0.85),
+        backgroundColor: colors.GREY.iconSecondary,
+    },
 });

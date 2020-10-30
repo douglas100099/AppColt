@@ -95,7 +95,6 @@ export default class WTransactionHistory extends React.Component {
                                 <Text style={styles.historyamounttextStyle}>{item.type + 'ed '+ this.state.settings.symbol + parseFloat(item.amount).toFixed(2)+ ' '+ languageJSON.form_wallet}</Text>
                             :null}
                                    
-                            <Text style={styles.textStyle}>{languageJSON.Transaction_Id} {item.txRef}</Text>
                             <Text style={styles.textStyle2}>{item.date}</Text>
                             </View>
                         </View>

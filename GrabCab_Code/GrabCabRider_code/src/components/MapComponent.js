@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
-import mapStyleCustom from '../../mapStyle.json';
+import IconCarMap from '../../assets/svg/IconCarMap';
+import { colors } from '../common/theme';
+import LocationUser from '../../assets/svg/LocationUser';
 
 export default class MapComponent extends Component {
     constructor(props) {
@@ -21,7 +23,7 @@ export default class MapComponent extends Component {
                 style={[mapStyle, { marginBottom: this.state.marginBottom }]}
                 initialRegion={mapRegion}
                 onMapReady={() => this.setState({ marginBottom: 1 })}
-                enablePoweredByContainer={false}
+                enablePoweredByContainer={true}
                 showsCompass={false}
                 showsScale={false}
                 rotateEnabled={false}
@@ -32,9 +34,18 @@ export default class MapComponent extends Component {
                         <Marker.Animated
                             coordinate={{ latitude: item.location ? item.location.lat : 0.00, longitude: item.location ? item.location.lng : 0.00 }}
                             key={index}
-                            image={require('../../assets/images/available_car.png')}
-                        //tracksViewChanges={this.state.tracksViewChanges}
                         >
+                            <IconCarMap
+                                width={35}
+                                height={35}
+                                style={{ transform: [{ rotate: item.location.angle+"deg" }],
+                                shadowColor: colors.BLACK,
+                                shadowOpacity: 0.2,
+                                shadowOffset: { x: 0.1, y: 0.1 },
+                                shadowRadius: 5,
+                                elevation: 3  
+                            }}
+                            />
                         </Marker.Animated>
                     )
                 })
@@ -43,9 +54,12 @@ export default class MapComponent extends Component {
                 {pickup ?
                     <Marker
                         coordinate={{ latitude: (pickup.latitude), longitude: (pickup.longitude) }}
-                        image={require('../../assets/images/markerUser.png')}
                         anchor={{ x: 0, y: 0 }}
                     >
+                        <LocationUser
+                            width={25}
+                            height={25}
+                        />
                     </Marker>
                     : null}
             </MapView.Animated>

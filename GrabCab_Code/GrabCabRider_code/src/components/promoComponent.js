@@ -45,14 +45,18 @@ export default class PromoComp extends React.Component {
 
 
   loadPromos(){
-    const getpromo=firebase.database().ref('offers/');
+    const getpromo = firebase.database().ref('offers/');
     getpromo.once('value',getpromo=>{
         if(getpromo.val()){
           let promoObj = getpromo.val();
           var allPromoData = [];
           for(key in promoObj){
-            promoObj[key].promoKey = key;
-            allPromoData.push(promoObj[key]);
+            if(promoObj[key].visible){
+              if(promoObj[key].visible == true ) {
+                promoObj[key].promoKey = key;
+                allPromoData.push(promoObj[key]);
+              }
+            }
           }
           if(allPromoData){
             this.setState({

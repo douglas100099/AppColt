@@ -1,6 +1,6 @@
 import React from 'react';
 import AppContainer from './src/navigation/AppNavigator';
-import {Asset} from 'expo-asset';
+import { Asset } from 'expo-asset';
 import * as Font from 'expo-font';
 import * as firebase from 'firebase'
 import Constants from 'expo-constants';
@@ -11,9 +11,12 @@ import {
   StyleSheet,
   Text,
   View,
+  Image,
+  LogBox,
   ImageBackground,
   Dimensions
 } from "react-native";
+import _ from 'lodash';
 import languageJSON from './src/common/language';
 
 var firebaseConfig = Constants.manifest.extra.firebaseConfig;
@@ -28,25 +31,30 @@ Notifications.setNotificationHandler({
   }),
 });
 
+LogBox.ignoreLogs(['Setting a timer']);
+const _console = _.clone(console);
+console.warn = message => {
+  if (message.indexOf('Setting a timer') <= -1) {
+    _console.warn(message);
+  }
+};
+
 export default class App extends React.Component {
 
   state = {
     assetsLoaded: false,
-    updateMsg:''
+    updateMsg: ''
   };
 
-  constructor(){
+  constructor() {
     super();
-    console.disableYellowBox = true;
+    LogBox.ignoreAllLogs(true)
   }
 
-//resource load at the time of app loading
+  //resource load at the time of app loading
   _loadResourcesAsync = async () => {
     return Promise.all([
       Asset.loadAsync([
-        require('./assets/images/background.png'),
-        require('./assets/images/logo.png'),
-        require('./assets/images/bg.png'),
         require('./assets/images/splash.png'),
       ]),
       Font.loadAsync({
@@ -92,22 +100,13 @@ export default class App extends React.Component {
       }
     }
   }
-  
+
   render() {
     return (
-        this.state.assetsLoaded ?
-          <AppContainer/>
+      this.state.assetsLoaded ?
+        <AppContainer />
         :
-        <View style={[styles.container, styles.horizontal]}>
-          <ImageBackground
-              source={require("./assets/images/splash.png")}
-              resizeMode="stretch"
-              style={styles.imagebg}
-          >
-            <ActivityIndicator/>
-            <Text style={{paddingBottom:100}}>{this.state.updateMsg}</Text>
-          </ImageBackground>
-        </View>
+        null
     );
   }
 }
@@ -124,7 +123,6 @@ const styles = StyleSheet.create({
     top: 0,
     width: Dimensions.get('window').width,
     height: Dimensions.get('window').height,
-    justifyContent: "flex-end",
     alignItems: 'center'
   }
 });

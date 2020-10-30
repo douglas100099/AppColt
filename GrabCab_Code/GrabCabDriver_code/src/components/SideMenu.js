@@ -20,14 +20,15 @@ export default class SideMenu extends React.Component{
             heightIphoneX :false,
             heightIphoneXsMax :false,
             sideMenuList: [
-                {key: 1, name: languageJSON.booking_request, navigationName: 'DriverTripAccept', icon: 'home', type: 'font-awesome', child: 'firstChild'},
-                {key: 2, name: languageJSON.profile_settings, navigationName: 'Profile', icon: 'ios-person-add', type: 'ionicon', child: 'secondChild'},
-                {key: 4, name: languageJSON.incomeText, navigationName: 'MyEarning', icon: 'md-wallet', type: 'ionicon', child: 'ninethChild'},
-                {key: 3, name: languageJSON.my_bookings, navigationName: 'RideList', icon: 'car-sports', type: 'material-community', child: 'thirdChild'},
-                {key: 9, name: languageJSON.about_us, navigationName: 'About', icon: 'info', type: 'entypo', child: 'ninethChild'},
-                {key: 10, name: languageJSON.sign_out, icon: 'sign-out', type: 'font-awesome', child: 'lastChild'}
+                {key: 1, name: languageJSON.booking_request, navigationName: 'DriverTripAccept', icon: 'ios-navigate', type: 'ionicon', child: 'firstChild'},
+                {key: 2, name: languageJSON.profile_settings, navigationName: 'Profile', icon: 'ios-person', type: 'ionicon', child: 'secondChild'},
+                {key: 4, name: languageJSON.incomeText, navigationName: 'MyEarning', icon: 'ios-wallet', type: 'ionicon', child: 'ninethChild'},
+                {key: 3, name: languageJSON.my_bookings, navigationName: 'RideList', icon: 'ios-speedometer', type: 'ionicon', child: 'thirdChild'},
+                {key: 9, name: languageJSON.about_us, navigationName: 'About', icon: 'ios-headset', type: 'ionicon', child: 'ninethChild'},
+                {key: 10, name: languageJSON.sign_out, icon: 'ios-log-out', type: 'ionicon', child: 'lastChild'}
             ],
-            profile_image:null
+            profile_image:null,
+            myBookingarr: []
         }
         
     }
@@ -44,9 +45,30 @@ export default class SideMenu extends React.Component{
                             driverActiveStatus:true
                         })
                     }
+                    if(currentUserData.val().ratings) {
+                        let ratings = currentUserData.val().ratings.userrating
+                        this.setState({rating: ratings })
+                    }
                 });    
             }
-        }) 
+        })
+        let ref = firebase.database().ref('users/' + curuser + '/ganhos');
+        ref.on('value', allBookings => {
+            if (allBookings.val()) {
+                let data = allBookings.val();
+                var myBookingarr = [];
+                for (let k in data) {
+                    data[k].bookingKey = k
+                    myBookingarr.push(data[k])
+                }
+
+                if (myBookingarr) {
+                    this.setState({ myBooking: myBookingarr.length }, () => {
+                    })
+
+                }
+            }
+        })
     }
 
     //check for device height(specially iPhones)
@@ -84,7 +106,7 @@ export default class SideMenu extends React.Component{
     render(){
         return(
             <View style={styles.mainViewStyle}>
-                <SideMenuHeader onPress={this.navigateToScreen("Profile") } headerStyle={styles.myHeader} userPhoto={this.state.profile_image} userEmail={this.state.email} userName ={this.state.firstName + ' '+ this.state.lastName}></SideMenuHeader> 
+                <SideMenuHeader onPress={this.navigateToScreen("Profile") } headerStyle={styles.myHeader} userPhoto={this.state.profile_image} userCorridas={this.state.myBooking} userRating={this.state.rating} userName ={this.state.firstName + ' '+ this.state.lastName}></SideMenuHeader> 
                 
                 <View style={styles.compViewStyle}>
                     <View style={[styles.vertialLine,{height: (width <= 320) ? width/1.53 : width/1.68 }]}></View>

@@ -21,6 +21,7 @@ const LONGITUDE_DELTA = 0.009;
 const LATITUDE = 22.6107983;
 const LONGITUDE = 88.4429171;
 import  languageJSON  from '../common/language';
+import CarMakerSVG from '../SVG/CarMarkerSVG';
 export default class TrackNow extends React.Component {
     
 constructor(props) {
@@ -85,14 +86,15 @@ async componentDidMount() {
     const { bId, alldata} = this.props;
     if(alldata){
         let paramData = alldata;
+        this.getMapRegion();
         //console.log('paramData',paramData)
         this.setState({
             allData: paramData,
-            startLoc: paramData.pickup.lat+','+ paramData.pickup.lng,
+            startLoc: this.state.latitude+','+ this.state.longitude,
             destinationLoc: paramData.drop.lat +','+ paramData.drop.lng
         },()=>{
-            //console.log(this.state.allData)
-            this.getDirections();
+            console.log(this.state.startLoc + ' ' + this.state.destinationLoc)
+            this.getDirections(this.state.startLoc, this.state.destinationLoc);
         })
     }
 }
@@ -140,9 +142,9 @@ requestCameraPermission = async () => {
 };
 
 // find your origin and destination point coordinates and pass it to our method.
-async getDirections() {
+async getDirections(startLoc, destinationLoc) {
     try {
-        let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${ this.state.startLoc }&destination=${ this.state.destinationLoc }&key=${ google_map_key }`)
+        let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=${ google_map_key }`)
         let respJson = await resp.json();
         console.log("respJson",respJson)
         let points = Polyline.decode(respJson.routes[0].overview_polyline.points);
@@ -154,7 +156,7 @@ async getDirections() {
         })
         this.setState({coords: coords},()=>{
             setTimeout(() => {
-                this.map.fitToCoordinates([{latitude: this.state.allData.pickup.lat, longitude: this.state.allData.pickup.lng}, {latitude: this.state.allData.drop.lat, longitude: this.state.allData.drop.lng}], {
+                this.map.fitToCoordinates([{latitude: this.state.latitude, longitude: this.state.longitude}, {latitude: this.state.allData.drop.lat, longitude: this.state.allData.drop.lng}], {
                     edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
                     animated: true,
                  })  
@@ -181,33 +183,31 @@ render() {
                     loadingEnabled
                     region={this.getMapRegion()}
                 >
+                {console.log(this.state.coords + ' Coords no pollyline 1')}
                 <MapView.Polyline 
                     coordinates={this.state.coords?this.state.coords:[{latitude:0.00,longitude:0.00}]}
-                    strokeWidth={5}
-                    strokeColor={colors.BLUE.default}
+                    strokeWidth={3}
+                    strokeColor={colors.DEEPBLUE}
                 /> 
-                <MapView.Polyline coordinates={this.state.routeCoordinates} strokeWidth={5} />    
+                {console.log(this.state.routeCoordinates + ' Coords no pollyline 2')}
+                <MapView.Polyline coordinates={this.state.routeCoordinates} strokeWidth={3} />
                 
                 <Marker.Animated
                     ref={marker => {
                     this.marker = marker;
                     }}
-                    image={require('../../assets/images/track_Car.png')}
                     coordinate={new AnimatedRegion({
                         latitude: this.state.latitude,
                         longitude: this.state.longitude,
                         latitudeDelta: LATITUDE_DELTA,
-            longitudeDelta: LONGITUDE_DELTA
+                        longitudeDelta: LONGITUDE_DELTA
                     })}
                     >
+                        <CarMakerSVG
+                            width={45}
+                            height={45}
+                        />
                 </Marker.Animated>
-
-                <Marker
-                    // ref={markerRef}
-                    coordinate={{latitude: this.state.allData?this.state.allData.pickup.lat: 0.00, longitude: this.state.allData?this.state.allData.pickup.lng:0.00}} 
-                    image={require('../../assets/images/rsz_2red_pin.png')}
-                    >
-                </Marker>
 
                 <Marker
                     coordinate={{latitude: this.state.allData?this.state.allData.drop.lat:0.00, longitude: this.state.allData?this.state.allData.drop.lng:0.00}}

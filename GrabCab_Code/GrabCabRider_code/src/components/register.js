@@ -1,30 +1,37 @@
 import React from 'react';
-import {View, Text, Dimensions,Modal, ScrollView, KeyboardAvoidingView, Image, TouchableWithoutFeedback, LayoutAnimation, Platform} from 'react-native';
+import { View, Text, Dimensions, Modal, ScrollView, KeyboardAvoidingView, Image, TouchableWithoutFeedback, LayoutAnimation, Platform } from 'react-native';
 import Background from './Background';
-import { Icon, Avatar,Button, Header, Input } from 'react-native-elements'
+import { Icon, Avatar, Button, Header, Input } from 'react-native-elements'
 import { colors } from '../common/theme';
 import * as firebase from 'firebase'; //Database
-var {  height } = Dimensions.get('window');
-import  languageJSON  from '../common/language';
-export default class Registration extends React.Component {
-    
-     constructor(props){
-        super(props);
-        this.state={
-          fname:this.props.reqData?this.props.reqData.profile.first_name:'',
-          lname:this.props.reqData?this.props.reqData.profile.last_name:'',
-          email:this.props.reqData?this.props.reqData.profile.email:'',
-          mobile:this.props.reqData?this.props.reqData.profile.mobile:'',
-          refferalId:'',
+var { height } = Dimensions.get('window');
+import languageJSON from '../common/language';
 
-          fnameValid: true,
-          lnameValid: true,
-          mobileValid: true,
-          emailValid: true,
-          reffralIdValid:true,
-          loadingModal:false
-        } 
-      }
+import { google_map_key } from '../common/key';
+import * as Location from 'expo-location';
+import * as Permissions from 'expo-permissions';
+import Geocoder from 'react-native-geocoding';
+
+export default class Registration extends React.Component {
+
+    constructor(props) {
+        super(props);
+        Geocoder.init(google_map_key);
+        this.state = {
+            fname: this.props.reqData ? this.props.reqData.profile.first_name : '',
+            lname: this.props.reqData ? this.props.reqData.profile.last_name : '',
+            email: this.props.reqData ? this.props.reqData.profile.email : '',
+            mobile: this.props.reqData ? this.props.reqData.profile.mobile : '',
+            refferalId: '',
+
+            fnameValid: true,
+            lnameValid: true,
+            mobileValid: true,
+            emailValid: true,
+            reffralIdValid: true,
+            loadingModal: false
+        }
+    }
 
     // first name validation
     validateFirstName() {
@@ -66,107 +73,139 @@ export default class Registration extends React.Component {
         return emailValid
     }
 
-  
+    _getLocationAsync = async () => {
+        console.log("ENTROU NO GET LOCATION ASYNC")
+        let { status } = await Permissions.askAsync(Permissions.LOCATION);
+        if (status !== 'granted') {
+            alert("Para acessar sua localização, é necessária permissão!");
+        } else {
+
+            let location = Platform.OS === 'android' ? await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 20000, }) :
+                await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 2000, })
+            if (location) {
+                var pos = {
+                    latitude: location.coords.latitude,
+                    longitude: location.coords.longitude,
+                };
+                var curuser = firebase.auth().currentUser.uid;
+                if (pos) {
+                    let latlng = pos.latitude + ',' + pos.longitude;
+                    fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
+                        .then((response) => response.json())
+                        .then((responseJson) => {
+                            //Setando a localização do usuario no firebase
+                            firebase.database().ref('users/' + curuser + '/location').update({
+                                add: responseJson.results[0].formatted_address,
+                                lat: pos.latitude,
+                                lng: pos.longitude
+                            })
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                        });
+                }
+            }
+        }
+    }
+
+
     //register button press for validation
-    onPressRegister(){
+    onPressRegister() {
         const { onPressRegister } = this.props;
         LayoutAnimation.easeInEaseOut();
         const fnameValid = this.validateFirstName();
         const lnameValid = this.validateLastname();
         const emailValid = this.validateEmail();
         const mobileValid = this.validateMobile();
-        
-       if ( fnameValid && lnameValid && emailValid && mobileValid) {
-           
-           if(this.state.refferalId != ''){
-              this.setState({loadingModal:true})
-               const userRoot=firebase.database().ref('users/');
-               userRoot.once('value',userData=>{
-                   if(userData.val()){
-                       let allUsers = userData.val();
-                       var flag = false;
-                       for(key in allUsers){
-                           if(allUsers[key].refferalId){
-                               if(this.state.refferalId.toLowerCase() == allUsers[key].refferalId){
-                                   flag = true;
-                                   var referralVia = {
-                                       userId:key,
-                                       refferalId:allUsers[key].refferalId
-                                   }
-                                   break;
-                               }else{
-                                   flag = false;
-                               }
-                           }
-                       }
-                       if(flag == true){            
-                         this.setState({reffralIdValid :true,loadingModal:false});
-                         onPressRegister( this.state.fname, this.state.lname, this.state.email, this.state.mobile, true,referralVia);
-                         this.setState({fname:'', lname:'',email: '', mobile:'',  password: '', confPassword: '',refferalId:''})
-                       }else{     
-                           this.refferalInput.shake();
-                           this.setState({reffralIdValid :false,loadingModal:false});
-                       }
-                   }
+
+        if (fnameValid && lnameValid && emailValid && mobileValid) {
+            this._getLocationAsync()
+
+            if (this.state.refferalId != '') {
+                this.setState({ loadingModal: true })
+                const userRoot = firebase.database().ref('users/');
+                userRoot.once('value', userData => {
+                    if (userData.val()) {
+                        let allUsers = userData.val();
+                        var flag = false;
+                        for (key in allUsers) {
+                            if (allUsers[key].refferalId) {
+                                if (this.state.refferalId.toLowerCase() == allUsers[key].refferalId) {
+                                    flag = true;
+                                    var referralVia = {
+                                        userId: key,
+                                        refferalId: allUsers[key].refferalId
+                                    }
+                                    break;
+                                } else {
+                                    flag = false;
+                                }
+                            }
+                        }
+                        if (flag == true) {
+                            this.setState({ reffralIdValid: true, loadingModal: false });
+                            onPressRegister(this.state.fname, this.state.lname, this.state.email, this.state.mobile, true, referralVia);
+                            this.setState({ fname: '', lname: '', email: '', mobile: '', password: '', confPassword: '', refferalId: '' })
+                        } else {
+                            this.refferalInput.shake();
+                            this.setState({ reffralIdValid: false, loadingModal: false });
+                        }
+                    }
                 })
-    
-           }else{
-               //refferal id is blank
-                onPressRegister( this.state.fname, this.state.lname, this.state.email, this.state.mobile, false, null);
-                this.setState({fname:'', lname:'',email: '', mobile:'',refferalId:''})
-           }
-           
+
+            } else {
+                //refferal id is blank
+                onPressRegister(this.state.fname, this.state.lname, this.state.email, this.state.mobile, false, null);
+                this.setState({ fname: '', lname: '', email: '', mobile: '', refferalId: '' })
+            }
+
         }
     }
-    
-    loading(){
-     return(
-        <Modal
+
+    loading() {
+        return (
+            <Modal
                 animationType="fade"
                 transparent={true}
                 visible={this.state.loadingModal}
                 onRequestClose={() => {
-                this.setState({loadingModal:false})
-            }}
+                    this.setState({ loadingModal: false })
+                }}
             >
-            <View style={{flex: 1, backgroundColor: "rgba(22,22,22,0.8)", justifyContent: 'center', alignItems: 'center' }}>
-                <View style={{width: '85%', backgroundColor: "#DBD7D9", borderRadius: 10, flex: 1, maxHeight: 70}}> 
-                <View style={{ alignItems: 'center',flexDirection:'row',flex:1,justifyContent:"center"}}>
-                     <Image
-                        style={{width:80,height:80,backgroundColor:colors.TRANSPARENT}}
-                        source={require('../../assets/images/loader.gif')}
-                        />
-                   <View style={{flex:1}}>
-                        <Text style={{color:"#000",fontSize:16,}}>{languageJSON.refferal_code_validation_modal}</Text>
+                <View style={{ flex: 1, backgroundColor: "rgba(22,22,22,0.8)", justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ width: '85%', backgroundColor: "#DBD7D9", borderRadius: 10, flex: 1, maxHeight: 70 }}>
+                        <View style={{ alignItems: 'center', flexDirection: 'row', flex: 1, justifyContent: "center" }}>
+                            <View style={{ flex: 1 }}>
+                                <Text style={{ color: "#000", fontSize: 16, }}>{languageJSON.refferal_code_validation_modal}</Text>
+                            </View>
+                        </View>
                     </View>
                 </View>
-                </View>
-            </View>
             </Modal>
-     )
+        )
     }
 
-    render(){
+    render() {
 
-        const { onPressBack, loading }=this.props
+        const { onPressBack, loading } = this.props
 
-        return(
+        return (
             <Background>
-                <Header 
+                <Header
                     backgroundColor={colors.TRANSPARENT}
-                    leftComponent={{icon:'ios-arrow-back', type:'ionicon', color:colors.WHITE, size: 35, component: TouchableWithoutFeedback,onPress: onPressBack }}
-                    containerStyle={styles.headerContainerStyle}  
+                    leftComponent={{ icon: 'ios-arrow-back', type: 'ionicon', color: colors.WHITE, size: 35, component: TouchableWithoutFeedback, onPress: onPressBack }}
+                    containerStyle={styles.headerContainerStyle}
                     innerContainerStyles={styles.headerInnerContainer}
                 />
                 <ScrollView style={styles.scrollViewStyle}>
                     <View style={styles.logo}>
                         <Image source={require('../../assets/images/logo.png')} />
                     </View>
-                    <KeyboardAvoidingView behavior={Platform.OS=='ios'?"padding":"padding"} style={styles.form}> 
+                    <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? "padding" : "padding"} style={styles.form}>
                         <View style={styles.containerStyle}>
                             <Text style={styles.headerStyle}>{languageJSON.registration_title}</Text>
 
-                            <View style={styles.textInputContainerStyle}> 
+                            <View style={styles.textInputContainerStyle}>
                                 <Icon
                                     name='user'
                                     type='font-awesome'
@@ -176,23 +215,23 @@ export default class Registration extends React.Component {
                                 />
                                 <Input
                                     ref={input => (this.fnameInput = input)}
-                                    editable={this.props.reqData.profile.first_name?false:true}
+                                    editable={this.props.reqData.profile.first_name ? false : true}
                                     underlineColorAndroid={colors.TRANSPARENT}
                                     placeholder={languageJSON.first_name_placeholder}
                                     placeholderTextColor={colors.WHITE}
                                     value={this.state.fname}
                                     keyboardType={'email-address'}
                                     inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text)=>{this.setState({fname: text})}}
+                                    onChangeText={(text) => { this.setState({ fname: text }) }}
                                     errorMessage={this.state.fnameValid ? null : languageJSON.first_name_blank_error}
                                     secureTextEntry={false}
                                     blurOnSubmit={true}
-                                    onSubmitEditing={() => { this.validateFirstName(); this.lnameInput.focus()}}
+                                    onSubmitEditing={() => { this.validateFirstName(); this.lnameInput.focus() }}
                                     errorStyle={styles.errorMessageStyle}
                                     inputContainerStyle={styles.inputContainerStyle}
                                     containerStyle={styles.textInputStyle}
                                 />
-                            </View>  
+                            </View>
 
                             <View style={styles.textInputContainerStyle}>
                                 <Icon
@@ -204,18 +243,18 @@ export default class Registration extends React.Component {
                                 />
                                 <Input
                                     ref={input => (this.lnameInput = input)}
-                                    editable={this.props.reqData.profile.last_name?false:true}
+                                    editable={this.props.reqData.profile.last_name ? false : true}
                                     underlineColorAndroid={colors.TRANSPARENT}
                                     placeholder={languageJSON.last_name_placeholder}
                                     placeholderTextColor={colors.WHITE}
                                     value={this.state.lname}
                                     keyboardType={'email-address'}
                                     inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text)=>{this.setState({lname: text})}}
+                                    onChangeText={(text) => { this.setState({ lname: text }) }}
                                     errorMessage={this.state.lnameValid ? null : languageJSON.last_name_blank_error}
                                     secureTextEntry={false}
                                     blurOnSubmit={true}
-                                    onSubmitEditing={() => { this.validateLastname(); this.emailInput.focus()}}
+                                    onSubmitEditing={() => { this.validateLastname(); this.emailInput.focus() }}
                                     errorStyle={styles.errorMessageStyle}
                                     inputContainerStyle={styles.inputContainerStyle}
                                     containerStyle={styles.textInputStyle}
@@ -233,7 +272,7 @@ export default class Registration extends React.Component {
                                 />
                                 <Input
                                     ref={input => (this.mobileInput = input)}
-                                    editable={this.props.reqData.profile.mobile?false:true}
+                                    editable={this.props.reqData.profile.mobile ? false : true}
                                     underlineColorAndroid={colors.TRANSPARENT}
                                     placeholder={languageJSON.mobile_no_placeholder}
                                     placeholderTextColor={colors.WHITE}
@@ -241,11 +280,11 @@ export default class Registration extends React.Component {
                                     keyboardType={'number-pad'}
                                     maxLength={11}
                                     inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text)=>{this.setState({mobile: text})}}
+                                    onChangeText={(text) => { this.setState({ mobile: text }) }}
                                     errorMessage={this.state.mobileValid ? null : languageJSON.mobile_no_blank_error}
                                     secureTextEntry={false}
                                     blurOnSubmit={true}
-                                    onSubmitEditing={() => { this.validateMobile(); this.passwordInput.focus()}}
+                                    onSubmitEditing={() => { this.validateMobile(); this.passwordInput.focus() }}
                                     errorStyle={styles.errorMessageStyle}
                                     inputContainerStyle={styles.inputContainerStyle}
                                     containerStyle={styles.textInputStyle}
@@ -261,18 +300,18 @@ export default class Registration extends React.Component {
                                 />
                                 <Input
                                     ref={input => (this.emailInput = input)}
-                                    editable={this.props.reqData.profile.email?false:true}
+                                    editable={this.props.reqData.profile.email ? false : true}
                                     underlineColorAndroid={colors.TRANSPARENT}
                                     placeholder={languageJSON.email_placeholder}
                                     placeholderTextColor={colors.WHITE}
                                     value={this.state.email}
                                     keyboardType={'email-address'}
                                     inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text)=>{this.setState({email: text})}}
+                                    onChangeText={(text) => { this.setState({ email: text }) }}
                                     errorMessage={this.state.emailValid ? null : languageJSON.valid_email_check}
                                     secureTextEntry={false}
                                     blurOnSubmit={true}
-                                    onSubmitEditing={() => { this.validateEmail(); this.mobileInput.focus()}}
+                                    onSubmitEditing={() => { this.validateEmail(); this.mobileInput.focus() }}
                                     errorStyle={styles.errorMessageStyle}
                                     inputContainerStyle={styles.inputContainerStyle}
                                     containerStyle={styles.textInputStyle}
@@ -287,7 +326,7 @@ export default class Registration extends React.Component {
                                     containerStyle={styles.iconContainer}
                                 />
 
-                                 <Input
+                                <Input
                                     ref={input => (this.refferalInput = input)}
                                     editable={true}
                                     underlineColorAndroid={colors.TRANSPARENT}
@@ -295,7 +334,7 @@ export default class Registration extends React.Component {
                                     placeholderTextColor={colors.WHITE}
                                     value={this.state.refferalId}
                                     inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text)=>{this.setState({refferalId: text})}}
+                                    onChangeText={(text) => { this.setState({ refferalId: text }) }}
                                     errorMessage={this.state.reffralIdValid == true ? null : languageJSON.refferal_id_not_match_error}
                                     secureTextEntry={false}
                                     blurOnSubmit={true}
@@ -305,51 +344,51 @@ export default class Registration extends React.Component {
                             </View>
                             <View style={styles.buttonContainer}>
                                 <Button
-                                    onPress={()=>{this.onPressRegister()}}
+                                    onPress={() => { this.onPressRegister() }}
                                     title={languageJSON.register_button}
                                     loading={loading}
                                     titleStyle={styles.buttonTitle}
                                     buttonStyle={styles.registerButton}
                                 />
                             </View>
-                            <View style={styles.gapView}/>
+                            <View style={styles.gapView} />
                         </View>
                     </KeyboardAvoidingView>
                 </ScrollView>
                 {this.loading()}
             </Background>
-        ); 
+        );
     }
 };
 
-const styles={
-    headerContainerStyle: { 
-        backgroundColor: colors.TRANSPARENT, 
-        borderBottomWidth: 0 ,
-        marginTop:0
+const styles = {
+    headerContainerStyle: {
+        backgroundColor: colors.TRANSPARENT,
+        borderBottomWidth: 0,
+        marginTop: 0
     },
     headerInnerContainer: {
-        marginLeft:10, 
+        marginLeft: 10,
         marginRight: 10
     },
     inputContainerStyle: {
-        borderBottomWidth:1,
+        borderBottomWidth: 1,
         borderBottomColor: colors.WHITE
     },
-    textInputStyle:{
-        marginLeft:10,
+    textInputStyle: {
+        marginLeft: 10,
     },
     iconContainer: {
-        paddingTop:8
+        paddingTop: 8
     },
     gapView: {
-        height:40,
-        width:'100%'
+        height: 40,
+        width: '100%'
     },
-    buttonContainer: { 
-        flexDirection:'row',
-        justifyContent:'center',
-        borderRadius:40
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        borderRadius: 40
     },
     registerButton: {
         backgroundColor: colors.SKY,
@@ -357,51 +396,51 @@ const styles={
         height: 50,
         borderColor: colors.TRANSPARENT,
         borderWidth: 0,
-        marginTop:30,
-        borderRadius:15,
+        marginTop: 30,
+        borderRadius: 15,
     },
-    buttonTitle: { 
-        fontSize:16 
+    buttonTitle: {
+        fontSize: 16
     },
     inputTextStyle: {
-        color:colors.WHITE,
-        fontSize:13,
-        marginLeft:0,
-        height:32,
+        color: colors.WHITE,
+        fontSize: 13,
+        marginLeft: 0,
+        height: 32,
     },
-    errorMessageStyle: { 
-        fontSize: 12, 
-        fontWeight:'bold',
-        marginLeft:0 
+    errorMessageStyle: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        marginLeft: 0
     },
-    containerStyle:{
-        flexDirection:'column',
-        marginTop:20
+    containerStyle: {
+        flexDirection: 'column',
+        marginTop: 20
     },
     form: {
         flex: 1,
     },
-    logo:{
-        width:'100%',
-        justifyContent:"flex-start",
-        marginTop:10,
-        alignItems:'center', 
+    logo: {
+        width: '100%',
+        justifyContent: "flex-start",
+        marginTop: 10,
+        alignItems: 'center',
     },
-    scrollViewStyle:{
+    scrollViewStyle: {
         height: height
     },
-    textInputContainerStyle:{
-        flexDirection:'row', 
-        alignItems: "center",  
-        marginLeft:20,
-        marginRight:20,
+    textInputContainerStyle: {
+        flexDirection: 'row',
+        alignItems: "center",
+        marginLeft: 20,
+        marginRight: 20,
         padding: 15,
     },
-    headerStyle:{
-        fontSize:18,
-        color:colors.WHITE,
-        textAlign:'center',
-        flexDirection:'row',
-        marginTop:0
+    headerStyle: {
+        fontSize: 18,
+        color: colors.WHITE,
+        textAlign: 'center',
+        flexDirection: 'row',
+        marginTop: 0
     },
 }

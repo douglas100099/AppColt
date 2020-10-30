@@ -9,7 +9,7 @@ export default class Background extends React.Component {
     return (
         <ImageBackground style={ styles.imgBackground } 
           resizeMode='cover' 
-          source={require('../../assets/images/background.png')}>
+          >
           {this.props.children}
         </ImageBackground>
     );

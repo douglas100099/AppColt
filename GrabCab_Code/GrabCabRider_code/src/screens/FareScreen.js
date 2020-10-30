@@ -738,7 +738,6 @@ export default class FareScreen extends React.Component {
                     flex: this.state.payDetails ? 1.8 : 2
                 }]}>
 
-                    {/* MAPA */}
                     {this.state.region && this.state.region.wherelatitude ?
                         <MapView
                             ref={map => { this.map = map }}

@@ -309,7 +309,6 @@ export default class DriverCompleteTrip extends React.Component {
             discount_amount: item.pagamento.discount_amount,
             promoCodeApplied: item.pagamento.promoCodeApplied,
             promoKey: item.pagamento.promoKey,
-            payment_status: item.pagamento.payment_status,
             cancellValue: item.pagamento.cancellValue,
         }
         var data = {
@@ -480,7 +479,7 @@ export default class DriverCompleteTrip extends React.Component {
     }
 
     centerFollowMap() {
-        this.map.animateToRegion(this.state.region, 1000)
+        this.map.animateToRegion(this.state.region, 500)
         setTimeout(() => { this.setState({ followMap: true, fitCordinates: false }) }, 1100)
     }
 

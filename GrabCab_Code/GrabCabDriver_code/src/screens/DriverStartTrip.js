@@ -412,7 +412,7 @@ export default class DriverStartTrip extends React.Component {
     }
 
     centerFollowMap() {
-        this.map.animateToRegion(this.state.region, 1000)
+        this.map.animateToRegion(this.state.region, 500)
         setTimeout(() => { this.setState({ followMap: true, fitCordinates: false }) }, 1100)
     }
 
@@ -473,6 +473,7 @@ export default class DriverStartTrip extends React.Component {
                 this.setState({
                     radio_props: reasons.val()
                 })
+                console.log(reasons.val())
             }
         })
     }

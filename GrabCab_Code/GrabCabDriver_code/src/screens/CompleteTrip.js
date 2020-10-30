@@ -101,7 +101,7 @@ export default class DriverCompleteTrip extends React.Component {
                         this.setState({
                             rateDetails: rates
                         }, () => {
-                            // console.log(this.state.rateDetails)
+                            console.log('TARIFA DIRETO DO OVO ' + rates.tarifa_base)
                         })
                     }
                 }
@@ -297,12 +297,20 @@ export default class DriverCompleteTrip extends React.Component {
         let driverShare = (finalFare - convenience_fees);
         
         var pagamentoObj = {
-            trip_cost: tripCost > 0 ? parseFloat(tripCost).toFixed(2) : 0,
-            convenience_fees: parseFloat(convenience_fees).toFixed(2), 
-            customer_paid: customerPaid > 0 ? customerPaid.toFixed(2) : 0,
+            trip_cost: tripCost > 0 ? parseFloat(tripCost) : 0,
+            convenience_fees: parseFloat(convenience_fees), 
+            customer_paid: customerPaid > 0 ? customerPaid : 0,
             payment_status: "IN_PROGRESS",
-            driver_share: driverShare.toFixed(2),
-            cashPaymentAmount: cashPaymentAmount > 0 ? cashPaymentAmount.toFixed(2) : 0,
+            driver_share: driverShare,
+            cashPaymentAmount: cashPaymentAmount > 0 ? cashPaymentAmount : 0,
+            estimate: item.pagamento.estimate,
+            payment_mode: item.pagamento.payment_mode,
+            usedWalletMoney: item.pagamento.usedWalletMoney,
+            discount_amount: item.pagamento.discount_amount,
+            promoCodeApplied: item.pagamento.promoCodeApplied,
+            promoKey: item.pagamento.promoKey,
+            payment_status: item.pagamento.payment_status,
+            cancellValue: item.pagamento.cancellValue,
         }
         var data = {
             status: "END",
@@ -335,7 +343,7 @@ export default class DriverCompleteTrip extends React.Component {
         let curUid = firebase.auth().currentUser.uid
         let bookingId = this.state.rideDetails.bookingId;
         firebase.database().ref('users/' + curUid + '/ganhos/' + bookingId + '/').update({
-            ganho: data.driver_share,
+            ganho: pagamentoObj.driver_share,
             hora: new Date().toLocaleTimeString(dateStyle),
             data: new Date().toString(),
             taxa: pagamentoObj.convenience_fees,
@@ -466,7 +474,7 @@ export default class DriverCompleteTrip extends React.Component {
     }
 
     checkMap() {
-        if (this.state.followMap) {
+        if (this.state.followMap && this.state.region) {
             return this.state.region;
         }
     }
@@ -521,6 +529,7 @@ export default class DriverCompleteTrip extends React.Component {
                         showsMyLocationButton={false}
                         region={this.checkMap()}
                     >
+                        {this.state.region ?
                         <Marker.Animated
                             coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
                             style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
@@ -531,6 +540,7 @@ export default class DriverCompleteTrip extends React.Component {
                                 height={45}
                             />
                         </Marker.Animated>
+                        : null}
                         <Marker.Animated
                             coordinate={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng, }}
                             anchor={{ x: 0, y: 0 }}

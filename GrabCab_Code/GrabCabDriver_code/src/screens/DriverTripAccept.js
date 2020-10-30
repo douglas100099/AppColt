@@ -472,7 +472,13 @@ export default class DriverTripAccept extends React.Component {
             var pagamentoObj = {
                 estimate: item.pagamento.estimate,
                 trip_cost: item.pagamento.trip_cost,
-                payment_mode: item.pagamento.payment_mode ? item.pagamento.payment_mode : null,
+                payment_mode: item.pagamento.payment_mode,
+                cashPaymentAmount: item.pagamento.cashPaymentAmount,
+                usedWalletMoney: item.pagamento.usedWalletMoney,
+                discount_amount: item.pagamento.discount_amount,
+                promoCodeApplied: item.pagamento.promoCodeApplied,
+                promoKey: item.pagamento.promoKey,
+                cancellValue: item.pagamento.cancellValue,
             }
             var data = {
                 carType: item.carType,
@@ -663,7 +669,7 @@ export default class DriverTripAccept extends React.Component {
     }
 
     centerFollowMap() {
-        this.map.animateToRegion(this.state.region, 1000)
+        this.map.animateToRegion(this.state.region, 500)
     }
 
 

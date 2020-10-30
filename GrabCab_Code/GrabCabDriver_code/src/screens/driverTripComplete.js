@@ -116,11 +116,11 @@ export default class DriverTripComplete extends React.Component {
 
         } else {
             var data = {
-                payment_status: "WAITING",
+                payment_status: "PAID",
             };
 
             var riderData = {
-                payment_status: "WAITING",
+                payment_status: "PAID",
             };
             //var bookingId = item.bookingId?item.bookingId:item.bookingUid;
             let dbRef = firebase.database().ref('users/' + this.state.curUid + '/my_bookings/' + item.bookingId + '/pagamento/');

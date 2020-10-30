@@ -112,37 +112,6 @@ export default class RideList extends React.Component {
                     </View>
                 </View>
             </TouchableWithoutFeedback>
-            /*
-            <TouchableOpacity style={styles.iconClickStyle} onPress={() => this.onPressButton(item, index)}>
-                <View style={styles.flexViewStyle}>
-                    <View style={styles.textView1}>
-                        <View style={{ flexDirection: 'row' }}>
-                            <Text style={[styles.textStyle, styles.dateStyle]}>{item.bookingDate ? new Date(item.bookingDate).toLocaleString(dateStyle) : ''}</Text>
-                            {
-                                item.status == 'CANCELLED' ?
-                                    <Text style={[styles.textStyle2, styles.dateStyle2]}>CANCELADO</Text>
-                                    :
-                                    null
-                            }
-                        </View>
-
-                        <Text style={[styles.textStyle, styles.dateStyle]}>{new Date(item.tripdate).toLocaleString(dateStyle)}</Text>
-                        <View style={[styles.picupStyle, styles.position]}>
-                            <View style={styles.greenDot} />
-                            <Text style={[styles.picPlaceStyle, styles.placeStyle]}>{item.pickup.add ? item.pickup.add : ""}</Text>
-                        </View>
-                        <View style={[styles.dropStyle, styles.textViewStyle]}>
-                            <View style={[styles.redDot, styles.textPosition]} />
-                            <Text style={[styles.dropPlaceStyle, styles.placeStyle]}>{item.drop.add ? item.drop.add : ""}</Text>
-                        </View>
-
-                    </View>
-                    <View style={styles.textView2}>
-                        <Text style={[styles.fareStyle, styles.dateStyle]}>{item.status == 'END' && item.payment_status == 'PAID' ? item.trip_cost > 0 ? this.state.currency.symbol + parseFloat(item.trip_cost).toFixed(2) : this.state.currency.symbol + parseFloat(item.estimate).toFixed(2) : null}</Text>
-                    </View>
-                </View>
-            </TouchableOpacity>
-            */
         )
     }
 

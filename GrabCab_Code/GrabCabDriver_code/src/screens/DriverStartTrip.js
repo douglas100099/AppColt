@@ -79,11 +79,11 @@ export default class DriverStartTrip extends React.Component {
 
     async UNSAFE_componentWillMount() {
         const allDetails = this.props.navigation.getParam('allDetails')
-        const regionUser = this.props.navigation.getParam('regionUser')
+        //const regionUser = this.props.navigation.getParam('regionUser')
         console.log(allDetails);
         this.setState({
             rideDetails: allDetails,
-            region: regionUser,
+            //region: regionUser,
             curUid: firebase.auth().currentUser.uid
         }, () => {
             this.checkStatus()
@@ -308,15 +308,37 @@ export default class DriverStartTrip extends React.Component {
         } else {
             if (this.state.allData) {
                 if ((codeRequired && inputCode == this.state.allData.otp) || !codeRequired) {
+                    
                     var data = {
                         status: "START",
-                        payment_status: "DUE",
+                        pagamento: {
+                            estimate: this.state.allData.pagamento.estimate,
+                            trip_cost: this.state.allData.pagamento.trip_cost,
+                            payment_mode: this.state.allData.pagamento.payment_mode,
+                            cashPaymentAmount: this.state.allData.pagamento.cashPaymentAmount,
+                            usedWalletMoney: this.state.allData.pagamento.usedWalletMoney,
+                            discount_amount: this.state.allData.pagamento.discount_amount,
+                            promoCodeApplied: this.state.allData.pagamento.promoCodeApplied,
+                            promoKey: this.state.allData.pagamento.promoKey,
+                            payment_status: 'DUE',
+                            cancellValue: this.state.allData.pagamento.cancellValue,
+                        },
                         trip_start_time: new Date().toLocaleTimeString(dateStyle),
                     }
 
                     var riderData = {
                         status: "START",
-                        payment_status: "DUE",
+                        pagamento: {
+                            estimate: this.state.allData.pagamento.estimate,
+                            trip_cost: this.state.allData.pagamento.trip_cost,
+                            payment_mode: this.state.allData.pagamento.payment_mode,
+                            cashPaymentAmount: this.state.allData.pagamento.cashPaymentAmount,
+                            usedWalletMoney: this.state.allData.pagamento.usedWalletMoney,
+                            discount_amount: this.state.allData.pagamento.discount_amount,
+                            promoCodeApplied: this.state.allData.pagamento.promoCodeApplied,
+                            promoKey: this.state.allData.pagamento.promoKey,
+                            payment_status: 'DUE',
+                        },
                         trip_start_time: new Date().toLocaleTimeString(dateStyle),
                     }
 

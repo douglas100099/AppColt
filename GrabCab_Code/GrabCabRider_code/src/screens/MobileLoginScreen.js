@@ -3,19 +3,20 @@ import {
     StyleSheet,
     View,
     Image,
-    ImageBackground,
     Text,
+    Platform,
     Dimensions,
-    KeyboardAvoidingView,
     TextInput
 } from "react-native";
-import MaterialButtonDark from "../components/MaterialButtonDark";
 import * as firebase from 'firebase'
+var { height, width } = Dimensions.get('window');
 import languageJSON from '../common/language';
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
+import { Icon } from 'react-native-elements';
 import RNPickerSelect from 'react-native-picker-select';
 import countries from '../common/countries';
+import { colors } from "../common/theme";
 
 export default class MobileLoginScreen extends Component {
 
@@ -25,22 +26,23 @@ export default class MobileLoginScreen extends Component {
     constructor(props) {
         super(props);
         let arr = [];
-        for(let i=0;i< countries.length; i++){
-            arr.push({label:countries[i].label + " (+" + countries[i].phone + ")",value: "+" + countries[i].phone,key:countries.code});
+        for (let i = 0; i < countries.length; i++) {
+            arr.push({ label: countries[i].label + " (+" + countries[i].phone + ")", value: "+" + countries[i].phone, key: countries.code });
         }
 
         this.state = {
             phoneNumber: null,
             verificationId: null,
             verificationCode: null,
-            countryCodeList:arr,
-            countryCode:null
+            countryCodeList: arr,
+            countryCode: null,
+            btnConfirmar: false
         }
     }
 
-    onPressLogin = async () => {
-        if(this.state.countryCode && this.state.countryCode!==languageJSON.select_country){
-            if(this.state.phoneNumber){
+    /*onPressLogin = async () => {
+        if (this.state.countryCode && this.state.countryCode !== languageJSON.select_country) {
+            if (this.state.phoneNumber) {
                 let formattedNum = this.state.phoneNumber.replace(/ /g, '');
                 formattedNum = this.state.countryCode + formattedNum.replace(/-/g, '');
                 if (formattedNum.length > 8) {
@@ -57,16 +59,22 @@ export default class MobileLoginScreen extends Component {
                 } else {
                     alert(languageJSON.mobile_no_blank_error);
                 }
-            }else{
+            } else {
                 alert(languageJSON.mobile_no_blank_error);
             }
-        }else{
+        } else {
             alert(languageJSON.country_blank_error);
         }
+    }*/
+
+    async UNSAFE_componentWillMount() {
+        const verificationId = await this.props.navigation.getParam('verificationId')
+        const phoneNumber = await this.props.navigation.getParam('phoneNumber')
+        this.setState({ verificationId: verificationId, phoneNumber: phoneNumber })
     }
 
-
     onSignIn = async () => {
+        this.setState({ btnConfirmar: true })
         try {
             const credential = firebase.auth.PhoneAuthProvider.credential(
                 this.state.verificationId,
@@ -79,6 +87,7 @@ export default class MobileLoginScreen extends Component {
                 verificationCode: null
             });
         } catch (err) {
+            this.setState({ btnConfirmar: false })
             alert(languageJSON.otp_error);
         }
     }
@@ -89,99 +98,65 @@ export default class MobileLoginScreen extends Component {
             verificationId: null,
             verificationCode: null
         });
+        this.props.navigation.goBack();
     }
 
     render() {
-
         return (
-            <KeyboardAvoidingView behavior={"position"} style={styles.container}>
-                <ImageBackground
-                    source={require("../../assets/images/bg.png")}
-                    resizeMode="stretch"
-                    style={styles.imagebg}
-                >
-                    <FirebaseRecaptchaVerifierModal
-                        ref={ref => (this.recaptchaVerifier = ref)}
-                        firebaseConfig={this.firebaseConfig}
-                    />
-                    <TouchableOpacity style={styles.backButton} onPress={() => { this.props.navigation.navigate('Intro') }}>
-                        <Image
-                            source={require("../../assets/images/ios-back.png")}
-                            resizeMode="contain"
-                            style={styles.backButtonImage}
-                        ></Image>
-                    </TouchableOpacity>
-                    <Text style={styles.logintext}>{languageJSON.login_title}</Text>
-                    <View style={styles.blackline}></View>
-                    <View style={styles.box1}>
-                        <RNPickerSelect
-                            placeholder={{label:languageJSON.select_country,value:languageJSON.select_country}}
-                            value={this.state.countryCode}
-                            useNativeAndroidPickerStyle={true} 
-                            style={{
-                                inputIOS: styles.pickerStyle,
-                                inputAndroid: styles.pickerStyle,
-                            }}
-                            onValueChange={(value) => this.setState({countryCode: value})}
-                            items={this.state.countryCodeList}
-                            disabled={!!this.state.verificationId ? true : false}
-                        />
-                    </View>
+            <View style={styles.container}>
+                <Text style={{ alignSelf: 'center', fontFamily: 'Inter-Medium', fontSize: 20, marginTop: Platform.OS == 'ios' ? 60 : 50 }}> Código de verificação </Text>
+
+                <Text style={{ alignSelf: 'center', marginTop: 50, fontFamily: 'Inter-Medium', fontSize: 15 }}> Digite o código enviado para {this.state.phoneNumber} </Text>
+                <View style={{ marginTop: Platform.OS == 'ios' ? 50 : 70 }}>
                     <View style={styles.box2}>
                         <TextInput
-                            ref={(ref) => { this.mobileInput = ref }}
+                            ref={(ref) => { this.otpInput = ref }}
                             style={styles.textInput}
-                            placeholder={languageJSON.mobile_no_placeholder}
-                            onChangeText={(value) => this.setState({ phoneNumber: value })}
-                            value={this.state.phoneNumber}
-                            editable={!!this.state.verificationId ? false : true}
+                            placeholder={languageJSON.otp_here}
+                            onChangeText={(value) => this.setState({ verificationCode: value })}
+                            value={this.state.verificationCode}
+                            ditable={!!this.state.verificationId}
                             keyboardType="phone-pad"
+                            secureTextEntry={true}
                         />
                     </View>
-                    {this.state.verificationId ? null :
-                        <MaterialButtonDark
-                            onPress={() => this.onPressLogin()}
-                            style={styles.materialButtonDark}
-                        >{languageJSON.request_otp}</MaterialButtonDark>
-                    }
-                    {!!this.state.verificationId ?
-                        <View style={styles.box2}>
-                            <TextInput
-                                ref={(ref) => { this.otpInput = ref }}
-                                style={styles.textInput}
-                                placeholder={languageJSON.otp_here}
-                                onChangeText={(value) => this.setState({ verificationCode: value })}
-                                value={this.state.verificationCode}
-                                ditable={!!this.state.verificationId}
-                                keyboardType="phone-pad"
-                                secureTextEntry={true}
-                            />
-                        </View>
-                        : null}
-                    {!!this.state.verificationId ?
-                        <MaterialButtonDark
-                            onPress={this.onSignIn}
-                            style={styles.materialButtonDark}
-                        >{languageJSON.authorize}</MaterialButtonDark>
-                        : null}
-                    {this.state.verificationId ?
-                        <View style={styles.actionLine}>
-                            <TouchableOpacity style={styles.actionItem} onPress={() => this.CancelLogin()}>
-                                <Text style={styles.actionText}>{languageJSON.cancel}</Text>
-                            </TouchableOpacity>
-                        </View>
-                        : null}
-                </ImageBackground>
-            </KeyboardAvoidingView>
 
+                    <TouchableOpacity
+                        onPress={this.onSignIn}
+                        style={styles.btnConfirmar}
+                        disabled={this.state.btnConfirmar}
+                    >
+                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: width < 375 ? 16 : 18, color: colors.WHITE }}>{languageJSON.authorize}</Text>
+                    </TouchableOpacity>
 
+                    <View style={styles.actionLine}>
+                        <TouchableOpacity style={styles.actionItem} onPress={() => this.CancelLogin()}>
+                            <Text style={styles.actionText}>{languageJSON.cancel}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
         );
     }
 }
 
 const styles = StyleSheet.create({
     container: {
+        flex: 1,
+    },
+    topBar: {
+        marginTop: 20,
+        justifyContent: 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
         flex: 1
+    },
+    btnVoltar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        position: 'absolute',
+        left: 0
     },
     imagebg: {
         position: 'absolute',
@@ -204,58 +179,64 @@ const styles = StyleSheet.create({
         marginTop: 45
     },
     logintext: {
-        color: "rgba(255,255,255,1)",
-        fontSize: 18,
-        fontFamily: "Roboto-Regular",
+        color: "rgba(0,0,0,1)",
+        fontSize: width < 375 ? 18 : 20,
+        fontFamily: "Inter-Bold",
         marginTop: 0,
         alignSelf: "center"
     },
-    blackline: {
-        width: 140,
-        height: 1,
-        backgroundColor: "rgba(0,0,0,1)",
-        marginTop: 12,
-        alignSelf: "center"
-    },
     box1: {
-        height: 35,
+        height: 45,
         backgroundColor: "rgba(255,255,255,1)",
-        marginTop: 26,
-        marginLeft: 35,
-        marginRight: 35,
+        marginTop: 12,
+        marginHorizontal: 50,
         borderWidth: 1,
-        borderColor: "#c2bbba",
-        justifyContent:'center'
+        borderColor: "rgba(0,0,0,0.1)",
+        borderRadius: 5,
+        justifyContent: 'center'
     },
     box2: {
-        height: 35,
-        backgroundColor: "rgba(255,255,255,1)",
-        marginTop: 12,
-        marginLeft: 35,
-        marginRight: 35,
-        borderWidth: 1,
-        borderColor: "#c2bbba",
-        justifyContent:'center'
+        height: 45,
+        marginTop: 10,
+        marginHorizontal: 50,
+        borderBottomWidth: 2,
+        borderColor: "rgba(0,0,0,0.1)",
+        borderRadius: 5,
+        justifyContent: 'center'
     },
-    pickerStyle:{
+    pickerStyle: {
         color: "#121212",
-        fontFamily: "Roboto-Regular",
+        fontFamily: "Inter-Regular",
         fontSize: 18,
-        marginLeft:5
+        marginLeft: 5
     },
 
     textInput: {
         color: "#121212",
-        fontSize: 18,
-        fontFamily: "Roboto-Regular",
+        fontSize: Platform.OS == 'ios' ? 18 : 16,
+        fontFamily: "Inter-Regular",
         textAlign: "left",
-        marginLeft: 5
+        marginLeft: Platform.OS == 'ios' ? 5 : 8,
     },
     materialButtonDark: {
-        height: 35,
+        height: 40,
         marginTop: 22,
         marginLeft: 35,
-        marginRight: 35
+        marginRight: 35,
+        backgroundColor: colors.BLACK,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 5
+    },
+    btnConfirmar: {
+        height: 40,
+        marginTop: 22,
+        marginLeft: 35,
+        marginRight: 35,
+        backgroundColor: colors.DEEPBLUE,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 5
     },
     actionLine: {
         height: 20,
@@ -270,8 +251,8 @@ const styles = StyleSheet.create({
         alignSelf: "center"
     },
     actionText: {
-        fontSize: 15,
-        fontFamily: "Roboto-Regular",
-        fontWeight: 'bold'
+        fontSize: 16,
+        color: colors.RED,
+        fontFamily: "Inter-Bold",
     }
 });

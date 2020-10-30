@@ -1,21 +1,25 @@
 import React from 'react';
-import { Text, View, Image,TouchableOpacity, Platform, StatusBar } from 'react-native';
+import { Text, View, Image, TouchableOpacity, Platform, StatusBar } from 'react-native';
 import { Icon } from 'react-native-elements'
 import { colors } from '../common/theme';
 
 import AvatarUser from '../../assets/svg/AvatarUser';
 
-const SideMenuHeader = ({headerStyle,userPhoto,userName,userEmail,userPhone}) =>{
-   return (
+const SideMenuHeader = ({ headerStyle, userPhoto, userName, userEmail, userPhone }) => {
+    return (
         <View style={[styles.viewStyle, headerStyle]}>
-            <TouchableOpacity style={styles.userImageView} >
-                 <AvatarUser/>
-            </TouchableOpacity>   
+            <View style={styles.userImageView} >
+                {userPhoto ?
+                    <Image source={{ uri: userPhoto }} style={{ width: 75, height: 75, borderRadius: 50 }} />
+                    :
+                    <AvatarUser />
+                }
+            </View>
             <View style={styles.headerTextStyle}>
-                <Text style={styles.ProfileNameStyle}>{userName?userName.toUpperCase():""}</Text>
+                <Text style={styles.ProfileNameStyle}>{userName ? userName.toUpperCase() : ""}</Text>
             </View>
             <View style={styles.iconViewStyle}>
-                <Icon 
+                <Icon
                     name='call'
                     type='material'
                     color={colors.WHITE}
@@ -24,36 +28,36 @@ const SideMenuHeader = ({headerStyle,userPhoto,userName,userEmail,userPhone}) =>
                 <Text style={styles.emailStyle}>{userPhone}</Text>
             </View>
         </View>
-   );
- 
+    );
+
 };
 
 const styles = {
-    viewStyle:{
-        backgroundColor:colors.DEEPBLUE,
-        justifyContent:'flex-end',
-        alignItems:'flex-start',
-        height:200,
-        paddingTop:Platform.OS == 'ios' ? 20 : StatusBar.currentHeight,
-        shadowColor:colors.BLACK,
-        shadowOffset:{ width:0, height:2},
-        shadowOpacity:0.2,
-        elevation:2,
-        position:'relative',
-        flexDirection:'column',
+    viewStyle: {
+        backgroundColor: colors.DEEPBLUE,
+        justifyContent: 'flex-end',
+        alignItems: 'flex-start',
+        height: 200,
+        paddingTop: Platform.OS == 'ios' ? 20 : StatusBar.currentHeight,
+        shadowColor: colors.BLACK,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        elevation: 2,
+        position: 'relative',
+        flexDirection: 'column',
         padding: 10,
     },
-    textStyle:{
-        fontSize:20,
-        color:colors.WHITE
+    textStyle: {
+        fontSize: 20,
+        color: colors.WHITE
     },
-    headerTextStyle:{
-        justifyContent:'center',
+    headerTextStyle: {
+        justifyContent: 'center',
         alignItems: 'center',
         marginTop: 10
     },
-    iconStyle:{
-       
+    iconStyle: {
+
     },
     userImageView: {
         width: 84,
@@ -67,33 +71,33 @@ const styles = {
         alignItems: 'center',
         padding: 20
     },
-    ProfileNameStyle:{
+    ProfileNameStyle: {
         fontFamily: 'Inter-Bold',
-        color: colors.WHITE, 
+        color: colors.WHITE,
         marginLeft: 10,
         fontSize: 15
-        
+
     },
-    iconViewStyle:{
-        width:150,
-        flexDirection: 'row', 
-        alignItems: 'center', 
+    iconViewStyle: {
+        width: 150,
+        flexDirection: 'row',
+        alignItems: 'center',
         marginLeft: 10,
         marginTop: 4,
 
     },
-    emailStyle:{
+    emailStyle: {
         fontFamily: 'Inter-Medium',
-        color: colors.WHITE, 
+        color: colors.WHITE,
         fontSize: 14,
         marginLeft: 4,
         justifyContent: 'center',
         alignItems: 'center',
-        textAlign:'center',
+        textAlign: 'center',
     },
-    imageStyle:{
-        width: 80, 
-        height:80
+    imageStyle: {
+        width: 80,
+        height: 80
     }
 }
 //make the component available to other parts of the app

@@ -10,7 +10,7 @@ import {
     Modal,
     AsyncStorage,
 } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { TouchableOpacity, TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { MapComponent } from '../components';
 import { Icon, Button, Avatar } from 'react-native-elements';
 import { colors } from '../common/theme';
@@ -118,7 +118,7 @@ export default class MapScreen extends React.Component {
 
     getSavedLocations() {
         var curuser = firebase.auth().currentUser.uid;
-        firebase.database().ref('users/' + curuser + '/savedLocations').once('value', snap => {
+        firebase.database().ref('users/' + curuser + '/savedLocations').on('value', snap => {
             if (snap.val()) {
                 let locationCasa = {}
                 locationCasa.lat = snap.val().lat,
@@ -128,6 +128,10 @@ export default class MapScreen extends React.Component {
                     this.setState({
                         locationCasa: locationCasa
                     })
+            } else {
+                this.setState({
+                    locationCasa: null
+                })
             }
         })
     }
@@ -155,7 +159,7 @@ export default class MapScreen extends React.Component {
 
         this.intervalGetDrivers = setInterval(() => {
             if (this._isMounted) {
-                this.getLocationUser();
+                //this.getLocationUser();
                 if (this.state.passData && this.state.passData.wherelatitude) {
                     this.getDrivers();
                 }
@@ -251,21 +255,6 @@ export default class MapScreen extends React.Component {
             console.log("Asyncstorage issue 9");
         }
     };
-
-    //Vai pra pagina de confirmaçao
-    goToFareScreen() {
-        if ((this.state.passData.whereText == "" || this.state.passData.wherelatitude == 0 || this.state.passData.wherelongitude == 0) && (this.state.passData.dropText == "" || this.state.passData.droplatitude == 0 || this.state.passData.droplongitude == 0)) {
-            alert(languageJSON.pickup_and_drop_location_blank_error)
-        } else {
-            if (this.state.passData.whereText == "" || this.state.passData.wherelatitude == 0 || this.state.passData.wherelongitude == 0) {
-                alert(languageJSON.pickup_location_blank_error)
-            } else if (this.state.passData.dropText == "" || this.state.passData.droplatitude == 0 || this.state.passData.droplongitude == 0) {
-                alert(languageJSON.drop_location_blank_error)
-            } else {
-                this.props.navigation.replace('FareDetails', { data: this.state.passData, minTimeEconomico: this.state.minTimeEco, minTimeConfort: this.state.minTimeCon });
-            }
-        }
-    }
 
     getDriverTime(startLoc, destLoc) {
         console.log("GET DRIVERS TIME")
@@ -455,12 +444,14 @@ export default class MapScreen extends React.Component {
                 </View>
 
                 {this.state.geolocationFetchComplete ?
-                    <View style={styles.viewStyleTop}>
+                    <View style={[styles.viewStyleTop, {
+                        flex: this.state.locationCasa != null ? width < 375 ? 1.4 : 1.1 : width < 375 ? 1 : 0.7
+                    }]}>
                         <View>
                             <Text style={{ marginHorizontal: 15, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 13 : 15, margin: 10 }}> Olá
                             <Text style={{ fontSize: width < 375 ? 17 : 18 }}> {this.state.nameUser ? this.state.nameUser : null}</Text>, que bom te ver novamente.
                         </Text>
-                            <TouchableOpacity style={{ height: 63 }} onPress={() => this.tapAddress()}>
+                            <TouchableWithoutFeedback style={{ height: 63 }} onPress={() => this.tapAddress()}>
                                 <View style={styles.inputDrop}>
                                     <View style={styles.textIconStyle}>
                                         <Icon
@@ -473,11 +464,10 @@ export default class MapScreen extends React.Component {
                                         <Text numberOfLines={1} style={[styles.textStyleDrop, { fontSize: 18, color: colors.GREY.iconSecondary }]}>Para onde vamos?</Text>
                                     </View>
                                 </View>
-                            </TouchableOpacity>
+                            </TouchableWithoutFeedback>
                         </View>
 
-                        {this.state.locationCasa ?
-
+                        {this.state.locationCasa != null ?
                             <TouchableOpacity onPress={() => this.goToFareByMap()}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', height: width < 375 ? 50 : 60, width: width }}>
                                     <View style={{ left: 12, flex: 0.2 }}>
@@ -560,7 +550,6 @@ const styles = StyleSheet.create({
         backgroundColor: colors.WHITE,
         //top: Platform.select({ ios: 60, android: 40 }),
         width: width,
-        flex: width < 375 ? 1.4 : 1.2
     },
     bordaIconeMenu2: {
         width: 37,
@@ -582,8 +571,8 @@ const styles = StyleSheet.create({
     bordaIconeMenu: {
         width: 37,
         height: 37,
-        left: 20,
-        top: 55,
+        left: width < 375 ? 10 : 20,
+        top: Platform.OS == 'ios' ? 55 : 40,
         position: 'absolute',
         alignItems: 'center',
         alignSelf: 'center',

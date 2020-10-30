@@ -2,18 +2,18 @@ import React, { Component } from "react";
 import {
     StyleSheet,
     View,
-    ImageBackground,
     Text,
     Dimensions,
-    KeyboardAvoidingView,
     Alert,
     TextInput,
-    Image, TouchableWithoutFeedbackBase, TouchableHighlightBase
+    Image
 } from "react-native";
-import MaterialButtonDark from "../components/MaterialButtonDark";
 import * as firebase from 'firebase'
+var { height, width } = Dimensions.get('window');
 import languageJSON from '../common/language';
 import { TouchableOpacity } from "react-native-gesture-handler";
+import { Icon } from 'react-native-elements';
+import { colors } from '../common/theme';
 import SegmentedControlTab from 'react-native-segmented-control-tab';
 
 export default class EmailLoginScreen extends Component {
@@ -24,12 +24,13 @@ export default class EmailLoginScreen extends Component {
             email: '',
             password: '',
             confirmpassword: '',
-            customStyleIndex: 0
+            customStyleIndex: 0,
+            btnDisabled: false
         }
     }
 
     onAction = async () => {
-
+        this.setState({ btnDisabled: true })
         const { email, password, confirmpassword, customStyleIndex } = this.state;
         if (customStyleIndex == 0) {
             if (this.validateEmail(email)) {
@@ -42,10 +43,12 @@ export default class EmailLoginScreen extends Component {
                             password: '',
                             confirmpassword: ''
                         });
+                        this.setState({ btnDisabled: false })
                         this.emailInput.focus();
                         alert(error.code + " - " + error.message);
                     }
                 } else {
+                    this.setState({ btnDisabled: false })
                     this.passInput.focus();
                     alert(languageJSON.password_blank_messege);
                 }
@@ -77,6 +80,7 @@ export default class EmailLoginScreen extends Component {
         const emailValid = re.test(email);
         if (!emailValid) {
             this.emailInput.focus();
+            this.setState({ btnDisabled: false })
             alert(languageJSON.valid_email_check);
         }
         return emailValid;
@@ -143,21 +147,24 @@ export default class EmailLoginScreen extends Component {
     render() {
 
         return (
-            <KeyboardAvoidingView behavior={"position"} style={styles.container}>
-                <ImageBackground
-                    source={require("../../assets/images/bg.png")}
-                    resizeMode="stretch"
-                    style={styles.imagebg}
-                >
-                    <View style={styles.topBar}>
-                        <TouchableOpacity style={styles.backButton} onPress={() => { this.props.navigation.navigate('Intro') }}>
-                            <Image
-                                source={require("../../assets/images/ios-back.png")}
-                                resizeMode="contain"
-                                style={styles.backButtonImage}
-                            ></Image>
+            <View style={styles.container}>
+                <View style={styles.topBar}>
+                    <View style={{ position: 'absolute', left: 15 }}>
+                        <TouchableOpacity onPress={() => { this.props.navigation.goBack(); }}>
+                            <View style={{  backgroundColor: colors.WHITE, width: 35, height: 35, borderRadius: 50 }} >
+                                <Icon
+                                    name='chevron-left'
+                                    type='MaterialIcons'
+                                    color={colors.BLACK}
+                                    size={40}
+                                />
+                            </View>
                         </TouchableOpacity>
                     </View>
+                    <Text style={{ fontFamily: 'Inter-Bold', fontSize: 17 }}> Cadastre-se ou faça login </Text>
+                </View>
+
+                <View style={{ flex: 5 }}>
                     <SegmentedControlTab
                         values={[languageJSON.email_login, languageJSON.register_email]}
                         selectedIndex={this.state.customStyleIndex}
@@ -170,7 +177,7 @@ export default class EmailLoginScreen extends Component {
                             borderColor: 'transparent',
                         }}
                         activeTabStyle={{ borderBottomColor: '#212121', backgroundColor: 'transparent', borderBottomWidth: 2, marginTop: 2 }}
-                        tabTextStyle={{ color: '#fff', fontWeight: 'bold' }}
+                        tabTextStyle={{ color: colors.GREY2, fontSize: width < 375 ? 17 : 19, fontFamily: 'Inter-Bold' }}
                         activeTabTextStyle={{ color: '#212121' }}
                     />
 
@@ -205,10 +212,11 @@ export default class EmailLoginScreen extends Component {
                             />
                         </View>
                         : null}
-                    <MaterialButtonDark
-                        onPress={this.onAction}
-                        style={styles.materialButtonDark}
-                    >{this.state.customStyleIndex == 0 ? languageJSON.login_button : languageJSON.register_link}</MaterialButtonDark>
+
+                    <TouchableOpacity disabled={this.state.btnDisabled} onPress={this.onAction} style={styles.btnLogin}>
+                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: 18, color: colors.WHITE }}>{this.state.customStyleIndex == 0 ? languageJSON.login_button : languageJSON.register_link}</Text>
+                    </TouchableOpacity>
+
                     {this.state.customStyleIndex == 0 ?
                         <View style={styles.linkBar}>
                             <TouchableOpacity style={styles.barLinks} onPress={() => this.Forgot_Password(this.state.email)}>
@@ -216,15 +224,16 @@ export default class EmailLoginScreen extends Component {
                             </TouchableOpacity>
                         </View>
                         : null}
-                </ImageBackground>
-            </KeyboardAvoidingView>
+                </View>
+            </View>
         );
     }
 }
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1
+        flex: 1,
+        backgroundColor: colors.WHITE
     },
     imagebg: {
         position: 'absolute',
@@ -234,10 +243,13 @@ const styles = StyleSheet.create({
         height: Dimensions.get('window').height,
     },
     topBar: {
-        marginTop: 0,
-        marginLeft: 0,
-        marginRight: 0,
-        height: Dimensions.get('window').height * 0.52
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flex: 1,
+    },
+    btnVoltar: {
+
     },
     backButton: {
         height: 40,
@@ -253,7 +265,7 @@ const styles = StyleSheet.create({
     segmentcontrol: {
         color: "rgba(255,255,255,1)",
         fontSize: 18,
-        fontFamily: "Roboto-Regular",
+        fontFamily: "Inter-Regular",
         marginTop: 0,
         alignSelf: "center",
         height: 50,
@@ -268,41 +280,48 @@ const styles = StyleSheet.create({
         alignSelf: "center"
     },
     box1: {
-        height: 35,
+        height: 45,
         backgroundColor: "rgba(255,255,255,1)",
         marginTop: 26,
         marginLeft: 35,
         marginRight: 35,
         borderWidth: 1,
-        borderColor: "#c2bbba",
+        borderColor: "rgba(0,0,0,0.1)",
+        borderRadius: 5,
+        justifyContent: 'center'
     },
     box2: {
-        height: 35,
+        height: 45,
         backgroundColor: "rgba(255,255,255,1)",
-        marginTop: 12,
+        marginTop: 15,
         marginLeft: 35,
         marginRight: 35,
         borderWidth: 1,
-        borderColor: "#c2bbba",
+        borderColor: "rgba(0,0,0,0.1)",
+        borderRadius: 5,
+        justifyContent: 'center'
     },
 
     textInput: {
         color: "#121212",
-        fontSize: 18,
-        fontFamily: "Roboto-Regular",
+        fontSize: width < 375 ? 16 : 18,
+        fontFamily: "Inter-Regular",
         textAlign: "left",
-        marginTop: 8,
-        marginLeft: 5
+        alignItems: 'center',
+        marginLeft: 8
     },
-    materialButtonDark: {
-        height: 35,
+    btnLogin: {
+        backgroundColor: colors.DEEPBLUE,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 5,
+        height: 45,
         marginTop: 22,
-        marginLeft: 35,
-        marginRight: 35
+        marginHorizontal: 85
     },
     linkBar: {
         flexDirection: "row",
-        marginTop: 30,
+        marginTop: 20,
         alignSelf: 'center'
     },
     barLinks: {
@@ -313,9 +332,8 @@ const styles = StyleSheet.create({
         fontWeight: 'bold'
     },
     linkText: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#fff',
-        fontFamily: "Roboto-Bold",
+        fontSize: width < 375 ? 14 : 16,
+        color: colors.RED,
+        fontFamily: "Inter-Regular",
     }
 });

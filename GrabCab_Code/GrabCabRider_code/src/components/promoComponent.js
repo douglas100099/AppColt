@@ -10,25 +10,26 @@ import {
 import { Avatar, Button } from "react-native-elements";
 import { colors } from "../common/theme";
 import * as firebase from 'firebase'
-import  languageJSON  from '../common/language';
+import languageJSON from '../common/language';
 
 export default class PromoComp extends React.Component {
   constructor(props) {
     super(props);
-   
+
     this.state = {
-        data: [] , 
-        settings:{
-          code:'',
-          symbol:'',
-          cash:false,
-          wallet:false
-        }
-      };
+      data: [],
+      settings: {
+        code: '',
+        symbol: '',
+        cash: false,
+        wallet: false
+      },
+      btnDisable: false
+    };
     this.loadPromos();
   }
 
-  componentDidMount(){
+  componentDidMount() {
     this._retrieveSettings();
   }
 
@@ -36,45 +37,46 @@ export default class PromoComp extends React.Component {
     try {
       const value = await AsyncStorage.getItem('settings');
       if (value !== null) {
-        this.setState({settings:JSON.parse(value)});
+        this.setState({ settings: JSON.parse(value) });
       }
     } catch (error) {
-        console.log("Asyncstorage issue 1");
+      console.log("Asyncstorage issue 1");
     }
   };
 
 
-  loadPromos(){
+  loadPromos() {
     const getpromo = firebase.database().ref('offers/');
-    getpromo.once('value',getpromo=>{
-        if(getpromo.val()){
-          let promoObj = getpromo.val();
-          var allPromoData = [];
-          for(key in promoObj){
-            if(promoObj[key].visible){
-              if(promoObj[key].visible == true ) {
-                promoObj[key].promoKey = key;
-                allPromoData.push(promoObj[key]);
-              }
+    getpromo.once('value', getpromo => {
+      if (getpromo.val()) {
+        let promoObj = getpromo.val();
+        var allPromoData = [];
+        for (key in promoObj) {
+          if (promoObj[key].visible) {
+            if (promoObj[key].visible == true) {
+              promoObj[key].promoKey = key;
+              allPromoData.push(promoObj[key]);
             }
           }
-          if(allPromoData){
-            this.setState({
-              data:allPromoData
-            },()=>{
-              console.log("this.state")
-            })
-          }
         }
-      })
+        if (allPromoData) {
+          this.setState({
+            data: allPromoData
+          }, () => {
+            console.log("this.state")
+          })
+        }
+      }
+    })
   }
 
 
 
   onPressButton(item, index) {
+    this.setState({ btnDisable: true })
     const { onPressButton } = this.props;
     onPressButton(item, index)
-}
+  }
 
 
   newData = ({ item, index }) => {
@@ -87,9 +89,9 @@ export default class PromoComp extends React.Component {
                 size={40}
                 rounded
                 source={{
-                  uri: item.promo_discount_type? 
-                        item.promo_discount_type == 'flat'?"https://cdn1.iconfinder.com/data/icons/service-maintenance-icons/512/tag_price_label-512.png":
-                        "https://cdn4.iconfinder.com/data/icons/icoflat3/512/discount-512.png":null
+                  uri: item.promo_discount_type ?
+                    item.promo_discount_type == 'flat' ? "https://cdn1.iconfinder.com/data/icons/service-maintenance-icons/512/tag_price_label-512.png" :
+                      "https://cdn4.iconfinder.com/data/icons/icoflat3/512/discount-512.png" : null
                 }}
               />
             </View>
@@ -97,17 +99,18 @@ export default class PromoComp extends React.Component {
               <Text style={styles.textStyle}>
                 <Text style={styles.couponCode}>{item.promo_name}</Text> - {item.promo_description}
               </Text>
-              <Text style={styles.timeTextStyle}>{languageJSON.min_order_value} {this.state.settings.symbol}{item.min_order}</Text>
+              <Text style={styles.timeTextStyle}>Valor mínimo da corrida {this.state.settings.symbol}{item.min_order}</Text>
 
             </View>
             <View style={styles.applyBtnPosition} >
-            <Button
-                    title={languageJSON.apply}
-                    TouchableComponent={TouchableOpacity}
-                    titleStyle={styles.buttonTitleStyle}
-                    buttonStyle={styles.confButtonStyle}
-                    onPress={()=>this.onPressButton(item,index)}
-                  />
+              <Button
+                title={languageJSON.apply}
+                TouchableComponent={TouchableOpacity}
+                titleStyle={styles.buttonTitleStyle}
+                buttonStyle={styles.confButtonStyle}
+                disabled={this.state.btnDisable}
+                onPress={() => this.onPressButton(item, index)}
+              />
             </View>
           </View>
           <View style={styles.borderBottomStyle} />
@@ -137,7 +140,7 @@ const styles = StyleSheet.create({
   },
   viewStyle: {
     flexDirection: "row",
-    backgroundColor: colors.WHITE 
+    backgroundColor: colors.WHITE
   },
   borderBottomStyle: {
     borderBottomWidth: 1,
@@ -167,8 +170,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     flexWrap: "wrap"
   },
-  couponCode:{
-   fontWeight:'bold'
+  couponCode: {
+    fontWeight: 'bold'
   },
   timeTextStyle: {
     color: "#a6a6a6",
@@ -180,7 +183,8 @@ const styles = StyleSheet.create({
   },
   buttonTitleStyle: {
     textAlign: "center",
-    color: colors.GREEN.default,
+    color: '#fff',
+    fontFamily: 'Inter-Bold',
     fontSize: 11,
     paddingBottom: 0,
     paddingTop: 0
@@ -188,10 +192,14 @@ const styles = StyleSheet.create({
   confButtonStyle: {
     borderRadius: 6,
     height: 29,
-    width:65,
-    alignSelf:'flex-end',
-    backgroundColor:colors.GREY.whiteish,
-    elevation: 0
+    width: 65,
+    alignSelf: 'flex-end',
+    backgroundColor: 'rgba(63,220,90,0.7)',
+    elevation: 0,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { x: 0, y: 0 },
+    shadowRadius: 5,
   },
   deleteButtonStyle: {
     backgroundColor: colors.WHITE,
@@ -202,11 +210,4 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     width: 85
   },
-  deleteBtnTitleStyle: {
-    color: colors.LIGHT_RED,
-    textAlign: "center",
-    fontSize: 11,
-    paddingBottom: 0,
-    paddingTop: 0
-  }
 });

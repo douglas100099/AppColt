@@ -101,9 +101,37 @@ export default class RideDetails extends React.Component {
 
     //go back
     goBack() {
-        this.props.navigation.replace('RideList');
+        this.props.navigation.goBack();
     }
 
+    //tracking the ride
+    trackNow(item) {
+        console.log('item', item)
+        if (item.status == 'START' || item.status == 'END') {
+            firebase.database().ref('bookings/' + item.bookingUid + '/').once('value', (snap) => {
+                if (snap.val()) {
+                    AsyncStorage.getItem('startTime', (err, result) => {
+                        if (result) {
+                            let bookingData = snap.val()
+                            bookingData.bookingId = item.bookingUid;
+                            this.props.navigation.navigate('DriverTripComplete', { allDetails: bookingData, startTime: parseInt(result) })
+                        }
+                    });
+                }
+            })
+
+        } else if (item.status == 'ACCEPTED') {
+            firebase.database().ref('bookings/' + item.bookingUid + '/').once('value', (snap) => {
+                if (snap.val()) {
+                    let bookingData = snap.val();
+                    bookingData.bookingId = item.bookingUid;
+                    this.props.navigation.navigate('DriverTripStart', { allDetails: bookingData })
+                }
+            })
+
+        }
+
+    }
     info = () => {
         if (this.state.infoVisible) {
             this.setState({ infoVisible: false })

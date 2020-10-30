@@ -8,7 +8,8 @@ import {
   Text,
   TouchableWithoutFeedback,
   ScrollView, Dimensions,
-  AsyncStorage
+  AsyncStorage,
+  Platform
 } from 'react-native';
 import { Header, Icon } from 'react-native-elements';
 import { colors } from '../common/theme';
@@ -100,10 +101,10 @@ export default class WalletDetails extends React.Component {
               />
             </TouchableOpacity>
           </View>
-          <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20, marginTop: 40 }}> Carteira Colt </Text>
+          <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20}}> Carteira Colt </Text>
         </View>
-        <View style={{ flex: 2.5 }}>
-          <View style={{ flexDirection: 'row', justifyContent: "space-around", marginTop: 8 }}>
+        <View style={{ flex: 3 }}>
+          <View style={{ flexDirection: 'row', justifyContent: "space-around", marginTop: 25 }}>
             <View style={styles.btnSaldo}>
               <Text style={styles.txtSaldo}>Saldo</Text>
               <Text style={styles.valorSaldo}>{this.state.settings.symbol}{this.state.allData ? parseFloat(this.state.allData.walletBalance).toFixed(2) : ''}</Text>
@@ -125,7 +126,7 @@ export default class WalletDetails extends React.Component {
           </View>
 
           <View style={styles.viewHistorico}>
-            <Text style={{ paddingHorizontal: 10, color: colors.WHITE, textAlign: 'center', fontSize: 18, fontWeight: '600' }}>Historico de movimentação</Text>
+            <Text style={{ paddingHorizontal: 10, color: colors.BLACK, fontFamily: 'Inter-Bold', textAlign: 'center', fontSize: 16 }}>Historico de movimentação</Text>
           </View>
         </View>
 
@@ -157,6 +158,7 @@ const styles = StyleSheet.create({
   },
   viewHeader: {
     flex: 1, 
+    top: Platform.OS == 'ios' ? 30 : 20,
     backgroundColor: colors.WHITE, 
     flexDirection: 'row', 
     alignItems: 'center', 
@@ -166,11 +168,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     backgroundColor: colors.WHITE,
     width: 40,
-    top: 10,
     height: 40,
     borderRadius: 50,
     elevation: 5,
-    marginTop: 40,
     justifyContent: 'center',
     alignItems: 'center',
     left: 15,
@@ -210,21 +210,24 @@ const styles = StyleSheet.create({
     borderRadius: 8, 
     justifyContent: 'center', 
     flexDirection: 'column', 
-    elevation: 5,
     elevation: 5, 
     shadowColor: '#000',
-    shadowOffset: { x: 0, y: 5 },
-    shadowOpacity: 0.1,
+    shadowOffset: { x: 0, y: 0 },
+    shadowOpacity: 0.2,
     shadowRadius: 10,
   },
   viewHistorico: {
     position: 'absolute', 
-    bottom: 0, 
+    bottom: Platform.OS == 'ios' ? 10 : 0, 
     width: width, 
-    height: 30, 
+    height: 35, 
     justifyContent: 'center', 
     alignItems: 'center', 
-    backgroundColor: colors.GREEN.light, 
-    opacity: 0.5
+    backgroundColor: colors.GREY1, 
+    elevation: 5, 
+    shadowColor: '#000',
+    shadowOffset: { x: 0, y: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
   },
 });

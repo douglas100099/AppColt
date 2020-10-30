@@ -25,6 +25,10 @@ export function farehelper(distance,time,rateDetails){
     console.log('VALOR TOTAL ' + total)
     console.log('-------------------------------')
 
+    if( distance >= 50000 ){
+        total = total + ( total * 0.10 )
+    }
+
     let convenienceFee = (total*rateDetails.convenience_fees/100);
     
 

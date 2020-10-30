@@ -20,6 +20,7 @@ var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
 import { farehelper } from '../common/FareCalculator';
 import distanceCalc from '../common/distanceCalc';
+import { getPixelSize } from '../common/utils';
 import { PromoComp } from "../components";
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import { google_map_key } from '../common/key';
@@ -59,11 +60,11 @@ export default class FareScreen extends React.Component {
             promoCode: null,
             promoCodeValid: true,
             usedWalletMoney: 0,
-            cancellValue: 0,
             infoModal: false,
             showViewInfo: true,
-            fadeAnim: new Animated.Value(0),
-        }
+            cancellValue: 0,
+        },
+            this.fadeAnim = new Animated.Value(0)
     }
 
     async componentDidMount() {
@@ -111,16 +112,16 @@ export default class FareScreen extends React.Component {
         this._retrieveSettings();
     }
 
-    fadeIn(params){
+    fadeIn(params) {
         this.setState({ showViewInfo: !this.state.showViewInfo })
-        if(params){
-            Animated.timing(this.state.fadeAnim, {
+        if (params) {
+            Animated.timing(this.fadeAnim, {
                 toValue: 1,
                 duration: 500,
                 useNativeDriver: false,
             }).start();
-        } else { 
-            Animated.timing(this.state.fadeAnim, {
+        } else {
+            Animated.timing(this.fadeAnim, {
                 toValue: 0,
                 duration: 500,
                 useNativeDriver: false,
@@ -164,7 +165,6 @@ export default class FareScreen extends React.Component {
                 i == 0 ? this.setState({ estimatePrice1: detailsBooking.estimateFare, estimatedTimeBooking: detailsBooking.estimateTime })
                     : this.setState({ estimatePrice2: detailsBooking.estimateFare, estimatedTimeBooking: detailsBooking.estimateTime })
             }
-            this.getCancellValue()
             this.setState({
                 detailsBooking: arrayDetails,
                 selected: 0,
@@ -173,6 +173,7 @@ export default class FareScreen extends React.Component {
                 carType: this.state.rateDetailsObjects[0].name,
                 carImage: this.state.rateDetailsObjects[0].image
             })
+            this.getCancellValue(arrayDetails)
 
             var points = Polyline.decode(respJson.routes[0].overview_polyline.points);
             var coords = points.map((point) => {
@@ -184,7 +185,7 @@ export default class FareScreen extends React.Component {
             this.setState({ coords: coords }, () => {
                 setTimeout(() => {
                     this.map.fitToCoordinates([{ latitude: this.state.region.wherelatitude, longitude: this.state.region.wherelongitude }, { latitude: this.state.region.droplatitude, longitude: this.state.region.droplongitude }], {
-                        edgePadding: { top: 50, right: 50, bottom: 80, left: 50 },
+                        edgePadding: { top: getPixelSize(50), right: getPixelSize(50), bottom: getPixelSize(50), left: getPixelSize(50) },
                         animated: true,
                     })
                 }, 500);
@@ -220,7 +221,7 @@ export default class FareScreen extends React.Component {
 
         var pickUp = { lat: this.state.region.wherelatitude, lng: this.state.region.wherelongitude, add: this.state.region.whereText };
         var drop = { lat: this.state.region.droplatitude, lng: this.state.region.droplongitude, add: this.state.region.droptext };
-        var cashPayment = this.state.selected == 0 ? this.state.estimatePrice1 - this.state.usedWalletMoney : this.state.estimatePrice2 - this.state.usedWalletMoney;
+        var cashPayment = this.state.selected == 0 ? (this.state.estimatePrice1 - this.state.usedWalletMoney).toFixed(2) : (this.state.estimatePrice2 - this.state.usedWalletMoney).toFixed(2);
 
         if (this.state.settings.otp_secure)
             var otp = Math.floor(Math.random() * 90000) + 10000;
@@ -228,6 +229,18 @@ export default class FareScreen extends React.Component {
             var otp = false;
         }
         let today = new Date().toString();
+
+        var pagamentoObj = {
+            estimate: this.state.estimateFare,
+            trip_cost: 0,
+            payment_mode: this.state.metodoPagamento,
+            cashPaymentAmount: cashPayment,
+            usedWalletMoney: this.state.usedWalletMoney,
+            discount_amount: this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value : 0,
+            promoCodeApplied: this.state.payDetails ? this.state.payDetails.promo_details.promo_code : "",
+            promoKey: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : "",
+            cancellValue: this.state.cancellValue ? this.state.cancellValue : 0
+        }
 
         var data = {
             carImage: this.state.carImage,
@@ -241,29 +254,23 @@ export default class FareScreen extends React.Component {
             driver_name: "",
             drop: drop,
             pickup: pickUp,
-            estimate: this.state.estimateFare,
+            pagamento: pagamentoObj,
             estimateDistance: this.state.distance,
             serviceType: 'pickUp',
             status: "NEW",
             total_trip_time: 0,
-            trip_cost: 0,
             trip_end_time: "00:00",
             trip_start_time: "00:00",
             tripdate: today,
-            estimate: this.state.estimateFare,
             otp: otp,
             bookingDate: today,
 
             imageRider: this.state.userDetails.profile_image ? this.state.userDetails.profile_image : null,
-            cashPaymentAmount: cashPayment.toFixed(2),
-            payment_mode: this.state.metodoPagamento,
-            usedWalletMoney: this.state.usedWalletMoney,
-            discount_amount: this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value : 0,
-            promoCodeApplied: this.state.payDetails ? this.state.payDetails.promo_details.promo_code : "",
-            promoKey: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : "",        
+            ratingRider: this.state.userDetails.ratings ? this.state.userDetails.ratings.userrating : null,
         }
 
         var MyBooking = {
+            firstNameRider: this.state.userDetails.firstName,
             carImage: this.state.carImage,
             carType: this.state.carType,
             driver: "",
@@ -271,26 +278,18 @@ export default class FareScreen extends React.Component {
             driver_name: "",
             drop: drop,
             pickup: pickUp,
-            estimate: this.state.estimateFare,
             estimateDistance: this.state.distance,
             serviceType: 'pickUp',
             status: "NEW",
             total_trip_time: 0,
-            trip_cost: 0,
             trip_end_time: "00:00",
             trip_start_time: "00:00",
             tripdate: today,
-            estimate: this.state.estimateFare,
             coords: this.state.coords,
             otp: otp,
             bookingDate: today,
+            pagamento: pagamentoObj,
 
-            cashPaymentAmount: cashPayment.toFixed(2),
-            payment_mode: this.state.metodoPagamento,
-            usedWalletMoney: this.state.usedWalletMoney,
-            discount_amount: this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value : 0,
-            promoCodeApplied: this.state.payDetails ? this.state.payDetails.promo_details.promo_code : "",
-            promoKey: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : ""
         }
 
         firebase.database().ref('bookings/').push(data).then((res) => {
@@ -303,7 +302,7 @@ export default class FareScreen extends React.Component {
                 }
                 setTimeout(() => {
                     this.setState({ buttonDisabled: false }, () => {
-                        this.props.navigation.navigate('BookedCab', { passData: bookingData, riderName: data.customer_name });
+                        this.props.navigation.replace('BookedCab', { passData: bookingData, riderName: data.customer_name });
                     })
                 }, 500)
             })
@@ -311,14 +310,13 @@ export default class FareScreen extends React.Component {
     }
 
     //Verifica se o passageiro tem taxa de cancelamento pendente
-    getCancellValue() {
+    getCancellValue(param) {
         const userData = firebase.database().ref('users/' + this.state.curUID.uid + '/cancell_details/');
         userData.once('value', cancellValue => {
             if (cancellValue.val()) {
-                let rate = cancellValue.val().value
                 this.setState({
-                    estimatePrice1: parseFloat(this.state.estimatePrice1) + parseFloat(rate),
-                    estimatePrice2: parseFloat(this.state.estimatePrice2) + parseFloat(rate),
+                    estimatePrice1: parseFloat(param[0].estimateFare) + parseFloat(cancellValue.val().value),
+                    estimatePrice2: parseFloat(param[1].estimateFare) + parseFloat(cancellValue.val().value),
                     cancellValue: cancellValue.val().value
                 })
             }
@@ -427,7 +425,11 @@ export default class FareScreen extends React.Component {
     async checkPromo(item, index) {
         if (item != null && index != null) {
             let verifyCupomData = {}
-            verifyCupomData = VerifyCupom(item, index, this.state.estimateFare);
+            if (this.state.selected == 0) {
+                verifyCupomData = VerifyCupom(item, index, this.state.estimatePrice1);
+            } else {
+                verifyCupomData = VerifyCupom(item, index, this.state.estimatePrice2);
+            }
 
             setTimeout(() => {
                 if (verifyCupomData.promo_applied) {
@@ -574,7 +576,7 @@ export default class FareScreen extends React.Component {
     ModalPayment() {
         return (
             <Modal
-                animationType="fade"
+                animationType="slide"
                 transparent={true}
                 visible={this.state.openModalPayment}
             >
@@ -613,7 +615,10 @@ export default class FareScreen extends React.Component {
                                         color={colors.DEEPBLUE}
                                         containerStyle={styles.iconMoney}
                                     />
-                                    <Text style={styles.textMoney}> Carteira Colt </Text>
+                                    <View style={{ flexDirection: 'column' }}>
+                                        <Text style={styles.textMoney}> Carteira Colt </Text>
+                                        <Text style={{ fontFamily: 'Inter-Bold', color: colors.GREY2, fontSize: 15, marginLeft: 10 }}> Saldo: R${parseFloat(this.state.walletBallance).toFixed(2)} </Text>
+                                    </View>
                                 </View>
                                 <Icon
                                     name='chevron-right'
@@ -729,9 +734,10 @@ export default class FareScreen extends React.Component {
     render() {
         return (
             <View style={styles.container}>
-                <View style={styles.mapcontainer}>
+                <View style={[styles.mapcontainer, {
+                    flex: this.state.payDetails ? 1.8 : 2
+                }]}>
 
-                    {/* MAPA */}
                     {this.state.region && this.state.region.wherelatitude ?
                         <MapView
                             ref={map => { this.map = map }}
@@ -755,7 +761,7 @@ export default class FareScreen extends React.Component {
                                 //title={this.state.region.whereText}
                                 centerOffset={{ x: 0.1, y: 0.1 }}
                                 anchor={{ x: 0.1, y: 0.1 }}
-                                onPress={() => this.props.navigation.navigate('Search', { old: this.state.region })}
+                                onPress={() => this.props.navigation.replace('Search', { old: this.state.region })}
                             >
                                 <LocationUser
                                     width={25}
@@ -772,7 +778,7 @@ export default class FareScreen extends React.Component {
                                 //title={this.state.region.droptext}
                                 centerOffset={{ x: 0.1, y: 0.1 }}
                                 anchor={{ x: 0.1, y: 0.1 }}
-                                onPress={() => this.props.navigation.navigate('Search', { old: this.state.region })}
+                                onPress={() => this.props.navigation.replace('Search', { old: this.state.region })}
                             >
                                 <LocationDrop />
 
@@ -804,27 +810,29 @@ export default class FareScreen extends React.Component {
                     </View>
 
                     {/* Botao Cupom */}
-                    <TouchableOpacity style={[styles.btnAddPromo, {
-                        borderColor: this.state.payDetails ? colors.GREEN.light : colors.GREY2,
-                        borderWidth: this.state.payDetails ? 2 : 1
-                    }]} onPress={() => this.openPromoModal()} >
+                    {this.state.rateDetailsObjects[0] ?
+                        <TouchableOpacity style={[styles.btnAddPromo, {
+                            borderColor: this.state.payDetails ? colors.GREEN.light : colors.GREY2,
+                            borderWidth: this.state.payDetails ? 2 : 1
+                        }]} onPress={() => this.openPromoModal()} >
 
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Icon
-                                name='ios-pricetag'
-                                type='ionicon'
-                                size={20}
-                                containerStyle={{ opacity: 0.2, marginTop: 3 }}
-                            />
-                            <Text style={styles.txtCupom}> {this.state.payDetails ? "-R$" + (this.state.payDetails.promo_details.promo_discount_value).toFixed(2) : "Cupom"} </Text>
-                        </View>
-                    </TouchableOpacity>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Icon
+                                    name='ios-pricetag'
+                                    type='ionicon'
+                                    size={20}
+                                    containerStyle={{ opacity: 0.2, marginTop: 3 }}
+                                />
+                                <Text style={styles.txtCupom}> {this.state.payDetails ? "-R$" + (this.state.payDetails.promo_details.promo_discount_value).toFixed(2) : "Cupom"} </Text>
+                            </View>
+                        </TouchableOpacity>
+                        : null}
 
                     <Animated.View
                         style={[
                             styles.fadingContainer,
                             {
-                                opacity: this.state.fadeAnim
+                                opacity: this.fadeAnim
                             }
                         ]}
                     >
@@ -832,7 +840,7 @@ export default class FareScreen extends React.Component {
                     </Animated.View>
 
                     {this.state.cancellValue != 0 ?
-                        <TouchableOpacity style={styles.btnCancellRate} onPress={() => this.fadeIn(this.state.showViewInfo) }>
+                        <TouchableOpacity style={styles.btnCancellRate} onPress={() => this.fadeIn(this.state.showViewInfo)}>
                             <Icon
                                 name="ios-alert"
                                 type="ionicon"
@@ -845,8 +853,8 @@ export default class FareScreen extends React.Component {
 
                 {/* View de alerta da promoçao aplicada */}
                 {this.state.payDetails ?
-                    <View style={{ backgroundColor: colors.GREEN.light, height: 30, justifyContent: 'center', alignItems: 'center', opacity: 0.5 }}>
-                        <Text style={{ color: colors.GREY3, fontFamily: 'Inter-Bold' }}>Promoção aplicada</Text>
+                    <View style={{ backgroundColor: 'rgba(63,220,90,0.7)', justifyContent: 'center', alignItems: 'center', }}>
+                        <Text style={{ paddingBottom: 7, paddingTop: 7, color: colors.WHITE, fontFamily: 'Inter-Bold' }}>Promoção aplicada</Text>
                     </View>
                     : null}
 
@@ -867,7 +875,13 @@ export default class FareScreen extends React.Component {
                                     <ColtEconomicoCar />
                                     <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[0].name}</Text>
 
-                                    <Text style={styles.price1}>{this.state.settings.symbol} <Text style={styles.price2}> {this.state.metodoPagamento === "Dinheiro/Carteira" ? (this.state.estimatePrice1 - this.state.walletBallance).toFixed(2) : this.state.estimatePrice1} </Text></Text>
+                                    {this.state.estimatePrice1 ?
+                                        <Text style={styles.price1}>{this.state.settings.symbol}
+                                            <Text style={styles.price2}>
+                                                {this.state.metodoPagamento === "Dinheiro/Carteira" ? ((this.state.estimatePrice1 - this.state.walletBallance)).toFixed(2) : (parseFloat(this.state.estimatePrice1) ).toFixed(2)}
+                                            </Text>
+                                        </Text>
+                                        : null}
 
                                     {this.state.minTimeEconomico == null ?
                                         <View style={[styles.timeBox, {
@@ -893,7 +907,15 @@ export default class FareScreen extends React.Component {
                                 <TouchableOpacity style={styles.touchCard2} onPress={() => this.selectCarType(1)}>
                                     <ColtConfortCar />
                                     <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[1].name}</Text>
-                                    <Text style={styles.price1}>{this.state.settings.symbol} <Text style={styles.price2}>{this.state.metodoPagamento === "Dinheiro/Carteira" ? (this.state.estimatePrice2 - this.state.walletBallance).toFixed(2) : this.state.estimatePrice2} </Text></Text>
+
+                                    {this.state.estimatePrice2 ?
+                                        <Text style={styles.price1}>
+                                            {this.state.settings.symbol}
+                                            <Text style={styles.price2}>
+                                                {this.state.metodoPagamento === "Dinheiro/Carteira" ? ((this.state.estimatePrice2 - this.state.walletBallance) ).toFixed(2) : (parseFloat(this.state.estimatePrice2) ).toFixed(2)}
+                                            </Text>
+                                        </Text>
+                                        : null}
 
                                     {this.state.minTimeConfort == null ?
                                         <View style={[styles.timeBox, {
@@ -945,7 +967,7 @@ export default class FareScreen extends React.Component {
                                                 </View>
                                                 <Text style={styles.metodoPagamento}> Carteira Colt </Text>
                                             </View>
-                                            <Text style={{ fontFamily: 'Inter-Bold', opacity: 0.4 }} >SALDO: R${this.state.walletBallance} </Text>
+                                            <Text style={{ fontFamily: 'Inter-Bold', opacity: 0.4 }} >SALDO: R${parseFloat(this.state.walletBallance).toFixed(2)} </Text>
                                         </TouchableOpacity>
                                     </View>
                                     : <View style={styles.containerDinheiro}>
@@ -1124,7 +1146,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginHorizontal: 20,
         backgroundColor: colors.WHITE,
-        height: 55,
+        height: 60,
         marginTop: 16,
         borderRadius: 10,
         elevation: 5,
@@ -1135,13 +1157,12 @@ const styles = StyleSheet.create({
     },
     bordaIconeVoltar: {
         position: 'absolute',
-        top: 20,
+        top: Platform.OS == 'android' ? 35 : 45,
         backgroundColor: colors.WHITE,
         width: 40,
         height: 40,
         borderRadius: 50,
         elevation: 5,
-        marginTop: 40,
         justifyContent: 'center',
         alignItems: 'center',
         left: 15,
@@ -1202,11 +1223,12 @@ const styles = StyleSheet.create({
         shadowRadius: 10,
         backgroundColor: colors.WHITE,
         elevation: 5,
-        flex: 1.5,
+        flex: width < 375 ? 2 : 1.5,
         alignSelf: 'center',
     },
     viewBotao: {
         paddingTop: 5,
+        paddingBottom: width < 375 ? 10 : 0,
         justifyContent: 'center',
         elevation: 5,
         shadowColor: colors.DEEPBLUE,
@@ -1340,7 +1362,7 @@ const styles = StyleSheet.create({
         color: colors.WHITE,
     },
     timeBox: {
-        top: 14,
+        top: Platform.OS == "android" ? 10 : 14,
         backgroundColor: colors.GREY1,
         width: 70,
         height: 25,

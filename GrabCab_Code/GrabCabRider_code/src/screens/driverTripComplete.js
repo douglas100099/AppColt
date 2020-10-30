@@ -100,7 +100,6 @@ export default class DriverTripComplete extends React.Component {
                     if (fRating) {
                         //avarage Rating submission
                         firebase.database().ref('users/' + this.state.getDetails.driver + '/ratings/').update({ userrating: parseFloat(fRating).toFixed(1) }).then(() => {
-                            this.setState({ alertModalVisible: true });
                             //Rating for perticular booking 
                             firebase.database().ref('users/' + this.state.getDetails.driver + '/my_bookings/' + this.state.getDetails.bookingKey + '/').update({
                                 rating: this.state.starCount > 0 ? this.state.starCount : 5,
@@ -109,64 +108,26 @@ export default class DriverTripComplete extends React.Component {
                                     skip: true,
                                     rating_queue: false
                                 })
-                            });
+                            }).then(() => {
+                                this.setState({ alertModalVisible: false, currentBookingId: null },
+                                    () => {
+                                        this.props
+                                            .navigation
+                                            .dispatch(StackActions.reset({
+                                                index: 0,
+                                                actions: [
+                                                    NavigationActions.navigate({
+                                                        routeName: 'Map',
+                                                    }),
+                                                ],
+                                            }))
+                                    })
+                            })
                         })
                     }
                 }
             })
         })
-    }
-
-    alertModal() {
-        return (
-            <Modal
-                animationType="fade"
-                transparent={true}
-                visible={this.state.alertModalVisible}
-                onRequestClose={() => {
-                    this.setState({ alertModalVisible: false })
-                }}>
-                <View style={styles.alertModalContainer}>
-                    <View style={styles.alertModalInnerContainer}>
-
-                        <View style={styles.alertContainer}>
-
-                            <View style={styles.horizontalLLine} />
-
-                            <View style={styles.msgContainer}>
-                                <Text style={styles.cancelMsgText}>{languageJSON.thanks}</Text>
-                            </View>
-                            <View style={styles.okButtonContainer}>
-                                <Button
-                                    title={languageJSON.no_driver_found_alert_OK_button}
-                                    titleStyle={styles.signInTextStyle}
-                                    onPress={() => {
-                                        this.setState({ alertModalVisible: false, currentBookingId: null },
-                                            () => {
-                                                this.props
-                                                    .navigation
-                                                    .dispatch(StackActions.reset({
-                                                        index: 0,
-                                                        actions: [
-                                                            NavigationActions.navigate({
-                                                                routeName: 'Map',
-                                                            }),
-                                                        ],
-                                                    }))
-                                            })
-                                    }}
-                                    buttonStyle={styles.okButtonStyle}
-                                    containerStyle={styles.okButtonContainerStyle}
-                                />
-                            </View>
-
-                        </View>
-
-                    </View>
-                </View>
-
-            </Modal>
-        )
     }
 
     render() {
@@ -202,8 +163,8 @@ export default class DriverTripComplete extends React.Component {
                 </View>
 
                 <View style={styles.rateViewStyle}>
-                    <Text style={styles.paymentMode}> {this.state.getDetails ? this.state.getDetails.payment_mode : null} </Text>
-                    <Text style={styles.rateViewTextStyle}>{this.state.settings.symbol}{this.state.getDetails ? this.state.getDetails.customer_paid > 0 ? this.state.getDetails.customer_paid.toFixed(2) : 0 : null}</Text>
+                    <Text style={styles.paymentMode}> {this.state.getDetails ? this.state.getDetails.pagamento.payment_mode : null} </Text>
+                    <Text style={styles.rateViewTextStyle}>{this.state.settings.symbol}{this.state.getDetails ? this.state.getDetails.pagamento.customer_paid > 0 ? parseFloat(this.state.getDetails.pagamento.customer_paid).toFixed(2) : 0 : null}</Text>
                 </View>
 
                 <View style={styles.tripMainView}>
@@ -254,9 +215,6 @@ export default class DriverTripComplete extends React.Component {
                         disabled={this.state.btnSubmit}
                     />
                 </View>
-                {
-                    this.alertModal()
-                }
             </View>
         )
     }

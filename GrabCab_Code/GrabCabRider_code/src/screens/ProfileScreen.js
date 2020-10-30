@@ -65,7 +65,7 @@ export default class ProfileScreen extends React.Component {
                 if (userData.val()) {
                     var str = userData.val().location.add
                     var tempAdd = str.split(",")[3] + ',' + str.split(",")[4];
-                    this.setState({ tempAddress: tempAdd });
+                    this.setState({ tempAddress: tempAdd, userImage: userData.val().profile_image });
                     this.setState(userData.val(), (res) => {
                     });
                 }
@@ -219,10 +219,15 @@ export default class ProfileScreen extends React.Component {
                         <View style={styles.imageParentView}>
                             <View style={styles.imageViewStyle} >
                                 {
-                                    this.state.loader == true ? this.loader() : 
-                                    <TouchableOpacity onPress={this.showActionSheet}>
-                                        <AvatarUser/>
-                                    </TouchableOpacity>
+                                     this.state.loader == true ? this.loader() : 
+                                     this.state.userImage ? 
+                                     <TouchableOpacity>
+                                         <Image source={{ uri: this.state.userImage }} style={{ width: 90, height: 90, borderRadius: 50 }} /> 
+                                     </TouchableOpacity>
+                                     :
+                                     <TouchableOpacity onPress={this.showActionSheet}>
+                                         <AvatarUser/>
+                                     </TouchableOpacity>
                                 }
                             </View>
                         </View>
@@ -399,9 +404,9 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     imageViewStyle: {
-        borderRadius: 80 / 2,
-        width: 80,
-        height: 80,
+        borderRadius: 100 / 2,
+        width: 100,
+        height: 100,
         backgroundColor: colors.BLACK,
         justifyContent: 'center',
         alignItems: 'center',
@@ -524,6 +529,8 @@ const styles = StyleSheet.create({
     editarPerfil: {
         flexDirection: 'row',
         justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 15
     },
     iconBack: {
         width: 30,

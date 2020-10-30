@@ -3,13 +3,16 @@ import { RideList, Btnvoltar } from '../components';
 import {
     StyleSheet,
     View,
+    Dimensions,
     Text,
-    TouchableWithoutFeedback
+    Platform,
 } from 'react-native';
-import { Header } from 'react-native-elements';
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Icon } from 'react-native-elements';
 import { colors } from '../common/theme';
 import * as firebase from 'firebase';
 import languageJSON from '../common/language';
+var { width, height } = Dimensions.get('window');
 import dateStyle from '../common/dateStyle';
 
 export default class RideListPage extends React.Component {
@@ -35,7 +38,6 @@ export default class RideListPage extends React.Component {
             item.roundoff = (Math.round(item.roundoffCost) - item.estimate).toFixed(2);
             this.props.navigation.push('RideDetails', { data: item });
         }
-
     }
 
     //Fetching My Rides
@@ -54,8 +56,6 @@ export default class RideListPage extends React.Component {
                 if (allRides) {
                     this.setState({
                         myrides: allRides.reverse()
-                    }, () => {
-
                     })
                 }
             }
@@ -66,13 +66,21 @@ export default class RideListPage extends React.Component {
     render() {
         return (
             <View style={styles.mainView}>
-                <Header
-                    backgroundColor={colors.WHITE}
-                    leftComponent={{ icon: 'chevron-left', type: 'MaterialIcons', color: colors.BLACK, size: 35, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.goBack(); } }}
-                    centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.ride_list_title}</Text>}
-                    containerStyle={styles.headerStyle}
-                    innerContainerStyles={{ marginLeft: 10, marginRight: 10 }}
-                />
+                <View style={styles.viewHeader}>
+                    <View style={styles.viewTop}>
+                        <View style={{ position: 'absolute', left: 10 }}>
+                            <TouchableOpacity style={styles.btnVoltar} onPress={() => { this.props.navigation.goBack() }}>
+                                <Icon
+                                    name='chevron-left'
+                                    type='MaterialIcons'
+                                    color={colors.BLACK}
+                                    size={32}
+                                />
+                            </TouchableOpacity>
+                        </View>
+                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: width < 375 ? 18 : 20 }}> Minhas corridas </Text>
+                    </View>
+                </View>
 
                 <RideList onPressButton={(item, index) => { this.goDetails(item, index) }} data={this.state.myrides}></RideList>
             </View>
@@ -81,20 +89,33 @@ export default class RideListPage extends React.Component {
 }
 
 const styles = StyleSheet.create({
-    headerStyle: {
-        backgroundColor: colors.WHITE,
-        borderBottomWidth: 0
-    },
-    headerTitleStyle: {
-        color: colors.BLACK,
-        fontFamily: 'Inter-Bold',
-        fontSize: 20
-    },
-    containerView: { flex: 1 },
-    textContainer: { textAlign: "center", backgroundColor: colors.TRANSPARENT },
     mainView: {
         flex: 1,
+    },
+    viewHeader: {
         backgroundColor: colors.WHITE,
-        //marginTop: StatusBar.currentHeight 
+        flex: 1,
+    },
+    viewTop: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginLeft: 10,
+        marginTop: Platform.OS == 'ios' ? 60 : 40,
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    btnVoltar: {
+        backgroundColor: colors.WHITE,
+        width: 40,
+        height: 40,
+
+        borderRadius: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
     }
 });

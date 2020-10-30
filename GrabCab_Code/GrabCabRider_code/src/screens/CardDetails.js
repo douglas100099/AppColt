@@ -54,21 +54,23 @@ export default class CardDetailsScreen extends React.Component {
     this._isMounted = true
     this._retrieveSettings();
     this.setValueToDB()
+    console.log("CHAAMOU")
   }
 
   async UNSAFE_componentWillMount() {
     var pdata = this.props.navigation.getParam('data');
+    console.log(pdata.driver + 'pdata')
     if (pdata) {
       data = {
-        amount: pdata.trip_cost,
-        payableAmmount: pdata.trip_cost,
+        amount: pdata.pagamento.trip_cost,
+        payableAmmount: pdata.pagamento.trip_cost,
         txRef: pdata.bookingKey // booking id
       }
       this.setState({
         userData: pdata,
         payDetails: data,
         loadingPayment: true,
-        usedWalletAmmount: pdata.usedWalletMoney
+        usedWalletAmmount: pdata.pagamento.usedWalletMoney
       })
       if (pdata.promoKey != "") {
         //this.addDetailsToPromo(pdata.promoKey, firebase.auth().currentUser.uid)
@@ -118,13 +120,14 @@ export default class CardDetailsScreen extends React.Component {
 
   setValueToDB() {
     let paramData = this.state.userData;
-    firebase.database().ref('users/' + paramData.driver + '/my_bookings/' + paramData.bookingKey + '/').update({
+    console.log(paramData.driver + "TESTE")
+    firebase.database().ref('users/' + paramData.driver + '/my_bookings/' + paramData.bookingKey + '/pagamento/').update({
       payment_status: "PAID",
     }).then(() => {
-      firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my-booking/' + paramData.bookingKey + '/').update({
+      firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my-booking/' + paramData.bookingKey + '/pagamento/').update({
         payment_status: "PAID",
       }).then(() => {
-        firebase.database().ref('bookings/' + paramData.bookingKey + '/').update({
+        firebase.database().ref('bookings/' + paramData.bookingKey + '/pagamento/').update({
           payment_status: "PAID",
         }).then(() => {
           this.setState({ loadingPayment: false });
@@ -146,8 +149,8 @@ export default class CardDetailsScreen extends React.Component {
           }
         }).then(() => {
           let cancelData = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/cancell_details/')
-          cancelData.once('value', data =>{
-            if( data.val() ){
+          cancelData.once('value', data => {
+            if (data.val()) {
               firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/cancell_details/').remove()
             }
           })
@@ -158,7 +161,7 @@ export default class CardDetailsScreen extends React.Component {
   }
 
   render() {
-    return(
+    return (
       <View>
         <Text> TESTE </Text>
       </View>

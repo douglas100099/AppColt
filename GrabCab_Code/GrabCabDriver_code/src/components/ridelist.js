@@ -1,27 +1,28 @@
 import React from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, AsyncStorage } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Image, AsyncStorage } from 'react-native';
 import { Icon } from 'react-native-elements'
 import { colors } from '../common/theme';
-import dateStyle from '../common/dateStyle';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 export default class RideList extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state={
-            currency:{
-                code:'',
-                symbol:''
-            }
+        this.state = {
+            currency: {
+                code: '',
+                symbol: ''
+            },
+            loader: false,
         };
         this._retrieveCurrency();
     }
 
     _retrieveCurrency = async () => {
         try {
-          const value = await AsyncStorage.getItem('currency');
-          if (value !== null) {
-            this.setState({currency:JSON.parse(value)});
-          }
+            const value = await AsyncStorage.getItem('currency');
+            if (value !== null) {
+                this.setState({ currency: JSON.parse(value) });
+            }
         } catch (error) {
             console.log("Asyncstorage issue 1");
         }
@@ -29,14 +30,89 @@ export default class RideList extends React.Component {
 
     //on press of each item function
     onPressButton(item, index) {
+        this.setState({ loader: true })
         const { onPressButton } = this.props;
         onPressButton(item, index)
     }
 
+    dataAtualFormatada(item) {
+        var data = new Date(item.tripdate),
+            dia = data.getDate().toString().padStart(2, '0'),
+            mes = (data.getMonth() + 1).toString().padStart(2, '0'), //+1 pois no getMonth Janeiro começa com zero.
+            ano = data.getFullYear();
+        return dia + "/" + mes + "/" + ano;
+    }
+
+    loader() {
+        return (
+            <View style={[styles.loadingcontainer, styles.horizontal]}>
+                <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+        )
+    }
 
     //flatlist return function
     newData = ({ item, index }) => {
         return (
+            <TouchableWithoutFeedback style={{ backgroundColor: colors.WHITE, borderRadius: 0, borderWidth: 0, borderColor: colors.WHITE }} disabled={this.state.loader} onPress={() => this.onPressButton(item, index)}>
+                <View style={styles.mainView} >
+                    <View style={[styles.viewInfos, { borderLeftColor: item.status == 'CANCELLED' ? colors.RED : colors.GREEN.light, borderLeftWidth: 3 }]}>
+
+
+                        {item.status == 'END' ?
+                            <View style={{ position: 'absolute', right: 25, top: 5 }}>
+                                <Icon
+                                    name="check-circle"
+                                    type="feather"
+                                    size={25}
+                                    color={colors.DEEPBLUE}
+                                />
+                            </View>
+                            : null}
+                        {item.status == 'CANCELLED' ?
+                            <View style={{ position: 'absolute', right: 25, top: 5 }}>
+                                <Icon
+                                    name="x-circle"
+                                    type="feather"
+                                    size={25}
+                                    color={colors.RED}
+                                />
+                            </View>
+                            : null}
+                        {item.status == 'START' ?
+                            <View style={{ position: 'absolute', right: 25, top: 5 }}>
+                                <Icon
+                                    name="alert-circle"
+                                    type="feather"
+                                    size={25}
+                                    color={colors.YELLOW.primary}
+                                />
+                            </View>
+                            : null}
+
+
+                        <View style={styles.headerView} onPress={() => this.onPressButton(item, index)}>
+                            <View style={styles.nomePhoto}>
+                                <Image source={item.imageRider ? { uri: item.imageRider } : require('../../assets/images/profilePic.png')} style={styles.fotoPassageiro} />
+                                <Text style={styles.txtPassageiro}>{item.customer_name ? item.customer_name : 'Sem nome'}</Text>
+                            </View>
+                            <View style={{flexDirection: 'row'}}>
+                                <View style={{ marginRight: 5 }}>
+                                    <Text style={styles.txtHora}>{item.tripdate ? this.dataAtualFormatada(item) : 'Indefinido'}</Text>
+                                </View>
+                                <View style={{ marginRight: 30 }}>
+                                    <Text style={styles.txtHora2}>{item.trip_start_time ? item.trip_start_time.split(':')[0] + ':' + item.trip_start_time.split(':')[1] : 'Indefinido'}</Text>
+                                </View>
+                            </View>
+                        </View>
+                        <View style={styles.viewDinheiro}>
+                            <Text style={styles.txtMetodopgt}>{item.metodoPagamento ? item.metodoPagamento : 'Dinheiro'}</Text>
+                            <Text style={styles.txtDinheiro}>R$ {item.trip_cost ? parseFloat(item.trip_cost).toFixed(2) : '0'}</Text>
+                        </View>
+                    </View>
+                </View>
+            </TouchableWithoutFeedback>
+            /*
             <TouchableOpacity style={styles.iconClickStyle} onPress={() => this.onPressButton(item, index)}>
                 <View style={styles.flexViewStyle}>
                     <View style={styles.textView1}>
@@ -66,6 +142,7 @@ export default class RideList extends React.Component {
                     </View>
                 </View>
             </TouchableOpacity>
+            */
         )
     }
 
@@ -85,10 +162,96 @@ export default class RideList extends React.Component {
 
 //style for this component
 const styles = StyleSheet.create({
+    /* NOVO CSS */
+
+    mainView: {
+        flex: 1,
+        backgroundColor: colors.WHITE,
+        marginHorizontal: 10,
+        marginVertical: 5,
+    },
+
+    viewInfos: {
+        flex: 1,
+        backgroundColor: colors.WHITE,
+        height: 80,
+        borderRadius: 15,
+        marginBottom: 5,
+        elevation: 5,
+    },
+
+    headerView: {
+        flex: 0.5,
+        marginTop: 10,
+        marginHorizontal: 25,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+
+    txtHora: {
+        fontSize: 14,
+        fontFamily: 'Inter-Regular',
+        color: colors.BLACK,
+    },
+
+    txtHora2: {
+        fontSize: 14,
+        fontFamily: 'Inter-Bold',
+        color: colors.BLACK,
+    },
+
+    nomePhoto: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+
+    txtPassageiro: {
+        fontSize: 12,
+        fontFamily: 'Inter-Regular',
+        color: colors.BLACK,
+    },
+
+    fotoPassageiro: {
+        height: 25,
+        width: 25,
+        borderRadius: 50,
+        marginRight: 5,
+    },
+
+    viewDinheiro: {
+        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingTop: 10,
+        marginHorizontal: 25,
+
+    },
+
+    txtMetodopgt: {
+        fontSize: 14,
+        fontFamily: 'Inter-SemiBold',
+        color: colors.BLACK,
+    },
+
+    txtDinheiro: {
+        fontSize: 20,
+        fontFamily: 'Inter-Bold',
+        color: colors.BLACK,
+    },
+
+
+
+
+    /* FIM DO NOVO CSS */
+
+
+
+
+
     textStyle: {
         fontSize: 13,
     },
-    textStyle2:{
+    textStyle2: {
         fontSize: 13,
     },
     fareStyle: {
@@ -114,7 +277,7 @@ const styles = StyleSheet.create({
     },
     dropPlaceStyle: {
         color: colors.BLACK,
-        
+
     },
     greenDot: {
         alignSelf: 'center',
@@ -178,22 +341,22 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter-Regular',
         fontSize: 15,
         alignSelf: 'center',
-        
+
     },
     textViewStyle: {
         marginTop: 10,
         marginBottom: 10,
-        
+
     },
     cancelImageStyle: {
         width: 50,
         height: 50,
         marginRight: 20,
         marginTop: 18,
-        alignSelf:'flex-end',
+        alignSelf: 'flex-end',
         backgroundColor: colors.TRANSPARENT
-        
-        
+
+
     },
     iconViewStyle: {
         flex: 1, marginTop: 10
@@ -213,10 +376,10 @@ const styles = StyleSheet.create({
     position: {
         marginTop: 20,
         marginLeft: 20,
-        
+
     },
     textPosition: {
         alignSelf: 'center',
-        
+
     }
 });

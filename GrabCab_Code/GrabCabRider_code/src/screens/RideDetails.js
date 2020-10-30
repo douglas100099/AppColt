@@ -20,6 +20,7 @@ var { width } = Dimensions.get('window');
 import * as firebase from 'firebase'; //Database
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
+import { NavigationActions, StackActions } from 'react-navigation';
 
 export default class RideDetails extends React.Component {
     getRideDetails;
@@ -112,7 +113,20 @@ export default class RideDetails extends React.Component {
                 bokkingId: data.bookingId,
                 coords: data.coords,
             }
-            this.props.navigation.navigate('BookedCab', { passData: bookingData });
+            //this.props.navigation.navigate('BookedCab', { passData: bookingData });
+
+            this.props
+                .navigation
+                .dispatch(StackActions.reset({
+                    index: 0,
+                    actions: [
+                        NavigationActions.navigate({
+                            routeName: 'BookedCab',
+                            params: { passData: bookingData },
+                        }),
+                    ],
+                }))
+
         } else if (data.status == 'START') {
             this.props.navigation.navigate('trackRide', { data: data, bId: data.bookingId });
         } else {
@@ -251,7 +265,7 @@ export default class RideDetails extends React.Component {
                                 <Avatar
                                     size="small"
                                     rounded
-                                    source={this.state.paramData.carImage ? { uri: this.state.paramData.carImage } : require('../../assets/images/microBlackCar.png')}
+                                    source={this.state.paramData.carImage ? { uri: this.state.paramData.carImage } : null}
                                     activeOpacity={0.7}
                                 />
                                 <View style={styles.userView}>

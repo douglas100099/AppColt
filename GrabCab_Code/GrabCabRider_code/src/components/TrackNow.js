@@ -1,19 +1,25 @@
-
 import React from 'react';
-import { StyleSheet, View, PermissionsAndroid } from 'react-native';
+import { StyleSheet, View, Modal, Image, Text, Dimensions } from 'react-native';
 import haversine from "haversine";
 import MapView, {
     Marker,
     AnimatedRegion,
     PROVIDER_GOOGLE
 } from "react-native-maps";
+import { Icon } from 'react-native-elements';
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import { colors } from '../common/theme';
 import Polyline from '@mapbox/polyline';
+var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import distanceCalc from '../common/distanceCalc';
+
+import LocationUser from '../../assets/svg/LocationUser';
+import IconCarMap from '../../assets/svg/IconCarMap';
+
+
 export default class TrackNow extends React.Component {
 
     constructor(props) {
@@ -24,11 +30,14 @@ export default class TrackNow extends React.Component {
             routeCoordinates: [],
             distanceTravelled: 0,
             prevLatLng: {},
-            coordinate: null
+            coordinate: null,
+            checkDirection: true
         };
+        this._isMounted = false;
     }
 
     async componentDidMount() {
+        this._isMounted = true
         const { duid, alldata, bookingStatus } = this.props;
         let paramData = alldata;
 
@@ -49,13 +58,17 @@ export default class TrackNow extends React.Component {
                     longitude
                 };
 
-                coordinate.timing(newCoordinate).start();
+                coordinate.timing(newCoordinate, {
+                    toValue: 1,
+                    duration: 500,
+                    useNativeDriver: false,
+                }).start();
+
                 this.setState({
                     latitude,
                     longitude,
                     routeCoordinates: routeCoordinates.concat([newCoordinate]),
-                    distanceTravelled:
-                        distanceTravelled + this.calcDistance(newCoordinate),
+                    distanceTravelled: distanceTravelled + this.calcDistance(newCoordinate),
                     prevLatLng: newCoordinate
                 });
             },
@@ -70,8 +83,8 @@ export default class TrackNow extends React.Component {
 
         if (duid && alldata) {
             const dat = firebase.database().ref('users/' + duid + '/');
-            setInterval(() => {
 
+            setInterval(() => {
                 dat.once('value', snapshot => {
                     if (snapshot.val() && snapshot.val().location) {
                         var data = snapshot.val().location;
@@ -80,14 +93,16 @@ export default class TrackNow extends React.Component {
                                 allData: paramData,
                                 destinationLoc: paramData.wherelatitude + ',' + paramData.wherelongitude,
                                 startLoc: data.lat + ',' + data.lng,
-                                latitude: data.lat, longitude: data.lng
+                                latitude: data.lat,
+                                longitude: data.lng,
+                                'angle': data.angle
                             }, () => {
                                 if (bookingStatus == 'ACCEPTED') {
                                     var location1 = [paramData.wherelatitude, paramData.wherelongitude];
                                     var location2 = [data.lat, data.lng];
                                     var distance = distanceCalc(location1, location2);
                                     var originalDistance = distance * 1000;
-                                    // alert(originalDistance)
+
                                     if (originalDistance && originalDistance < 50) {
                                         if (!this.state.allData.flag) {
                                             this.setState({
@@ -108,12 +123,12 @@ export default class TrackNow extends React.Component {
                         }
                     }
                 })
-
-            }, 10000)
+            }, 7000)
         }
     }
 
     componentWillUnmount() {
+        this._isMounted = false
         navigator.geolocation.clearWatch(this.watchID);
     }
 
@@ -125,8 +140,8 @@ export default class TrackNow extends React.Component {
     getMapRegion = () => ({
         latitude: this.state.latitude,
         longitude: this.state.longitude,
-        latitudeDelta: 0.009,
-        longitudeDelta: 0.009
+        latitudeDelta: 0.0143,
+        longitudeDelta: 0.0134
     });
 
     async getDirections() {
@@ -142,14 +157,16 @@ export default class TrackNow extends React.Component {
             })
             this.setState({ coords: coords }, () => {
                 setTimeout(() => {
-                    if (this.map) {
-                        this.map.fitToCoordinates([{ latitude: this.state.latitude, longitude: this.state.longitude }, { latitude: this.state.allData.wherelatitude, longitude: this.state.allData.wherelongitude }], {
-                            edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
-                            animated: true,
-                        })
-                    };
-                }, 1500);
-
+                    if (this.state.checkDirection) {
+                        if (this.map) {
+                            this.map.fitToCoordinates([{ latitude: this.state.latitude, longitude: this.state.longitude }, { latitude: this.state.allData.wherelatitude, longitude: this.state.allData.wherelongitude }], {
+                                edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
+                                animated: true,
+                            })
+                        };
+                        this.setState({ checkDirection: false })
+                    }
+                }, 500);
             })
             return coords
         }
@@ -162,44 +179,62 @@ export default class TrackNow extends React.Component {
     render() {
         return (
             <View style={styles.innerContainer}>
-                {this.state.latitude?
-                <MapView
-                    ref={map => { this.map = map }}
-                    style={styles.map}
-                    provider={PROVIDER_GOOGLE}
-                    showUserLocation
-                    followUserLocation
-                    loadingEnabled
-                    region={this.getMapRegion()}
-                >
-                    {this.state.coords?
-                    <MapView.Polyline
-                        coordinates={this.state.coords}
-                        strokeWidth={5}
-                        strokeColor={colors.BLUE.default}
-                    />
-                    :null}
-                    {this.state.routeCoordinates?
-                    <MapView.Polyline coordinates={this.state.routeCoordinates} strokeWidth={5} />
-                    :null}
-                    {this.state.allData?
-                    <Marker
-                        coordinate={{ latitude: this.state.allData.wherelatitude, longitude: this.state.allData.wherelongitude}}
-                        image={require('../../assets/images/marker.png')}
+                {this.state.allData ?
+                    <MapView
+                        ref={map => { this.map = map }}
+                        style={styles.map}
+                        provider={PROVIDER_GOOGLE}
+                        showUserLocation
+                        followUserLocation
+                        loadingEnabled
+                        showsCompass={false}
+                        showsScale={false}
+                        rotateEnabled={false}
+                        showsMyLocationButton={false}
+                        //region={this.getMapRegion()}
+                        initialRegion={{
+                            latitude: (this.state.latitude),
+                            longitude: (this.state.longitude),
+                            latitudeDelta: 0.0143,
+                            longitudeDelta: 0.0134,
+                        }}
                     >
-                    </Marker>
-                    :null}
-                    {this.state.latitude?
-                    <Marker
-                        coordinate={{ latitude: this.state.latitude, longitude: this.state.longitude }}
-                        anchor={{ x : 0 , y : 0 }}
-                        image={require('../../assets/images/available_car.png')}
-                    >
-                    </Marker>
-                    :null}
+                        {this.state.coords ?
+                            <MapView.Polyline
+                                coordinates={this.state.coords}
+                                strokeWidth={2.5}
+                                strokeColor={colors.DEEPBLUE}
+                            />
+                            : null}
+                        {this.state.routeCoordinates ?
+                            <MapView.Polyline strokeColor={colors.DEEPBLUE} coordinates={this.state.routeCoordinates} strokeWidth={3} />
+                            : null}
+                        {this.state.allData ?
+                            <Marker
+                                coordinate={{ latitude: this.state.allData.wherelatitude, longitude: this.state.allData.wherelongitude }}
+                                anchor={{ x: 0, y: 0 }}
+                            >
+                                <LocationUser
+                                    width={25}
+                                    height={25}
+                                />
+                            </Marker>
+                            : null}
+                        {this.state.latitude ?
+                            <Marker
+                                coordinate={{ latitude: this.state.latitude, longitude: this.state.longitude }}
+                                anchor={{ x: 0, y: 0 }}
+                            >
+                                <IconCarMap
+                                    width={45}
+                                    height={45}
+                                    style={{ transform: [{ rotate: this.state.angle + "deg" }] }}
+                                />
+                            </Marker>
+                            : null}
 
-                </MapView>
-                :null}
+                    </MapView>
+                    : null}
             </View>
 
         );
@@ -248,6 +283,12 @@ const styles = StyleSheet.create({
     latlng: {
         width: 200,
         alignItems: "stretch"
+    },
+    textLoading: {
+        fontFamily: 'Inter-Bold',
+        fontSize: 18,
+        textAlign: 'center',
+        fontWeight: "600",
     },
 
 });

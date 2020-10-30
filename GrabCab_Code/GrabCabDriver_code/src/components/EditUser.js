@@ -23,7 +23,7 @@ export default class EditUser extends React.Component {
         } 
       }
 
-      async componentWillMount() {
+      async UNSAFE_componentWillMount() {
         var curuser = firebase.auth().currentUser;
         const userData=firebase.database().ref('users/'+curuser.uid);
         if(curuser.email) this.setState({loginType:'email'});
@@ -108,9 +108,6 @@ export default class EditUser extends React.Component {
                     innerContainerStyles={styles.headerInnerContainer}
                 />
                 <ScrollView style={styles.scrollViewStyle}>
-                    {/* <View style={styles.logo}>
-                        <Image source={require('../../assets/images/logo.png')} />
-                    </View> */}
                     <KeyboardAvoidingView behavior={Platform.OS=='ios'?"padding":"padding"} style={styles.form}> 
                         <View style={styles.containerStyle}>
 

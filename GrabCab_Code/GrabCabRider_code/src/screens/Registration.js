@@ -11,7 +11,6 @@ export default class RegistrationPage extends React.Component {
         }
     }
 
-    
     async clickRegister(fname, lname, email, mobile, viaRef,referralVia) {
         this.setState({loading: true})
         var regData = {
@@ -33,9 +32,7 @@ export default class RegistrationPage extends React.Component {
           });
         });
     }
-
-  
-    
+ 
   render() {
     const registrationData= this.props.navigation.getParam("requireData");
     return (

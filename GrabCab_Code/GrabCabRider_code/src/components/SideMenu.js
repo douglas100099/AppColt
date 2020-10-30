@@ -31,7 +31,6 @@ export default class SideMenu extends React.Component {
                 wallet: false
             }
         }
-
     }
 
     _retrieveSettings = async () => {
@@ -57,7 +56,6 @@ export default class SideMenu extends React.Component {
         })
         this.tripSatusCheck();
         this._retrieveSettings();
-
     }
 
     //check for device height(specially iPhone 6)
@@ -92,20 +90,19 @@ export default class SideMenu extends React.Component {
                 if (userData.val()) {
                     var data = userData.val()
                     if (data['my-booking']) {
-                        let bookingData = userData.val()['my-booking']
+                        let bookingData = data['my-booking']
                         for (key in bookingData) {
-
                             bookingData[key].bookingKey = key
                             if (bookingData[key].payment_status) {
                                 if (bookingData[key].payment_status == "WAITING" && bookingData[key].status == 'END' && bookingData[key].skip != true && bookingData[key].paymentstart != true) {
-                                    bookingData[key].firstname = userData.val().firstName;
-                                    bookingData[key].lastname = userData.val().lastName;
-                                    bookingData[key].email = userData.val().email;
-                                    bookingData[key].phonenumber = userData.val().mobile;
+                                    bookingData[key].firstname = data.firstName;
+                                    bookingData[key].lastname = data.lastName;
+                                    bookingData[key].email = data.email;
+                                    bookingData[key].phonenumber = data.mobile;
                                     this.props.navigation.navigate('CardDetails', { data: bookingData[key] });
+                                    console.log("ENTROU AQUI NO CARD DETAILS")
                                 }
                             }
-
                         }
                     }
                 }
@@ -113,16 +110,13 @@ export default class SideMenu extends React.Component {
         })
     }
 
-
-
-
     render() {
         return (
             <View style={styles.mainViewStyle}>
                 <SideMenuHeader headerStyle={styles.myHeader} userPhoto={this.state.profile_image} userEmail={this.state.email} userPhone={this.state.mobile} userName={this.state.firstName + ' ' + this.state.lastName} ></SideMenuHeader>
 
                 <View style={styles.compViewStyle}>
-                    <View style={[styles.vertialLine, { height: (width <= 320) ? width / 1.53 : width / 1.68 }]}></View>
+                    
                     <FlatList
                         data={this.state.sideMenuList}
                         keyExtractor={(item, index) => index.toString()}
@@ -146,7 +140,7 @@ export default class SideMenu extends React.Component {
                                             name={item.icon}
                                             type={item.type}
                                             color={colors.BLACK}
-                                            size={18}
+                                            size={20}
                                             containerStyle={styles.iconStyle}
                                         />
                                     </View>
@@ -171,7 +165,7 @@ const styles = StyleSheet.create({
         width: 1,
         backgroundColor: colors.GREY2,
         position: 'absolute',
-        left: 25,
+        left: 27,
         top: 24
     },
     menuItemView: {
@@ -184,8 +178,8 @@ const styles = StyleSheet.create({
         paddingRight: 10,
     },
     viewIcon: {
-        width: 30,
-        height: 30,
+        width: 35,
+        height: 35,
         borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
@@ -208,7 +202,8 @@ const styles = StyleSheet.create({
     },
     compViewStyle: {
         position: 'relative',
-        flex: 3
+        flex: 3,
+        marginLeft: 10
     },
     iconStyle: {
         justifyContent: 'center',

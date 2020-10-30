@@ -3,105 +3,265 @@ import {
     StyleSheet,
     View,
     Text,
+    Modal,
     Image,
     Dimensions,
-    TouchableWithoutFeedback,
     AsyncStorage,
     Linking,
-    TouchableOpacity
+    ActivityIndicator,
+    TouchableOpacity,
+    Alert
 } from 'react-native';
-import { MapComponent, TripStartModal } from '../components';
-import { Button, Header, Icon } from 'react-native-elements';
+import { Icon, Button } from 'react-native-elements';
+import ActionSheet from 'react-native-actionsheet';
 import { colors } from '../common/theme';
+import getDirections from 'react-native-google-maps-directions'
+import Polyline from '@mapbox/polyline';
 import { RequestPushMsg } from '../common/RequestPushMsg';
+import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import * as Permissions from 'expo-permissions';
+import { NavigationActions, StackActions } from 'react-navigation';
 import * as Location from 'expo-location';
 import * as firebase from 'firebase';
+import distanceCalc from '../common/distanceCalc';
 import languageJSON from '../common/language';
+import CellphoneSVG from '../SVG/CellphoneSVG'
+import CarMarkerSVG from '../SVG/CarMarkerSVG';
+import ChatSVG from '../SVG/ChatSVG';
+import IconCloseSVG from '../SVG/IconCloseSVG';
 var { width, height } = Dimensions.get('window');
 import { google_map_key } from '../common/key';
 import dateStyle from '../common/dateStyle';
+import * as IntentLauncher from 'expo-intent-launcher';
+import RadioForm from 'react-native-simple-radio-button';
+const LOCATION_TASK_NAME = 'background-location-task';
+
 export default class DriverStartTrip extends React.Component {
+
+    _isMounted = false;
+
     constructor(props) {
         super(props);
         this.state = {
             region: {
-                latitude: 37.78825,
-                longitude: -122.4324,
-                latitudeDelta: 0.9922,
-                longitudeDelta: 0.9421,
+                latitude: 0,
+                longitude: 0,
+                latitudeDelta: 0.0143,
+                longitudeDelta: 0.0134,
             },
             mediaSelectModal: false,
             allData: "",
-            inputCode: ""
+            inputCode: "",
+            modalOpen: false,
+            coords: [],
+            radio_props: [],
+            value: 0,
+            notificarChegada: false,
+            followMap: true,
+            fitCordinates: false,
+            loader: false,
+            modalCancel: false,
         }
+        //this.getLocationDriver();
+
     }
 
-    componentWillMount() {
+    async UNSAFE_componentWillMount() {
         const allDetails = this.props.navigation.getParam('allDetails')
         console.log(allDetails);
         this.setState({
             rideDetails: allDetails,
-            region: {
-                latitude: allDetails.pickup.lat,
-                longitude: allDetails.pickup.lng,
-                latitudeDelta: 0.9922,
-                longitudeDelta: 0.9421,
-            },
             curUid: firebase.auth().currentUser.uid
         }, () => {
-            this.checkStaus()
+            this.checkStatus()
         })
-        setInterval(this.updateLocation.bind(this), 5000);
+        const { status } = await Permissions.askAsync(Permissions.LOCATION);
+        const gpsActived = await Location.hasServicesEnabledAsync()
+        console.log(gpsActived)
+        if (status === "granted" && gpsActived) {
+            this._getLocationAsync();
+        } else {
+            this.setState({ error: "Locations services needed" });
+            this.openAlert()
+        }
     }
 
-    checkStaus() {
+    componentDidMount() {
+        this._isMounted = true;
+        this.getCancelReasons();
+        if (this.state.rideDetails && this._isMounted) {
+            setTimeout(() => {
+                this.getDirectionss('"' + this.state.region.latitude + ',' + this.state.region.longitude + '"', '"' + this.state.rideDetails.pickup.lat + ',' + this.state.rideDetails.pickup.lng + '"')
+            }, 500)
+        }
+    }
+
+    componentWillUnmount() {
+        this._isMounted = false;
+        if (this.location != undefined) {
+            console.log('REMOVEU O WATCH STARTTRIP')
+            this.location.remove()
+        }
+        console.log('DESMONTOU A TELA START TRIP')
+    }
+
+    openAlert() {
+        Alert.alert(
+            'Localização necessária',
+            'Para receber corrida e ficar online, precisamos de sua localização ativa, por favor ative-a em configurações.',
+            [{
+                text: "Cancelar",
+                onPress: () => console.log("Cancel Pressed"),
+                style: "cancel"
+            },
+            { text: 'IR PARA CONFIGURAÇÕES', onPress: () => { IntentLauncher.startActivityAsync(IntentLauncher.ACTION_LOCATION_SOURCE_SETTINGS) } }
+            ],
+            { cancelable: false }
+        );
+    }
+
+    _getLocationAsync = async () => {
+        this.location = await Location.watchPositionAsync({
+            accuracy: Location.Accuracy.Highest,
+            distanceInterval: 1,
+            timeInterval: 2000
+        },
+            newLocation => {
+                let { coords } = newLocation;
+                // console.log(coords);
+                let region = {
+                    latitude: coords.latitude,
+                    longitude: coords.longitude,
+                    latitudeDelta: 0.045,
+                    longitudeDelta: 0.045,
+                    angle: coords.heading,
+                };
+                this.setState({ region: region });
+                this.setLocationDB(region.latitude, region.longitude, region.angle)
+            },
+            error => console.log(error)
+        );
+        return this.location
+    };
+
+    setLocationDB(lat, lng, angle) {
+        let uid = firebase.auth().currentUser.uid;
+        var latlng = lat + ',' + lng;
+        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
+            .then((response) => response.json())
+            .then((responseJson) => {
+                if (responseJson.results[0] && responseJson.results[0].formatted_address) {
+                    let address = responseJson.results[0].formatted_address;
+                    firebase.database().ref('users/' + uid + '/location').update({
+                        add: address,
+                        lat: lat,
+                        lng: lng,
+                        angle: angle,
+                    });
+                }
+            }).catch((error) => {
+                console.error(error);
+            });
+    }
+
+    /*async getLocationDriver() {
+        try {
+            let { status } = await Permissions.askAsync(Permissions.LOCATION);
+            let verificarGPS = await Location.hasServicesEnabledAsync();
+            if (status === 'granted' && verificarGPS) {
+                var uid = firebase.auth().currentUser.uid;
+                const driverlocation = firebase.database().ref('users/' + uid + '/location');
+                driverlocation.on('value', location => {
+                    if (location.val()) {
+                        let loc = location.val()
+                        console.log(loc)
+                        this.setState({
+                            region: {
+                                latitude: loc.lat,
+                                longitude: loc.lng,
+                                latitudeDelta: 0.0143,
+                                longitudeDelta: 0.0134,
+                            },
+                            geolocationFetchComplete: true
+                        })
+                    }
+                    //console.log(this.state.region)
+                })
+            } else {
+                this.setState({
+                    errorMessage: 'Permission to access location was denied',
+                });
+                this.openAlert();
+            }
+        } catch {
+            alert(error)
+            return error
+        }
+    }*/
+
+    checkStatus() {
         let tripRef = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my_bookings/' + this.state.rideDetails.bookingId + '/');
         tripRef.on('value', (snap) => {
+            console.log(this.state.rideDetails.bookingId)
             let tripData = snap.val();
             console.log('tripData', tripData)
             if (tripData) {
                 this.setState({ status: tripData.status })
                 if (tripData.status == "CANCELLED") {
-                    this.props.navigation.navigate('DriverTripAccept');
-                    alert(languageJSON.rider_ride_cancel_text)
+                    //console.log('NAVEGOU POR QUE CANCELOU')
+                    this.props
+                        .navigation
+                        .dispatch(StackActions.reset({
+                            index: 0,
+                            actions: [
+                                NavigationActions.navigate({
+                                    routeName: 'DriverTripAccept',
+                                }),
+                            ],
+                        }))
+                    alert('Corrida atual foi cancelada')
                 }
             }
         })
-
-        // console.log('curuser',firebase.auth().currentUser.uid)
-
     }
 
-
-    updateLocation = async () => {
-        if (this.state.status == 'ACCEPTED') {
-
-            let { status } = await Permissions.askAsync(Permissions.LOCATION);
-            if (status !== 'granted') {
-                console.log('i am called')
-                this.setState({
-                    errorMessage: 'Permission to access location was denied',
-                });
-            }
-
-            let location = await Location.getCurrentPositionAsync({});
-            /*var latlng = location.coords.latitude + ',' + location.coords.longitude;
-            return fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
-                .then((response) => response.json())
-                .then((responseJson) => {
-                    console.log(location)*/
-            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
-                lat: location.coords.latitude,
-                lng: location.coords.longitude,
-                //add: responseJson.results[0].formatted_address
+    async getDirectionss(startLoc, destinationLoc) {
+        try {
+            let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=${google_map_key}`)
+            let respJson = await resp.json();
+            let points = Polyline.decode(respJson.routes[0].overview_polyline.points);
+            let coords = points.map((point, index) => {
+                return {
+                    latitude: point[0],
+                    longitude: point[1]
+                }
             })
-            /* })
-             .catch((error) => {
-                 console.error(error);
-             });*/
+            this.setState({ coords: coords })
+            return coords
         }
-    };
+        catch (error) {
+            alert(error)
+            return error
+        }
+    }
+
+    checkDist(item) {
+        this.setState({ loader: true })
+        this.setState({ allData: item },
+            () => {
+                var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
+                var location2 = [this.state.rideDetails.pickup.lat, this.state.rideDetails.pickup.lng];   //Driver lat and lang
+                //calculate the distance of two locations
+                var distance = distanceCalc(location1, location2);
+                var originalDistance = (distance);
+                if (originalDistance <= 0.8) {
+                    //this.onPressStartTrip(this.state.allData)
+                    this.embarque();
+                } else {
+                    this.showActionSheet()
+                }
+            })
+    }
 
     //start trip button press function
     onPressStartTrip(item) {
@@ -117,12 +277,25 @@ export default class DriverStartTrip extends React.Component {
 
 
     }
+
+    showActionSheet = () => {
+        this.ActionSheet.show()
+    }
+
     closeModal() {
         this.setState({ mediaSelectModal: false })
     }
 
+    openModalInfo() {
+        this.setState({ modalOpen: true })
+    }
+
+    closeModalInfo() {
+        this.setState({ modalOpen: false })
+    }
+
     chat() {
-        this.props.navigation.navigate("Chat", { passData: this.state.rideDetails });
+        this.props.navigation.push("Chat", { passData: this.state.rideDetails });
     }
 
     callToCustomer(data) {
@@ -172,9 +345,12 @@ export default class DriverStartTrip extends React.Component {
                                 this.closeModal();
                                 let startTime = new Date().getTime().toString();
                                 AsyncStorage.setItem('startTime', startTime);
+                                console.log(startTime + ' Start Time da tela Start trip')
+                                this.setState({ notificarChegada: false })
+                                this.setState({ loader: false })
                                 this.props.navigation.navigate('DriverTripComplete', { allDetails: this.state.allData, startTime: startTime });
-                                
-                                this.sendPushNotification(this.state.allData.customer, this.state.allData.bookingId);
+
+                                this.sendPushNotification(this.state.allData.customer);
                             })
                         })
                     })
@@ -188,90 +364,370 @@ export default class DriverStartTrip extends React.Component {
 
     }
 
-    sendPushNotification(customerUID, bookingId) {
+    informarChegada() {
+        if (this.state.notificarChegada == false) {
+            setTimeout(
+                function () {
+                    this.setState({ notificarChegada: true });
+                }
+                    .bind(this),
+                1000
+            );
+        }
+    }
+
+    sendPushNotification(customerUID) {
         const customerRoot = firebase.database().ref('users/' + customerUID);
         customerRoot.once('value', customerData => {
             if (customerData.val()) {
                 let allData = customerData.val()
-                RequestPushMsg(allData.pushToken ? allData.pushToken : null, languageJSON.driver_journey_err + bookingId)
+                RequestPushMsg(allData.pushToken ? allData.pushToken : null, ' o motorista iniciou sua corrida')
             }
         })
     }
 
+    sendPushNotification2(customerUID, bookingId, msg) {
+        const customerRoot = firebase.database().ref('users/' + customerUID);
+        customerRoot.once('value', customerData => {
+            if (customerData.val()) {
+                let allData = customerData.val()
+                RequestPushMsg(allData.pushToken ? allData.pushToken : null, msg)
+            }
+        })
+    }
+
+    animateToDestination() {
+        this.setState({ fitCordinates: true, followMap: false })
+        setTimeout(() => {
+            this.map.fitToCoordinates([{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }, { latitude: this.state.rideDetails.pickup.lat, longitude: this.state.rideDetails.pickup.lng }], {
+                edgePadding: { top: 80, right: 65, bottom: 50, left: 50 },
+                animated: true,
+            })
+        }, 200);
+    }
+
+    centerFollowMap() {
+        this.map.animateToRegion(this.state.region, 1000)
+        setTimeout(() => { this.setState({ followMap: true, fitCordinates: false }) }, 1100)
+    }
+
+    checkMap() {
+        if (this.state.followMap) {
+            return this.state.region;
+        }
+    }
+
+    handleGetDirections() {
+        const data = {
+            source: {
+                latitude: this.state.region.latitude,
+                longitude: this.state.region.longitude
+            },
+            destination: {
+                latitude: this.state.rideDetails.pickup.lat,
+                longitude: this.state.rideDetails.pickup.lng
+            },
+            params: [
+                {
+                    key: "travelmode",
+                    value: "driving"        // may be "walking", "bicycling" or "transit" as well
+                },
+                {
+                    key: "dir_action",
+                    value: "navigate"       // this instantly initializes navigation using the given travel mode
+                }
+            ],
+        }
+
+        getDirections(data)
+    }
+
+    embarque(){
+        // ATUALIZANDO STATUS BOOKINGS
+        firebase.database().ref(`bookings/` + this.state.allData.bookingId + '/').update({
+            status: 'EMBARQUE',
+        }).then(() => {
+            // ATUALIZANDO STATUS DRIVER
+            firebase.database().ref(`/users/` + this.state.curUid + '/my_bookings/' + this.state.allData.bookingId + '/').update({
+                status: 'EMBARQUE',
+            }) 
+        }).then(() => {
+            // ATUALIZANDO STATUS RIDER
+            firebase.database().ref(`/users/` + this.state.rideDetails.customer + '/my-booking/' + this.state.allData.bookingId + '/').update({
+                status: 'EMBARQUE',
+            })
+            this.sendPushNotification2(this.state.rideDetails.customer, this.state.allData.bookingId, this.state.rideDetails.driver_name + ' chegou ao local de embarque.')
+            this.setState({ loader: false })
+        })
+    }
+
+    getCancelReasons() {
+        const reasonListPath = firebase.database().ref('/cancel_reason/');
+        reasonListPath.on('value', reasons => {
+            if (reasons.val()) {
+                this.setState({
+                    radio_props: reasons.val()
+                })
+            }
+        })
+    }
+
+    onCancelConfirm() {
+        console.log(this.state.rideDetails.bookingId)
+        firebase.database().ref(`bookings/` + this.state.rideDetails.bookingId + '/').update({
+            status: 'CANCELLED',
+        })
+        firebase.database().ref(`/users/` + this.state.curUid + '/my_bookings/' + this.state.rideDetails.bookingId + '/').update({
+            status: 'CANCELLED',
+            reason: this.state.radio_props[this.state.value].label
+        })
+            .then(() => {
+                this.setState({ modalCancel: false })
+                firebase.database().ref(`/users/` + this.state.rideDetails.customer + '/my-booking/' + this.state.rideDetails.bookingId + '/').update({
+                    status: 'CANCELLED',
+                    reason: this.state.radio_props[this.state.value].label,
+                    cancelledByDriver: true,
+                }).then(() => {
+                    firebase.database().ref(`/users/` + this.state.curUid + '/').update({ queue: false })
+                    this.sendPushNotification2(this.state.rideDetails.customer, this.state.rideDetails.bookingId, this.state.rideDetails.driver_name + ' cancelou a corrida atual!')
+                }).then(() => {
+                    firebase.database().ref(`/users/` + this.state.curUid + '/emCorrida').remove()
+                })
+            })
+    }
+
+    dissMissCancel() {
+        this.setState({ modalCancel: false })
+    }
+
+    cancelModal() {
+        return (
+            <Modal
+                animationType='fade'
+                transparent={true}
+                visible={this.state.modalCancel}
+                onRequestClose={() => {
+                    this.setState({ modalCancel: false })
+                }}>
+                <View style={styles.cancelModalContainer}>
+                    <View style={styles.cancelModalInnerContainer}>
+
+                        <View style={styles.cancelContainer}>
+                            <View style={styles.cancelReasonContainer}>
+                                <Text style={styles.cancelReasonText}>Qual o motivo do cancelamento?</Text>
+                            </View>
+
+                            <View style={styles.radioContainer}>
+                                <RadioForm
+                                    radio_props={this.state.radio_props ? this.state.radio_props : null}
+                                    initial={5}
+                                    animation={true}
+                                    buttonColor={colors.GREY2}
+                                    selectedButtonColor={colors.DEEPBLUE}
+                                    buttonSize={10}
+                                    buttonOuterSize={20}
+                                    style={styles.radioContainerStyle}
+                                    labelStyle={styles.radioText}
+                                    radioStyle={styles.radioStyle}
+                                    onPress={(value) => { this.setState({ value: value }) }}
+                                />
+                            </View>
+                            <View style={styles.cancelModalButtosContainer}>
+                                <Button
+                                    title='Não cancelar'
+                                    titleStyle={styles.signInTextStyle}
+                                    onPress={() => { this.dissMissCancel() }}
+                                    buttonStyle={styles.cancelModalButttonStyle}
+                                    containerStyle={styles.cancelModalButtonContainerStyle}
+                                />
+
+                                <View style={styles.buttonSeparataor} />
+
+                                <Button
+                                    title='OK'
+                                    titleStyle={styles.signInTextStyle}
+                                    onPress={() => { this.onCancelConfirm() }}
+                                    buttonStyle={styles.cancelModalButttonStyle}
+                                    containerStyle={styles.cancelModalButtonContainerStyle}
+                                />
+                            </View>
+
+                        </View>
+
+
+                    </View>
+                </View>
+
+            </Modal>
+        )
+    }
+
     render() {
         return (
+
             <View style={styles.containerView}>
-                <Header
-                    backgroundColor={colors.GREY.default}
-                    leftComponent={{ icon: 'md-menu', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.toggleDrawer(); } }}
-                    centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.on_trip}</Text>}
-                    containerStyle={styles.headerStyle}
-                    innerContainerStyles={styles.innerContStyle}
-                />
-
-                <View style={styles.segment1}>
-                    <Text style={styles.textContainer}>{this.state.rideDetails.drop.add}</Text>
+                <View>
+                    <ActionSheet
+                        ref={o => this.ActionSheet = o}
+                        style={styles}
+                        title={<Text style={{ color: colors.BLACK, fontSize: 20, fontFamily: 'Inter-Bold' }}>Passageiro distante</Text>}
+                        message={<Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Regular', textAlign: 'center' }}>Você está distante do passageiro, tem certeza que deseja iniciar corrida?</Text>}
+                        options={['Continuar', 'Voltar']}
+                        cancelButtonIndex={1}
+                        destructiveButtonIndex={0}
+                        onPress={(index) => {
+                            if (index == 0) {
+                                this.embarque()
+                            } else {
+                                this.setState({ loader: false })
+                            }
+                        }}
+                    />
                 </View>
 
-                <View style={styles.segment2}>
-                    <MapComponent mapStyle={styles.map} mapRegion={this.state.region} markerCord={this.state.region} />
-                    <TouchableOpacity
-                        style={styles.floatButtonStyle}
-                        onPress={() => this.chat()}
-                    >
-                        <Icon
-                            name="ios-chatbubbles"
-                            type="ionicon"
-                            // icon: 'chat', color: '#fff',
-                            size={30}
-                            color={colors.WHITE}
-                        />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.CallfloatButtonStyle}
-                        onPress={() => this.callToCustomer(this.state.rideDetails)}
-                    >
-                        <Icon
-                            name="ios-call"
-                            type="ionicon"
-                            // icon: 'chat', color: '#fff',
-                            size={30}
-                            color={colors.WHITE}
-                        />
-                    </TouchableOpacity>
-                </View>
+                {/* MAPA VIEW AQUI */}
 
-                <View style={styles.segment3}>
-                    <View style={styles.segment3Style}>
-                        <View style={styles.segView}>
-                            <Image source={require('../../assets/images/alarm-clock.png')} resizeMode={'contain'} style={{ width: 38, height: height / 15 }} />
+                <View style={styles.viewMap}>
+                    <MapView
+                        ref={map => { this.map = map }}
+                        style={styles.map}
+                        rotateEnabled={false}
+                        provider={PROVIDER_GOOGLE}
+                        showsUserLocation={false}
+                        showsCompass={false}
+                        showsScale={false}
+                        loadingEnabled
+                        showsMyLocationButton={false}
+                        region={this.checkMap()}
+                    >
+                        <Marker.Animated
+                            coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
+                        >
+                            <CarMarkerSVG
+                                width={45}
+                                height={45}
+                            />
+                        </Marker.Animated>
+                        <Marker
+                            coordinate={{ latitude: this.state.rideDetails.pickup.lat, longitude: this.state.rideDetails.pickup.lng, }}
+                            image={require('../../assets/images/BaxFOmg.png')}
+                        />
+                        {this.state.coords ?
+                        <MapView.Polyline
+                            coordinates={this.state.coords}
+                            strokeWidth={4}
+                            strokeColor={colors.DEEPBLUE}
+                        />
+                        : null}
+                    </MapView>
+                    <TouchableOpacity style={styles.iconeMap} onPress={() => { this.centerFollowMap() }}>
+                        <Icon
+                            name="crosshair"
+                            type="feather"
+                            size={25}
+                            color={colors.BLACK}
+                        />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.iconeFit} onPress={() => { this.animateToDestination() }}>
+                        <Icon
+                            name="map-pin"
+                            type="feather"
+                            size={25}
+                            color={colors.BLACK}
+                        />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.iconeNav} onPress={() => { this.handleGetDirections() }}>
+                        <Icon
+                            name="navigation"
+                            type="feather"
+                            size={25}
+                            color={colors.BLACK}
+                        />
+                    </TouchableOpacity>
+                    {this.state.notificarChegada ?
+                        <View style={styles.alertView}>
+                            <Text style={styles.txtAlert}>Informamos ao passageiro de sua chegada, aguarde</Text>
                         </View>
-                        <View style={styles.riderTextStyle}>
-                            <Text style={styles.riderText}>{languageJSON.wait_for_rider}</Text>
-                            <Text style={styles.riderTextSubheading}>{languageJSON.rider_notified}</Text>
+                        : null}
+                </View>
+
+                {/* MODAL DOS DETALHES AQUI */}
+
+                <View style={styles.viewDetails}>
+                    <View style={styles.viewPhotoName}>
+                        <View style={styles.viewPhoto}>
+                            <Image source={this.state.rideDetails.imageRider ? { uri: this.state.rideDetails.imageRider } : require('../../assets/images/profilePic.png')} style={styles.fotoPassageiro} />
+                        </View>
+                        <Text style={styles.nomePassageiro}>{this.state.rideDetails.firstNameRider}</Text>
+                    </View>
+
+                    <View style={styles.viewEndereco}>
+                        <View style={styles.viewPartidaEndereco}>
+                            <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.DEEPBLUE, marginRight: 5, marginLeft: 5 }}></View>
+                            <Text style={styles.TxtEnderecoPartida}>{this.state.rideDetails.pickup.add}</Text>
+                        </View>
+                        <View style={styles.viewDestinoEndereco}>
+                            <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.RED, marginRight: 5, marginLeft: 5 }}></View>
+                            <Text style={styles.TxtEnderecoDestino}>{this.state.rideDetails.drop.add}</Text>
                         </View>
                     </View>
 
-                    <View style={styles.newViewStyle} />
+                    <View style={styles.viewIcones}>
+                        <View style={{ flex: 1 }}>
+                            <TouchableOpacity
+                                style={styles.btnLigar}
+                                onPress={() => this.callToCustomer(this.state.rideDetails)}
+                            >
+                                <CellphoneSVG />
+                            </TouchableOpacity>
+                        </View>
 
-                    <View style={styles.fixContenStyle}>
-                        <Button
-                            title={languageJSON.start_trip}
+                        <View style={{ flex: 1 }}>
+                            <TouchableOpacity
+                                style={styles.btnLigar}
+                                onPress={() => this.chat()}
+                            >
+                                <ChatSVG />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+                            <TouchableOpacity
+                                style={styles.btnLigar}
+                                onPress={() => this.setState({ modalCancel: true })}
+                            >
+                                <IconCloseSVG />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                    {this.state.status == 'ACCEPTED' ?
+                        <TouchableOpacity style={{ backgroundColor: colors.DEEPBLUE, position: 'absolute', right: 0, left: 0, bottom: 0, top: 0, alignItems: 'center', justifyContent: "center" }}
+                            onPress={() => {
+                                this.checkDist(this.state.rideDetails)
+                            }}
+                            disabled={this.state.loader}
+                        >
+                            <Text style={{ fontSize: 16, fontFamily: 'Inter-Bold', color: colors.WHITE }}>Cheguei ao local</Text>
+                            <ActivityIndicator animating={this.state.loader} size="large" color={colors.WHITE} style={{ position: 'absolute', right: 25 }} />
+                        </TouchableOpacity>
+                    : null}
+                    {this.state.status != 'ACCEPTED' ?
+                        <TouchableOpacity style={{ backgroundColor: colors.DEEPBLUE, position: 'absolute', right: 0, left: 0, bottom: 0, top: 0, alignItems: 'center', justifyContent: "center" }}
                             onPress={() => {
                                 this.onPressStartTrip(this.state.rideDetails)
                             }}
-                            titleStyle={{ fontFamily: 'Roboto-Bold' }}
-                            buttonStyle={styles.myButtonStyle}
-                        />
+                            disabled={this.state.loader}
+                        >
+                            <Text style={{ fontSize: 16, fontFamily: 'Inter-Bold', color: colors.WHITE }}>Iniciar a corrida</Text>
+                            <ActivityIndicator animating={this.state.loader} size="large" color={colors.WHITE} style={{ position: 'absolute', right: 25 }} />
+                        </TouchableOpacity>
+                    : null}
                     </View>
                 </View>
-                <TripStartModal
-                    modalvisable={this.state.mediaSelectModal}
-                    requestmodalclose={() => { this.closeModal() }}
-                    onChangeText={text => this.setState({ inputCode: text })}
-                    enterCode={() => this.codeEnter(true, this.state.inputCode)}
-                />
-
+                {
+                    this.cancelModal()
+                }
             </View>
         );
     }
@@ -281,9 +737,186 @@ export default class DriverStartTrip extends React.Component {
 const styles = StyleSheet.create({
     containerView: {
         flex: 1,
-        backgroundColor: colors.GREY.btnSecondary,
+        //backgroundColor: colors.WHITE,
         //marginTop: StatusBar.currentHeight
     },
+
+    viewMap: {
+        flex: 2.4
+    },
+
+    viewDetails: {
+        flex: 1.5,
+        backgroundColor: colors.WHITE,
+    },
+
+    viewPhotoName: {
+        flex: 0.7,
+        flexDirection: 'row',
+        marginLeft: 12,
+        justifyContent: 'flex-start',
+        alignItems: 'center'
+    },
+
+    fotoPassageiro: {
+        width: 32,
+        height: 32,
+        borderRadius: 50,
+
+    },
+
+    viewPhoto: {
+        width: 32,
+        height: 32,
+        borderRadius: 50,
+
+    },
+
+    nomePassageiro: {
+        fontFamily: 'Inter-SemiBold',
+        marginLeft: 5,
+        fontSize: 13,
+        color: colors.BLACK,
+    },
+
+    viewEndereco: {
+        flex: 2,
+        borderWidth: 0.6,
+        borderColor: colors.GREY1,
+        backgroundColor: colors.WHITE,
+    },
+
+    viewPartidaEndereco: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginHorizontal: 10,
+    },
+
+    TxtEnderecoPartida: {
+        fontFamily: 'Inter-SemiBold',
+        fontSize: 12,
+        color: colors.BLACK
+    },
+
+    viewDestinoEndereco: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginHorizontal: 10,
+    },
+
+    TxtEnderecoDestino: {
+        fontFamily: 'Inter-SemiBold',
+        fontSize: 12,
+        color: colors.BLACK
+    },
+
+    viewIcones: {
+        flex: 1.5,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: colors.WHITE,
+    },
+
+    btnLigar: {
+        height: 60,
+        width: 60,
+        backgroundColor: colors.WHITE,
+        borderRadius: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignSelf: 'center',
+        elevation: 5
+    },
+
+    viewButton: {
+        flex: 0.5
+    },
+
+    btnEmbarque: {
+        flex: 1,
+        position: 'absolute',
+        height: 60,
+        bottom: 0,
+        right: 0,
+        left: 0,
+        backgroundColor: colors.DEEPBLUE,
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+
+    txtBtn: {
+        fontSize: 16,
+        color: colors.WHITE,
+        fontFamily: 'Inter-Bold',
+    },
+
+    iconeMap: {
+        height: 40,
+        width: 40,
+        borderRadius: 50,
+        position: 'absolute',
+        backgroundColor: colors.WHITE,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 4,
+        bottom: 45,
+        right: 22,
+    },
+
+    iconeFit: {
+        height: 40,
+        width: 40,
+        borderRadius: 50,
+        position: 'absolute',
+        backgroundColor: colors.WHITE,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 4,
+        bottom: 100,
+        right: 22,
+    },
+
+    iconeNav: {
+        height: 40,
+        width: 40,
+        borderRadius: 50,
+        position: 'absolute',
+        backgroundColor: colors.WHITE,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 4,
+        top: 30,
+        right: 22,
+    },
+
+    alertView: {
+        height: 30,
+        position: 'absolute',
+        marginHorizontal: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.WHITE,
+        borderRadius: 10,
+        bottom: 7,
+        right: 0,
+        left: 0,
+    },
+
+    txtAlert: {
+        fontFamily: 'Inter-SemiBold',
+        fontSize: 12,
+        color: colors.DEEPBLUE,
+    },
+
+
+
+
+
+
+
     textContainer: {
         textAlign: "center",
         fontSize: 16.2,
@@ -316,40 +949,20 @@ const styles = StyleSheet.create({
     },
     segment2: {
         flex: 7.5,
-        width: '97.4%',
+        width: '100%',
         alignSelf: 'center',
-        borderRadius: 10,
         backgroundColor: colors.WHITE,
-        marginLeft: 5,
-        marginRight: 5,
-        marginTop: 5,
-        paddingTop: 12,
-        paddingBottom: 12,
-        paddingRight: 8,
-        paddingLeft: 8,
         justifyContent: 'center',
         alignItems: 'center',
         overflow: 'hidden'
     },
-    riderText: { alignSelf: "flex-start", fontSize: 16.2, color: colors.BLUE.dark, fontFamily: 'Roboto-Medium' },
-    riderTextSubheading: { alignSelf: "flex-start", fontSize: 14, color: colors.BLUE.sky, fontFamily: 'Roboto-Medium' },
+    riderText: { alignSelf: "flex-start", fontSize: 14, color: colors.BLACK, fontFamily: 'Inter-Bold' },
     segment3: {
         flex: 2.5,
-        borderRadius: 10,
         backgroundColor: colors.WHITE,
-        marginLeft: 5,
-        marginRight: 5,
-        marginTop: 5,
-        marginBottom: 5,
-        paddingTop: 12,
-        paddingBottom: 3,
-        paddingRight: 8,
-        paddingLeft: 8,
-        alignItems: 'center'
     },
     map: {
         flex: 1,
-        borderRadius: 10,
         ...StyleSheet.absoluteFillObject,
     },
     innerContainerStyles: {
@@ -357,16 +970,14 @@ const styles = StyleSheet.create({
         marginRight: 10
     },
     segment3Style: {
-        flex: 0.6,
+        flex: 0.5,
         flexDirection: 'row',
         alignItems: 'center'
     },
     segView: {
-        flex: 3,
-        alignItems: 'flex-end'
+        marginLeft: 12,
     },
     riderTextStyle: {
-        flex: 7,
         paddingLeft: 15
     },
     newViewStyle: {
@@ -414,5 +1025,76 @@ const styles = StyleSheet.create({
         height: 60,
         backgroundColor: colors.BLACK,
         borderRadius: 30
+    },
+    //cancel modal
+    cancelModalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        backgroundColor: colors.GREY.background
+    },
+    cancelModalInnerContainer: {
+        height: 400,
+        width: width * 0.85,
+        padding: 0,
+        backgroundColor: colors.WHITE,
+        alignItems: 'center',
+        alignSelf: 'center',
+        borderRadius: 7
+    },
+    cancelContainer: {
+        flex: 1,
+        justifyContent: 'space-between',
+        width: (width * 0.85)
+    },
+    cancelReasonContainer: {
+        flex: 1
+    },
+    cancelReasonText: {
+        top: 10,
+        color: colors.BLACK,
+        fontFamily: 'Inter-Bold',
+        fontSize: 20,
+        alignSelf: 'center'
+    },
+    radioContainer: {
+        flex: 8,
+        alignItems: 'center'
+    },
+    radioText: {
+        fontSize: 15,
+        fontFamily: 'Inter-Medium',
+        color: colors.DARK,
+    },
+    radioContainerStyle: {
+        paddingTop: 30,
+        marginLeft: 20
+    },
+    radioStyle: {
+        paddingBottom: 25
+    },
+    cancelModalButtosContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        backgroundColor: colors.GREY.iconSecondary,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    buttonSeparataor: {
+        height: height / 35,
+        width: 0.5,
+        backgroundColor: colors.WHITE,
+        alignItems: 'center',
+        marginTop: 3
+    },
+    cancelModalButttonStyle: {
+        backgroundColor: colors.GREY.iconSecondary,
+        borderRadius: 0
+    },
+    cancelModalButtonContainerStyle: {
+        flex: 1,
+        width: (width * 2) / 2,
+        backgroundColor: colors.GREY.iconSecondary,
+        alignSelf: 'center',
+        margin: 0
     },
 });

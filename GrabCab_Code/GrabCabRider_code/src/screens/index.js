@@ -39,5 +39,5 @@ export {
     AddMoneyScreen,
     SelectGatewayPage,
     EmailLoginScreen,
-    IntroScreen
+    IntroScreen,
 };

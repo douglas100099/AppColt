@@ -2,15 +2,14 @@ import React from 'react';
 import { Text, View, Image,TouchableOpacity, Platform, StatusBar } from 'react-native';
 import { Icon } from 'react-native-elements'
 import { colors } from '../common/theme';
-//make a compontent
+
+import AvatarUser from '../../assets/svg/AvatarUser';
+
 const SideMenuHeader = ({headerStyle,userPhoto,userName,userEmail,userPhone}) =>{
    return (
-        <View style={[styles.viewStyle,headerStyle]}>
+        <View style={[styles.viewStyle, headerStyle]}>
             <TouchableOpacity style={styles.userImageView} >
-                 <Image 
-                    source={userPhoto == null?require('../../assets/images/profilePic.png'):{uri:userPhoto}}
-                    style={styles.imageStyle}
-                />
+                 <AvatarUser/>
             </TouchableOpacity>   
             <View style={styles.headerTextStyle}>
                 <Text style={styles.ProfileNameStyle}>{userName?userName.toUpperCase():""}</Text>
@@ -35,9 +34,9 @@ const styles = {
         justifyContent:'flex-end',
         alignItems:'flex-start',
         height:200,
-        paddingTop:Platform.OS=='ios'?20:StatusBar.currentHeight,
+        paddingTop:Platform.OS == 'ios' ? 20 : StatusBar.currentHeight,
         shadowColor:colors.BLACK,
-        shadowOffset:{width:0,height:2},
+        shadowOffset:{ width:0, height:2},
         shadowOpacity:0.2,
         elevation:2,
         position:'relative',
@@ -84,9 +83,9 @@ const styles = {
 
     },
     emailStyle:{
-        fontFamily: 'Inter-Regular',
+        fontFamily: 'Inter-Medium',
         color: colors.WHITE, 
-        fontSize: 13,
+        fontSize: 14,
         marginLeft: 4,
         justifyContent: 'center',
         alignItems: 'center',

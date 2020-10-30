@@ -12,10 +12,11 @@ import {
 } from 'react-native';
 import { Header, Icon } from 'react-native-elements';
 import { colors } from '../common/theme';
-var { height } = Dimensions.get('window');
+var { height, width } = Dimensions.get('window');
 import * as firebase from 'firebase';
 import languageJSON from '../common/language';
-import {cloud_function_server_url} from '../common/serverUrl';
+import { cloud_function_server_url } from '../common/serverUrl';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export default class WalletDetails extends React.Component {
   constructor(props) {
@@ -27,7 +28,7 @@ export default class WalletDetails extends React.Component {
         cash: false,
         wallet: false
       },
-      providers:null
+      providers: null
     };
   }
 
@@ -78,9 +79,9 @@ export default class WalletDetails extends React.Component {
   }
 
   doReacharge() {
-    if(this.state.providers){
-      this.props.navigation.push('addMoney', { allData: this.state.allData, providers:this.state.providers });
-    }else{
+    if (this.state.providers) {
+      this.props.navigation.push('addMoney', { allData: this.state.allData, providers: this.state.providers });
+    } else {
       alert('No Payment Providers Found.')
     }
   }
@@ -89,48 +90,48 @@ export default class WalletDetails extends React.Component {
     const walletBar = height / 4;
     return (
       <View style={styles.mainView}>
-        <Header
-          backgroundColor={colors.WHITE}
-          leftComponent={{ icon: 'chevron-left', type: 'MaterialIcons', color: colors.BLACK, size: 35, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.goBack(); } }}
-          centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.my_wallet_tile}</Text>}
-          containerStyle={styles.headerStyle}
-          innerContainerStyles={{ marginLeft: 10, marginRight: 10 }}
-        />
+        <View style={styles.viewHeader}>
+          <View style={styles.bordaIconeVoltar}>
+            <TouchableOpacity onPress={() => { this.props.navigation.goBack() }}>
+              <Icon
+                name='chevron-left'
+                type='MaterialIcons'
+                size={40}
+              />
+            </TouchableOpacity>
+          </View>
+          <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20, marginTop: 40 }}> Carteira Colt </Text>
+        </View>
+        <View style={{ flex: 2.5 }}>
+          <View style={{ flexDirection: 'row', justifyContent: "space-around", marginTop: 8 }}>
+            <View style={styles.btnSaldo}>
+              <Text style={styles.txtSaldo}>Saldo</Text>
+              <Text style={styles.valorSaldo}>{this.state.settings.symbol}{this.state.allData ? parseFloat(this.state.allData.walletBalance).toFixed(2) : ''}</Text>
+            </View>
 
-        <View style={{ flex: 1, flexDirection: 'column' }}>
-          <View style={{ height: walletBar, marginBottom: 12 }}>
-            <View >
-              <View style={{ flexDirection: 'row', justifyContent: "space-around", marginTop: 8 }}>
-                <View style={{ height: walletBar - 10, width: '48%', backgroundColor: '#FFFF', borderRadius: 8, elevation: 5 ,justifyContent: 'center', flexDirection: 'column' }}>
-                  <Text style={{ textAlign: 'center', fontSize: 18, fontFamily: 'Inter-Regular' }}>Saldo</Text>
-                  <Text style={{ textAlign: 'center', fontSize: 25, fontWeight: '500', fontFamily: 'Inter-Bold' ,color: '#1CA84F' }}>{this.state.settings.symbol}{this.state.allData ? parseFloat(this.state.allData.walletBalance).toFixed(2) : ''}</Text>
-                </View>
-                <View style={{ height: walletBar - 10, width: '48%', backgroundColor: '#1CA84F', borderRadius: 8, justifyContent: 'center', flexDirection: 'column', elevation: 5 }}>
-                  <Icon
-                    name='add-circle'
-                    type='MaterialIcons'
-                    color='#fff'
-                    size={45}
-                    iconStyle={{ lineHeight: 48 }}
-                    onPress={() => this.doReacharge()}
-                  />
-                  <Text style={{ textAlign: 'center', fontSize: 18, color: '#fff', fontFamily: 'Inter-Bold'}}>Adicionar saldo</Text>
-
-                </View>
+            <TouchableOpacity style={{ width: (width/2)-10}} onPress={() => this.doReacharge()}>
+              <View style={styles.btnAddMoney}>
+                <Icon
+                  name='add-circle'
+                  type='MaterialIcons'
+                  color='#fff'
+                  size={45}
+                  iconStyle={{ lineHeight: 48 }}
+                />
+                <Text style={{ textAlign: 'center', fontSize: 18, color: '#fff', fontFamily: 'Inter-Bold' }}>Adicionar valor</Text>
               </View>
-            </View>
-            <View style={{ marginVertical: 10 }}>
-              <Text style={{ paddingHorizontal: 10, fontSize: 18, fontWeight: '500', marginTop: 8 }}>Historico de movimentação</Text>
-            </View>
+            </TouchableOpacity>
+
           </View>
 
-          <View style={{}}>
-            <ScrollView style={{ height: (height - walletBar) - 110 }}>
-              <WTransactionHistory />
-            </ScrollView>
+          <View style={styles.viewHistorico}>
+            <Text style={{ paddingHorizontal: 10, color: colors.WHITE, textAlign: 'center', fontSize: 18, fontWeight: '600' }}>Historico de movimentação</Text>
           </View>
         </View>
 
+        <View style={{ flex: 4.5, backgroundColor: colors.GREY.background }}>
+          <WTransactionHistory />
+        </View>
       </View>
     );
   }
@@ -154,5 +155,76 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.WHITE,
   },
-
+  viewHeader: {
+    flex: 1, 
+    backgroundColor: colors.WHITE, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-around'
+  },
+  bordaIconeVoltar: {
+    position: 'absolute',
+    backgroundColor: colors.WHITE,
+    width: 40,
+    top: 10,
+    height: 40,
+    borderRadius: 50,
+    elevation: 5,
+    marginTop: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    left: 15,
+    shadowColor: '#000',
+    shadowOffset: { x: 0, y: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+  },
+  btnSaldo: {
+    width: (width/2)-10, 
+    height: (height/4) - 10, 
+    backgroundColor: colors.WHITE,  
+    borderRadius: 8, 
+    justifyContent: 'center', 
+    flexDirection: 'column',
+    elevation: 5, 
+    shadowColor: '#000',
+    shadowOffset: { x: 0, y: 5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+  },
+  txtSaldo: {
+    textAlign: 'center', 
+    fontSize: 18, 
+    fontFamily: 'Inter-Regular' 
+  },
+  valorSaldo: {
+    textAlign: 'center', 
+    fontSize: 28, 
+    fontWeight: '500', 
+    fontFamily: 'Inter-Bold', 
+    color: '#1CA84F'
+  },
+  btnAddMoney: {
+    height: (height/4) - 10, 
+    backgroundColor: '#1CA84F', 
+    borderRadius: 8, 
+    justifyContent: 'center', 
+    flexDirection: 'column', 
+    elevation: 5,
+    elevation: 5, 
+    shadowColor: '#000',
+    shadowOffset: { x: 0, y: 5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+  },
+  viewHistorico: {
+    position: 'absolute', 
+    bottom: 0, 
+    width: width, 
+    height: 30, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: colors.GREEN.light, 
+    opacity: 0.5
+  },
 });

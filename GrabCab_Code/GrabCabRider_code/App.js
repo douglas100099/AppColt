@@ -6,7 +6,17 @@ import Constants from 'expo-constants';
 import * as firebase from 'firebase';
 import * as Notifications from 'expo-notifications';
 import * as Updates from 'expo-updates';
-import { LogBox } from 'react-native';
+import { 
+  LogBox, 
+  ImageBackground, 
+  ActivityIndicator,  
+  StyleSheet,
+  Dimensions,
+  View,
+  Text,
+  Image,
+  Platform,
+} from 'react-native';
 import _ from 'lodash';
 
 var firebaseConfig = Constants.manifest.extra.firebaseConfig;
@@ -67,16 +77,64 @@ export default class App extends React.Component {
   };
 
   async componentDidMount() {
-    this._loadResourcesAsync().then(() => {
-      this.setState({ assetsLoaded: true })
-    })
+    if (__DEV__) {
+      this.setState({ updateMsg: "Carregando arquivos" });
+      this._loadResourcesAsync().then(() => {
+        this.setState({ assetsLoaded: true });
+      });
+    } else {
+      try {
+        this.setState({ updateMsg: "Verificando atualizações" })
+        const update = await Updates.checkForUpdateAsync();
+        if (update.isAvailable) {
+          this.setState({ updateMsg: "Baixando atualizações" })
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        } else {
+          this.setState({ updateMsg: "Carregando arquivos..." });
+          this._loadResourcesAsync().then(() => {
+            this.setState({ assetsLoaded: true });
+          });
+        }
+      } catch (e) {
+        alert('Não foi possível verificar as atualizações')
+      }
+    }
   }
 
   render() {
     return (
       this.state.assetsLoaded ?
         <AppContainer />
-        : null
+        :
+        <View style={styles.container}>
+          <ImageBackground
+            source={require("./assets/images/splash.png")}
+            resizeMode='contain'
+            style={styles.imagebg}
+          >
+            <ActivityIndicator />
+            <Text style={{ paddingBottom: 100, fontWeight:'600', color: '#fff' }}> {this.state.updateMsg} </Text>
+          </ImageBackground>
+        </View>
     )
   }
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: 'center',
+    backgroundColor: "#1152FD"
+  },
+  imagebg: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height,
+    justifyContent: "flex-end",
+    alignItems: 'center'
+  }
+})

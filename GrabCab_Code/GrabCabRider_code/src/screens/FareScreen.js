@@ -60,12 +60,11 @@ export default class FareScreen extends React.Component {
             promoCode: null,
             promoCodeValid: true,
             usedWalletMoney: 0,
-            cancellValue: 0,
             infoModal: false,
             showViewInfo: true,
             cancellValue: 0,
         },
-        this.fadeAnim = new Animated.Value(0)
+            this.fadeAnim = new Animated.Value(0)
     }
 
     async componentDidMount() {
@@ -174,7 +173,7 @@ export default class FareScreen extends React.Component {
                 carType: this.state.rateDetailsObjects[0].name,
                 carImage: this.state.rateDetailsObjects[0].image
             })
-            this.getCancellValue(arrayDetails[0].estimateFare)
+            this.getCancellValue(arrayDetails)
 
             var points = Polyline.decode(respJson.routes[0].overview_polyline.points);
             var coords = points.map((point) => {
@@ -242,9 +241,6 @@ export default class FareScreen extends React.Component {
             promoKey: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : "",
             cancellValue: this.state.cancellValue ? this.state.cancellValue : 0
         }
-
-        console.log(this.state.usedWalletMoney + "WALLET ")
-        console.log(cashPayment + "CASH ")
 
         var data = {
             carImage: this.state.carImage,
@@ -314,12 +310,13 @@ export default class FareScreen extends React.Component {
     }
 
     //Verifica se o passageiro tem taxa de cancelamento pendente
-    getCancellValue(params) {
+    getCancellValue(param) {
         const userData = firebase.database().ref('users/' + this.state.curUID.uid + '/cancell_details/');
         userData.once('value', cancellValue => {
             if (cancellValue.val()) {
                 this.setState({
-                    estimateFare: params + cancellValue.val().value,
+                    estimatePrice1: parseFloat(param[0].estimateFare) + parseFloat(cancellValue.val().value),
+                    estimatePrice2: parseFloat(param[1].estimateFare) + parseFloat(cancellValue.val().value),
                     cancellValue: cancellValue.val().value
                 })
             }
@@ -881,8 +878,8 @@ export default class FareScreen extends React.Component {
 
                                     {this.state.estimatePrice1 ?
                                         <Text style={styles.price1}>{this.state.settings.symbol}
-                                            <Text style={styles.price2}> 
-                                            {this.state.metodoPagamento === "Dinheiro/Carteira" ? ((this.state.estimatePrice1 - this.state.walletBallance) + parseFloat(this.state.cancellValue)).toFixed(2) : (parseFloat(this.state.estimatePrice1) + parseFloat(this.state.cancellValue)).toFixed(2)}
+                                            <Text style={styles.price2}>
+                                                {this.state.metodoPagamento === "Dinheiro/Carteira" ? ((this.state.estimatePrice1 - this.state.walletBallance)).toFixed(2) : (parseFloat(this.state.estimatePrice1) ).toFixed(2)}
                                             </Text>
                                         </Text>
                                         : null}
@@ -913,7 +910,12 @@ export default class FareScreen extends React.Component {
                                     <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[1].name}</Text>
 
                                     {this.state.estimatePrice2 ?
-                                        <Text style={styles.price1}>{this.state.settings.symbol} <Text style={styles.price2}>{this.state.metodoPagamento === "Dinheiro/Carteira" ? ((this.state.estimatePrice2 - this.state.walletBallance) + parseFloat(this.state.cancellValue)).toFixed(2) : (parseFloat(this.state.estimatePrice2) + parseFloat(this.state.cancellValue)).toFixed(2)} </Text></Text>
+                                        <Text style={styles.price1}>
+                                            {this.state.settings.symbol}
+                                            <Text style={styles.price2}>
+                                                {this.state.metodoPagamento === "Dinheiro/Carteira" ? ((this.state.estimatePrice2 - this.state.walletBallance) ).toFixed(2) : (parseFloat(this.state.estimatePrice2) ).toFixed(2)}
+                                            </Text>
+                                        </Text>
                                         : null}
 
                                     {this.state.minTimeConfort == null ?

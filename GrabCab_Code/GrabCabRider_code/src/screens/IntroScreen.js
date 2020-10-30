@@ -7,26 +7,41 @@ import {
     Text,
     Dimensions,
     Linking,
-    Platform
+    Platform,
+    TextInput
 } from "react-native";
 import MaterialButtonDark from "../components/MaterialButtonDark";
+import { Icon } from 'react-native-elements';
 import * as firebase from 'firebase'
 import languageJSON from '../common/language';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from "expo-crypto";
 import { colors } from '../common/theme';
-import { TouchableOpacity, TouchableWithoutFeedback } from "react-native-gesture-handler";
+import { TouchableOpacity } from "react-native-gesture-handler";
+import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
+import RNPickerSelect from 'react-native-picker-select';
 var { width, height } = Dimensions.get('window');
 import {
     iosStandaloneAppClientId,
     androidStandaloneAppClientId
 } from '../common/key';
+import countries from '../common/countries';
 import * as Google from 'expo-google-app-auth';
 
 export default class IntroScreen extends Component {
+    recaptchaVerifier = null;
+    firebaseConfig = firebase.apps.length ? firebase.app().options : undefined;
 
     constructor(props) {
         super(props);
+
+        this.state = {
+            phoneNumber: null,
+            verificationId: null,
+            verificationCode: null,
+            countryCode: null,
+            btnConfirmar: false
+        }
     }
 
     async googleLogin() {
@@ -61,6 +76,31 @@ export default class IntroScreen extends Component {
             alert(languageJSON.google_login_auth_error + error.message);
         }
     }
+
+    onPressLogin = async () => {
+        if (this.state.phoneNumber) {
+            let formattedNum = this.state.phoneNumber.replace(/ /g, '');
+            formattedNum = '+55' + formattedNum.replace(/-/g, '');
+            if (formattedNum.length > 8) {
+                try {
+                    const phoneProvider = new firebase.auth.PhoneAuthProvider();
+                    const verificationId = await phoneProvider.verifyPhoneNumber(
+                        formattedNum,
+                        this.recaptchaVerifier
+                    );
+                    this.props.navigation.navigate("MobileLogin", { verificationId: verificationId, phoneNumber: formattedNum });
+                    //this.setState({ verificationId: verificationId });
+                } catch (error) {
+                    alert(error.message);
+                }
+            } else {
+                alert(languageJSON.mobile_no_blank_error);
+            }
+        } else {
+            alert(languageJSON.mobile_no_blank_error);
+        }
+    }
+
 
     /*async FbLogin() {
 
@@ -98,7 +138,7 @@ export default class IntroScreen extends Component {
         }
     }*/
 
-    appleSigin = async () => {
+    /*appleSigin = async () => {
 
         const csrf = Math.random().toString(36).substring(2, 15);
         const nonce = Math.random().toString(36).substring(2, 10);
@@ -140,52 +180,76 @@ export default class IntroScreen extends Component {
                 alert(languageJSON.apple_signin_error);
             }
         }
-    }
+    }*/
 
     onPressLoginEmail = async () => {
         this.props.navigation.navigate("EmailLogin");
     }
 
-    onPressLoginMobile = async () => {
+    /*onPressLoginMobile = async () => {
         this.props.navigation.navigate("MobileLogin");
-    }
-
+    }*/
 
     async openTerms() {
-        Linking.openURL("https://exicube.com/privacy-policy.html").catch(err => console.error("Couldn't load page", err));
+        Linking.openURL("https://exicube.com/privacy-policy.html").catch(err => console.error("Não possível carregar a página", err));
     }
 
-
     render() {
-
         return (
-            <View style={{ flex: 1 }}>
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <View style={{ flex: 1,  justifyContent: 'center', alignItems: 'center', marginTop: Platform.OS == 'ios' ? 120 : 80}} >
-                        <Image
-                            source={require('../../assets/images/iconLogin.png')}
-                            style={{ width: 250, height: 80 }}
-                        />
+            <View style={{ flex: 1, justifyContent: 'center', alignContent: 'center' }}>
+                <FirebaseRecaptchaVerifierModal
+                    ref={ref => (this.recaptchaVerifier = ref)}
+                    firebaseConfig={this.firebaseConfig}
+                />
+                <View style={{ alignItems: 'center', justifyContent: 'flex-end' }}>
+                    <Text style={{ alignSelf: 'center', marginTop: Platform.OS == 'ios' ? 65 : 40, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 18 : 20 }}> Seja bem vindo a COLT </Text>
+                </View>
+                <View style={{}}>
+                    <View style={{ marginTop: 40 }}>
+                        <Text style={{ alignSelf: 'flex-start', marginLeft: Platform.OS == 'ios' ? 8 : 10, fontSize: width < 375 ? 18 : 20, fontFamily: 'Inter-Regular' }}> Digite seu número de telefone</Text>
+                        <View style={{ flexDirection: 'row', marginTop: 10, alignItems: 'flex-end' }}>
+
+                            <View style={styles.box1}>
+                                <Text style={{ opacity: .4, marginLeft: 7, fontFamily: 'Inter-Bold', fontSize: 16 }}> +55 </Text>
+                            </View>
+
+                            <View style={styles.box2}>
+                                <TextInput
+                                    ref={(ref) => { this.mobileInput = ref }}
+                                    style={styles.textInput}
+                                    placeholder={languageJSON.mobile_no_placeholder}
+                                    onChangeText={(value) => this.setState({ phoneNumber: value })}
+                                    value={this.state.phoneNumber}
+                                    editable={!!this.state.verificationId ? false : true}
+                                    keyboardType="phone-pad"
+                                />
+                            </View>
+                        </View>
                     </View>
-                    <View style={{ flex: 2 }} >
-                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: 25 }}> Seja bem vindo </Text>
+
+                    <View style={{ marginTop: 35 }}>
+                        <TouchableOpacity style={{ height: 50, elevation: 5, borderRadius: 5, marginHorizontal: 40, backgroundColor: colors.DEEPBLUE, justifyContent: 'center', alignItems: 'center' }} onPress={this.onPressLogin}>
+                            <Text style={{ color: colors.WHITE, fontFamily: 'Inter-Bold', fontSize: 18 }}> Confirmar  </Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
 
-                <View style={{ flex: 1, marginTop: 20 }}>
-                    <TouchableWithoutFeedback style={{ elevation: 5, borderRadius: 5, marginHorizontal: 20, backgroundColor: colors.DEEPBLUE, height: 50, justifyContent: 'center', alignItems: 'center' }} onPress={() => this.onPressLoginEmail()}>
-                        <View>
-                            <Text style={{ color: colors.WHITE, fontFamily: 'Inter-Bold', fontSize: 18 }}> Login com email </Text>
-                        </View>
-                    </TouchableWithoutFeedback>
+                <View style={{ flex: 1, }}>
+                    <Text style={{ alignSelf: 'center', margin: 10, fontFamily: 'Inter-Medium', fontSize: 15, }}> ou se preferir </Text>
 
-                    <TouchableWithoutFeedback style={{ elevation: 5, marginTop: 15, borderRadius: 5, marginHorizontal: 20, backgroundColor: colors.DEEPBLUE, height: 50, justifyContent: 'center', alignItems: 'center' }} onPress={this.onPressLoginMobile}>
-                        <View >
-                            <Text style={{ color: colors.WHITE, fontFamily: 'Inter-Bold', fontSize: 18 }} > Login com celular </Text>
+                    <TouchableOpacity  onPress={() => this.onPressLoginEmail()}>
+                        <View style={{ elevation: 5, borderRadius: 5, marginHorizontal: 80, backgroundColor: colors.GREY1, height: 45, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', alignItems: 'center' }}>
+                            <Icon
+                                name='ios-mail'
+                                type='ionicon'
+                                color={colors.BLACK}
+                                size={22}
+                                containerStyle={{ opacity: .3 }}
+                            />
+                            <Text style={{ marginLeft: 10, color: colors.BLACK, fontFamily: 'Inter-Bold', fontSize: 18 }}> Entrar com email </Text>
                         </View>
-                    </TouchableWithoutFeedback>
+                    </TouchableOpacity>
                 </View>
-
             </View>
         );
     }
@@ -193,7 +257,38 @@ export default class IntroScreen extends Component {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1
+        flex: 1,
+        backgroundColor: colors.WHITE
+    },
+    box1: {
+        width: 55,
+        height: 40,
+        backgroundColor: "rgba(0,0,0,.1)",
+        borderRadius: 5,
+        justifyContent: 'center',
+        marginLeft: 10
+    },
+    box2: {
+        height: 45,
+        width: width - 80,
+        borderBottomWidth: 2,
+        borderColor: "rgba(0,0,0,0.1)",
+        borderRadius: 5,
+        marginTop: 10,
+        justifyContent: 'center'
+    },
+    textInput: {
+        color: "#121212",
+        fontSize: Platform.OS == 'ios' ? 19 : 16,
+        fontFamily: "Inter-Regular",
+        textAlign: "left",
+        marginLeft: Platform.OS == 'ios' ? 8 : 10,
+    },
+    pickerStyle: {
+        color: "#121212",
+        fontFamily: "Inter-Regular",
+        fontSize: 15,
+        marginLeft: Platform.OS == 'ios' ? 5 : 0,
     },
     imagebg: {
         position: 'absolute',
@@ -209,88 +304,5 @@ const styles = StyleSheet.create({
         height: Dimensions.get('window').height * 0.58,
         width: Dimensions.get('window').width
     },
-    materialButtonDark: {
-        height: 40,
-        marginTop: 20,
-        marginLeft: 35,
-        marginRight: 35,
-        backgroundColor: "#3b3b3b",
-    },
-    materialButtonDark2: {
-        height: 40,
-        marginTop: 14,
-        marginLeft: 35,
-        marginRight: 35,
-        backgroundColor: "#3b3b3b",
-    },
-    actionLine: {
-        height: 20,
-        flexDirection: "row",
-        marginTop: 20,
-        alignSelf: 'center'
-    },
-    actionItem: {
-        height: 20,
-        marginLeft: 15,
-        marginRight: 15,
-        alignSelf: "center"
-    },
-    actionText: {
-        fontSize: 15,
-        fontFamily: "Inter-Regular",
-        fontWeight: 'bold'
-    },
-    seperator: {
-        width: 250,
-        height: 20,
-        flexDirection: "row",
-        marginTop: 20,
-        alignSelf: 'center'
-    },
-    lineLeft: {
-        width: 40,
-        height: 1,
-        backgroundColor: "rgba(113,113,113,1)",
-        marginTop: 9
-    },
-    sepText: {
-        color: "#000",
-        fontSize: 16,
-        fontFamily: "Inter-Regular"
-    },
-    lineLeftFiller: {
-        flex: 1,
-        flexDirection: "row",
-        justifyContent: "center"
-    },
-    lineRight: {
-        width: 40,
-        height: 1,
-        backgroundColor: "rgba(113,113,113,1)",
-        marginTop: 9
-    },
-    socialBar: {
-        height: 40,
-        flexDirection: "row",
-        marginTop: 15,
-        alignSelf: 'center'
-    },
-    socialIcon: {
-        width: 40,
-        height: 40,
-        marginLeft: 15,
-        marginRight: 15,
-        alignSelf: "center"
-    },
-    socialIconImage: {
-        width: 40,
-        height: 40
-    },
-    terms: {
-        marginTop: 18,
-        justifyContent: 'center',
-        alignItems: 'center',
-        alignSelf: "center",
-        opacity: .54
-    }
+
 });

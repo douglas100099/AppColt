@@ -36,7 +36,7 @@ export default class WTransactionHistory extends React.Component {
 
     componentDidMount(){
         var mS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
-        const root=firebase.database().ref('users/'+firebase.auth().currentUser.uid + '/walletHistory');
+        const root=firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/walletHistory');
         root.on('value',walletData=>{
             if(walletData.val()){
                let wdata = walletData.val()
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
         height: 40,
         width: 40,
         borderRadius: 40 / 2,
-        marginLeft: 5,
+        marginLeft: 10,
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',

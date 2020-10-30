@@ -1,43 +1,93 @@
 import React from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image,AsyncStorage } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, AsyncStorage, Platform } from 'react-native';
 import { Icon } from 'react-native-elements'
 import { colors } from '../common/theme';
-import  languageJSON  from '../common/language';
+import languageJSON from '../common/language';
 import dateStyle from '../common/dateStyle';
+
+import CircleLineTriangle from '../../assets/svg/CircleLineTriangle';
 
 export default class RideList extends React.Component {
 
     constructor(props) {
         super(props);
         this.state = {
-            settings:{
-              code:'',
-              symbol:'',
-              cash:false,
-              wallet:false
-            }
-          };
+            settings: {
+                code: '',
+                symbol: '',
+                cash: false,
+                wallet: false
+            },
+        }
     }
 
     _retrieveSettings = async () => {
         try {
-          const value = await AsyncStorage.getItem('settings');
-          if (value !== null) {
-            this.setState({settings:JSON.parse(value)});
-          }
+            const value = await AsyncStorage.getItem('settings');
+            if (value !== null) {
+                this.setState({ settings: JSON.parse(value) });
+            }
         } catch (error) {
             console.log("Asyncstorage issue 2");
         }
-      };
+    };
 
-    componentDidMount(){
+    componentDidMount() {
         this._retrieveSettings();
     }
-    
+
+    getMonth(params) {
+        switch (params) {
+            case 'Jan':
+                return '01'
+                break
+            case 'Feb':
+                return '02'
+                break
+            case 'Mar':
+                return '03'
+                break
+            case 'Apr':
+                return '04'
+                break
+            case 'May':
+                return '05'
+                break
+            case 'June':
+                return '06'
+                break
+            case 'July':
+                return '07'
+                break
+            case 'Aug':
+                return '08'
+                break
+            case 'Sept':
+                return '09'
+                break
+            case 'Oct':
+                return '10'
+                break
+            case 'Nov':
+                return '11'
+                break
+            case 'Dec':
+                return '12'
+                break
+        }
+    }
 
     onPressButton(item, index) {
         const { onPressButton } = this.props;
         onPressButton(item, index)
+    }
+
+    dataAtualFormatada(item) {
+        var data = new Date(item.tripdate),
+            dia = data.getDate().toString().padStart(2, '0'),
+            mes = (data.getMonth() + 1).toString().padStart(2, '0'), //+1 pois no getMonth Janeiro começa com zero.
+            ano = data.getFullYear();
+        return dia + "/" + mes + "/" + ano;
     }
 
     //flatlist return function
@@ -46,32 +96,46 @@ export default class RideList extends React.Component {
         return (
             <TouchableOpacity style={styles.iconClickStyle} onPress={() => this.onPressButton(item, index)}>
                 <View style={styles.flexViewStyle}>
-                    <View style={styles.textView1}>
-                        <View style={{flexDirection: 'row'}}>
-                            <Text style={[styles.textStyle, styles.dateStyle]}>{item.bookingDate ? new Date(item.bookingDate).toLocaleString(dateStyle) : ''}</Text>
-                            {
-                                item.status == 'CANCELLED' ?
-                                <Text style={[styles.textStyle2, styles.dateStyle2]}>CANCELADO</Text>
-                                    :
-                                    null
-                            }
+                    <View style={{ flexDirection: 'row' }}>
+                        <View style={styles.textView1}>
+                            <View style={{ flexDirection: 'row', marginTop: 10 }}>
+                                <Text style={[styles.textStyle, styles.dateStyle]}>
+                                    {item.bookingDate ?
+                                        Platform.OS == 'ios' ?
+                                            item.bookingDate
+                                            : this.dataAtualFormatada(item) + ' - ' + item.trip_end_time
+                                        : ''
+                                    }
+                                </Text>
+                                {
+                                    item.status == 'CANCELLED' ?
+                                        <Text style={[styles.textStyle2, styles.dateStyle2]}>CANCELADO</Text>
+                                        :
+                                        null
+                                }
+                            </View>
+                            <Text style={[styles.textStyle, styles.carNoStyle]}>{item.carType ? item.carType : null} - {item.vehicle_number ? item.vehicle_number : null}</Text>
                         </View>
-                        <Text style={[styles.textStyle, styles.carNoStyle]}>{item.carType ? item.carType : null} - {item.vehicle_number ? item.vehicle_number : languageJSON.no_car_assign_text}</Text>
-                        <View style={[styles.picupStyle, styles.position]}>
 
-                            <View style={styles.greenDot} />
-                            <Text style={[styles.picPlaceStyle, styles.placeStyle]}>{item.pickup ? item.pickup.add : languageJSON.not_found_text}</Text>
+                        <View style={styles.textView2}>
+                            <Text style={styles.dateStyle}>{item.status == 'NEW' ? item.status : null}</Text>
+                            <Text style={styles.dateStyle}>{item.status == 'END' && item.pagamento.payment_status == 'PAID' ? item.pagamento.customer_paid ? this.state.settings.symbol + parseFloat(item.pagamento.customer_paid).toFixed(2) : this.state.settings.symbol + parseFloat(item.pagamento.estimate).toFixed(2) : null}</Text>
                         </View>
-                        <View style={[styles.dropStyle, styles.textViewStyle]}>
-                            <View style={[styles.redDot, styles.textPosition]} />
-                            <Text style={[styles.dropPlaceStyle, styles.placeStyle]}>{item.drop ? item.drop.add : languageJSON.not_found_text}</Text>
-                        </View>
+                    </View>
 
+                    <View style={{ flex: 5, flexDirection: 'row', alignItems: 'center', marginLeft: 10 }}>
+                        <CircleLineTriangle />
+                        <View style={{ flexDirection: 'column' }}>
+                            <View style={styles.picupStyle}>
+                                <Text style={styles.picPlaceStyle}>{item.pickup ? item.pickup.add : languageJSON.not_found_text}</Text>
+                            </View>
+
+                            <View style={styles.dropStyle}>
+                                <Text style={styles.dropPlaceStyle}>{item.drop ? item.drop.add : languageJSON.not_found_text}</Text>
+                            </View>
+                        </View>
                     </View>
-                    <View style={styles.textView2}>
-                        <Text style={[styles.fareStyle, styles.dateStyle]}>{item.status == 'NEW' ? item.status : null}</Text>
-                        <Text style={[styles.fareStyle, styles.dateStyle]}>{item.status == 'END' && item.payment_status == 'PAID' ? item.customer_paid ? this.state.settings.symbol + parseFloat(item.customer_paid).toFixed(2) : this.state.settings.symbol + parseFloat(item.estimate).toFixed(2) : null}</Text>
-                    </View>
+
                 </View>
             </TouchableOpacity>
         )
@@ -96,25 +160,27 @@ const styles = StyleSheet.create({
     textStyle: {
         fontSize: 13,
     },
-    textStyle2:{
+    textStyle2: {
         fontSize: 13,
-    },
-    fareStyle: {
-        fontSize: 18,
-    },
-    carNoStyle: {
-        marginLeft: 45,
-        fontSize: 13,
-        marginTop: 10,
     },
     picupStyle: {
         flexDirection: 'row',
+        marginTop: 20,
+        paddingLeft: 10,
+        paddingRight: 10
     },
     picPlaceStyle: {
-        color: colors.BLACK
+        color: colors.BLACK,
+        fontFamily: 'Inter-Regular',
+        fontSize: 15,
+        alignSelf: 'center',
     },
     dropStyle: {
         flexDirection: 'row',
+        marginTop: 10,
+        marginBottom: 20,
+        paddingLeft: 10,
+        paddingRight: 10
     },
     drpIconStyle: {
         color: colors.RED,
@@ -122,23 +188,9 @@ const styles = StyleSheet.create({
     },
     dropPlaceStyle: {
         color: colors.BLACK,
-        
-    },
-    greenDot: {
+        fontFamily: 'Inter-Regular',
+        fontSize: 15,
         alignSelf: 'center',
-        borderRadius: 10,
-        width: 10,
-        height: 10,
-        backgroundColor: colors.DEEPBLUE
-    },
-    redDot: {
-        borderRadius: 10,
-        width: 10,
-        height: 10,
-        backgroundColor: colors.BLACK,
-        marginLeft: 20,
-
-
     },
     logoStyle: {
         flexDirection: 'row',
@@ -151,18 +203,23 @@ const styles = StyleSheet.create({
     flexViewStyle: {
         backgroundColor: colors.WHITE,
         flex: 7,
-        elevation: 2,
-        flexDirection: 'row',
+        flexDirection: 'column',
         borderRadius: 15,
         marginTop: 20,
         marginLeft: 20,
-        marginRight: 20
+        marginRight: 20,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
     },
     dateStyle: {
         fontFamily: 'Inter-Bold',
         color: colors.BLACK,
         marginLeft: 20,
         marginTop: 5,
+        fontSize: 18,
     },
     dateStyle2: {
         fontFamily: 'Inter-Bold',
@@ -181,50 +238,40 @@ const styles = StyleSheet.create({
         marginLeft: 20,
         color: colors.BLACK,
     },
-    placeStyle: {
-        marginLeft: 10,
-        fontFamily: 'Inter-Regular',
-        fontSize: 15,
-        alignSelf: 'center',
-        
-    },
     textViewStyle: {
         marginTop: 10,
         marginBottom: 10,
-        
+
     },
     cancelImageStyle: {
         width: 50,
         height: 50,
         marginRight: 20,
         marginTop: 18,
-        alignSelf:'flex-end',
+        alignSelf: 'flex-end',
         backgroundColor: colors.TRANSPARENT
-        
-        
+
+
     },
     iconViewStyle: {
         flex: 1, marginTop: 10
     },
     textView1: {
-        flex: 5,
-        backgroundColor: colors.TRANSPARENT
-    },
-    textView2: {
         flex: 2,
         backgroundColor: colors.TRANSPARENT
     },
+    textView2: {
+        height: 50,
+        backgroundColor: colors.TRANSPARENT,
+        paddingRight: 20
+    },
     textView3: {
-        flex: 1,
+        flex: 6,
         backgroundColor: colors.TRANSPARENT
     },
     position: {
         marginTop: 20,
         marginLeft: 20,
-        
+
     },
-    textPosition: {
-        alignSelf: 'center',
-        
-    }
 });

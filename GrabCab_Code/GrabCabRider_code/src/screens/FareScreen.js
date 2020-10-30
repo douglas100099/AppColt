@@ -20,6 +20,7 @@ var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
 import { farehelper } from '../common/FareCalculator';
 import distanceCalc from '../common/distanceCalc';
+import { getPixelSize } from '../common/utils';
 import { PromoComp } from "../components";
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import { google_map_key } from '../common/key';
@@ -184,7 +185,7 @@ export default class FareScreen extends React.Component {
             this.setState({ coords: coords }, () => {
                 setTimeout(() => {
                     this.map.fitToCoordinates([{ latitude: this.state.region.wherelatitude, longitude: this.state.region.wherelongitude }, { latitude: this.state.region.droplatitude, longitude: this.state.region.droplongitude }], {
-                        edgePadding: { top: 50, right: 50, bottom: 80, left: 50 },
+                        edgePadding: { top: getPixelSize(50), right: getPixelSize(50), bottom: getPixelSize(50), left: getPixelSize(50) },
                         animated: true,
                     })
                 }, 500);
@@ -220,7 +221,7 @@ export default class FareScreen extends React.Component {
 
         var pickUp = { lat: this.state.region.wherelatitude, lng: this.state.region.wherelongitude, add: this.state.region.whereText };
         var drop = { lat: this.state.region.droplatitude, lng: this.state.region.droplongitude, add: this.state.region.droptext };
-        var cashPayment = this.state.selected == 0 ? this.state.estimatePrice1 - this.state.usedWalletMoney : this.state.estimatePrice2 - this.state.usedWalletMoney;
+        var cashPayment = this.state.selected == 0 ? (this.state.estimatePrice1 - this.state.usedWalletMoney).toFixed(2) : (this.state.estimatePrice2 - this.state.usedWalletMoney).toFixed(2);
 
         if (this.state.settings.otp_secure)
             var otp = Math.floor(Math.random() * 90000) + 10000;
@@ -228,6 +229,20 @@ export default class FareScreen extends React.Component {
             var otp = false;
         }
         let today = new Date().toString();
+
+        var pagamentoObj = {
+            estimate: this.state.estimateFare,
+            trip_cost: 0,
+            payment_mode: this.state.metodoPagamento,
+            cashPaymentAmount: cashPayment,
+            usedWalletMoney: this.state.usedWalletMoney,
+            discount_amount: this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value : 0,
+            promoCodeApplied: this.state.payDetails ? this.state.payDetails.promo_details.promo_code : "",
+            promoKey: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : "",
+        }
+
+        console.log(this.state.usedWalletMoney + "WALLET ")
+        console.log(cashPayment + "CASH ")
 
         var data = {
             carImage: this.state.carImage,
@@ -241,30 +256,23 @@ export default class FareScreen extends React.Component {
             driver_name: "",
             drop: drop,
             pickup: pickUp,
-            estimate: this.state.estimateFare,
+            pagamento: pagamentoObj,
             estimateDistance: this.state.distance,
             serviceType: 'pickUp',
             status: "NEW",
             total_trip_time: 0,
-            trip_cost: 0,
             trip_end_time: "00:00",
             trip_start_time: "00:00",
             tripdate: today,
-            estimate: this.state.estimateFare,
             otp: otp,
             bookingDate: today,
 
             imageRider: this.state.userDetails.profile_image ? this.state.userDetails.profile_image : null,
             ratingRider: this.state.userDetails.ratings ? this.state.userDetails.ratings.userrating : null,
-            cashPaymentAmount: cashPayment.toFixed(2),
-            payment_mode: this.state.metodoPagamento,
-            usedWalletMoney: this.state.usedWalletMoney,
-            discount_amount: this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value : 0,
-            promoCodeApplied: this.state.payDetails ? this.state.payDetails.promo_details.promo_code : "",
-            promoKey: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : "",
         }
 
         var MyBooking = {
+            firstNameRider: this.state.userDetails.firstName,
             carImage: this.state.carImage,
             carType: this.state.carType,
             driver: "",
@@ -272,26 +280,18 @@ export default class FareScreen extends React.Component {
             driver_name: "",
             drop: drop,
             pickup: pickUp,
-            estimate: this.state.estimateFare,
             estimateDistance: this.state.distance,
             serviceType: 'pickUp',
             status: "NEW",
             total_trip_time: 0,
-            trip_cost: 0,
             trip_end_time: "00:00",
             trip_start_time: "00:00",
             tripdate: today,
-            estimate: this.state.estimateFare,
             coords: this.state.coords,
             otp: otp,
             bookingDate: today,
+            pagamento: pagamentoObj,
 
-            cashPaymentAmount: cashPayment.toFixed(2),
-            payment_mode: this.state.metodoPagamento,
-            usedWalletMoney: this.state.usedWalletMoney,
-            discount_amount: this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value : 0,
-            promoCodeApplied: this.state.payDetails ? this.state.payDetails.promo_details.promo_code : "",
-            promoKey: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : ""
         }
 
         firebase.database().ref('bookings/').push(data).then((res) => {
@@ -428,7 +428,11 @@ export default class FareScreen extends React.Component {
     async checkPromo(item, index) {
         if (item != null && index != null) {
             let verifyCupomData = {}
-            verifyCupomData = VerifyCupom(item, index, this.state.estimateFare);
+            if (this.state.selected == 0) {
+                verifyCupomData = VerifyCupom(item, index, this.state.estimatePrice1);
+            } else {
+                verifyCupomData = VerifyCupom(item, index, this.state.estimatePrice2);
+            }
 
             setTimeout(() => {
                 if (verifyCupomData.promo_applied) {
@@ -615,8 +619,8 @@ export default class FareScreen extends React.Component {
                                         containerStyle={styles.iconMoney}
                                     />
                                     <View style={{ flexDirection: 'column' }}>
-                                    <Text style={styles.textMoney}> Carteira Colt </Text>
-                                    <Text style={{ fontFamily: 'Inter-Bold', color: colors.GREY2, fontSize: 15, marginLeft: 10 }}> Saldo: R${parseFloat(this.state.walletBallance).toFixed(2)} </Text>
+                                        <Text style={styles.textMoney}> Carteira Colt </Text>
+                                        <Text style={{ fontFamily: 'Inter-Bold', color: colors.GREY2, fontSize: 15, marginLeft: 10 }}> Saldo: R${parseFloat(this.state.walletBallance).toFixed(2)} </Text>
                                     </View>
                                 </View>
                                 <Icon
@@ -733,7 +737,9 @@ export default class FareScreen extends React.Component {
     render() {
         return (
             <View style={styles.container}>
-                <View style={styles.mapcontainer}>
+                <View style={[styles.mapcontainer, {
+                    flex: this.state.payDetails ? 1.8 : 2
+                }]}>
 
                     {/* MAPA */}
                     {this.state.region && this.state.region.wherelatitude ?
@@ -808,21 +814,23 @@ export default class FareScreen extends React.Component {
                     </View>
 
                     {/* Botao Cupom */}
-                    <TouchableOpacity style={[styles.btnAddPromo, {
-                        borderColor: this.state.payDetails ? colors.GREEN.light : colors.GREY2,
-                        borderWidth: this.state.payDetails ? 2 : 1
-                    }]} onPress={() => this.openPromoModal()} >
+                    {this.state.rateDetailsObjects[0] ?
+                        <TouchableOpacity style={[styles.btnAddPromo, {
+                            borderColor: this.state.payDetails ? colors.GREEN.light : colors.GREY2,
+                            borderWidth: this.state.payDetails ? 2 : 1
+                        }]} onPress={() => this.openPromoModal()} >
 
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Icon
-                                name='ios-pricetag'
-                                type='ionicon'
-                                size={20}
-                                containerStyle={{ opacity: 0.2, marginTop: 3 }}
-                            />
-                            <Text style={styles.txtCupom}> {this.state.payDetails ? "-R$" + (this.state.payDetails.promo_details.promo_discount_value).toFixed(2) : "Cupom"} </Text>
-                        </View>
-                    </TouchableOpacity>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Icon
+                                    name='ios-pricetag'
+                                    type='ionicon'
+                                    size={20}
+                                    containerStyle={{ opacity: 0.2, marginTop: 3 }}
+                                />
+                                <Text style={styles.txtCupom}> {this.state.payDetails ? "-R$" + (this.state.payDetails.promo_details.promo_discount_value).toFixed(2) : "Cupom"} </Text>
+                            </View>
+                        </TouchableOpacity>
+                        : null}
 
                     <Animated.View
                         style={[
@@ -849,8 +857,8 @@ export default class FareScreen extends React.Component {
 
                 {/* View de alerta da promoçao aplicada */}
                 {this.state.payDetails ?
-                    <View style={{ backgroundColor: colors.GREEN.light, height: 30, justifyContent: 'center', alignItems: 'center', opacity: 0.5 }}>
-                        <Text style={{ color: colors.GREY3, fontFamily: 'Inter-Bold' }}>Promoção aplicada</Text>
+                    <View style={{ backgroundColor: 'rgba(63,220,90,0.7)', justifyContent: 'center', alignItems: 'center', }}>
+                        <Text style={{ paddingBottom: 7, paddingTop: 7, color: colors.WHITE, fontFamily: 'Inter-Bold' }}>Promoção aplicada</Text>
                     </View>
                     : null}
 
@@ -954,7 +962,7 @@ export default class FareScreen extends React.Component {
                                                 </View>
                                                 <Text style={styles.metodoPagamento}> Carteira Colt </Text>
                                             </View>
-                                            <Text style={{ fontFamily: 'Inter-Bold', opacity: 0.4 }} >SALDO: R${parseFloat(this.state.walletBallance).toFixed(2 )} </Text>
+                                            <Text style={{ fontFamily: 'Inter-Bold', opacity: 0.4 }} >SALDO: R${parseFloat(this.state.walletBallance).toFixed(2)} </Text>
                                         </TouchableOpacity>
                                     </View>
                                     : <View style={styles.containerDinheiro}>
@@ -1144,13 +1152,12 @@ const styles = StyleSheet.create({
     },
     bordaIconeVoltar: {
         position: 'absolute',
-        top: 20,
+        top: Platform.OS == 'android' ? 35 : 45,
         backgroundColor: colors.WHITE,
         width: 40,
         height: 40,
         borderRadius: 50,
         elevation: 5,
-        marginTop: 40,
         justifyContent: 'center',
         alignItems: 'center',
         left: 15,
@@ -1216,6 +1223,7 @@ const styles = StyleSheet.create({
     },
     viewBotao: {
         paddingTop: 5,
+        paddingBottom: width < 375 ? 10 : 0,
         justifyContent: 'center',
         elevation: 5,
         shadowColor: colors.DEEPBLUE,

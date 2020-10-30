@@ -165,13 +165,6 @@ export default class RideDetails extends React.Component {
     render() {
         return (
             <View style={styles.mainView}>
-                <Header
-                    backgroundColor={colors.GREY.default}
-                    leftComponent={{ icon: 'ios-arrow-back', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.goBack() } }}
-                    centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.ride_details_page_title}</Text>}
-                    containerStyle={styles.headerStyle}
-                    innerContainerStyles={{ marginLeft: 10, marginRight: 10 }}
-                />
                 <ScrollView>
                     <View style={styles.mapView}>
                         <View style={styles.mapcontainer}>
@@ -231,9 +224,6 @@ export default class RideDetails extends React.Component {
                                             source={require('../../assets/images/profilePic.png')}
                                             activeOpacity={0.7}
                                         /> : null
-
-
-
                                 : null}
                             <View style={styles.userView}>
                                 {/*Driver Name */}
@@ -487,7 +477,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         height: 160,
-        marginBottom: 15
+        marginBottom: 15,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
     },
     mapcontainer: {
         flex: 7,

@@ -163,8 +163,8 @@ export default class DriverTripComplete extends React.Component {
                 </View>
 
                 <View style={styles.rateViewStyle}>
-                    <Text style={styles.paymentMode}> {this.state.getDetails ? this.state.getDetails.payment_mode : null} </Text>
-                    <Text style={styles.rateViewTextStyle}>{this.state.settings.symbol}{this.state.getDetails ? this.state.getDetails.customer_paid > 0 ? this.state.getDetails.customer_paid.toFixed(2) : 0 : null}</Text>
+                    <Text style={styles.paymentMode}> {this.state.getDetails ? this.state.getDetails.pagamento.payment_mode : null} </Text>
+                    <Text style={styles.rateViewTextStyle}>{this.state.settings.symbol}{this.state.getDetails ? this.state.getDetails.pagamento.customer_paid > 0 ? parseFloat(this.state.getDetails.pagamento.customer_paid).toFixed(2) : 0 : null}</Text>
                 </View>
 
                 <View style={styles.tripMainView}>

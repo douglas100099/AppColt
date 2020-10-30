@@ -9,6 +9,7 @@ import MapView, {
 import { Icon } from 'react-native-elements';
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import { colors } from '../common/theme';
+import { getPixelSize } from '../common/utils';
 import Polyline from '@mapbox/polyline';
 var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
@@ -95,7 +96,7 @@ export default class TrackNow extends React.Component {
                                 startLoc: data.lat + ',' + data.lng,
                                 latitude: data.lat,
                                 longitude: data.lng,
-                                'angle': data.angle
+                                angle: data.angle
                             }, () => {
                                 if (bookingStatus == 'ACCEPTED') {
                                     var location1 = [paramData.wherelatitude, paramData.wherelongitude];
@@ -160,7 +161,7 @@ export default class TrackNow extends React.Component {
                     if (this.state.checkDirection) {
                         if (this.map) {
                             this.map.fitToCoordinates([{ latitude: this.state.latitude, longitude: this.state.longitude }, { latitude: this.state.allData.wherelatitude, longitude: this.state.allData.wherelongitude }], {
-                                edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
+                                edgePadding: { top: getPixelSize(40), right: getPixelSize(40), bottom: getPixelSize(40), left: getPixelSize(40) },
                                 animated: true,
                             })
                         };

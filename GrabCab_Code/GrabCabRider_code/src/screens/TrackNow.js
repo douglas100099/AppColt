@@ -18,6 +18,7 @@ import MapView, {
 import { colors } from '../common/theme';
 import Polyline from '@mapbox/polyline';
 var { width, height } = Dimensions.get('window');
+import { getPixelSize } from '../common/utils';
 import * as firebase from 'firebase';
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
@@ -153,7 +154,7 @@ export default class TrackNow extends React.Component {
             this.setState({ coords: coords }, () => {
                 setTimeout(() => {
                     this.map.fitToCoordinates([{ latitude: this.state.allData.pickup.lat, longitude: this.state.allData.pickup.lng }, { latitude: this.state.allData.drop.lat, longitude: this.state.allData.drop.lng }], {
-                        edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
+                        edgePadding: { top: getPixelSize(40), right: getPixelSize(40), bottom: getPixelSize(40), left: getPixelSize(40) },
                         animated: true,
                     })
                 }, 500);
@@ -312,7 +313,7 @@ export default class TrackNow extends React.Component {
                             <CircleLineTriangle style={{}} />
                             <View style={{ justifyContent: 'space-around' }}>
                                 <Text style={{ fontFamily: 'Inter-Medium' }}> {this.state.allData ? this.state.allData.pickup.add.split(',')[0] : null} </Text>
-                                <Text style={{ fontFamily: 'Inter,Medium' }}> {this.state.allData ? this.state.allData.drop.add.split(',')[0] : null} </Text>
+                                <Text style={{ fontFamily: 'Inter-Medium' }}> {this.state.allData ? this.state.allData.drop.add.split(',')[0] : null} </Text>
                             </View>
                         </View>
                     </View>

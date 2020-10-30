@@ -530,13 +530,13 @@ export default class SearchScreen extends Component {
                     suppressDefaultStyles={true}
                     enableHighAccuracyLocation={true}
 
-                    listEmptyComponent={
+                    /*listEmptyComponent={
                         <View style={{ backgroundColor: colors.WHITE }}>
                             <View style={{ justifyContent: 'center', alignItems: 'center' }}>
                                 <Text style={{ fontFamily: 'Inter-Bold', fontSize: 18, color: colors.GREY1 }}> Nenhum resultado encontrado. </Text>
                             </View>
                         </View>
-                    }
+                    }*/
 
                     renderRightButton={() => {
                         return (

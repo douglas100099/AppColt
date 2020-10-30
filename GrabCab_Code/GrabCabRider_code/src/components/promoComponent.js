@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   },
   buttonTitleStyle: {
     textAlign: "center",
-    color: colors.WHITE,
+    color: '#fff',
     fontFamily: 'Inter-Bold',
     fontSize: 11,
     paddingBottom: 0,
@@ -210,11 +210,4 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     width: 85
   },
-  deleteBtnTitleStyle: {
-    color: colors.LIGHT_RED,
-    textAlign: "center",
-    fontSize: 11,
-    paddingBottom: 0,
-    paddingTop: 0
-  }
 });

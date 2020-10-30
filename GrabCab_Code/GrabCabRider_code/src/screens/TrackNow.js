@@ -312,8 +312,8 @@ export default class TrackNow extends React.Component {
                         <View style={{ flexDirection: 'row', marginTop: 15 }}>
                             <CircleLineTriangle style={{}} />
                             <View style={{ justifyContent: 'space-around' }}>
-                                <Text style={{ fontFamily: 'Inter-Medium' }}> {this.state.allData ? this.state.allData.pickup.add.split(',')[0] : null} </Text>
-                                <Text style={{ fontFamily: 'Inter-Medium' }}> {this.state.allData ? this.state.allData.drop.add.split(',')[0] : null} </Text>
+                                <Text style={{ fontFamily: 'Inter-Medium' }}> {this.state.allData ? this.state.allData.pickup.add : null} </Text>
+                                <Text style={{ fontFamily: 'Inter-Medium' }}> {this.state.allData ? this.state.allData.drop.add : null} </Text>
                             </View>
                         </View>
                     </View>

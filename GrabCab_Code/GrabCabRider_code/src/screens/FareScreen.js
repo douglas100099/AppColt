@@ -63,8 +63,9 @@ export default class FareScreen extends React.Component {
             cancellValue: 0,
             infoModal: false,
             showViewInfo: true,
-            fadeAnim: new Animated.Value(0),
-        }
+            cancellValue: 0,
+        },
+        this.fadeAnim = new Animated.Value(0)
     }
 
     async componentDidMount() {
@@ -115,13 +116,13 @@ export default class FareScreen extends React.Component {
     fadeIn(params) {
         this.setState({ showViewInfo: !this.state.showViewInfo })
         if (params) {
-            Animated.timing(this.state.fadeAnim, {
+            Animated.timing(this.fadeAnim, {
                 toValue: 1,
                 duration: 500,
                 useNativeDriver: false,
             }).start();
         } else {
-            Animated.timing(this.state.fadeAnim, {
+            Animated.timing(this.fadeAnim, {
                 toValue: 0,
                 duration: 500,
                 useNativeDriver: false,
@@ -165,7 +166,6 @@ export default class FareScreen extends React.Component {
                 i == 0 ? this.setState({ estimatePrice1: detailsBooking.estimateFare, estimatedTimeBooking: detailsBooking.estimateTime })
                     : this.setState({ estimatePrice2: detailsBooking.estimateFare, estimatedTimeBooking: detailsBooking.estimateTime })
             }
-            this.getCancellValue()
             this.setState({
                 detailsBooking: arrayDetails,
                 selected: 0,
@@ -174,6 +174,7 @@ export default class FareScreen extends React.Component {
                 carType: this.state.rateDetailsObjects[0].name,
                 carImage: this.state.rateDetailsObjects[0].image
             })
+            this.getCancellValue(arrayDetails[0].estimateFare)
 
             var points = Polyline.decode(respJson.routes[0].overview_polyline.points);
             var coords = points.map((point) => {
@@ -239,6 +240,7 @@ export default class FareScreen extends React.Component {
             discount_amount: this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value : 0,
             promoCodeApplied: this.state.payDetails ? this.state.payDetails.promo_details.promo_code : "",
             promoKey: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : "",
+            cancellValue: this.state.cancellValue ? this.state.cancellValue : 0
         }
 
         console.log(this.state.usedWalletMoney + "WALLET ")
@@ -312,14 +314,12 @@ export default class FareScreen extends React.Component {
     }
 
     //Verifica se o passageiro tem taxa de cancelamento pendente
-    getCancellValue() {
+    getCancellValue(params) {
         const userData = firebase.database().ref('users/' + this.state.curUID.uid + '/cancell_details/');
         userData.once('value', cancellValue => {
             if (cancellValue.val()) {
-                let rate = cancellValue.val().value
                 this.setState({
-                    estimatePrice1: parseFloat(this.state.estimatePrice1) + parseFloat(rate),
-                    estimatePrice2: parseFloat(this.state.estimatePrice2) + parseFloat(rate),
+                    estimateFare: params + cancellValue.val().value,
                     cancellValue: cancellValue.val().value
                 })
             }
@@ -836,7 +836,7 @@ export default class FareScreen extends React.Component {
                         style={[
                             styles.fadingContainer,
                             {
-                                opacity: this.state.fadeAnim
+                                opacity: this.fadeAnim
                             }
                         ]}
                     >
@@ -880,7 +880,11 @@ export default class FareScreen extends React.Component {
                                     <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[0].name}</Text>
 
                                     {this.state.estimatePrice1 ?
-                                        <Text style={styles.price1}>{this.state.settings.symbol} <Text style={styles.price2}> {this.state.metodoPagamento === "Dinheiro/Carteira" ? (this.state.estimatePrice1 - this.state.walletBallance).toFixed(2) : parseFloat(this.state.estimatePrice1).toFixed(2)} </Text></Text>
+                                        <Text style={styles.price1}>{this.state.settings.symbol}
+                                            <Text style={styles.price2}> 
+                                            {this.state.metodoPagamento === "Dinheiro/Carteira" ? ((this.state.estimatePrice1 - this.state.walletBallance) + parseFloat(this.state.cancellValue)).toFixed(2) : (parseFloat(this.state.estimatePrice1) + parseFloat(this.state.cancellValue)).toFixed(2)}
+                                            </Text>
+                                        </Text>
                                         : null}
 
                                     {this.state.minTimeEconomico == null ?
@@ -909,7 +913,7 @@ export default class FareScreen extends React.Component {
                                     <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[1].name}</Text>
 
                                     {this.state.estimatePrice2 ?
-                                        <Text style={styles.price1}>{this.state.settings.symbol} <Text style={styles.price2}>{this.state.metodoPagamento === "Dinheiro/Carteira" ? (this.state.estimatePrice2 - this.state.walletBallance).toFixed(2) : parseFloat(this.state.estimatePrice2).toFixed(2)} </Text></Text>
+                                        <Text style={styles.price1}>{this.state.settings.symbol} <Text style={styles.price2}>{this.state.metodoPagamento === "Dinheiro/Carteira" ? ((this.state.estimatePrice2 - this.state.walletBallance) + parseFloat(this.state.cancellValue)).toFixed(2) : (parseFloat(this.state.estimatePrice2) + parseFloat(this.state.cancellValue)).toFixed(2)} </Text></Text>
                                         : null}
 
                                     {this.state.minTimeConfort == null ?

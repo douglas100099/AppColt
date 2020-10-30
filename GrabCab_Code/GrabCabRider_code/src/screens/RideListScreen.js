@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginLeft: 10,
-        marginTop: Platform.OS == 'ios' ? 60 : 20,
+        marginTop: Platform.OS == 'ios' ? 60 : 40,
         justifyContent: 'center',
         alignItems: 'center'
     },

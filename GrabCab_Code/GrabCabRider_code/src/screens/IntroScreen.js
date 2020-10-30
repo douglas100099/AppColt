@@ -186,52 +186,6 @@ export default class IntroScreen extends Component {
                     </TouchableWithoutFeedback>
                 </View>
 
-
-                {/*<View style={styles.topSpace}></View>
-                <MaterialButtonDark
-                    onPress={() => this.onPressLoginEmail()}
-                    style={styles.materialButtonDark}
-                >
-                    {languageJSON.email_login}
-                </MaterialButtonDark>
-
-                <MaterialButtonDark
-                    onPress={this.onPressLoginMobile}
-                    style={styles.materialButtonDark2}
-                >
-                    {languageJSON.login_title}
-                </MaterialButtonDark>
-                */}
-
-                {/*<View style={styles.seperator}>
-                    <View style={styles.lineLeft}></View>
-                    <View style={styles.lineLeftFiller}>
-                        <Text style={styles.sepText}>{languageJSON.spacer_message}</Text>
-                    </View>
-                    <View style={styles.lineRight}></View>
-                </View>
-
-                <View style={styles.socialBar}>
-                    <TouchableOpacity style={styles.socialIcon} onPress={() => { this.FbLogin() }}>
-                        <Image
-                            source={require("../../assets/images/image_fb.png")}
-                            resizeMode="contain"
-                            style={styles.socialIconImage}
-                        ></Image>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.socialIcon} onPress={() => { this.googleLogin() }}>
-                        <Image
-                            source={require("../../assets/images/image_google.png")}
-                            resizeMode="contain"
-                            style={styles.socialIconImage}
-                        ></Image>
-                    </TouchableOpacity>
-                </View>
-                <View>
-                    <TouchableOpacity style={styles.terms} onPress={() => this.openTerms()}>
-                        <Text style={styles.actionText}>{languageJSON.terms}</Text>
-                    </TouchableOpacity>
-            </View>*/}
             </View>
         );
     }

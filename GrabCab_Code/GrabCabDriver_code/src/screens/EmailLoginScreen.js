@@ -147,7 +147,7 @@ export default class EmailLoginScreen extends Component {
             <KeyboardAvoidingView behavior={"position"} style={styles.container}>
 
                 <ImageBackground
-                    source={require("../../assets/images/bg.png")}
+                    source={require("../../assets/images/splash.png")}
                     resizeMode="stretch"
                     style={styles.imagebg}
                 >

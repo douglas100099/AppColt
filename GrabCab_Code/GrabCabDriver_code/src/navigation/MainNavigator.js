@@ -11,6 +11,7 @@ import {
     DriverTripAccept,
     DriverRegistrationPage,
     EditProfilePage,
+    CancelBooking,
     AboutPage,
     OnlineChat,
     DriverIncomePage,
@@ -68,6 +69,8 @@ var { width, height } = Dimensions.get('window');
             screen:  DriverStartTrip,
             navigationOptions:{
                 headerShown: false,
+                headerLeft: null,
+                gestureEnabled: false,
             }
         },
         Chat:{
@@ -77,6 +80,8 @@ var { width, height } = Dimensions.get('window');
             screen:  DriverCompleteTrip,
             navigationOptions:{
                 headerShown: false,
+                headerLeft: null, 
+                gestureEnabled: false,
             }
         },
         editUser:{
@@ -84,6 +89,14 @@ var { width, height } = Dimensions.get('window');
             navigationOptions:{
                 headerShown: false,
             } 
+        },
+        BookingCancel: {
+            screen: CancelBooking,
+            navigationOptions:{
+                headerShown: false,
+                headerLeft: null,
+                gestureEnabled: false,
+            }
         },
         About: {
             screen: AboutPage,

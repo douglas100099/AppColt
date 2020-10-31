@@ -30,8 +30,10 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data: { locations }, error }
     .then((response) => response.json())
     .then((responseJson) => {
       if (responseJson.results[0] && responseJson.results[0].formatted_address) {
+        console.log('ENTROU NO IF PRIMEIRO DO TASK')
         let address = responseJson.results[0].formatted_address;
         if (locations.length > 0) {
+          console.log('SETANDO LOC NO BANCO DE DADOS TASK MANAGER')
           firebase.database().ref('users/' + uid + '/location').update({
             add: address,
             lat: location.coords.latitude,
@@ -41,6 +43,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data: { locations }, error }
       }
     }).catch((error) => {
       console.error(error);
+      console.log('DEU ERRO EM SETAR A LOC TASK MANAGER')
       alert('Ops, tivemos um problema ao gerar localização em segundo plano.')
     });
 });

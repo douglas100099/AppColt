@@ -4739,6 +4739,11 @@ expo-av@~8.6.0:
     lodash "^4.17.15"
     nullthrows "^1.1.0"
 
+expo-battery@~3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/expo-battery/-/expo-battery-3.0.0.tgz#ec3d723071c6c779435f833da934023ae42ac079"
+  integrity sha512-pGZNnebKq0ONfXsFRhaNQMZwolwECl91f+tz33JmS3iz0LyubJWUqV+aIWnz4fkxdYe/h9WnXggTOs+K03Iazw==
+
 expo-constants@9.2.0, expo-constants@~9.2.0:
   version "9.2.0"
   resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-9.2.0.tgz#e86a38793deaff9018878afac65bce2543c80a4c"

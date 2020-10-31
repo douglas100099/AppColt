@@ -18,6 +18,7 @@ import languageJSON from '../common/language';
 import { Audio } from 'expo-av';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
+import * as Battery from 'expo-battery';
 
 import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
@@ -66,7 +67,8 @@ export default class DriverTripAccept extends React.Component {
             loaderBtn: false,
             chegouCorrida: false,
             acceptBtnDisable: false,
-            intervalCheckGps: null
+            intervalCheckGps: null,
+            batteryLevel: null,
         }
     }
 
@@ -141,7 +143,7 @@ export default class DriverTripAccept extends React.Component {
                     })
                 } else {
                     if (status === "granted") {
-                        if (this.state.statusDetails == false && verificarGPS) {
+                        if (this.state.statusDetails == false && verificarGPS && this.state.batteryLevel > 0.10) {
                             if (this.location == null) {
                                 this._getLocationAsync();
                             }
@@ -218,6 +220,7 @@ export default class DriverTripAccept extends React.Component {
             }
         }
         this._isMounted = true;
+        this._subscribe();
         await this.getRiders();
         await this.getPhotoDriver();
         await this.getStatusDetails();
@@ -235,7 +238,34 @@ export default class DriverTripAccept extends React.Component {
             clearInterval(this.state.intervalCheckGps);
             console.log('REMOVEU CHECK GPS INTERVAL')
         }
+        this._unsubscribe();
         console.log('DESMONTOU')
+    }
+
+    // VERIFICAR BATERIA
+    async _subscribe() {
+        const batteryLevel = await Battery.getBatteryLevelAsync();
+        this.setState({ batteryLevel });
+        this._subscription = Battery.addBatteryLevelListener(({ batteryLevel }) => {
+            this.setState({ batteryLevel });
+        });
+        if(this.state.batteryLevel) {
+            if(this.state.batteryLevel <= 0.10) {
+                if(this.state.statusDetails != null) {
+                    if(this.state.statusDetails){
+                        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/driverActiveStatus/').set(false);
+                        alert('Você foi desconectado, nivel de bateria abaixo de 10%, para aceitar corridas. Nivel: ' + parseFloat(this.state.batteryLevel).toFixed(2)*100 + '%')
+                    } else {
+                        alert('Nivel de bateria abaixo de 10%, carregue e volte a ficar online. Nivel: ' + parseFloat(this.state.batteryLevel).toFixed(2)*100 + '%')
+                    }
+                }
+            }
+        }
+    }
+
+    _unsubscribe() {
+        this._subscription && this._subscription.remove();
+        this._subscription = null;
     }
 
     // find your origin and destination point coordinates and pass it to our method.

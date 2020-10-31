@@ -272,7 +272,7 @@ export default class DriverCompleteTrip extends React.Component {
                 this.state.rideDetails.pagamento.discount_amount ? this.state.rideDetails.pagamento.discount_amount: 0, 
                 this.state.rideDetails.pagamento.usedWalletMoney ? this.state.rideDetails.pagamento.usedWalletMoney: 0)
             } else {
-                var fareCalculation = farehelper(respJson.routes[0].legs[0].distance.value, totalTimeTaken, this.state.rateDetails ? this.state.rateDetails : 1);
+                var fareCalculation = farehelper(respJson.routes[0].legs[0].distance.value, totalTimeTaken, this.state.rateDetails ? this.state.rateDetails : 1, this.state.rideDetails.pagamento.cancellValue);
                 if (fareCalculation) {
                     this.finalCostStore(item, fareCalculation.grandTotal, pos, respJson.routes[0].legs[0].distance.value, fareCalculation.convenience_fees,
                         this.state.rideDetails.pagamento.discount_amount ? this.state.rideDetails.pagamento.discount_amount : 0,
@@ -291,11 +291,51 @@ export default class DriverCompleteTrip extends React.Component {
 
     //driver current location fetching
     finalCostStore(item, finalFare, pos, distance, convenience_fees, discount, wallet) {
+        let curUid = firebase.auth().currentUser.uid
+        let riderID = item.customer
+        let bookingId = this.state.rideDetails.bookingId;
+
         let tripCost = finalFare;
         let customerPaid = (finalFare - discount);
         let cashPaymentAmount = (finalFare - discount - wallet);
         let driverShare = (finalFare - convenience_fees);
+        let usedWalletMoney = item.pagamento.usedWalletMoney;
         
+        if(item.pagamento.payment_mode == 'Carteira') {
+            if(customerPaid != item.pagamento.usedWalletMoney){
+                let refw = firebase.database().ref('users/' + riderID + '/walletBalance/');
+                refw.once('value', checkWallet => {
+                    let walletCheck = checkWallet.val()
+                    if(walletCheck){
+                        if(customerPaid > item.pagamento.usedWalletMoney){
+                            let diferenca = customerPaid - item.pagamento.usedWalletMoney
+                            if(walletCheck >= diferenca){
+                                walletCheck = walletCheck - diferenca
+                                usedWalletMoney = usedWalletMoney + diferenca
+                                firebase.database().ref('users/' + riderID + '/').update({
+                                    walletBalance: walletCheck
+                                })
+                            } else {
+                                cashPaymentAmount = diferenca - walletCheck
+                                usedWalletMoney = usedWalletMoney + walletCheck
+                                walletCheck = 0
+                                firebase.database().ref('users/' + riderID + '/').update({
+                                    walletBalance: walletCheck
+                                })
+                            }
+                        } else if (customerPaid < item.pagamento.usedWalletMoney){
+                            let diferenca = item.pagamento.usedWalletMoney - customerPaid
+                            walletCheck = walletCheck + diferenca
+                            usedWalletMoney = usedWalletMoney - diferenca
+                            firebase.database().ref('users/' + riderID + '/').update({
+                                walletBalance: walletCheck
+                            })
+                        }
+                    }
+                })
+            }
+        }
+
         var pagamentoObj = {
             trip_cost: tripCost > 0 ? parseFloat(tripCost) : 0,
             convenience_fees: parseFloat(convenience_fees), 
@@ -305,7 +345,7 @@ export default class DriverCompleteTrip extends React.Component {
             cashPaymentAmount: cashPaymentAmount > 0 ? cashPaymentAmount : 0,
             estimate: item.pagamento.estimate,
             payment_mode: item.pagamento.payment_mode,
-            usedWalletMoney: item.pagamento.usedWalletMoney,
+            usedWalletMoney: usedWalletMoney,
             discount_amount: item.pagamento.discount_amount,
             promoCodeApplied: item.pagamento.promoCodeApplied,
             promoKey: item.pagamento.promoKey,
@@ -339,8 +379,6 @@ export default class DriverCompleteTrip extends React.Component {
                 this.updateDriverLocation(data.drop)
             }
         });
-        let curUid = firebase.auth().currentUser.uid
-        let bookingId = this.state.rideDetails.bookingId;
         firebase.database().ref('users/' + curUid + '/ganhos/' + bookingId + '/').update({
             ganho: pagamentoObj.driver_share,
             hora: new Date().toLocaleTimeString(dateStyle),
@@ -358,7 +396,7 @@ export default class DriverCompleteTrip extends React.Component {
 
             // Verifica se existe carteira criada no banco de dados
             let ref = firebase.database().ref('users/' + curUid + '/carteira/');
-            ref.on('value', carteiraData => {
+            ref.once('value', carteiraData => {
                 let dataCarteira = carteiraData.val()
                 if(dataCarteira){
                     // Armazena o valor que estava dentro de saldo

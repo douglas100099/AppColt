@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
     },
 
     header: {
-        flex: 1,
+        height: 400,
         backgroundColor: colors.DEEPBLUE,
     },
 

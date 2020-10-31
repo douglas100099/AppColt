@@ -59,7 +59,6 @@ export default class RideDetails extends React.Component {
                     longitudeDelta: 0.9421,
                 },
                 curUid: firebase.auth().currentUser.uid,
-                payButtonShow: (this.getRideDetails.payment_status == 'DUE' || this.getRideDetails.payment_status == 'IN_PROGRESS' || this.getRideDetails.status == 'ACCEPTED') ? true : false
             }, () => {
                 //console.log(this.state.paramData.rating);
                 this.forceUpdate();

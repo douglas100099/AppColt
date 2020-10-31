@@ -70,6 +70,38 @@ export class AuthLoadingScreen extends React.Component {
     }
   }
 
+  /*tripSatusCheck() {
+    var curuser = firebase.auth().currentUser;
+    this.setState({ currentUser: curuser }, () => {
+      const userData = firebase.database().ref('users/' + this.state.currentUser.uid);
+      userData.on('value', userData => {
+        if (userData.val()) {
+          var data = userData.val()
+          if (data['my-booking']) {
+            let bookingData = data['my-booking']
+
+
+            for (key in bookingData) {
+              bookingData[key].bookingKey = key
+              if (bookingData[key].payment_status) {
+                if (bookingData[key].pagamento.payment_status == "PAID" && bookingData[key].status == 'END' && bookingData[key].skip != true && bookingData[key].paymentstart != true) {
+                  bookingData[key].firstname = data.firstName;
+                  bookingData[key].lastname = data.lastName;
+                  bookingData[key].email = data.email;
+                  bookingData[key].phonenumber = data.mobile;
+                  //this.props.navigation.replace('ratingPage', { data: bookingData[key] });
+                  this.props.navigation.navigate('ratingPage', { data: bookingData[key] });
+                }
+              }
+            }
+          } else {
+            this.props.navigation.navigate('Root');
+          }
+        }
+      })
+    })
+  }*/
+
   // Fetch the token from storage then navigate to our appropriate place
   bootstrapAsync = async () => {
     firebase.auth().onAuthStateChanged((user) => {
@@ -85,6 +117,7 @@ export class AuthLoadingScreen extends React.Component {
                 this._setSettings();
                 this._getLocationAsync();
                 this.props.navigation.navigate('Root');
+                //this.tripSatusCheck()
               }
               else {
                 firebase.auth().signOut();
@@ -137,7 +170,6 @@ export class AuthLoadingScreen extends React.Component {
       <View style={styles.container}>
         <ImageBackground
           source={require("../../assets/images/splash.png")}
-          //resizeMode="stretch"
           style={styles.imagebg}
         >
           {/*<ActivityIndicator />

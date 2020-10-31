@@ -134,9 +134,9 @@ const RequestPushMsg = (token, msg) => {
         },
         body: JSON.stringify({
             "to": token,
-            "title": 'GrabCab Notification',
+            "title": 'Colt',
             "body": msg,
-            "data": { "msg": msg, "title": 'GrabCab Notification' },
+            "data": { "msg": msg, "title": 'Colt' },
             "priority": "high",
             "sound": "default",
             "channelId": "messages",
@@ -150,10 +150,49 @@ const RequestPushMsg = (token, msg) => {
     return true;
 }
 
+
+/*exports.TesteFunctions = functions.pubsub.schedule('every 10 minutes').timeZone('America/New_York').onRun((context) => {
+    admin.database().ref('/users').once("value", (snapshot) => {
+        let driver = snapshot.val();
+        if (driver) {
+            for (let key in driver) {
+                RequestPushMsg(driver[key].pushToken, 'TESTANDO CARAI');
+            }
+        }
+        return true
+    }).catch(error => {
+        console.log(error);
+        return false;
+    })
+})*/
+
+
+
+exports.timerIgnoreBooking = functions.database.ref('/bookings/{bookingsId}/requestedDriver/').onCreate((snap, context) => {
+    let bookingId = context.params.bookingsId;
+    let requested = booking.requestedDriver
+
+    setTimeout(() => {
+        admin.database().ref('/bookings/' + bookingId + '/requestedDriver/').once("value", (snapshot) => {
+            if (requested === snapshot) {
+
+                admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove();
+                admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove();
+                admin.database().ref('bookings/' + bookingId).update({
+                    status: 'REJECTED',
+                });
+                return true;
+            } else {
+                return false
+            }
+        })
+    }, 10000)
+})
+
 exports.bookingScheduler = functions.pubsub.schedule('every 5 minutes').onRun((context) => {
     admin.database().ref('/bookings').orderByChild("status").equalTo('NEW').once("value", (snapshot) => {
         let bookings = snapshot.val();
-        if(bookings){
+        if (bookings) {
             for (let key in bookings) {
                 let booking = bookings[key];
                 booking.key = key;
@@ -165,18 +204,18 @@ exports.bookingScheduler = functions.pubsub.schedule('every 5 minutes').onRun((c
                 if (diffMins > 0 && diffMins < 15 && booking.bookLater && !booking.requestedDriver) {
                     admin.database().ref('/users').orderByChild("queue").equalTo(false).once("value", (ddata) => {
                         let drivers = ddata.val();
-                        if(drivers){
-                            for(let dkey in drivers){
+                        if (drivers) {
+                            for (let dkey in drivers) {
                                 let driver = drivers[dkey];
                                 driver.key = dkey;
-                                if(driver.usertype === 'driver' && driver.approved === true && driver.driverActiveStatus === true && driver.location){
+                                if (driver.usertype === 'driver' && driver.approved === true && driver.driverActiveStatus === true && driver.location) {
                                     let originalDistance = getDistance(booking.pickup.lat, booking.pickup.lng, driver.location.lat, driver.location.lng);
                                     if (originalDistance <= 10 && driver.carType === booking.carType) {
                                         admin.database().ref("users/" + driver.key + "/waiting_riders_list/" + booking.key).set(booking);
                                         admin.database().ref('bookings/' + booking.key + '/requestedDriver/' + count.toString()).set(driver.key);
-                                        count=count+1;
+                                        count = count + 1;
                                         RequestPushMsg(driver.pushToken, 'You Have A New Booking Request');
-                                    }                                       
+                                    }
                                 }
                             }
                         }
@@ -188,18 +227,18 @@ exports.bookingScheduler = functions.pubsub.schedule('every 5 minutes').onRun((c
                         reason: 'RIDE AUTO CANCELLED. NO RESPONSE'
                     }).then(() => {
                         let requestedDrivers = booking.requestedDriver;
-                        if(requestedDrivers && requestedDrivers.length>0){
+                        if (requestedDrivers && requestedDrivers.length > 0) {
                             for (let i = 0; i < requestedDrivers.length; i++) {
                                 admin.database().ref("users/" + requestedDrivers[i] + "/waiting_riders_list/" + booking.key).remove();
                             }
-                            admin.database().ref("bookings/" + booking.key  + "/requestedDriver").remove();
+                            admin.database().ref("bookings/" + booking.key + "/requestedDriver").remove();
                             admin.database().ref('bookings/' + booking.key).update({
                                 status: 'CANCELLED',
                                 reason: 'RIDE AUTO CANCELLED. NO RESPONSE'
                             });
                         }
                         return true;
-                    }).catch(error=>{
+                    }).catch(error => {
                         console.log(error);
                         return false;
                     })

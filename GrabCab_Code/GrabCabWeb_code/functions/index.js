@@ -169,12 +169,12 @@ const RequestPushMsg = (token, msg) => {
 
 
 exports.timerIgnoreBooking = functions.database.ref('/bookings/{bookingsId}/requestedDriver/').onCreate((snap, context) => {
-    let bookingId = context.params.bookingsId;
-    let requested = booking.requestedDriver
+    const bookingId = context.params.bookingsId;
+    const requested = snap.val()
 
     setTimeout(() => {
         admin.database().ref('/bookings/' + bookingId + '/requestedDriver/').once("value", (snapshot) => {
-            if (requested === snapshot) {
+            if (requested === snapshot.val()) {
 
                 admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove();
                 admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove();

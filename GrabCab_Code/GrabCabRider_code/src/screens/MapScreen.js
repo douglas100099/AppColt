@@ -164,7 +164,7 @@ export default class MapScreen extends React.Component {
                     this.getDrivers();
                 }
             }
-        }, 5000)
+        }, 7000)
     }
 
     getDrivers() {

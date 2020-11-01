@@ -44,6 +44,7 @@ export default class FareScreen extends React.Component {
             detailsBooking: [],
             rateType: [],
             settings: {
+                cancell_value: '',
                 code: '',
                 symbol: '',
                 cash: false,
@@ -228,7 +229,8 @@ export default class FareScreen extends React.Component {
                 })
             })
         }
-        this.sendPushNotification(this.state.curUID.uid, 'Você usou ' + this.state.usedWalletMoney + ' da carteira Colt!')
+        if (this.state.usedWalletMoney > 0)
+            this.sendPushNotification(this.state.curUID.uid, 'Você usou ' + this.state.usedWalletMoney + ' da carteira Colt!')
     }
 
     //Confirma corrida e começa a procurar motorista
@@ -314,13 +316,13 @@ export default class FareScreen extends React.Component {
             this.setNewWallerBalance(bookingKey)
             firebase.database().ref('users/' + curuser + '/my-booking/' + bookingKey + '/').set(MyBooking).then((res) => {
 
-                let bookingData = {
+                let bookingItens = {
                     bokkingId: bookingKey,
                     coords: this.state.coords,
                 }
                 setTimeout(() => {
                     this.setState({ buttonDisabled: false }, () => {
-                        this.props.navigation.replace('BookedCab', { passData: bookingData, riderName: data.customer_name, walletBallance: this.state.walletBallance - this.state.usedWalletMoney });
+                        this.props.navigation.replace('BookedCab', { passData: bookingItens, riderName: data.customer_name, walletBallance: this.state.walletBallance - this.state.usedWalletMoney });
                     })
                 }, 500)
             })
@@ -698,7 +700,7 @@ export default class FareScreen extends React.Component {
             >
                 <View style={{ flex: 1 }}>
                     <View style={{ position: 'absolute', bottom: 25, left: 10, width: width, backgroundColor: colors.WHITE, flexDirection: 'row', alignItems: 'center' }}>
-                        <Text> Você está pagando R$6,00 a mais nessa corrida por conta da taxa de cancelamento! </Text>
+                        <Text> Você está pagando {this.state.settings.cancell_value} a mais nessa corrida por conta da taxa de cancelamento! </Text>
                     </View>
                 </View>
             </Modal>
@@ -836,7 +838,7 @@ export default class FareScreen extends React.Component {
                             }
                         ]}
                     >
-                        <Text style={styles.fadingText}>Você está pagando R$6,00 a mais por conta da taixa de cancelamento!</Text>
+                        <Text style={styles.fadingText}>Você está pagando R$ {this.state.settings.cancell_value},00 a mais por conta da taixa de cancelamento!</Text>
                     </Animated.View>
 
                     {this.state.cancellValue != 0 ?

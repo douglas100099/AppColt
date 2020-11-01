@@ -9,6 +9,7 @@ import {
     Modal,
     AsyncStorage,
     Linking,
+    ActivityIndicator,
 } from 'react-native';
 import { Icon, Button } from 'react-native-elements';
 import RadioForm from 'react-native-simple-radio-button';
@@ -47,7 +48,7 @@ export default class BookedCabScreen extends React.Component {
                 symbol: '',
                 cash: false,
                 wallet: false,
-                otp_secure: false,
+                otp_secure: false
             },
             value: 0,
             driverSerach: true,
@@ -72,7 +73,6 @@ export default class BookedCabScreen extends React.Component {
         bookingResponse.on('value', currUserBookings => {
             if (currUserBookings.val()) {
                 let currUserBooking = currUserBookings.val()
-
                 let region = {
                     wherelatitude: currUserBooking.pickup.lat,
                     wherelongitude: currUserBooking.pickup.lng,
@@ -107,7 +107,6 @@ export default class BookedCabScreen extends React.Component {
 
                 }, () => {
                     this.getCancelReasons();
-                    //this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
                 })
 
                 //Checando o status da corrida 
@@ -138,11 +137,13 @@ export default class BookedCabScreen extends React.Component {
                     }
                 }
                 else if (currUserBooking.status == "EMBARQUE") {
+
                     this.setState({ embarque: true })
                 } else if (currUserBooking.status == "START") {
 
                     this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
                 } else if (currUserBooking.status == "REJECTED") {
+
                     this.searchDriver(this.getParamData.bokkingId);
                 }
             }
@@ -171,7 +172,7 @@ export default class BookedCabScreen extends React.Component {
         rejectedDrivers.once('value', drivers => {
             if (drivers.val()) {
                 let rejectedDrivers = drivers.val();
-                for (reject in rejectedDrivers) {
+                for (let reject in rejectedDrivers) {
                     if (rejectedDrivers[reject] == driverUid) {
                         checkRejected = false;
                     }
@@ -214,6 +215,7 @@ export default class BookedCabScreen extends React.Component {
                             }
                         }
                     }
+                    console.log("RODANDO FOR")
                 }
 
                 this.getBookingData(param)
@@ -234,8 +236,12 @@ export default class BookedCabScreen extends React.Component {
                             this.setState({ bookingDataState: bookingData })
                         })
                     }, 500)
+                } else {
+                    setTimeout(() => {
+                        if (this.state.driverSerach)
+                            this.searchDriver(param)
+                    }, 1500)
                 }
-                else {}
             }
         })
     }
@@ -259,34 +265,6 @@ export default class BookedCabScreen extends React.Component {
             }
         })
     }
-
-    //Encontra seu ponto de origem e destinoo e passa pro metodo 
-    /*async getDirections(startLoc, destinationLoc) {
-        try {
-            let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=${google_map_key}`)
-            let respJson = await resp.json();
-            let points = Polyline.decode(respJson.routes[0].overview_polyline.points);
-            let coords = points.map((point, index) => {
-                return {
-                    latitude: point[0],
-                    longitude: point[1]
-                }
-            })
-            this.setState({ coords: coords }, () => {
-                // setTimeout(() => {
-                //     this.map.fitToCoordinates([{latitude: this.state.region.wherelatitude, longitude: this.state.region.wherelongitude}, {latitude: this.state.region.droplatitude, longitude: this.state.region.droplongitude}], {
-                //         edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
-                //         animated: true,
-                //      })  
-                // }, 1500);
-            })
-            return coords
-        }
-        catch (error) {
-            alert(error)
-            return error
-        }
-    }*/
 
     //Cancell Button Press
     async onPressCancellBtn() {
@@ -371,7 +349,7 @@ export default class BookedCabScreen extends React.Component {
                                     firebase.database().ref(`/users/` + this.state.currentUser.uid + '/cancell_details/').update({
                                         bookingId: this.state.currentBookingId,
                                         data: new Date().toString(),
-                                        value: 6
+                                        value: parseFloat(this.state.settings.cancell_value)
                                     })
                                 }
                             }).then(() => {
@@ -402,45 +380,7 @@ export default class BookedCabScreen extends React.Component {
                     })
                 }
             })
-            .then(() => {
-                //Essa parte serve pra caso o motorista ter aceito a corrida e o passageiro cancelar em seguida
-                firebase.database().ref(`/users/` + this.state.driverUID + '/my_bookings/' + this.state.currentBookingId + '/').on('value', curbookingData => {
-                    if (curbookingData.val()) {
-                        if (curbookingData.val().status == 'ACCEPTED') {
-                            this.setState({ modalVisible: false })
-                            firebase.database().ref(`/users/` + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
-                                status: 'CANCELLED',
-                                reason: this.state.radio_props[this.state.value].label
-                            }).then(() => {
-                                if (this.state.punisherCancell) {
-                                    firebase.database().ref(`/users/` + this.state.currentUser.uid + '/cancell_details/').update({
-                                        bookingId: this.state.currentBookingId,
-                                        data: new Date().toString(),
-                                        value: 3
-                                    })
-                                }
-                            }).then(() => {
-                                firebase.database().ref(`/users/` + this.state.driverUID + '/').update({ queue: false })
-                                this.sendPushNotification(curbookingData.val().driver, this.state.currentBookingId, curbookingData.val().firstNameRider + ' cancelou a corrida atual!')
-                            }).then(() => {
-                                firebase.database().ref('users/' + this.state.driverUID + '/emCorrida').remove()
-                            }).then(() => {
-                                this.props
-                                    .navigation
-                                    .dispatch(StackActions.reset({
-                                        index: 0,
-                                        actions: [
-                                            NavigationActions.navigate({
-                                                routeName: 'Map',
-                                            }),
-                                        ],
-                                    }))
-                                //this.props.navigation.replace('Map')
-                            })
-                        }
-                    }
-                })
-            })
+
     }
 
     //Botao ligar pro motorista
@@ -537,7 +477,7 @@ export default class BookedCabScreen extends React.Component {
                         </View>
                         <View style={{ flex: 3, flexDirection: 'column', }}>
                             <Text style={{ marginHorizontal: 10, fontSize: 15, textAlign: 'center', fontFamily: 'Inter-Medium' }}> Essa corrida já está em andamento e você já ultrapassou o tempo máximo de cancelamento. </Text>
-                            <Text style={{ marginHorizontal: 10, fontSize: 15, marginTop: 10, textAlign: 'center', fontFamily: 'Inter-Medium' }}> Ao cancelar, será cobrada uma taxa no valor de R$3,00 na próxima corrida! </Text>
+                            <Text style={{ marginHorizontal: 10, fontSize: 15, marginTop: 10, textAlign: 'center', fontFamily: 'Inter-Medium' }}> Ao cancelar, será cobrada uma taxa no valor de R${parseFloat(this.state.settings.cancell_value)},00 na próxima corrida! </Text>
                         </View>
 
                         <View style={{}}>
@@ -570,8 +510,9 @@ export default class BookedCabScreen extends React.Component {
                 }}
             >
                 <View style={{ flex: 1, backgroundColor: colors.WHITE, width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
-                    <Image source={require('../../assets/images/searchDrivers.gif')} style={styles.styleGif} />
+                    {/*<Image source={require('../../assets/images/searchDrivers.gif')} style={styles.styleGif} />*/}
                     <Text style={styles.textGif}> Procurando motoristas próximos </Text>
+                    <ActivityIndicator size='large' color={colors.DEEPBLUE} />
                     <TouchableOpacity disabled={this.state.searchDisabled} style={styles.touchView} onPress={() => { this.setState({ searchDisabled: true }), this.onCancellSearchBooking() }}>
                         <Text style={styles.textCancel}> Cancelar </Text>
                     </TouchableOpacity>

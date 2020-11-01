@@ -68,7 +68,7 @@ export default class RideDetails extends React.Component {
                 },
                 paramData: this.getRideDetails,
             }, () => {
-                //this.getDirections('"' + this.state.paramData.pickup.lat + ',' + this.state.paramData.pickup.lng + '"', '"' + this.state.paramData.drop.lat + ',' + this.state.paramData.drop.lng + '"');
+                this.getDirections('"' + this.state.paramData.pickup.lat + ',' + this.state.paramData.pickup.lng + '"', '"' + this.state.paramData.drop.lat + ',' + this.state.paramData.drop.lng + '"');
                 this.forceUpdate();
             })
         }

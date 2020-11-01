@@ -289,7 +289,6 @@ export default class FareScreen extends React.Component {
             otp: otp,
             bookingDate: today,
             pagamento: pagamentoObj,
-
         }
 
         firebase.database().ref('bookings/').push(data).then((res) => {
@@ -371,28 +370,10 @@ export default class FareScreen extends React.Component {
                                 })
                             }
                         }
-
-                        if (arr[carType] && arr[carType].drivers) {
-                            arr[carType].drivers.push(driver);
-                            if (arr[carType].minDistance > distance) {
-                                arr[carType].minDistance = distance;
-                                arr[carType].minTime = driver.arriveTime.time_in_secs;
-                            }
-                        } else {
-                            arr[carType] = {};
-                            arr[carType].drivers = [];
-                            arr[carType].drivers.push(driver);
-                            arr[carType].minDistance = distance;
-                            arr[carType].minTime = driver.arriveTime.time_in_secs;
-                        }
                     }
                 }
             }
         }
-
-        this.setState({
-            allCars: arr,
-        });
     }
 
     getDriverTime(startLoc, destLoc) {
@@ -878,7 +859,7 @@ export default class FareScreen extends React.Component {
                                     {this.state.estimatePrice1 ?
                                         <Text style={styles.price1}>{this.state.settings.symbol}
                                             <Text style={styles.price2}>
-                                                {this.state.metodoPagamento === "Dinheiro/Carteira" ? ((this.state.estimatePrice1 - this.state.walletBallance)).toFixed(2) : (parseFloat(this.state.estimatePrice1) ).toFixed(2)}
+                                                {this.state.metodoPagamento === "Dinheiro/Carteira" ? ((this.state.estimatePrice1 - this.state.walletBallance)).toFixed(2) : (parseFloat(this.state.estimatePrice1)).toFixed(2)}
                                             </Text>
                                         </Text>
                                         : null}
@@ -912,7 +893,7 @@ export default class FareScreen extends React.Component {
                                         <Text style={styles.price1}>
                                             {this.state.settings.symbol}
                                             <Text style={styles.price2}>
-                                                {this.state.metodoPagamento === "Dinheiro/Carteira" ? ((this.state.estimatePrice2 - this.state.walletBallance) ).toFixed(2) : (parseFloat(this.state.estimatePrice2) ).toFixed(2)}
+                                                {this.state.metodoPagamento === "Dinheiro/Carteira" ? ((this.state.estimatePrice2 - this.state.walletBallance)).toFixed(2) : (parseFloat(this.state.estimatePrice2)).toFixed(2)}
                                             </Text>
                                         </Text>
                                         : null}

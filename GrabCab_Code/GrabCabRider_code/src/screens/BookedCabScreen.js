@@ -753,7 +753,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
     textGif: {
-        color: '#fff',
+        color: colors.GREY2,
         top: 55,
         position: 'absolute',
         fontSize: 20,

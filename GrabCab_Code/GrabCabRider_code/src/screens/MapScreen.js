@@ -161,7 +161,7 @@ export default class MapScreen extends React.Component {
             if (this._isMounted) {
                 //this.getLocationUser();
                 if (this.state.passData && this.state.passData.wherelatitude) {
-                    //this.getDrivers();
+                    this.getDrivers();
                 }
             }
         }, 5000)

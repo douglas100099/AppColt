@@ -235,6 +235,7 @@ export default class BookedCabScreen extends React.Component {
                         })
                     }, 500)
                 }
+                else {}
             }
         })
     }

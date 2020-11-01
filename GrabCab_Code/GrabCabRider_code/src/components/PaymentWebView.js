@@ -12,16 +12,16 @@ export default class PaymentWebView extends Component {
     const { nativeEvent } = syntheticEvent;
     let matchUrl = nativeEvent.url.split('?');
     if (matchUrl[0] === cloud_function_server_url + '/success') {
-      var obj = {gateway:this.props.provider.name};
-      if(matchUrl[1]){
+      var obj = { gateway: this.props.provider.name };
+      if (matchUrl[1]) {
         var pairs = matchUrl[1].split('&');
-        for(i in pairs){
-            var split = pairs[i].split('=');
-            obj[decodeURIComponent(split[0])] = decodeURIComponent(split[1]);
+        for (i in pairs) {
+          var split = pairs[i].split('=');
+          obj[decodeURIComponent(split[0])] = decodeURIComponent(split[1]);
         }
       }
-      if(obj['transaction_id']==undefined){
-        obj['transaction_id']='no transaction id'
+      if (obj['transaction_id'] == undefined) {
+        obj['transaction_id'] = 'no transaction id'
       }
       this.props.onSuccess(obj);
     }

@@ -41,6 +41,14 @@ export default class BookedCabScreen extends React.Component {
             alertModalVisible: false,
             coords: [],
             radio_props: [],
+            settings: {
+                cancell_value: '',
+                code: '',
+                symbol: '',
+                cash: false,
+                wallet: false,
+                otp_secure: false,
+            },
             value: 0,
             driverSerach: true,
             bookingDataState: null,
@@ -55,6 +63,7 @@ export default class BookedCabScreen extends React.Component {
         this._isMounted = true;
         this.state.bookingDataState == null ? this.getParamData = this.props.navigation.getParam('passData') : this.getParamData = this.state.bookingDataState
         this.props.navigation.getParam('riderName') ? this.state.riderName = this.props.navigation.getParam('riderName') : null
+        const walletBalance = this.props.navigation.getParam('walletBallance')
 
         this.searchDriver(this.getParamData.bokkingId)
 
@@ -73,7 +82,10 @@ export default class BookedCabScreen extends React.Component {
                     droptext: currUserBooking.drop.add
                 }
                 this.setState({
+
                     firstNameRider: currUserBooking.firstNameRider,
+                    walletBalance: walletBalance,
+                    usedWalletMoney: currUserBooking.pagamento.usedWalletMoney,
                     coords: this.getParamData.coords,
                     region: region,
                     distance: currUserBooking.estimateDistance,
@@ -93,7 +105,6 @@ export default class BookedCabScreen extends React.Component {
                     starCount: currUserBooking.driverRating,
                     otp: currUserBooking.otp,
 
-
                 }, () => {
                     this.getCancelReasons();
                     //this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
@@ -105,20 +116,28 @@ export default class BookedCabScreen extends React.Component {
                         bookingStatus: currUserBooking.status,
                         driverSerach: false
                     })
-                    if (currUserBooking.status == "CANCELLED") {
-                        this.props
-                            .navigation
-                            .dispatch(StackActions.reset({
-                                index: 0,
-                                actions: [
-                                    NavigationActions.navigate({
-                                        routeName: 'Map',
-                                    }),
-                                ],
-                            }))
+                }
+                else if (currUserBooking.status == "CANCELLED") {
+                    if (currUserBooking.pagamento.usedWalletMoney != 0) {
+                        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/').update({
+                            walletBalance: currUserBooking.pagamento.usedWalletMoney + walletBalance
+                        }).then(() => {
+
+                            alert("O motorista cancelou a corrida atual!")
+                            this.props
+                                .navigation
+                                .dispatch(StackActions.reset({
+                                    index: 0,
+                                    actions: [
+                                        NavigationActions.navigate({
+                                            routeName: 'Map',
+                                        }),
+                                    ],
+                                }))
+                        })
                     }
-                    //AsyncStorage.setItem('startTripTime', new Date().getTime());
-                } else if (currUserBooking.status == "EMBARQUE") {
+                }
+                else if (currUserBooking.status == "EMBARQUE") {
                     this.setState({ embarque: true })
                 } else if (currUserBooking.status == "START") {
 
@@ -128,11 +147,23 @@ export default class BookedCabScreen extends React.Component {
                 }
             }
         })
+        this._retrieveSettings
     }
 
     componentWillUnmount() {
         this._isMounted = false;
     }
+
+    _retrieveSettings = async () => {
+        try {
+            const value = await AsyncStorage.getItem('settings');
+            if (value !== null) {
+                this.setState({ settings: JSON.parse(value) });
+            }
+        } catch (error) {
+            console.log("Asyncstorage issue 8 ");
+        }
+    };
 
     verificarRejected(driverUid, currentBooking) {
         let checkRejected = true;
@@ -141,7 +172,7 @@ export default class BookedCabScreen extends React.Component {
             if (drivers.val()) {
                 let rejectedDrivers = drivers.val();
                 for (reject in rejectedDrivers) {
-                    if (reject == driverUid) {
+                    if (rejectedDrivers[reject] == driverUid) {
                         checkRejected = false;
                     }
                 }
@@ -300,6 +331,12 @@ export default class BookedCabScreen extends React.Component {
                         firebase.database().ref('bookings/' + this.state.currentBookingId + '/requestedDriver/').remove();
                     }
                 })
+            }).then(() => {
+                if (this.state.usedWalletMoney != 0) {
+                    firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/').update({
+                        walletBalance: this.state.usedWalletMoney + this.state.walletBalance
+                    })
+                }
             })
         //Atualiza o status da corrida em "bookings" no firebase
         firebase.database().ref(`bookings/` + this.state.currentBookingId + '/').update({
@@ -356,8 +393,51 @@ export default class BookedCabScreen extends React.Component {
                             })
                         }
                     }
+        }).then(() => {
+            if (this.state.usedWalletMoney != 0) {
+                firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/').update({
+                    walletBalance: this.state.usedWalletMoney + this.state.walletBalance
                 })
+            }
+        }).then(() => {
+            //Essa parte serve pra caso o motorista ter aceito a corrida e o passageiro cancelar em seguida
+            firebase.database().ref(`/users/` + this.state.driverUID + '/my_bookings/' + this.state.currentBookingId + '/').on('value', curbookingData => {
+                if (curbookingData.val()) {
+                    if (curbookingData.val().status == 'ACCEPTED') {
+                        this.setState({ modalVisible: false })
+                        firebase.database().ref(`/users/` + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
+                            status: 'CANCELLED',
+                            reason: this.state.radio_props[this.state.value].label
+                        }).then(() => {
+                            if (this.state.punisherCancell) {
+                                firebase.database().ref(`/users/` + this.state.currentUser.uid + '/cancell_details/').update({
+                                    bookingId: this.state.currentBookingId,
+                                    data: new Date().toString(),
+                                    value: 3
+                                })
+                            }
+                        }).then(() => {
+                            firebase.database().ref(`/users/` + this.state.driverUID + '/').update({ queue: false })
+                            this.sendPushNotification(curbookingData.val().driver, this.state.currentBookingId, curbookingData.val().firstNameRider + ' cancelou a corrida atual!')
+                        }).then(() => {
+                            firebase.database().ref('users/' + this.state.driverUID + '/emCorrida').remove()
+                        }).then(() => {
+                            this.props
+                                .navigation
+                                .dispatch(StackActions.reset({
+                                    index: 0,
+                                    actions: [
+                                        NavigationActions.navigate({
+                                            routeName: 'Map',
+                                        }),
+                                    ],
+                                }))
+                            //this.props.navigation.replace('Map')
+                        })
+                    }
+                }
             })
+        })
     }
 
     //Botao ligar pro motorista

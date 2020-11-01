@@ -95,12 +95,13 @@ export default class SideMenu extends React.Component {
                         for (key in bookingData) {
                             bookingData[key].bookingKey = key
                             if (bookingData[key].payment_status) {
-                                if (bookingData[key].pagamento.payment_status == "WAITING" && bookingData[key].status == 'END' && bookingData[key].skip != true && bookingData[key].paymentstart != true) {
+                                if (bookingData[key].pagamento.payment_status == "PAID" && bookingData[key].status == 'END' && bookingData[key].skip != true && bookingData[key].paymentstart != true) {
                                     bookingData[key].firstname = data.firstName;
                                     bookingData[key].lastname = data.lastName;
                                     bookingData[key].email = data.email;
                                     bookingData[key].phonenumber = data.mobile;
-                                    this.props.navigation.navigate('CardDetails', { data: bookingData[key] });
+                                    //this.props.navigation.replace('ratingPage', { data: bookingData[key] });
+                                    this.props.navigation.navigate('ratingPage', { data: bookingData[key] });
                                     console.log("ENTROU AQUI NO CARD DETAILS")
                                 }
                             }
@@ -110,6 +111,29 @@ export default class SideMenu extends React.Component {
             })
         })
     }
+
+    addDetailsToPromo(offerkey, curUId) {
+        const promoData = firebase.database().ref('offers/' + offerkey);
+        promoData.once('value', promo => {
+          if (promo.val()) {
+            let promoData = promo.val();
+            let user_avail = promoData.user_avail;
+            if (user_avail) {
+              firebase.database().ref('offers/' + offerkey + '/user_avail/details').push({
+                userId: curUId
+              }).then(() => {
+                firebase.database().ref('offers/' + offerkey + '/user_avail/').update({ count: user_avail.count + 1 })
+              })
+            } else {
+              firebase.database().ref('offers/' + offerkey + '/user_avail/details').push({
+                userId: curUId
+              }).then(() => {
+                firebase.database().ref('offers/' + offerkey + '/user_avail/').update({ count: 1 })
+              })
+            }
+          }
+        })
+      }
 
     render() {
         return (

@@ -214,8 +214,26 @@ export default class FareScreen extends React.Component {
         })
     }
 
+    setNewWallerBalance(params) {
+        if (this.state.usedWalletMoney > 0) {
+            let tDate = new Date();
+            firebase.database().ref('users/' + this.state.curUID.uid + '/walletHistory').push({
+                type: 'Debit',
+                amount: this.state.usedWalletMoney,
+                date: tDate.toString(),
+                txRef: params,
+            }).then(() => {
+                firebase.database().ref('users/' + this.state.curUID.uid + '/').update({
+                    walletBalance: this.state.walletBallance - this.state.usedWalletMoney
+                })
+            })
+        }
+        this.sendPushNotification(this.state.curUID.uid, 'Você usou ' + this.state.usedWalletMoney + ' da carteira Colt!')
+    }
+
     //Confirma corrida e começa a procurar motorista
     confirmarCorrida() {
+        console.log(this.state.usedWalletMoney + "MONEY")
         this.setState({ buttonDisabled: true });
         var curuser = this.state.curUID.uid;
 
@@ -293,6 +311,7 @@ export default class FareScreen extends React.Component {
 
         firebase.database().ref('bookings/').push(data).then((res) => {
             var bookingKey = res.key;
+            this.setNewWallerBalance(bookingKey)
             firebase.database().ref('users/' + curuser + '/my-booking/' + bookingKey + '/').set(MyBooking).then((res) => {
 
                 let bookingData = {
@@ -301,7 +320,7 @@ export default class FareScreen extends React.Component {
                 }
                 setTimeout(() => {
                     this.setState({ buttonDisabled: false }, () => {
-                        this.props.navigation.replace('BookedCab', { passData: bookingData, riderName: data.customer_name });
+                        this.props.navigation.replace('BookedCab', { passData: bookingData, riderName: data.customer_name, walletBallance: this.state.walletBallance - this.state.usedWalletMoney });
                     })
                 }, 500)
             })
@@ -629,13 +648,13 @@ export default class FareScreen extends React.Component {
     checkWalletBalance() {
         if (this.state.walletBallance > 0) {
             if (this.state.selected == 0) {
-                if (this.state.walletBallance - this.state.estimatePrice1 <= 0) {
+                if (this.state.walletBallance - this.state.estimatePrice1 < 0) {
                     this.alertWalletBalance(this.state.selected)
                 } else {
                     this.setState({ metodoPagamento: "Carteira", openModalPayment: false, usedWalletMoney: this.state.estimatePrice1 })
                 }
             } else if (this.state.selected == 1) {
-                if (this.state.walletBallance - this.state.estimatePrice2 <= 0) {
+                if (this.state.walletBallance - this.state.estimatePrice2 < 0) {
                     this.alertWalletBalance(this.state.selected)
                 } else {
                     this.setState({ metodoPagamento: "Carteira", openModalPayment: false, usedWalletMoney: this.state.estimatePrice2 })
@@ -702,7 +721,7 @@ export default class FareScreen extends React.Component {
     }
 
     //Enviar notificaçao
-    sendPushNotification(customerUID, bookingId, msg) {
+    sendPushNotification(customerUID, msg) {
         const customerRoot = firebase.database().ref('users/' + customerUID);
         customerRoot.once('value', customerData => {
             if (customerData.val()) {

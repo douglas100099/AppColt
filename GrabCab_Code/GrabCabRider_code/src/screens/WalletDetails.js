@@ -107,7 +107,7 @@ export default class WalletDetails extends React.Component {
           <View style={{ flexDirection: 'row', justifyContent: "space-around", marginTop: 25 }}>
             <View style={styles.btnSaldo}>
               <Text style={styles.txtSaldo}>Saldo</Text>
-              <Text style={styles.valorSaldo}>{this.state.settings.symbol}{this.state.allData ? parseFloat(this.state.allData.walletBalance).toFixed(2) : ''}</Text>
+              <Text style={styles.valorSaldo}>{this.state.settings.symbol}{this.state.allData ? parseFloat(this.state.allData.walletBalance > 0 ? this.state.allData.walletBalance : 0).toFixed(2) : ''}</Text>
             </View>
 
             <TouchableOpacity style={{ width: (width/2)-10}} onPress={() => this.doReacharge()}>

@@ -222,11 +222,14 @@ export default class ProfileScreen extends React.Component {
                                      this.state.loader == true ? this.loader() : 
                                      this.state.userImage ? 
                                      <TouchableOpacity>
-                                         <Image source={{ uri: this.state.userImage }} style={{ width: 90, height: 90, borderRadius: 50 }} /> 
+                                         <Image source={{ uri: this.state.userImage }} style={{ width: 95, height: 95, borderRadius: 50 }} /> 
                                      </TouchableOpacity>
                                      :
                                      <TouchableOpacity onPress={this.showActionSheet}>
-                                         <AvatarUser/>
+                                         <AvatarUser
+                                            width={95}
+                                            height={95}
+                                         />
                                      </TouchableOpacity>
                                 }
                             </View>
@@ -421,7 +424,6 @@ const styles = StyleSheet.create({
     },
     newViewStyle: {
         flex: 1,
-        elevation: 6,
         backgroundColor: colors.WHITE,
         marginLeft: 15,
         marginRight: 15,
@@ -478,11 +480,11 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     textIconStyle2: {
-        width: 333,
-        height: 60,
+        width: 250,
+        height: 50,
         marginTop: 10,
         marginBottom: 20,
-        borderRadius: 15,
+        borderRadius: 8,
         backgroundColor: colors.DEEPBLUE,
         alignSelf: 'center',
         alignItems: 'center',
@@ -497,7 +499,7 @@ const styles = StyleSheet.create({
     textButton2: {
         color: colors.WHITE,
         fontFamily: 'Inter-Bold',
-        fontSize: 18,
+        fontSize: 20,
     },
     mainView: {
         flex: 1,

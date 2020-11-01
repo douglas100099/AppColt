@@ -77,7 +77,7 @@ export class AuthLoadingScreen extends React.Component {
         if (user.displayName) {
           const userData = firebase.database().ref('users/' + user.uid);
           userData.once('value', userData => {
-            if (userData.val()) {
+            if (userData.val()) { 
               if (userData.val().usertype == 'rider') {
                 //Token notifications
                 GetPushToken();

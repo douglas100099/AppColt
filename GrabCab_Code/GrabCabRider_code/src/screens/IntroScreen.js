@@ -202,7 +202,7 @@ export default class IntroScreen extends Component {
                     firebaseConfig={this.firebaseConfig}
                 />
                 <View style={{ alignItems: 'center', justifyContent: 'flex-end' }}>
-                    <Text style={{ alignSelf: 'center', marginTop: Platform.OS == 'ios' ? 65 : 40, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 18 : 20 }}> Seja bem vindo a COLT </Text>
+                    <Text style={{ alignSelf: 'center', marginTop: Platform.OS == 'ios' ? 75 : 50, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 18 : 20 }}> Seja bem vindo a COLT </Text>
                 </View>
                 <View style={{}}>
                     <View style={{ marginTop: 40 }}>
@@ -238,7 +238,7 @@ export default class IntroScreen extends Component {
                     <Text style={{ alignSelf: 'center', margin: 10, fontFamily: 'Inter-Medium', fontSize: 15, }}> ou se preferir </Text>
 
                     <TouchableOpacity  onPress={() => this.onPressLoginEmail()}>
-                        <View style={{ elevation: 5, borderRadius: 5, marginHorizontal: 80, backgroundColor: colors.GREY1, height: 45, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', alignItems: 'center' }}>
+                        <View style={{  borderRadius: 5, marginHorizontal: 80, backgroundColor: colors.GREY1, height: 45, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', alignItems: 'center' }}>
                             <Icon
                                 name='ios-mail'
                                 type='ionicon'

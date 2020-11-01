@@ -12,7 +12,10 @@ const SideMenuHeader = ({ headerStyle, userPhoto, userName, userEmail, userPhone
                 {userPhoto ?
                     <Image source={{ uri: userPhoto }} style={{ width: 75, height: 75, borderRadius: 50 }} />
                     :
-                    <AvatarUser />
+                    <AvatarUser
+                        width={76}
+                        height={76}
+                    />
                 }
             </View>
             <View style={styles.headerTextStyle}>

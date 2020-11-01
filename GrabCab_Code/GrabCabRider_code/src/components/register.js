@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, Dimensions, Modal, ScrollView, KeyboardAvoidingView, Image, TouchableWithoutFeedback, LayoutAnimation, Platform } from 'react-native';
+import { View, Text, Dimensions, Modal, ScrollView, KeyboardAvoidingView, Image, TouchableOpacity, LayoutAnimation, Platform } from 'react-native';
 import Background from './Background';
 import { Icon, Avatar, Button, Header, Input } from 'react-native-elements'
 import { colors } from '../common/theme';
 import * as firebase from 'firebase'; //Database
-var { height } = Dimensions.get('window');
+var { width, height } = Dimensions.get('window');
 import languageJSON from '../common/language';
 
 import { google_map_key } from '../common/key';
@@ -186,39 +186,37 @@ export default class Registration extends React.Component {
     }
 
     render() {
-
         const { onPressBack, loading } = this.props
 
         return (
-            <Background>
-                <Header
-                    backgroundColor={colors.TRANSPARENT}
-                    leftComponent={{ icon: 'ios-arrow-back', type: 'ionicon', color: colors.WHITE, size: 35, component: TouchableWithoutFeedback, onPress: onPressBack }}
-                    containerStyle={styles.headerContainerStyle}
-                    innerContainerStyles={styles.headerInnerContainer}
-                />
-                <ScrollView style={styles.scrollViewStyle}>
-                    <View style={styles.logo}>
-                        <Image source={require('../../assets/images/logo.png')} />
+            <View style={styles.mainView}>
+                <View style={styles.topBar}>
+                    <View style={{ position: 'absolute', left: 15 }}>
+                        <TouchableOpacity onPress={onPressBack}>
+                            <View style={styles.btnVoltar}>
+                                <Icon
+                                    name='chevron-left'
+                                    type='MaterialIcons'
+                                    color={colors.BLACK}
+                                    size={40}
+                                />
+                            </View>
+                        </TouchableOpacity>
                     </View>
-                    <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? "padding" : "padding"} style={styles.form}>
+                    <Text style={{ alignSelf: 'center', marginBottom: 5, marginTop: 15, fontFamily: 'Inter-Bold', fontSize: 20 }}> Confirme seu cadastro </Text>
+                </View>
+
+                <ScrollView style={styles.scrollViewStyle}>
+                    <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? 'height' : 'height'} style={styles.form}>
                         <View style={styles.containerStyle}>
-                            <Text style={styles.headerStyle}>{languageJSON.registration_title}</Text>
 
                             <View style={styles.textInputContainerStyle}>
-                                <Icon
-                                    name='user'
-                                    type='font-awesome'
-                                    color={colors.WHITE}
-                                    size={30}
-                                    containerStyle={styles.iconContainer}
-                                />
                                 <Input
                                     ref={input => (this.fnameInput = input)}
                                     editable={this.props.reqData.profile.first_name ? false : true}
                                     underlineColorAndroid={colors.TRANSPARENT}
                                     placeholder={languageJSON.first_name_placeholder}
-                                    placeholderTextColor={colors.WHITE}
+                                    placeholderTextColor={colors.GREY2}
                                     value={this.state.fname}
                                     keyboardType={'email-address'}
                                     inputStyle={styles.inputTextStyle}
@@ -234,19 +232,13 @@ export default class Registration extends React.Component {
                             </View>
 
                             <View style={styles.textInputContainerStyle}>
-                                <Icon
-                                    name='user'
-                                    type='font-awesome'
-                                    color={colors.WHITE}
-                                    size={30}
-                                    containerStyle={styles.iconContainer}
-                                />
+
                                 <Input
                                     ref={input => (this.lnameInput = input)}
                                     editable={this.props.reqData.profile.last_name ? false : true}
                                     underlineColorAndroid={colors.TRANSPARENT}
                                     placeholder={languageJSON.last_name_placeholder}
-                                    placeholderTextColor={colors.WHITE}
+                                    placeholderTextColor={colors.GREY2}
                                     value={this.state.lname}
                                     keyboardType={'email-address'}
                                     inputStyle={styles.inputTextStyle}
@@ -263,19 +255,13 @@ export default class Registration extends React.Component {
 
 
                             <View style={styles.textInputContainerStyle}>
-                                <Icon
-                                    name='mobile-phone'
-                                    type='font-awesome'
-                                    color={colors.WHITE}
-                                    size={40}
-                                    containerStyle={styles.iconContainer}
-                                />
+
                                 <Input
                                     ref={input => (this.mobileInput = input)}
                                     editable={this.props.reqData.profile.mobile ? false : true}
                                     underlineColorAndroid={colors.TRANSPARENT}
                                     placeholder={languageJSON.mobile_no_placeholder}
-                                    placeholderTextColor={colors.WHITE}
+                                    placeholderTextColor={colors.GREY2}
                                     value={this.state.mobile}
                                     keyboardType={'number-pad'}
                                     maxLength={11}
@@ -291,19 +277,13 @@ export default class Registration extends React.Component {
                                 />
                             </View>
                             <View style={styles.textInputContainerStyle}>
-                                <Icon
-                                    name='envelope-o'
-                                    type='font-awesome'
-                                    color={colors.WHITE}
-                                    size={23}
-                                    containerStyle={styles.iconContainer}
-                                />
+
                                 <Input
                                     ref={input => (this.emailInput = input)}
                                     editable={this.props.reqData.profile.email ? false : true}
                                     underlineColorAndroid={colors.TRANSPARENT}
                                     placeholder={languageJSON.email_placeholder}
-                                    placeholderTextColor={colors.WHITE}
+                                    placeholderTextColor={colors.GREY2}
                                     value={this.state.email}
                                     keyboardType={'email-address'}
                                     inputStyle={styles.inputTextStyle}
@@ -318,20 +298,13 @@ export default class Registration extends React.Component {
                                 />
                             </View>
                             <View style={styles.textInputContainerStyle}>
-                                <Icon
-                                    name='lock'
-                                    type='font-awesome'
-                                    color={colors.WHITE}
-                                    size={30}
-                                    containerStyle={styles.iconContainer}
-                                />
 
                                 <Input
                                     ref={input => (this.refferalInput = input)}
                                     editable={true}
                                     underlineColorAndroid={colors.TRANSPARENT}
                                     placeholder={languageJSON.referral_id_placeholder}
-                                    placeholderTextColor={colors.WHITE}
+                                    placeholderTextColor={colors.GREY2}
                                     value={this.state.refferalId}
                                     inputStyle={styles.inputTextStyle}
                                     onChangeText={(text) => { this.setState({ refferalId: text }) }}
@@ -342,70 +315,73 @@ export default class Registration extends React.Component {
                                     containerStyle={styles.textInputStyle}
                                 />
                             </View>
-                            <View style={styles.buttonContainer}>
-                                <Button
-                                    onPress={() => { this.onPressRegister() }}
-                                    title={languageJSON.register_button}
-                                    loading={loading}
-                                    titleStyle={styles.buttonTitle}
-                                    buttonStyle={styles.registerButton}
-                                />
-                            </View>
-                            <View style={styles.gapView} />
+                            <TouchableOpacity onPress={() => { this.onPressRegister() }}>
+                                <View style={styles.buttonContainer}>
+                                    <Text style={{ fontFamily: 'Inter-Bold', fontSize: 16, color: colors.WHITE }}>{languageJSON.register_button}</Text>
+                                </View>
+                            </TouchableOpacity>
                         </View>
                     </KeyboardAvoidingView>
                 </ScrollView>
-                {this.loading()}
-            </Background>
+                {
+                    this.loading()
+                }
+            </View >
         );
     }
 };
 
 const styles = {
-    headerContainerStyle: {
-        backgroundColor: colors.TRANSPARENT,
-        borderBottomWidth: 0,
-        marginTop: 0
+    mainView: {
+        flex: 1,
+        backgroundColor: colors.WHITE
     },
-    headerInnerContainer: {
-        marginLeft: 10,
-        marginRight: 10
+    topBar: {
+        justifyContent: 'flex-end',
+        marginTop: Platform.OS == 'ios' ? 0 : 10,
+        flex: Platform.OS == 'ios' ? .13 : .15,
+    },
+    btnVoltar: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: 35,
+        height: 35,
+        borderRadius: 50
     },
     inputContainerStyle: {
-        borderBottomWidth: 1,
-        borderBottomColor: colors.WHITE
+        borderWidth: 1,
+        borderRadius: 6,
+        height: 50,
+        borderColor: colors.GREY1
     },
     textInputStyle: {
         marginLeft: 10,
     },
     iconContainer: {
-        paddingTop: 8
-    },
-    gapView: {
-        height: 40,
-        width: '100%'
+        paddingTop: 8,
+        backgroundColor: colors.BLACK,
     },
     buttonContainer: {
+        marginTop: 10,
         flexDirection: 'row',
         justifyContent: 'center',
-        borderRadius: 40
-    },
-    registerButton: {
-        backgroundColor: colors.SKY,
-        width: 180,
-        height: 50,
-        borderColor: colors.TRANSPARENT,
-        borderWidth: 0,
-        marginTop: 30,
-        borderRadius: 15,
+        borderRadius: 10,
+        backgroundColor: colors.DEEPBLUE,
+        height: 45,
+        marginHorizontal: 55,
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     buttonTitle: {
-        fontSize: 16
+        fontSize: 16,
+        fontFamily: 'Inter-Bold',
     },
     inputTextStyle: {
-        color: colors.WHITE,
-        fontSize: 13,
-        marginLeft: 0,
+        color: colors.BLACK,
+        fontFamily: 'Inter-Medium',
+        fontSize: 16,
+        marginLeft: 10,
+        padding: 10,
         height: 32,
     },
     errorMessageStyle: {
@@ -420,27 +396,14 @@ const styles = {
     form: {
         flex: 1,
     },
-    logo: {
-        width: '100%',
-        justifyContent: "flex-start",
-        marginTop: 10,
-        alignItems: 'center',
-    },
     scrollViewStyle: {
-        height: height
+        flex: 1
     },
     textInputContainerStyle: {
         flexDirection: 'row',
         alignItems: "center",
-        marginLeft: 20,
         marginRight: 20,
         padding: 15,
-    },
-    headerStyle: {
-        fontSize: 18,
-        color: colors.WHITE,
-        textAlign: 'center',
-        flexDirection: 'row',
-        marginTop: 0
+        backgroundColor: colors.TRANSPARENT
     },
 }

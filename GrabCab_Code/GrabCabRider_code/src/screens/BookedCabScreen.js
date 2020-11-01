@@ -393,51 +393,53 @@ export default class BookedCabScreen extends React.Component {
                             })
                         }
                     }
-        }).then(() => {
-            if (this.state.usedWalletMoney != 0) {
-                firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/').update({
-                    walletBalance: this.state.usedWalletMoney + this.state.walletBalance
                 })
-            }
-        }).then(() => {
-            //Essa parte serve pra caso o motorista ter aceito a corrida e o passageiro cancelar em seguida
-            firebase.database().ref(`/users/` + this.state.driverUID + '/my_bookings/' + this.state.currentBookingId + '/').on('value', curbookingData => {
-                if (curbookingData.val()) {
-                    if (curbookingData.val().status == 'ACCEPTED') {
-                        this.setState({ modalVisible: false })
-                        firebase.database().ref(`/users/` + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
-                            status: 'CANCELLED',
-                            reason: this.state.radio_props[this.state.value].label
-                        }).then(() => {
-                            if (this.state.punisherCancell) {
-                                firebase.database().ref(`/users/` + this.state.currentUser.uid + '/cancell_details/').update({
-                                    bookingId: this.state.currentBookingId,
-                                    data: new Date().toString(),
-                                    value: 3
-                                })
-                            }
-                        }).then(() => {
-                            firebase.database().ref(`/users/` + this.state.driverUID + '/').update({ queue: false })
-                            this.sendPushNotification(curbookingData.val().driver, this.state.currentBookingId, curbookingData.val().firstNameRider + ' cancelou a corrida atual!')
-                        }).then(() => {
-                            firebase.database().ref('users/' + this.state.driverUID + '/emCorrida').remove()
-                        }).then(() => {
-                            this.props
-                                .navigation
-                                .dispatch(StackActions.reset({
-                                    index: 0,
-                                    actions: [
-                                        NavigationActions.navigate({
-                                            routeName: 'Map',
-                                        }),
-                                    ],
-                                }))
-                            //this.props.navigation.replace('Map')
-                        })
-                    }
+            }).then(() => {
+                if (this.state.usedWalletMoney != 0) {
+                    firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/').update({
+                        walletBalance: this.state.usedWalletMoney + this.state.walletBalance
+                    })
                 }
             })
-        })
+            .then(() => {
+                //Essa parte serve pra caso o motorista ter aceito a corrida e o passageiro cancelar em seguida
+                firebase.database().ref(`/users/` + this.state.driverUID + '/my_bookings/' + this.state.currentBookingId + '/').on('value', curbookingData => {
+                    if (curbookingData.val()) {
+                        if (curbookingData.val().status == 'ACCEPTED') {
+                            this.setState({ modalVisible: false })
+                            firebase.database().ref(`/users/` + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
+                                status: 'CANCELLED',
+                                reason: this.state.radio_props[this.state.value].label
+                            }).then(() => {
+                                if (this.state.punisherCancell) {
+                                    firebase.database().ref(`/users/` + this.state.currentUser.uid + '/cancell_details/').update({
+                                        bookingId: this.state.currentBookingId,
+                                        data: new Date().toString(),
+                                        value: 3
+                                    })
+                                }
+                            }).then(() => {
+                                firebase.database().ref(`/users/` + this.state.driverUID + '/').update({ queue: false })
+                                this.sendPushNotification(curbookingData.val().driver, this.state.currentBookingId, curbookingData.val().firstNameRider + ' cancelou a corrida atual!')
+                            }).then(() => {
+                                firebase.database().ref('users/' + this.state.driverUID + '/emCorrida').remove()
+                            }).then(() => {
+                                this.props
+                                    .navigation
+                                    .dispatch(StackActions.reset({
+                                        index: 0,
+                                        actions: [
+                                            NavigationActions.navigate({
+                                                routeName: 'Map',
+                                            }),
+                                        ],
+                                    }))
+                                //this.props.navigation.replace('Map')
+                            })
+                        }
+                    }
+                })
+            })
     }
 
     //Botao ligar pro motorista
@@ -501,7 +503,7 @@ export default class BookedCabScreen extends React.Component {
                                 </View>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => this.dissMissCancel()}>
-                                <Text style={{ marginBottom: 15, marginTop: 17, fontFamily: 'Inter-Medium', color: colors.RED, fontSize: width < 375 ? 17 : 20}}> Voltar </Text>
+                                <Text style={{ marginBottom: 15, marginTop: 17, fontFamily: 'Inter-Medium', color: colors.RED, fontSize: width < 375 ? 17 : 20 }}> Voltar </Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -891,7 +893,7 @@ const styles = StyleSheet.create({
     cancelModalContainer: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center'  
+        alignItems: 'center'
     },
     cancelModalInnerContainer: {
         height: 450,

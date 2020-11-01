@@ -52,9 +52,6 @@ export default class App extends React.Component {
   _loadResourcesAsync = async () => {
     return Promise.all([
       Asset.loadAsync([
-        require('./assets/images/background.png'),
-        require('./assets/images/logo.png'),
-        require('./assets/images/bg.png'),
         require('./assets/images/searchDrivers.gif'),
       ]),
 
@@ -110,7 +107,7 @@ export default class App extends React.Component {
         <View style={styles.container}>
           <ImageBackground
             source={require("./assets/images/splash.png")}
-            resizeMode='contain'
+            resizeMode={'contain'}
             style={styles.imagebg}
           >
             <ActivityIndicator />

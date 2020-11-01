@@ -1,11 +1,13 @@
 import React from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, AsyncStorage, Platform } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Dimensions, Image, AsyncStorage, Platform } from 'react-native';
 import { Icon } from 'react-native-elements'
 import { colors } from '../common/theme';
+var { width } = Dimensions.get('window');
 import languageJSON from '../common/language';
 import dateStyle from '../common/dateStyle';
 
 import CircleLineTriangle from '../../assets/svg/CircleLineTriangle';
+import { color } from 'react-native-reanimated';
 
 export default class RideList extends React.Component {
 
@@ -36,46 +38,6 @@ export default class RideList extends React.Component {
         this._retrieveSettings();
     }
 
-    getMonth(params) {
-        switch (params) {
-            case 'Jan':
-                return '01'
-                break
-            case 'Feb':
-                return '02'
-                break
-            case 'Mar':
-                return '03'
-                break
-            case 'Apr':
-                return '04'
-                break
-            case 'May':
-                return '05'
-                break
-            case 'June':
-                return '06'
-                break
-            case 'July':
-                return '07'
-                break
-            case 'Aug':
-                return '08'
-                break
-            case 'Sept':
-                return '09'
-                break
-            case 'Oct':
-                return '10'
-                break
-            case 'Nov':
-                return '11'
-                break
-            case 'Dec':
-                return '12'
-                break
-        }
-    }
 
     onPressButton(item, index) {
         const { onPressButton } = this.props;
@@ -99,7 +61,7 @@ export default class RideList extends React.Component {
                     <View style={{ flexDirection: 'row' }}>
                         <View style={styles.textView1}>
                             <View style={{ flexDirection: 'row', marginTop: 10 }}>
-                                <Text style={[styles.textStyle, styles.dateStyle]}>
+                                <Text style={[styles.textStyle, styles.dateRide]}>
                                     {item.bookingDate ?
                                         Platform.OS == 'ios' ?
                                             item.bookingDate
@@ -122,6 +84,7 @@ export default class RideList extends React.Component {
                             <Text style={styles.dateStyle}>{item.status == 'END' && item.pagamento.payment_status == 'PAID' ? item.pagamento.customer_paid ? this.state.settings.symbol + parseFloat(item.pagamento.customer_paid).toFixed(2) : this.state.settings.symbol + parseFloat(item.pagamento.estimate).toFixed(2) : null}</Text>
                         </View>
                     </View>
+                    <View style={{ backgroundColor: colors.GREY1, height: 1, marginHorizontal: 15 }} />
 
                     <View style={{ flex: 5, flexDirection: 'row', alignItems: 'center', marginLeft: 10 }}>
                         <CircleLineTriangle />
@@ -220,11 +183,18 @@ const styles = StyleSheet.create({
         marginTop: 5,
         fontSize: 18,
     },
+    dateRide: {
+        fontFamily: 'Inter-Bold',
+        color: colors.BLACK,
+        marginLeft: 20,
+        marginTop: 5,
+        fontSize: width < 375 ?  16 : 18,
+    },
     dateStyle2: {
         fontFamily: 'Inter-Bold',
         color: colors.RED,
         marginLeft: 20,
-        marginTop: 5,
+        marginTop: 10,
 
     },
     carNoStyle: {

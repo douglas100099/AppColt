@@ -27,6 +27,7 @@ import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
 import ColtConfortCar from '../../assets/svg/ColtConfortCar';
 import AvatarUser from '../../assets/svg/AvatarUser';
 import { NavigationActions, StackActions } from 'react-navigation';
+import { ScrollView } from 'react-native-gesture-handler';
 
 export default class BookedCabScreen extends React.Component {
     _isMounted = false;
@@ -81,6 +82,8 @@ export default class BookedCabScreen extends React.Component {
                     droptext: currUserBooking.drop.add
                 }
                 this.setState({
+
+                    firstNameRider: currUserBooking.firstNameRider,
                     walletBalance: walletBalance,
                     usedWalletMoney: currUserBooking.pagamento.usedWalletMoney,
                     coords: this.getParamData.coords,
@@ -96,14 +99,12 @@ export default class BookedCabScreen extends React.Component {
                     driverUID: currUserBooking.driver,
                     driverName: currUserBooking.driver_name,
                     driverPic: currUserBooking.driver_image,
-                    carImage: currUserBooking.carImage,
                     driverContact: currUserBooking.driver_contact,
                     carModel: currUserBooking.vehicleModelName,
                     carNo: currUserBooking.vehicle_number,
                     starCount: currUserBooking.driverRating,
                     otp: currUserBooking.otp,
 
-                    imageRider: currUserBooking.imageRider ? currUserBooking.imageRider : null,
                 }, () => {
                     this.getCancelReasons();
                     //this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
@@ -309,7 +310,7 @@ export default class BookedCabScreen extends React.Component {
     }
 
     dissMissCancel() {
-        this.setState({ modalVisible: false, modalInfoVisible: false })
+        this.setState({ modalVisible: false, modalInfoVisible: false, punisherCancell: false })
     }
 
     //Cancelar corrida antes do motorista ter aceito
@@ -354,6 +355,44 @@ export default class BookedCabScreen extends React.Component {
         firebase.database().ref(`/users/` + this.state.currentUser.uid + '/my-booking/' + this.state.currentBookingId + '/').update({
             status: 'CANCELLED',
             reason: this.state.radio_props[this.state.value].label
+        })
+            .then(() => {
+                //Essa parte serve pra caso o motorista ter aceito a corrida e o passageiro cancelar em seguida
+                firebase.database().ref(`/users/` + this.state.driverUID + '/my_bookings/' + this.state.currentBookingId + '/').on('value', curbookingData => {
+                    if (curbookingData.val()) {
+                        if (curbookingData.val().status == 'ACCEPTED') {
+                            this.setState({ modalVisible: false })
+                            firebase.database().ref(`/users/` + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
+                                status: 'CANCELLED',
+                                reason: this.state.radio_props[this.state.value].label
+                            }).then(() => {
+                                if (this.state.punisherCancell) {
+                                    firebase.database().ref(`/users/` + this.state.currentUser.uid + '/cancell_details/').update({
+                                        bookingId: this.state.currentBookingId,
+                                        data: new Date().toString(),
+                                        value: 6
+                                    })
+                                }
+                            }).then(() => {
+                                firebase.database().ref(`/users/` + this.state.driverUID + '/').update({ queue: false })
+                                this.sendPushNotification(curbookingData.val().driver, this.state.currentBookingId, this.state.firstNameRider + ' cancelou a corrida atual!')
+                            }).then(() => {
+                                firebase.database().ref('users/' + this.state.driverUID + '/emCorrida').remove()
+                            }).then(() => {
+                                this.props
+                                    .navigation
+                                    .dispatch(StackActions.reset({
+                                        index: 0,
+                                        actions: [
+                                            NavigationActions.navigate({
+                                                routeName: 'Map',
+                                            }),
+                                        ],
+                                    }))
+                                //this.props.navigation.replace('Map')
+                            })
+                        }
+                    }
         }).then(() => {
             if (this.state.usedWalletMoney != 0) {
                 firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/').update({
@@ -434,16 +473,16 @@ export default class BookedCabScreen extends React.Component {
                 }}>
                 <View style={styles.cancelModalContainer}>
                     <View style={styles.cancelModalInnerContainer}>
-                        <View style={styles.cancelContainer}>
-                            <View style={styles.cancelReasonContainer}>
-                                <Text style={styles.cancelReasonText}>{languageJSON.cancel_reason_modal_title}</Text>
-                            </View>
+                        <View style={styles.cancelReasonContainer}>
+                            <Text style={styles.cancelReasonText}>{languageJSON.cancel_reason_modal_title}</Text>
+                        </View>
 
-                            <View style={styles.radioContainer}>
+                        <View style={styles.radioContainer}>
+                            <ScrollView>
                                 <RadioForm
                                     radio_props={this.state.radio_props ? this.state.radio_props : null}
-                                    initial={5}
-                                    animation={true}
+                                    initial={0}
+                                    animation={false}
                                     buttonColor={colors.GREY2}
                                     selectedButtonColor={colors.DEEPBLUE}
                                     buttonSize={10}
@@ -453,20 +492,18 @@ export default class BookedCabScreen extends React.Component {
                                     radioStyle={styles.radioStyle}
                                     onPress={(value) => { this.setState({ value: value }) }}
                                 />
-                            </View>
-                            <View style={styles.cancelModalButtosContainer}>
-                                <TouchableOpacity onPress={() => this.onCancelConfirm()}>
-                                    <View style={{ width: width - 150, justifyContent: 'center', alignItems: 'center', height: 40, backgroundColor: colors.DEEPBLUE, borderRadius: 50 }}>
-                                        <Text style={{ fontFamily: "Inter-Bold", color: colors.WHITE, fontSize: 17 }}> Confirmar </Text>
-                                    </View>
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => this.dissMissCancel()}>
-                                    <Text style={{ marginBottom: 15, marginTop: 15, fontFamily: 'Inter-Medium', color: colors.RED, fontSize: 17 }}> Voltar </Text>
-                                </TouchableOpacity>
-                            </View>
+                            </ScrollView>
                         </View>
-
-
+                        <View style={styles.cancelModalButtosContainer}>
+                            <TouchableOpacity onPress={() => this.onCancelConfirm()}>
+                                <View style={{ width: width - 150, justifyContent: 'center', alignItems: 'center', height: 45, backgroundColor: colors.DEEPBLUE, borderRadius: 50 }}>
+                                    <Text style={{ fontFamily: "Inter-Bold", color: colors.WHITE, fontSize: 17 }}> Confirmar </Text>
+                                </View>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => this.dissMissCancel()}>
+                                <Text style={{ marginBottom: 15, marginTop: 17, fontFamily: 'Inter-Medium', color: colors.RED, fontSize: width < 375 ? 17 : 20}}> Voltar </Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
 
@@ -484,7 +521,7 @@ export default class BookedCabScreen extends React.Component {
                     this.setState({ modalInfoVisible: false })
                 }}
             >
-                <View style={{ flex: 1, backgroundColor: colors.BLACK, opacity: 0.1, width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ flex: 1, backgroundColor: colors.WHITE, width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
                     <View style={{ height: 400, backgroundColor: colors.WHITE, borderRadius: 25, marginHorizontal: 20 }}>
                         <View style={{ flex: 2, flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                             <Icon
@@ -497,13 +534,13 @@ export default class BookedCabScreen extends React.Component {
                         </View>
                         <View style={{ flex: 3, flexDirection: 'column', }}>
                             <Text style={{ marginHorizontal: 10, fontSize: 15, textAlign: 'center', fontFamily: 'Inter-Medium' }}> Essa corrida já está em andamento e você já ultrapassou o tempo máximo de cancelamento. </Text>
-                            <Text style={{ marginHorizontal: 10, fontSize: 15, marginTop: 10, textAlign: 'center', fontFamily: 'Inter-Medium' }}> Ao cancelar, será cobrada uma taxa no valor de R$6,00 na próxima corrida! </Text>
+                            <Text style={{ marginHorizontal: 10, fontSize: 15, marginTop: 10, textAlign: 'center', fontFamily: 'Inter-Medium' }}> Ao cancelar, será cobrada uma taxa no valor de R$3,00 na próxima corrida! </Text>
                         </View>
 
                         <View style={{}}>
-                            <Text style={{ marginHorizontal: 10, fontSize: 17, textAlign: "center", marginBottom: 10, fontFamily: 'Inter-Medium' }}> Deseja continuar? </Text>
+                            <Text style={{ marginHorizontal: 10, fontSize: 17, textAlign: "center", marginBottom: 10, fontFamily: 'Inter-Bold' }}> Deseja continuar? </Text>
                             <TouchableOpacity onPress={() => { this.setState({ punisherCancell: true, modalVisible: true, modalInfoVisible: false }) }}>
-                                <View style={{ justifyContent: 'center', alignItems: 'center', backgroundColor: colors.RED, marginHorizontal: 30, height: 40, borderRadius: 50 }}>
+                                <View style={{ justifyContent: 'center', alignItems: 'center', backgroundColor: colors.RED, marginHorizontal: 40, height: 45, borderRadius: 50 }}>
                                     <Text style={{ fontFamily: 'Inter-Bold', fontSize: 17, color: colors.WHITE }}> Continuar </Text>
                                 </View>
                             </TouchableOpacity>
@@ -575,7 +612,7 @@ export default class BookedCabScreen extends React.Component {
                 </View>
 
                 {this.state.driverSerach == false ?
-                    <View style={{ backgroundColor: colors.GREY2, opacity: 0.6, height: 20, justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ backgroundColor: colors.GREY1, height: 25, justifyContent: 'center', alignItems: 'center' }}>
                         <View style={styles.viewInfo}>
                             <Text style={{ color: colors.WHITE, fontFamily: 'Inter-Bold', fontSize: 14, alignSelf: 'center' }}> Confira as informações e a placa do carro!</Text>
                         </View>
@@ -585,18 +622,22 @@ export default class BookedCabScreen extends React.Component {
                 {this.state.embarque ?
                     <View style={{ borderBottomWidth: 2, borderColor: colors.GREY.background, backgroundColor: colors.GREY3, opacity: 0.6, height: 60, justifyContent: 'center', alignItems: 'center' }}>
                         <View style={styles.viewInfo}>
-                            <Text style={{ color: colors.BLACK, fontFamily: 'Inter-Medium', fontSize: 20, textAlign: 'center' }}> Encontre o motorista em {this.state.region.whereText.split("-")[0]} </Text>
+                            <Text style={{ color: colors.BLACK, fontFamily: 'Inter-Medium', fontSize: width < 375 ? 17 : 19, textAlign: 'center' }}> Encontre o motorista em {this.state.region.whereText.split("-")[0]} </Text>
                         </View>
                     </View>
                     : null}
 
                 {this.state.driverSerach == false ?
-                    <View style={[styles.containerBottom, { flex: this.state.embarque ? 4.5 : 3.5 }]}>
+                    <View style={[styles.containerBottom, { flex: this.state.embarque ? 4.5 : width < 375 ? 4.5 : 3.5 }]}>
                         <View style={styles.containerFoto}>
                             <View style={{ borderWidth: 1.5, borderColor: colors.DEEPBLUE, borderRadius: 100 }}>
-                                <AvatarUser
-                                    style={{ margin: 3 }}
-                                />
+                                {this.state.driverPic ?
+                                    <Image source={{ uri: this.state.driverPic }} style={{ width: 72, height: 72, borderRadius: 50 }} />
+                                    :
+                                    <AvatarUser
+                                        style={{ margin: 3 }}
+                                    />
+                                }
                             </View>
 
                             <Text style={styles.nameDriver}> {this.state.driverName ? this.state.driverName.split(" ")[0] : null} </Text>
@@ -615,11 +656,23 @@ export default class BookedCabScreen extends React.Component {
                         <View style={styles.containerCarDetails}>
                             <View style={{ justifyContent: 'center', alignItems: 'center' }}>
                                 {this.state.carType == "Colt econômico" ?
-                                    <ColtEconomicoCar />
+                                    width < 375 ?
+                                        <ColtEconomicoCar
+                                            width={80}
+                                            height={50}
+                                        />
+                                        :
+                                        <ColtEconomicoCar />
                                     :
-                                    <ColtConfortCar />
+                                    width < 375 ?
+                                        <ColtConfortCar
+                                            width={80}
+                                            height={50}
+                                        />
+                                        :
+                                        <ColtConfortCar />
                                 }
-                                <Text style={{ fontSize: 18, fontFamily: 'Inter-Medium', fontWeight: "500", textAlign: 'center', marginBottom: 5 }}> {this.state.carType} </Text>
+                                <Text style={{ fontSize: width < 375 ? 16 : 18, fontFamily: 'Inter-Medium', fontWeight: "500", textAlign: 'center', marginBottom: 5 }}> {this.state.carType} </Text>
                             </View>
 
                             <View style={styles.boxPlacaCarro}>
@@ -721,7 +774,7 @@ const styles = StyleSheet.create({
     },
     txtChatMotorista: {
         fontFamily: 'Inter-Bold',
-        fontSize: 16,
+        fontSize: width < 375 ? 14 : 16,
         color: colors.BLACK,
     },
     bottomContainer: {
@@ -838,7 +891,7 @@ const styles = StyleSheet.create({
     cancelModalContainer: {
         flex: 1,
         justifyContent: 'center',
-        backgroundColor: colors.BLACK,
+        alignItems: 'center'  
     },
     cancelModalInnerContainer: {
         height: 450,
@@ -847,25 +900,25 @@ const styles = StyleSheet.create({
         backgroundColor: colors.WHITE,
         alignItems: 'center',
         alignSelf: 'center',
-        borderRadius: 7
-    },
-    cancelContainer: {
-        flex: 1,
-        justifyContent: 'space-between',
-        width: (width * 0.85)
+        borderRadius: 7,
+        elevation: 4,
+        shadowColor: colors.BLACK,
+        shadowOpacity: 0.2,
+        shadowOffset: { x: 0, y: 0 },
+        shadowRadius: 15,
     },
     cancelReasonContainer: {
-        flex: 1
+        flex: 2
     },
     cancelReasonText: {
         top: 10,
         color: colors.BLACK,
         fontFamily: 'Inter-Bold',
-        fontSize: 20,
+        fontSize: width < 375 ? 17 : 20,
         alignSelf: 'center'
     },
     radioContainer: {
-        flex: 8,
+        flex: 10,
         alignItems: 'center'
     },
     radioText: {
@@ -881,7 +934,7 @@ const styles = StyleSheet.create({
         paddingBottom: 25
     },
     cancelModalButtosContainer: {
-        flex: 2,
+        flex: 4,
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
@@ -928,8 +981,9 @@ const styles = StyleSheet.create({
         borderRadius: 100
     },
     nameDriver: {
+        marginTop: width < 375 ? 0 : 5,
         fontFamily: 'Inter-Bold',
-        fontSize: 17,
+        fontSize: width < 375 ? 17 : 19,
         fontWeight: "600",
     },
     reLocation: {
@@ -963,17 +1017,17 @@ const styles = StyleSheet.create({
         backgroundColor: colors.WHITE,
         borderWidth: 2,
         borderColor: colors.DEEPBLUE,
-        height: 45,
+        height: width < 375 ? 40 : 45,
         borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
-        width: 250
+        width: width < 375 ? 220 : 250
     },
     btnCancelarCorrida: {
         backgroundColor: colors.RED,
         opacity: 0.5,
-        width: 50,
-        height: 50,
+        width: width < 375 ? 40 : 50,
+        height: width < 375 ? 40 : 50,
         borderRadius: 100,
         justifyContent: 'center',
         alignItems: 'center',
@@ -988,7 +1042,7 @@ const styles = StyleSheet.create({
     txtLigarMotorista: {
         fontFamily: 'Inter-Bold',
         color: colors.DEEPBLUE,
-        fontSize: 19,
+        fontSize: width < 375 ? 17 : 19,
     },
     boxPlacaCarro: {
         width: 150,
@@ -1002,7 +1056,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     placaCarro: {
-        fontSize: 25,
+        fontSize: width < 375 ? 20 : 25,
         fontFamily: 'Inter-Bold',
         fontWeight: '500',
 
@@ -1014,7 +1068,7 @@ const styles = StyleSheet.create({
     marcaCarro: {
         fontFamily: 'Inter-Regular',
         color: colors.BLACK,
-        fontSize: 18,
+        fontSize: width < 375 ? 16 : 18,
         position: 'absolute',
         right: 0
     },

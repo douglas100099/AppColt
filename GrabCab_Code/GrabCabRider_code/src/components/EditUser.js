@@ -101,7 +101,7 @@ export default class EditUser extends React.Component {
             <View style={styles.main}>
                 <Header
                     backgroundColor={colors.TRANSPARENT}
-                    leftComponent={{ icon: 'md-close', type: 'ionicon', color: colors.BLACK, size: 35, component: TouchableWithoutFeedback, onPress: onPressBack }}
+                    leftComponent={{ icon: 'md-close', type: 'ionicon', marginLeft: 10, color: colors.BLACK, size: 35, component: TouchableWithoutFeedback, onPress: onPressBack }}
                     containerStyle={styles.headerContainerStyle}
                     centerComponent={<Text style={styles.headerTitleStyle}>Atualizar perfil</Text>}
                     innerContainerStyles={styles.headerInnerContainer}
@@ -180,7 +180,7 @@ export default class EditUser extends React.Component {
                                 <Text style={styles.textInput}>E-MAIL</Text>
                                 <Input
                                     ref={input => (this.emailInput = input)}
-                                    editable={this.state.loginType != 'email' ? true : false}
+                                    editable={this.state.loginType != 'email' ? true : true}
                                     underlineColorAndroid={colors.TRANSPARENT}
                                     placeholder={languageJSON.email_placeholder}
                                     placeholderTextColor={colors.GREY.secondary}
@@ -217,7 +217,7 @@ export default class EditUser extends React.Component {
 
 const styles = {
     main: {
-        // backgroundColor: colors.BLACK, 
+        backgroundColor: colors.WHITE, 
     },
     headerContainerStyle: {
         backgroundColor: colors.TRANSPARENT,
@@ -230,8 +230,7 @@ const styles = {
     inputContainerStyle: {
         borderWidth: 1,
         borderColor: colors.GREY1,
-        borderRadius: 15,
-        backgroundColor: colors.GREY3,
+        borderRadius: 7,
         elevation: 2,
         marginTop: 10,
 
@@ -251,11 +250,11 @@ const styles = {
     buttonContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
-        borderRadius: 40
+        borderRadius: 10
     },
     registerButton: {
         backgroundColor: colors.DEEPBLUE,
-        width: 180,
+        width: 250,
         height: 45,
         borderColor: colors.TRANSPARENT,
         borderWidth: 0,
@@ -304,7 +303,7 @@ const styles = {
     textInput: {
         fontSize: 13,
         fontFamily: 'Inter-Bold',
-        marginLeft: 10,
+        marginLeft: 12,
         marginTop: 15,
     },
 }

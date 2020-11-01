@@ -7,15 +7,17 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Dimensions,
+  Image,
   Keyboard,
   TextInput,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  Platform
 } from "react-native";
 import { colors } from "../common/theme";
 import { Icon, Header } from "react-native-elements";
 import * as firebase from 'firebase'
 import languageJSON from '../common/language';
-var { height } = Dimensions.get('window');
+var { height, width } = Dimensions.get('window');
 import { RequestPushMsg } from '../common/RequestPushMsg';
 export default class OnlineChat extends Component {
   getParamData;
@@ -181,7 +183,7 @@ export default class OnlineChat extends Component {
     }
   }
 
-  sendPushNotification(customerUID, bookingId, msg) {
+  sendPushNotification(customerUID, msg) {
     const customerRoot = firebase.database().ref('users/' + customerUID);
     customerRoot.once('value', customerData => {
       if (customerData.val()) {
@@ -208,26 +210,33 @@ export default class OnlineChat extends Component {
   render() {
     return (
       <View style={styles.container}>
-        <Header
-          backgroundColor={colors.DEEPBLUE}
-          leftComponent={{ icon: 'angle-left', type: 'font-awesome', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.goBack(); } }}
-          centerComponent={<Text style={styles.headerTitleStyle}>{this.state.carbookedInfo.driver_name ? this.state.carbookedInfo.driver_name : "Chat"}</Text>}
-          containerStyle={styles.headerStyle}
-          innerContainerStyles={styles.inrContStyle}
-          statusBarProps={{ barStyle: 'light-content' }}
-          barStyle="light-content"
-          containerStyle={{
-            justifyContent: 'space-around',
-            height: 80
-
-          }}
-        />
+        <View style={styles.viewHeader}>
+          <View style={styles.bordaIconeVoltar}>
+            <TouchableOpacity onPress={() => { this.props.navigation.goBack() }}>
+              <Icon
+                name='chevron-left'
+                type='MaterialIcons'
+                size={ width < 375 ? 35 : 40}
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={{ flexDirection: 'column', alignItems: 'center' }}>
+            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20, }}> {this.state.carbookedInfo.driver_firstName}</Text>
+            <Text style={{ fontFamily: 'Inter-Medium', color: colors.GREY2, fontSize: width < 375 ? 14 : 16, marginBottom: 10 }}> {this.state.carbookedInfo.vehicle_number}</Text>
+          </View>
+          <View style={{ backgroundColor: colors.BLACK, width: 53, justifyContent: 'center', alignItems: 'center', height: 53, position: 'absolute', bottom: 5, right: 10, borderRadius: 100 }}>
+            <Image
+              source={{ uri: this.state.carbookedInfo.driver_image }}
+              style={{ width: 50, height: 50, borderRadius: 50, }}
+            />
+          </View>
+        </View>
         <FlatList
           data={this.state.allChat.reverse()}
           renderItem={this.renderItem}
           inverted
         />
-        <KeyboardAvoidingView behavior='padding'>
+        <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? 'padding' : 'height'}>
           <View style={styles.footer}>
             <TextInput
               value={this.state.inputmessage}
@@ -260,6 +269,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.WHITE,
     //marginTop: StatusBar.currentHeight,
+  },
+  viewHeader: {
+    backgroundColor: colors.WHITE,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-around',
+    height: Platform.OS == 'ios' ? 100 : 85,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { x: 0, y: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+  },
+  bordaIconeVoltar: {
+    position: 'absolute',
+    backgroundColor: colors.WHITE,
+    width: width < 375 ? 35 : 40,
+    height: width < 375 ? 35 : 40,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    bottom: 10,
+    left: 15,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { x: 0, y: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
   },
   container1: {
     height: height - 150

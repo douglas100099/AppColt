@@ -38,12 +38,13 @@ export default class EmailLoginScreen extends Component {
                     try {
                         await firebase.auth().signInWithEmailAndPassword(email, password)
                     } catch (error) {
+                        alert("Ops, tivemos um erro.");
                         this.setState({
                             email: '',
                             password: '',
-                            confirmpassword: ''
+                            confirmpassword: '',
+                            btnDisabled: false 
                         });
-                        this.setState({ btnDisabled: false })
                         this.emailInput.focus();
                         alert(error.code + " - " + error.message);
                     }
@@ -59,15 +60,17 @@ export default class EmailLoginScreen extends Component {
                     try {
                         await firebase.auth().createUserWithEmailAndPassword(email, password)
                     } catch (error) {
-                        alert(error.code + " - " + error.message);
+                        alert("Ops, tivemos um erro ao tentar criar o usuário.");
                         this.setState({
                             email: '',
                             password: '',
-                            confirmpassword: ''
+                            confirmpassword: '',
+                            btnDisabled: false
                         });
                         this.emailInput.focus();
                     }
                 } else {
+                    this.setState({ btnDisabled: false })
                     this.confirmPassInput.focus();
                     alert(languageJSON.confrim_password_not_match_err);
                 }
@@ -246,6 +249,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
+        marginTop: 20,
         flex: 1,
     },
     btnVoltar: {

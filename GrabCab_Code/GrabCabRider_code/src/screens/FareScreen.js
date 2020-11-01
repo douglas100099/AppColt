@@ -389,28 +389,10 @@ export default class FareScreen extends React.Component {
                                 })
                             }
                         }
-
-                        if (arr[carType] && arr[carType].drivers) {
-                            arr[carType].drivers.push(driver);
-                            if (arr[carType].minDistance > distance) {
-                                arr[carType].minDistance = distance;
-                                arr[carType].minTime = driver.arriveTime.time_in_secs;
-                            }
-                        } else {
-                            arr[carType] = {};
-                            arr[carType].drivers = [];
-                            arr[carType].drivers.push(driver);
-                            arr[carType].minDistance = distance;
-                            arr[carType].minTime = driver.arriveTime.time_in_secs;
-                        }
                     }
                 }
             }
         }
-
-        this.setState({
-            allCars: arr,
-        });
     }
 
     getDriverTime(startLoc, destLoc) {
@@ -635,7 +617,7 @@ export default class FareScreen extends React.Component {
                                     />
                                     <View style={{ flexDirection: 'column' }}>
                                         <Text style={styles.textMoney}> Carteira Colt </Text>
-                                        <Text style={{ fontFamily: 'Inter-Bold', color: colors.GREY2, fontSize: 15, marginLeft: 10 }}> Saldo: R${parseFloat(this.state.walletBallance).toFixed(2)} </Text>
+                                        <Text style={{ fontFamily: 'Inter-Bold', color: colors.GREY2, fontSize: 15, marginLeft: 10 }}> Saldo: R${parseFloat(this.state.walletBallance > 0 ? this.state.walletBallance : 0).toFixed(2)} </Text>
                                     </View>
                                 </View>
                                 <Icon
@@ -985,7 +967,7 @@ export default class FareScreen extends React.Component {
                                                 </View>
                                                 <Text style={styles.metodoPagamento}> Carteira Colt </Text>
                                             </View>
-                                            <Text style={{ fontFamily: 'Inter-Bold', opacity: 0.4 }} >SALDO: R${parseFloat(this.state.walletBallance).toFixed(2)} </Text>
+                                            <Text style={{ fontFamily: 'Inter-Bold', opacity: 0.4 }} >SALDO: R${parseFloat(this.state.walletBallance > 0 ? this.state.walletBallance : 0).toFixed(2)} </Text>
                                         </TouchableOpacity>
                                     </View>
                                     : <View style={styles.containerDinheiro}>

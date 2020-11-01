@@ -21,6 +21,7 @@ import { NavigationActions, StackActions } from 'react-navigation';
 
 import CircleLineTriangle from '../../assets/svg/CircleLineTriangle';
 import Verified from '../../assets/svg/Verified';
+import AvatarUser from '../../assets/svg/AvatarUser';
 
 export default class DriverTripComplete extends React.Component {
     constructor(props) {
@@ -177,7 +178,10 @@ export default class DriverTripComplete extends React.Component {
                         <View style={{ flex: 2, justifyContent: 'center', alignItems: "center" }}>
                             {this.state.getDetails ?
                                 this.state.getDetails.driver_image != '' ? <Image source={{ uri: this.state.getDetails.driver_image }} style={{ height: 68, width: 68, borderRadius: 78 / 2 }} /> :
-                                    <Image source={require('../../assets/images/profilePic.png')} style={{ height: 68, width: 68, borderRadius: 78 / 2 }} />
+                                    <AvatarUser
+                                        width={68}
+                                        height={68}
+                                    />
                                 : null}
                         </View>
                         <View style={styles.tripSummaryStyle}>
@@ -194,8 +198,8 @@ export default class DriverTripComplete extends React.Component {
                             emptyStar={'ios-star'}
                             iconSet={'Ionicons'}
                             fullStarColor={colors.DEEPBLUE}
-                            emptyStarColor={colors.GREY1}
                             halfStarColor={colors.YELLOW.primary}
+                            emptyStarColor={colors.GREY1}
                             rating={this.state.starCount}
                             selectedStar={(rating) => this.onStarRatingPress(rating)}
                             buttonStyle={{ padding: 10 }}

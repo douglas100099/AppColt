@@ -3,24 +3,30 @@ import {
     StyleSheet,
     View,
     Text,
-    TouchableWithoutFeedback,
-    ImageBackground,
     ScrollView,
+    TouchableOpacity,
     Dimensions,
     Platform,
     Linking,
+    Image,
     AsyncStorage
 } from 'react-native';
 import Polyline from '@mapbox/polyline';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
-import { Header, Rating, Avatar, Button } from 'react-native-elements';
+import { Header, Icon, Avatar, Button } from 'react-native-elements';
 import Dash from 'react-native-dash';
 import { colors } from '../common/theme';
 var { width } = Dimensions.get('window');
 import * as firebase from 'firebase'; //Database
+import { getPixelSize } from '../common/utils';
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import { NavigationActions, StackActions } from 'react-navigation';
+import LocationUser from '../../assets/svg/LocationUser';
+import LocationDrop from '../../assets/svg/LocationDrop';
+import CircleLineTriangle from '../../assets/svg/CircleLineTriangle';
+import AvatarUser from '../../assets/svg/AvatarUser';
+import { color } from 'react-native-reanimated';
 
 export default class RideDetails extends React.Component {
     getRideDetails;
@@ -62,7 +68,7 @@ export default class RideDetails extends React.Component {
                 },
                 paramData: this.getRideDetails,
             }, () => {
-                this.getDirections('"' + this.state.paramData.pickup.lat + ',' + this.state.paramData.pickup.lng + '"', '"' + this.state.paramData.drop.lat + ',' + this.state.paramData.drop.lng + '"');
+                //this.getDirections('"' + this.state.paramData.pickup.lat + ',' + this.state.paramData.pickup.lng + '"', '"' + this.state.paramData.drop.lat + ',' + this.state.paramData.drop.lng + '"');
                 this.forceUpdate();
             })
         }
@@ -82,6 +88,12 @@ export default class RideDetails extends React.Component {
                 }
             })
             this.setState({ coords: coords }, () => {
+                setTimeout(() => {
+                    this.map.fitToCoordinates([{ latitude: this.state.paramData.pickup.lat, longitude: this.state.paramData.pickup.lng }, { latitude: this.state.paramData.drop.lat, longitude: this.state.paramData.drop.lng }], {
+                        edgePadding: { top: getPixelSize(30), right: getPixelSize(30), bottom: getPixelSize(30), left: getPixelSize(30) },
+                        animated: true,
+                    })
+                }, 500);
             })
             return coords
         }
@@ -165,50 +177,179 @@ export default class RideDetails extends React.Component {
     render() {
         return (
             <View style={styles.mainView}>
+                <View style={{ justifyContent: 'center', height: 40, backgroundColor: colors.WHITE, marginTop: Platform.OS == 'ios' ? 60 : 40 }}>
+                    <TouchableOpacity style={styles.btnVoltar} onPress={() => { this.props.navigation.goBack() }}>
+                        <Icon
+                            name='chevron-left'
+                            type='MaterialIcons'
+                            size={35}
+                        />
+                    </TouchableOpacity>
+                    <Text style={{ fontFamily: 'Inter-Bold', fontSize: width < 375 ? 17 : 19, alignSelf: 'center' }}> Detalhes da corrida </Text>
+                </View>
                 <ScrollView>
                     <View style={styles.mapView}>
                         <View style={styles.mapcontainer}>
                             {this.state.intialregion ?
                                 <MapView style={styles.map}
+                                    ref={(ref) => this.map = ref}
                                     provider={PROVIDER_GOOGLE}
                                     region={{
                                         latitude: (this.state.intialregion.latitude),
                                         longitude: (this.state.intialregion.longitude),
-                                        latitudeDelta: 0.9922,
+                                        latitudeDelta: 0.0143,
                                         longitudeDelta: 1.9421
                                     }}
+                                    enablePoweredByContainer={true}
+                                    showsCompass={false}
+                                    showsScale={false}
+                                    rotateEnabled={false}
+
                                 >
                                     {this.state.paramData ?
                                         <Marker
                                             coordinate={{ latitude: this.state.paramData ? (this.state.paramData.pickup.lat) : 0.00, longitude: this.state.paramData ? (this.state.paramData.pickup.lng) : 0.00 }}
                                             title={'marker_title_1'}
+                                            anchor={{ x: 0.5, y: 0.5 }}
                                             description={this.state.paramData ? this.state.paramData.pickup.add : null}
-                                        />
+                                        >
+                                            <View style={{ width: 15, height: 15, borderRadius: 50, backgroundColor: colors.DEEPBLUE }} />
+                                        </Marker>
                                         : null}
                                     {this.state.paramData ?
                                         <Marker
                                             coordinate={{ latitude: (this.state.paramData.drop.lat), longitude: (this.state.paramData.drop.lng) }}
                                             title={'marker_title_2'}
+                                            anchor={{ x: 0.5, y: 0.5 }}
                                             description={this.state.paramData.drop.add}
                                             pinColor={colors.GREEN.default}
-                                        />
+                                        >
+                                            <LocationDrop
+                                                width={25}
+                                                height={25}
+                                            />
+                                        </Marker>
                                         : null}
                                     {this.state.coords ?
                                         <MapView.Polyline
                                             coordinates={this.state.coords}
-                                            strokeWidth={4}
-                                            strokeColor={colors.BLUE.default}
+                                            strokeWidth={3}
+                                            strokeColor={colors.DEEPBLUE}
                                         />
                                         : null}
                                 </MapView>
                                 : null}
                         </View>
                     </View>
+
                     <View style={styles.rideDesc}>
 
-                        <View style={styles.userDesc}>
+                        <View style={styles.cardLocation}>
+                            <View style={{ flexDirection: 'row', padding: 10, }}>
+                                <CircleLineTriangle />
 
-                            {/* Driver Image */}
+                                <View style={{ flexDirection: 'column', justifyContent: 'space-around' }}>
+                                    {this.state.paramData && this.state.paramData.pickup ?
+                                        <Text style={{ fontFamily: 'Inter-Medium', marginRight: 20 }}> {this.state.paramData.pickup.add.split(',')[0] + ', ' + this.state.paramData.pickup.add.split(',')[1]} </Text>
+                                        : null}
+                                    {this.state.paramData && this.state.paramData.pickup ?
+                                        <Text style={{ fontFamily: 'Inter-Medium', marginRight: 20 }}> {this.state.paramData.drop.add.split(',')[0] + ', ' + this.state.paramData.drop.add.split(',')[1]} </Text>
+                                        : null}
+                                </View>
+                            </View>
+                        </View>
+
+                        <View>
+                            <Text style={{ marginTop: 25, marginBottom: 10, marginLeft: 20, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 17 : 19 }}> Motorista </Text>
+                            <View style={styles.cardDriver}>
+                                <View style={{ marginLeft: 15 }}>
+                                    {this.state.paramData ?
+                                        <Image
+                                            source={{ uri: this.state.paramData.driver_image }}
+                                            style={{ borderWidth: 1, borderColor: colors.GREY1, width: 70, height: 70, borderRadius: 60 }}
+                                        />
+                                        :
+                                        <AvatarUser />
+                                    }
+                                </View>
+                                {this.state.paramData ?
+                                    <View style={{ marginLeft: 10 }}>
+                                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: width < 375 ? 17 : 19 }}> {this.state.paramData.driver_name} </Text>
+                                        <Text style={{ marginLeft: 3, paddingTop: 5, fontFamily: 'Inter-Medium' }}> {this.state.paramData.vehicleModelName} </Text>
+
+                                        <View style={{ marginLeft: 3, flexDirection: 'row', alignItems: 'center' }}>
+                                            <Icon
+                                                name='ios-star'
+                                                type='ionicon'
+                                                color={colors.DEEPBLUE}
+                                                size={15}
+                                            />
+                                            <Text style={{ fontFamily: 'Inter-Medium', marginLeft: 3 }}> {this.state.paramData.driverRating} </Text>
+                                        </View>
+                                    </View>
+                                    : null}
+                            </View>
+                        </View>
+
+                        <Text style={{ marginTop: 10, marginBottom: 10, marginLeft: 25, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 15 : 17 }}>Pagamento</Text>
+                        {this.state.paramData ?
+                            <View style={styles.cardPagamento}>
+                                <View style={{ marginLeft: 10, flexDirection: 'row', alignItems: 'center' }}>
+                                    <Icon
+                                        name='ios-cash'
+                                        type='ionicon'
+                                        color={colors.GREEN.light}
+                                        size={22}
+                                        containerStyle={{ opacity: .5 }}
+                                    />
+                                    <Text style={{ fontFamily: 'Inter-Medium', marginLeft: 3, fontSize: width < 375 ? 17 : 19 }}> {this.state.paramData.pagamento.payment_mode} </Text>
+                                </View>
+                                <Text style={{ fontFamily: 'Inter-Bold', fontSize: width < 375 ? 17 : 21, position: 'absolute', right: 20 }}>
+                                    <Text style={{ fontFamily: 'Inter-Bold', fontSize: 13 }}>R$</Text>
+                                    {this.state.paramData.pagamento.estimate}
+                                </Text>
+                            </View>
+                            : null}
+                        <TouchableOpacity >
+                        <View style={styles.btnProblem}>
+                            <Text style={{ fontFamily: "Inter-Bold", color: colors.RED, fontSize:  width < 375 ? 17 : 19 }}> Relatar problema </Text>
+                        </View>
+                        </TouchableOpacity>
+
+                        {/*<View>
+                            <View style={styles.location}>
+                                {this.state.paramData && this.state.paramData.trip_start_time ?
+                                    <View>
+                                        <Text style={styles.timeStyle}>{this.state.paramData.trip_start_time}</Text>
+                                    </View>
+                                    : null}
+                                {this.state.paramData && this.state.paramData.pickup ?
+                                    <View style={styles.address}>
+                                        <View style={styles.redDot} />
+                                        <Text style={styles.adressStyle}>{this.state.paramData.pickup.add}</Text>
+                                    </View>
+                                    : null}
+                            </View>
+
+                            <View style={styles.location}>
+                                {this.state.paramData && this.state.paramData.trip_end_time ?
+                                    <View>
+                                        <Text style={styles.timeStyle}>{this.state.paramData.trip_end_time}</Text>
+                                    </View>
+                                    : null}
+                                {this.state.paramData && this.state.paramData.drop ?
+                                    <View style={styles.address}>
+                                        <View style={styles.greenDot} />
+                                        <Text style={styles.adressStyle}>{this.state.paramData.drop.add}</Text>
+                                    </View>
+                                    : null}
+                            </View>
+                        </View>
+
+                        
+
+                        <View style={styles.userDesc}>
+                            
                             {this.state.paramData ?
                                 this.state.paramData.driver_image != '' ?
                                     <Avatar
@@ -217,21 +358,15 @@ export default class RideDetails extends React.Component {
                                         source={{ uri: this.state.paramData.driver_image }}
                                         activeOpacity={0.7}
                                     />
-                                    : this.state.paramData.driver_name != '' ?
-                                        <Avatar
-                                            size="small"
-                                            rounded
-                                            source={require('../../assets/images/profilePic.png')}
-                                            activeOpacity={0.7}
-                                        /> : null
+                                    : null
                                 : null}
                             <View style={styles.userView}>
-                                {/*Driver Name */}
+                                
                                 {this.state.paramData && this.state.paramData.driver_name != '' ? <Text style={styles.personStyle}>{this.state.paramData.driver_name}</Text> : null}
                                 {this.state.paramData && this.state.paramData.driverRating > 0 ?
 
                                     <View style={styles.personTextView}>
-                                        {/*My rating to driver */}
+                                        
                                         <Text style={styles.ratingText}>{languageJSON.you_rated_text}</Text>
                                         <Rating
                                             showRating
@@ -248,7 +383,7 @@ export default class RideDetails extends React.Component {
                                     : null}
                             </View>
                         </View>
-                        {/*Car details */}
+                        
                         {this.state.paramData && this.state.paramData.carType ?
                             <View style={[styles.userDesc, styles.avatarView]}>
 
@@ -267,54 +402,16 @@ export default class RideDetails extends React.Component {
                             : null}
 
                         <View style={styles.userDesc}>
-                            <Avatar
-                                size="small"
-                                source={Platform.OS == 'ios' ? require('../../assets/images/fareMetar.jpg') : require('../../assets/images/fareMetar.jpg')}
-                                activeOpacity={0.7}
 
-                            />
-                            {/* <Avatar
-                                size="small"
-                                rounded
-                                source={require('../../assets/images/fareMetar.png')}
-                                activeOpacity={0.7}
-                                avatarStyle={{backgroundColor: colors.WHITE}}
-                            /> */}
                             <View style={styles.userView}>
                                 <Text style={styles.textStyle}>{this.state.settings.symbol}{this.state.paramData && this.state.paramData.customer_paid ? parseFloat(this.state.paramData.customer_paid).toFixed(2) : this.state.paramData && this.state.paramData.estimate ? this.state.paramData.estimate : 0}</Text>
                             </View>
                         </View>
+                        */}
                     </View>
-                    {/* <View style={styles.locationView}> */}
-                    <View>
-                        <View style={styles.location}>
-                            {this.state.paramData && this.state.paramData.trip_start_time ?
-                                <View>
-                                    <Text style={styles.timeStyle}>{this.state.paramData.trip_start_time}</Text>
-                                </View>
-                                : null}
-                            {this.state.paramData && this.state.paramData.pickup ?
-                                <View style={styles.address}>
-                                    <View style={styles.redDot} />
-                                    <Text style={styles.adressStyle}>{this.state.paramData.pickup.add}</Text>
-                                </View>
-                                : null}
-                        </View>
 
-                        <View style={styles.location}>
-                            {this.state.paramData && this.state.paramData.trip_end_time ?
-                                <View>
-                                    <Text style={styles.timeStyle}>{this.state.paramData.trip_end_time}</Text>
-                                </View>
-                                : null}
-                            {this.state.paramData && this.state.paramData.drop ?
-                                <View style={styles.address}>
-                                    <View style={styles.greenDot} />
-                                    <Text style={styles.adressStyle}>{this.state.paramData.drop.add}</Text>
-                                </View>
-                                : null}
-                        </View>
-                    </View>
+                    {/* <View style={styles.locationView}> */}
+
                     {this.state.paramData ? this.state.paramData.status == "ACCEPTED" ?
                         <View style={styles.locationView}>
                             <Button
@@ -407,18 +504,6 @@ export default class RideDetails extends React.Component {
                         : null : null}
                     {this.state.paramData && this.state.paramData.payment_status ? this.state.paramData.payment_status == "IN_PROGRESS" || this.state.paramData.payment_status == "PAID" || this.state.paramData.payment_status == "WAITING" ?
                         <View>
-                            <View style={styles.iosView}>
-                                {
-                                    Platform.OS == 'ios' ?
-                                        <ImageBackground source={require('../../assets/images/dash.png')}
-                                            style={styles.backgroundImage}
-                                            resizeMode={Platform.OS == 'ios' ? 'repeat' : 'stretch'}>
-                                        </ImageBackground>
-                                        :
-                                        <Dash style={styles.dashView} />
-                                }
-                            </View>
-
                             <View style={styles.paymentTextView}>
                                 <Text style={styles.billTitle}>{languageJSON.payment_status}</Text>
                             </View>
@@ -476,7 +561,7 @@ const styles = StyleSheet.create({
     mapView: {
         justifyContent: 'center',
         alignItems: 'center',
-        height: 160,
+        height: 250,
         marginBottom: 15,
         elevation: 5,
         shadowColor: '#000',
@@ -485,8 +570,9 @@ const styles = StyleSheet.create({
         shadowRadius: 10,
     },
     mapcontainer: {
-        flex: 7,
+        flex: 9,
         width: width,
+        marginTop: 20,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -494,23 +580,47 @@ const styles = StyleSheet.create({
         flex: 1,
         ...StyleSheet.absoluteFillObject,
     },
-    triangle: {
-        width: 0,
-        height: 0,
-        backgroundColor: colors.TRANSPARENT,
-        borderStyle: 'solid',
-        borderLeftWidth: 9,
-        borderRightWidth: 9,
-        borderBottomWidth: 10,
-        borderLeftColor: colors.TRANSPARENT,
-        borderRightColor: colors.TRANSPARENT,
-        borderBottomColor: colors.YELLOW.secondary,
-        transform: [
-            { rotate: '180deg' }
-        ]
-    },
     rideDesc: {
+        marginTop: 10,
         flexDirection: 'column'
+    },
+    cardLocation: {
+        borderWidth: 1,
+        borderColor: colors.GREY2,
+        borderRadius: 10,
+        marginHorizontal: 20
+    },
+    cardDriver: {
+        borderRadius: 15,
+        marginHorizontal: 20,
+        elevation: 5,
+        backgroundColor: colors.WHITE,
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        height: 100,
+        flexDirection: 'row',
+        alignItems: 'center'
+    },
+    cardPagamento: {
+        backgroundColor: colors.GREY3,
+        borderRadius: 10,
+        marginHorizontal: 20,
+        height: 60,
+        flexDirection: 'row',
+        alignItems: 'center'
+    },
+    btnProblem: {
+        backgroundColor: colors.WHITE,
+        borderWidth: 1,
+        borderColor: colors.RED,
+        borderRadius: 10,
+        height: 60,
+        marginTop: 15,
+        marginHorizontal: 15,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     userDesc: {
         flexDirection: 'row',
@@ -532,14 +642,11 @@ const styles = StyleSheet.create({
     locationView2: {
         flex: 1,
         flexDirection: 'row',
-        // paddingHorizontal: 10,
         padding: 10,
         marginVertical: 14,
 
     },
-    // callButtonStyle:{
-    // width:400
-    // },
+
     location: {
         flexDirection: 'row',
         alignItems: 'flex-start',
@@ -616,28 +723,35 @@ const styles = StyleSheet.create({
     },
     carNoStyle: {
         fontSize: 16,
-        //fontWeight: 'bold', 
         fontFamily: 'Roboto-Medium'
     },
     carNoStyleSubText: {
         fontSize: 16,
-        //fontWeight: 'bold', 
         fontFamily: 'Roboto-Regular',
         color: colors.GREY.default
     },
     textStyle: {
         fontSize: 16,
-        //fontWeight: 'bold', 
         fontFamily: 'Roboto-Medium'
     },
     mainView: {
         flex: 1,
         backgroundColor: colors.WHITE,
-        //marginTop: StatusBar.currentHeight 
+    },
+    btnVoltar: {
+        width: 35,
+        height: 35,
+        borderRadius: 50,
+        backgroundColor: colors.WHITE,
+        position: 'absolute',
+        left: 15,
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
     },
     personStyle: {
         fontSize: 16,
-        //fontWeight: 'bold', 
         color: colors.BLACK,
         fontFamily: 'Roboto-Medium'
     },

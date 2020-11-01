@@ -14,11 +14,10 @@
     "version": "1.0",
     "orientation": "portrait",
     "icon": "./assets/images/appIcon.png",
- 
     "splash": {
-      "image": "./assets/images/logoIcon.png",
+      "image": "./assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1152fd"
+      "backgroundColor": "#1152FD"
     },
     "updates": {
       "fallbackToCacheTimeout": 0
@@ -35,7 +34,7 @@
         "NSLocationWhenInUseUsageDescription": "This app uses the location for handling improved pickups and dropoffs, customer support and safety purpose.",
         "NSCameraUsageDescription": "This app uses the camera to take your profile picture.",
         "NSPhotoLibraryUsageDescription": "This app uses Photo Library to help upload your profile picture.",
-        "ITSAppUsesNonExemptEncryption":false,
+        "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": [
           "location",
           "fetch"
@@ -49,9 +48,9 @@
     "android": {
       "package": "com.myth.appcoltmotorista",
       "versionCode": 10,
-      "adaptiveIcon":{
-        "foregroundImage": "./assets/images/logoIcon.png",
-        "backgroundColor": "#1152fd"
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptativeIcon.png",
+        "backgroundColor": "#1152FD"
       },
       "permissions": [
         "CAMERA",
@@ -70,8 +69,8 @@
       },
       "useNextNotificationsApi": true
     },
-    "extra":{
-      "firebaseConfig":{
+    "extra": {
+      "firebaseConfig": {
         "apiKey": "AIzaSyA_ulfyKW-NDZzvix7jaCSgL-uqElZkq0k",
         "authDomain": "app-colt.firebaseapp.com",
         "databaseURL": "https://app-colt.firebaseio.com",
@@ -80,7 +79,7 @@
         "messagingSenderId": "414404391933",
         "appId": "1:414404391933:web:4fe2919a63807454fddf94"
       },
-      "googlemapkey":"AIzaSyDALefKQ3xFjRRvw56_mRdPClMap41XAbM"
+      "googlemapkey": "AIzaSyDALefKQ3xFjRRvw56_mRdPClMap41XAbM"
     }
   }
 }

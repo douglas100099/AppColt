@@ -150,41 +150,25 @@ const RequestPushMsg = (token, msg) => {
     return true;
 }
 
-
-/*exports.TesteFunctions = functions.pubsub.schedule('every 10 minutes').timeZone('America/New_York').onRun((context) => {
-    admin.database().ref('/users').once("value", (snapshot) => {
-        let driver = snapshot.val();
-        if (driver) {
-            for (let key in driver) {
-                RequestPushMsg(driver[key].pushToken, 'TESTANDO CARAI');
-            }
-        }
-        return true
-    }).catch(error => {
-        console.log(error);
-        return false;
-    })
-})*/
-
-
-
 exports.timerIgnoreBooking = functions.database.ref('/bookings/{bookingsId}/requestedDriver/').onCreate((snap, context) => {
     const bookingId = context.params.bookingsId;
     const requested = snap.val()
 
     setTimeout(() => {
         admin.database().ref('/bookings/' + bookingId + '/requestedDriver/').once("value", (snapshot) => {
-            if (requested === snapshot.val()) {
-
-                admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove();
-                admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove();
-                admin.database().ref('bookings/' + bookingId).update({
-                    status: 'REJECTED',
-                });
-                return true;
-            } else {
-                return false
-            }
+            admin.database().ref('bookings/' + bookingId).once("value", data =>{ 
+                if (requested === snapshot.val() && data.status == 'NEW') {
+                
+                    admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove();
+                    admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove();
+                    admin.database().ref('bookings/' + bookingId).update({
+                        status: 'REJECTED',
+                    });
+                    return true;
+                } else {
+                    return false;
+                }
+            })
         })
     }, 10000)
 })

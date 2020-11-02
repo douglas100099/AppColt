@@ -66,7 +66,6 @@ export default class DriverStartTrip extends React.Component {
             modalCancel: false,
         }
         //this.getLocationDriver();
-
     }
 
     _activate = () => {
@@ -79,11 +78,11 @@ export default class DriverStartTrip extends React.Component {
 
     async UNSAFE_componentWillMount() {
         const allDetails = this.props.navigation.getParam('allDetails')
-        //const regionUser = this.props.navigation.getParam('regionUser')
+        const regionUser = await this.props.navigation.getParam('regionUser') ? await this.props.navigation.getParam('regionUser') : null
         console.log(allDetails);
         this.setState({
             rideDetails: allDetails,
-            //region: regionUser,
+            region: regionUser != null ? regionUser : this.state.region,
             curUid: firebase.auth().currentUser.uid
         }, () => {
             this.checkStatus()
@@ -103,11 +102,6 @@ export default class DriverStartTrip extends React.Component {
     componentDidMount() {
         this._isMounted = true;
         this.getCancelReasons();
-        if (this.state.rideDetails && this._isMounted) {
-            setTimeout(() => {
-                this.getDirectionss('"' + this.state.region.latitude + ',' + this.state.region.longitude + '"', '"' + this.state.rideDetails.pickup.lat + ',' + this.state.rideDetails.pickup.lng + '"')
-            }, 500)
-        }
     }
 
     componentWillUnmount() {
@@ -135,6 +129,7 @@ export default class DriverStartTrip extends React.Component {
     }
 
     _getLocationAsync = async () => {
+        let region = {}
         this.location = await Location.watchPositionAsync({
             accuracy: Location.Accuracy.Highest,
             distanceInterval: 1,
@@ -143,18 +138,20 @@ export default class DriverStartTrip extends React.Component {
             newLocation => {
                 let { coords } = newLocation;
                 // console.log(coords);
-                let region = {
-                    latitude: coords.latitude,
-                    longitude: coords.longitude,
-                    latitudeDelta: 0.045,
-                    longitudeDelta: 0.045,
-                    angle: coords.heading,
-                };
+                region.latitude = coords.latitude,
+                    region.longitude = coords.longitude,
+                    region.latitudeDelta = 0.045,
+                    region.longitudeDelta = 0.045,
+                    region.angle = coords.heading
+
                 this.setState({ region: region });
                 this.setLocationDB(region.latitude, region.longitude, region.angle)
             },
             error => console.log(error)
-        );
+        )
+        setTimeout(() => {
+            this.getDirectionss('"' + region.latitude + ',' + region.longitude + '"', '"' + this.state.rideDetails.pickup.lat + ',' + this.state.rideDetails.pickup.lng + '"')
+        }, 500)
         return this.location
     };
 
@@ -171,6 +168,12 @@ export default class DriverStartTrip extends React.Component {
                         lat: lat,
                         lng: lng,
                         angle: angle,
+                    }).then(() => {
+                        firebase.database().ref('bookings/' + this.state.rideDetails.bookingId + '/current/').update({
+                            lat: lat,
+                            lng: lng,
+                            angle: angle,
+                        })
                     });
                 }
             }).catch((error) => {
@@ -290,7 +293,7 @@ export default class DriverStartTrip extends React.Component {
                         } else {
                             return Linking.openURL('tel:' + customerPhoneNo);
                         }
-                    }).catch(err => { 
+                    }).catch(err => {
                         console.error('An error occurred', err)
                         alert('Ops, tivemos um problema.')
                     });
@@ -308,7 +311,7 @@ export default class DriverStartTrip extends React.Component {
         } else {
             if (this.state.allData) {
                 if ((codeRequired && inputCode == this.state.allData.otp) || !codeRequired) {
-                    
+
                     var data = {
                         status: "START",
                         pagamento: {
@@ -447,7 +450,7 @@ export default class DriverStartTrip extends React.Component {
         getDirections(data)
     }
 
-    embarque(){
+    embarque() {
         // ATUALIZANDO STATUS BOOKINGS
         firebase.database().ref(`bookings/` + this.state.allData.bookingId + '/').update({
             status: 'EMBARQUE',
@@ -455,7 +458,7 @@ export default class DriverStartTrip extends React.Component {
             // ATUALIZANDO STATUS DRIVER
             firebase.database().ref(`/users/` + this.state.curUid + '/my_bookings/' + this.state.allData.bookingId + '/').update({
                 status: 'EMBARQUE',
-            }) 
+            })
         }).then(() => {
             // ATUALIZANDO STATUS RIDER
             firebase.database().ref(`/users/` + this.state.rideDetails.customer + '/my-booking/' + this.state.allData.bookingId + '/').update({
@@ -570,7 +573,6 @@ export default class DriverStartTrip extends React.Component {
 
     render() {
         return (
-
             <View style={styles.containerView}>
                 <View>
                     <ActionSheet
@@ -628,12 +630,12 @@ export default class DriverStartTrip extends React.Component {
                             />
                         </Marker.Animated>
                         {this.state.coords ?
-                        <MapView.Polyline
-                            coordinates={this.state.coords}
-                            strokeWidth={4}
-                            strokeColor={colors.DEEPBLUE}
-                        />
-                        : null}
+                            <MapView.Polyline
+                                coordinates={this.state.coords}
+                                strokeWidth={4}
+                                strokeColor={colors.DEEPBLUE}
+                            />
+                            : null}
                     </MapView>
                     <TouchableOpacity style={styles.iconeMap} onPress={() => { this.centerFollowMap() }}>
                         <Icon
@@ -716,28 +718,28 @@ export default class DriverStartTrip extends React.Component {
                         </View>
                     </View>
                     <View style={{ flex: 1 }}>
-                    {this.state.status == 'ACCEPTED' ?
-                        <TouchableOpacity style={{ backgroundColor: colors.DEEPBLUE, position: 'absolute', right: 0, left: 0, bottom: 0, top: 0, alignItems: 'center', justifyContent: "center" }}
-                            onPress={() => {
-                                this.checkDist(this.state.rideDetails)
-                            }}
-                            disabled={this.state.loader}
-                        >
-                            <Text style={{ fontSize: 16, fontFamily: 'Inter-Bold', color: colors.WHITE }}>Cheguei ao local</Text>
-                            <ActivityIndicator animating={this.state.loader} size="large" color={colors.WHITE} style={{ position: 'absolute', right: 25 }} />
-                        </TouchableOpacity>
-                    : null}
-                    {this.state.status != 'ACCEPTED' ?
-                        <TouchableOpacity style={{ backgroundColor: colors.DEEPBLUE, position: 'absolute', right: 0, left: 0, bottom: 0, top: 0, alignItems: 'center', justifyContent: "center" }}
-                            onPress={() => {
-                                this.onPressStartTrip(this.state.rideDetails)
-                            }}
-                            disabled={this.state.loader}
-                        >
-                            <Text style={{ fontSize: 16, fontFamily: 'Inter-Bold', color: colors.WHITE }}>Iniciar a corrida</Text>
-                            <ActivityIndicator animating={this.state.loader} size="large" color={colors.WHITE} style={{ position: 'absolute', right: 25 }} />
-                        </TouchableOpacity>
-                    : null}
+                        {this.state.status == 'ACCEPTED' ?
+                            <TouchableOpacity style={{ backgroundColor: colors.DEEPBLUE, position: 'absolute', right: 0, left: 0, bottom: 0, top: 0, alignItems: 'center', justifyContent: "center" }}
+                                onPress={() => {
+                                    this.checkDist(this.state.rideDetails)
+                                }}
+                                disabled={this.state.loader}
+                            >
+                                <Text style={{ fontSize: 16, fontFamily: 'Inter-Bold', color: colors.WHITE }}>Cheguei ao local</Text>
+                                <ActivityIndicator animating={this.state.loader} size="large" color={colors.WHITE} style={{ position: 'absolute', right: 25 }} />
+                            </TouchableOpacity>
+                            : null}
+                        {this.state.status != 'ACCEPTED' ?
+                            <TouchableOpacity style={{ backgroundColor: colors.DEEPBLUE, position: 'absolute', right: 0, left: 0, bottom: 0, top: 0, alignItems: 'center', justifyContent: "center" }}
+                                onPress={() => {
+                                    this.onPressStartTrip(this.state.rideDetails)
+                                }}
+                                disabled={this.state.loader}
+                            >
+                                <Text style={{ fontSize: 16, fontFamily: 'Inter-Bold', color: colors.WHITE }}>Iniciar a corrida</Text>
+                                <ActivityIndicator animating={this.state.loader} size="large" color={colors.WHITE} style={{ position: 'absolute', right: 25 }} />
+                            </TouchableOpacity>
+                            : null}
                     </View>
                 </View>
                 {

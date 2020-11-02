@@ -47,8 +47,7 @@ export default class DriverTripAccept extends React.Component {
             });
         }
     }
-
-
+    
     constructor(props) {
         super(props);
         this.state = {

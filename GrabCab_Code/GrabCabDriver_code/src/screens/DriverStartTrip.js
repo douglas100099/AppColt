@@ -78,7 +78,7 @@ export default class DriverStartTrip extends React.Component {
 
     async UNSAFE_componentWillMount() {
         const allDetails = this.props.navigation.getParam('allDetails')
-        const regionUser = await this.props.navigation.getParam('regionUser') ? await this.props.navigation.getParam('regionUser') : null
+        const regionUser = this.props.navigation.getParam('regionUser') ? this.props.navigation.getParam('regionUser') : null
         console.log(allDetails);
         this.setState({
             rideDetails: allDetails,
@@ -172,13 +172,13 @@ export default class DriverStartTrip extends React.Component {
                         angle: angle,
                     })
                 }
-            }).then(() => {
+            })/*.then(() => {
                 firebase.database().ref('bookings/' + this.state.rideDetails.bookingId + '/current/').update({
                     lat: lat,
                     lng: lng,
                     angle: angle,
                 })
-            })
+            })*/
             .catch((error) => {
                 console.error(error);
                 alert('Ops, tivemos um problema.');

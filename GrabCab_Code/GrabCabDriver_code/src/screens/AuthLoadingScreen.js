@@ -93,25 +93,27 @@ export class AuthLoadingScreen extends React.Component {
                 });
                 if (userData.val().emCorrida) {
                   console.log('ENTROU NO START')
-                  let bookingData = firebase.database().ref('bookings/' + userData.val().emCorrida + '/')
+                  const bookingData = firebase.database().ref('bookings/' + userData.val().emCorrida + '/')
                   bookingData.once('value', item => {
-                    var item = item.val()
-                    if (item.status == 'START' || item.status == 'END') {
-                      if (item) {
+                    var itemData = item.val()
+                    if (itemData.status == 'START' || itemData.status == 'END') {
+                      if (itemData) {
                         AsyncStorage.getItem('startTime', (err, result) => {
                           if (result) {
-                            let bookingData = item
-                            bookingData.bookingId = userData.val().emCorrida;
-                            this.props.navigation.navigate('DriverTripComplete', { allDetails: bookingData, startTime: parseInt(result) })
+                            itemData.bookingId = userData.val().emCorrida;
+                            this.props.navigation.navigate('DriverTripComplete', { allDetails: itemData, startTime: parseInt(result) })
                           }
                         });
                       }
-                    } else if (item.status == 'ACCEPTED') {
+                    } else if (itemData.status == 'ACCEPTED') {
                       console.log('ENTROU NO ACCEPTED')
-                      if (item) {
-                        let bookingData = item;
-                        bookingData.bookingId = userData.val().emCorrida;
-                        this.props.navigation.navigate('DriverTripStart', { allDetails: bookingData })
+                      if (itemData) {
+                        itemData.bookingId = userData.val().emCorrida;
+                        let currentObj = {}
+                        currentObj.latitude = itemData.current.lat
+                        currentObj.longitude = itemData.current.lng
+                        currentObj.angle = itemData.current.angle
+                        this.props.navigation.navigate('DriverTripStart', { allDetails: itemData, regionUser: currentObj })
                       }
                     }
                   })
@@ -135,7 +137,7 @@ export class AuthLoadingScreen extends React.Component {
                   else {
                     firebase.database().ref('users/' + user.uid).update({
                       approved: true,
-                      driverActiveStatus: true,
+                      driverActiveStatus: false,
                       queue: false,
                     });
                     this.props.navigation.navigate("DriverRoot");

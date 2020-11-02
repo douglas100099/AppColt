@@ -109,13 +109,13 @@ export class AuthLoadingScreen extends React.Component {
                       console.log('ENTROU NO ACCEPTED')
                       if (itemData) {
                         itemData.bookingId = userData.val().emCorrida;
-                        if(itemData.current){
-                          let currentObj = {}
+                        let currentObj = {}
+                        if (itemData.current) {
                           currentObj.latitude = itemData.current.lat
                           currentObj.longitude = itemData.current.lng
                           currentObj.angle = itemData.current.angle
                         }
-                        this.props.navigation.navigate('DriverTripStart', { allDetails: itemData, regionUser: currentObj ? currentObj : null })
+                        this.props.navigation.navigate('DriverTripStart', { allDetails: itemData, regionUser: currentObj.latitude ? currentObj : null })
                       }
                     }
                   })

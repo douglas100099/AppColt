@@ -129,7 +129,7 @@ export default class DriverStartTrip extends React.Component {
     }
 
     _getLocationAsync = async () => {
-        let region = {}
+        
         this.location = await Location.watchPositionAsync({
             accuracy: Location.Accuracy.Highest,
             distanceInterval: 1,
@@ -138,11 +138,13 @@ export default class DriverStartTrip extends React.Component {
             newLocation => {
                 let { coords } = newLocation;
                 // console.log(coords);
-                region.latitude = coords.latitude,
-                    region.longitude = coords.longitude,
-                    region.latitudeDelta = 0.045,
-                    region.longitudeDelta = 0.045,
-                    region.angle = coords.heading
+                let region = {
+                    latitude: coords.latitude,
+                    longitude: coords.longitude,
+                    latitudeDelta: 0.045,
+                    longitudeDelta: 0.045,
+                    angle: coords.heading
+                }
 
                 this.setState({ region: region });
                 this.setLocationDB(region.latitude, region.longitude, region.angle)
@@ -150,7 +152,7 @@ export default class DriverStartTrip extends React.Component {
             error => console.log(error)
         )
         setTimeout(() => {
-            this.getDirectionss('"' + region.latitude + ',' + region.longitude + '"', '"' + this.state.rideDetails.pickup.lat + ',' + this.state.rideDetails.pickup.lng + '"')
+            this.getDirectionss('"' + this.state.region.latitude + ',' + this.state.region.longitude + '"', '"' + this.state.rideDetails.pickup.lat + ',' + this.state.rideDetails.pickup.lng + '"')
         }, 500)
         return this.location
     };

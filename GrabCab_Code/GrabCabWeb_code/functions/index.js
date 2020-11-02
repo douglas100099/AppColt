@@ -157,7 +157,7 @@ exports.timerIgnoreBooking = functions.database.ref('/bookings/{bookingsId}/requ
     setTimeout(() => {
         admin.database().ref('/bookings/' + bookingId + '/requestedDriver/').once("value", (snapshot) => {
             admin.database().ref('bookings/' + bookingId).once("value", data =>{ 
-                if (requested === snapshot.val() && data.status == 'NEW') {
+                if (requested === snapshot.val() && data.status === 'NEW') {
                 
                     admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove();
                     admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove();

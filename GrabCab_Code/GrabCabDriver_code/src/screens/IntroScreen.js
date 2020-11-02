@@ -108,7 +108,7 @@ export default class IntroScreen extends Component {
                             firebaseConfig={this.firebaseConfig}
                         />
                         <ImageBackground
-                            source={require("../../assets/images/LogoEscrita3.png")}
+                            source={require("../../assets/images/iconLogin.png")}
                             resizeMode="center"
                             style={styles.imagebg}
                         >

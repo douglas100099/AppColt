@@ -66,7 +66,6 @@ export default class DriverStartTrip extends React.Component {
             modalCancel: false,
         }
         //this.getLocationDriver();
-
     }
 
     _activate = () => {
@@ -79,11 +78,11 @@ export default class DriverStartTrip extends React.Component {
 
     async UNSAFE_componentWillMount() {
         const allDetails = this.props.navigation.getParam('allDetails')
-        //const regionUser = this.props.navigation.getParam('regionUser')
+        const regionUser = await this.props.navigation.getParam('regionUser')
         console.log(allDetails);
         this.setState({
             rideDetails: allDetails,
-            //region: regionUser,
+            region: regionUser,
             curUid: firebase.auth().currentUser.uid
         }, () => {
             this.checkStatus()

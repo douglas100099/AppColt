@@ -57,7 +57,7 @@ export class AuthLoadingScreen extends React.Component {
 
   async StartBackgroundLocation() {
     const { status } = await Location.requestPermissionsAsync();
-    if (status === 'granted' ) {
+    if (status === 'granted') {
       console.log('Setando update do background')
       await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
         accuracy: Location.Accuracy.Highest,
@@ -97,34 +97,30 @@ export class AuthLoadingScreen extends React.Component {
                   bookingData.once('value', item => {
                     var item = item.val()
                     if (item.status == 'START' || item.status == 'END') {
-                      firebase.database().ref('bookings/' + userData.val().emCorrida + '/').once('value', (snap) => {
-                        if (snap.val()) {
-                          AsyncStorage.getItem('startTime', (err, result) => {
-                            if (result) {
-                              let bookingData = snap.val()
-                              bookingData.bookingId = userData.val().emCorrida;
-                              this.props.navigation.navigate('DriverTripComplete', { allDetails: bookingData, startTime: parseInt(result) })
-                            }
-                          });
-                        }
-                      })
-
+                      if (item) {
+                        AsyncStorage.getItem('startTime', (err, result) => {
+                          if (result) {
+                            let bookingData = item
+                            bookingData.bookingId = userData.val().emCorrida;
+                            this.props.navigation.navigate('DriverTripComplete', { allDetails: bookingData, startTime: parseInt(result) })
+                          }
+                        });
+                      }
                     } else if (item.status == 'ACCEPTED') {
                       console.log('ENTROU NO ACCEPTED')
-                      firebase.database().ref('bookings/' + userData.val().emCorrida + '/').once('value', (snap) => {
-                        if (snap.val()) {
-                          let bookingData = snap.val();
-                          bookingData.bookingId = userData.val().emCorrida;
-                          this.props.navigation.navigate('DriverTripStart', { allDetails: bookingData })
-                        }
-                      })
-
+                      if (item) {
+                        let bookingData = item;
+                        bookingData.bookingId = userData.val().emCorrida;
+                        this.props.navigation.navigate('DriverTripStart', { allDetails: bookingData })
+                      }
                     }
                   })
-                } else if (userData.val().emCorrida == null && userData.val().in_reject_progress == null) {
+                }
+                else if (userData.val().emCorrida == null && userData.val().in_reject_progress == null) {
                   console.log('ENTROU NA INTRO')
                   this.props.navigation.navigate('DriverRoot');
-                } else if (userData.val().emCorrida == null && userData.val().in_reject_progress) {
+                }
+                else if (userData.val().emCorrida == null && userData.val().in_reject_progress) {
                   this.props.navigation.navigate('BookingCancel');
                 }
               }
@@ -193,11 +189,11 @@ export class AuthLoadingScreen extends React.Component {
       <View style={styles.container}>
         <ImageBackground
           source={require("../../assets/images/splash.png")}
-          resizeMode="stretch"
+          resizeMode='contain'
           style={styles.imagebg}
         >
           <ActivityIndicator />
-          <Text style={{ paddingBottom: 100 }}>{languageJSON.fetching_data}</Text>
+          <Text style={{ paddingBottom: 100, color: '#fff', fontFamily: 'Inter-Bold' }}>{languageJSON.fetching_data}</Text>
         </ImageBackground>
       </View>
     );

@@ -95,7 +95,7 @@ export default class ProfileScreen extends React.Component {
             if (dataCriacao) {
                 const now = new Date(); // Data de hoje
                 const past = new Date(dataCriacao); // Outra data no passado
-                const meses = past.getMonth() - now.getMonth() + (12 * (past.getFullYear() - now.getFullYear()))
+                const meses = now.getMonth() - past.getMonth() + (12 * (now.getFullYear() - past.getFullYear()))
                 if (meses) {
                     this.setState({
                         dataCriado: meses

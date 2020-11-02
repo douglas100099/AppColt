@@ -168,15 +168,16 @@ export default class DriverStartTrip extends React.Component {
                         lat: lat,
                         lng: lng,
                         angle: angle,
-                    }).then(() => {
-                        firebase.database().ref('bookings/' + this.state.rideDetails.bookingId + '/current/').update({
-                            lat: lat,
-                            lng: lng,
-                            angle: angle,
-                        })
-                    });
+                    })
                 }
-            }).catch((error) => {
+            }).then(() => {
+                firebase.database().ref('bookings/' + this.state.rideDetails.bookingId + '/current/').update({
+                    lat: lat,
+                    lng: lng,
+                    angle: angle,
+                })
+            })
+            .catch((error) => {
                 console.error(error);
                 alert('Ops, tivemos um problema.');
             });

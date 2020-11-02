@@ -94,7 +94,7 @@ export default class SideMenu extends React.Component {
                         let bookingData = data['my-booking']
                         for (key in bookingData) {
                             bookingData[key].bookingKey = key
-                            if (bookingData[key].payment_status) {
+                            if (bookingData[key].pagamento.payment_status) {
                                 if (bookingData[key].pagamento.payment_status == "PAID" && bookingData[key].status == 'END' && bookingData[key].skip != true && bookingData[key].paymentstart != true) {
                                     console.log("ENTROU NA NAVEGAÇAO");
                                     bookingData[key].firstname = data.firstName;

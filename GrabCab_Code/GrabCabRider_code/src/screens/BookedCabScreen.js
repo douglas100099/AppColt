@@ -206,8 +206,10 @@ export default class BookedCabScreen extends React.Component {
                                     if (allUsers[key].carType == this.state.carType) {
                                         //Salva sempre o mais proximo
                                         if (distance < distanciaValue) {
-                                            distanciaValue = distance;
-                                            driverUidnovo = key;
+                                            if(!allUsers[key].waiting_riders_list){
+                                                distanciaValue = distance;
+                                                driverUidnovo = key;
+                                            }
                                         }
                                     }
                                 }

@@ -347,7 +347,7 @@ export default class BookedCabScreen extends React.Component {
                                 firebase.database().ref(`/users/` + this.state.currentUser.uid + '/cancell_details/').update({
                                     bookingId: this.state.currentBookingId,
                                     data: new Date().toString(),
-                                    value: parseFloat(this.state.settings.cancell_value)
+                                    value: 3
                                 })
                             }
                         }).then(() => {
@@ -366,7 +366,6 @@ export default class BookedCabScreen extends React.Component {
                                         }),
                                     ],
                                 }))
-                            //this.props.navigation.replace('Map')
                         })
                     }
                 }

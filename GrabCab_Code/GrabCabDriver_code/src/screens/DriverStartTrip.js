@@ -172,13 +172,13 @@ export default class DriverStartTrip extends React.Component {
                         angle: angle,
                     })
                 }
-            })/*.then(() => {
+            }).then(() => {
                 firebase.database().ref('bookings/' + this.state.rideDetails.bookingId + '/current/').update({
                     lat: lat,
                     lng: lng,
                     angle: angle,
                 })
-            })*/
+            })
             .catch((error) => {
                 console.error(error);
                 alert('Ops, tivemos um problema.');
@@ -194,18 +194,19 @@ export default class DriverStartTrip extends React.Component {
             if (tripData) {
                 this.setState({ status: tripData.status })
                 if (tripData.status == "CANCELLED") {
-                    //console.log('NAVEGOU POR QUE CANCELOU')
-                    this.props
-                        .navigation
-                        .dispatch(StackActions.reset({
-                            index: 0,
-                            actions: [
-                                NavigationActions.navigate({
-                                    routeName: 'DriverTripAccept',
-                                }),
-                            ],
-                        }))
-                    alert('Corrida atual foi cancelada')
+                    firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/emCorrida').remove().then(() => {
+                        this.props
+                            .navigation
+                            .dispatch(StackActions.reset({
+                                index: 0,
+                                actions: [
+                                    NavigationActions.navigate({
+                                        routeName: 'DriverTripAccept',
+                                    }),
+                                ],
+                            }))
+                        alert('Corrida atual foi cancelada')
+                    })
                 }
             }
         })

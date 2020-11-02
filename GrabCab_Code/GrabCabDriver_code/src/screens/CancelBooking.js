@@ -33,7 +33,6 @@ export default class CancelBooking extends React.Component {
             rideDetails: allDetails,
             curUid: firebase.auth().currentUser.uid
         })
-
         const userDetails = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/');
         userDetails.once('value', customerData => {
             let userDetails = customerData.val()

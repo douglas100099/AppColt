@@ -619,7 +619,8 @@ export default class DriverTripAccept extends React.Component {
                             status: "REJECTED",
                             //requestDriver: [],
                         }).then(() => {
-                            firebase.database().ref('users/' + this.state.curUid + '/driverActiveStatus').set(false);
+                            firebase.database().ref('users/' + this.state.curUid + '/driverActiveStatus').set(false)
+
                         }).then(() => {
                             firebase.database().ref('users/' + this.state.curUid + '/in_reject_progress').update({
                                 punido: false,

@@ -82,7 +82,7 @@ export default class MapScreen extends React.Component {
         }
 
         this.allCarsData();
-        //this.onPressModal();
+        this.onPressModal();
     }
 
     getLocationUser() {
@@ -274,7 +274,7 @@ export default class MapScreen extends React.Component {
         });
     }
 
-    onPressCancel() {
+    onPressOk() {
         this.setState({
             giftModal: false
         })
@@ -308,7 +308,7 @@ export default class MapScreen extends React.Component {
                                     title={languageJSON.no_driver_found_alert_OK_button}
                                     loading={false}
                                     titleStyle={styles.buttonTitleText}
-                                    onPress={() => { this.onPressCancel() }}
+                                    onPress={() => { this.onPressOk() }}
                                     buttonStyle={styles.cancelButtonStyle}
                                     containerStyle={{ marginTop: 20 }}
                                 />

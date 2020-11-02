@@ -110,7 +110,7 @@ export default class WalletDetails extends React.Component {
               <Text style={styles.valorSaldo}>{this.state.settings.symbol}{this.state.allData ? parseFloat(this.state.allData.walletBalance > 0 ? this.state.allData.walletBalance : 0).toFixed(2) : ''}</Text>
             </View>
 
-            <TouchableOpacity style={{ width: (width/2)-10}} onPress={() => this.doReacharge()}>
+            <TouchableOpacity style={{ width: (width/2)-10}} /*onPress={() => this.doReacharge()}*/>
               <View style={styles.btnAddMoney}>
                 <Icon
                   name='add-circle'

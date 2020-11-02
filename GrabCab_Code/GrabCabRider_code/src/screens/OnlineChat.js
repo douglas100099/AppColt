@@ -140,6 +140,7 @@ export default class OnlineChat extends Component {
               msgTime: time,
               source: "rider"
             })
+            this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + inputmessage)
           }
           else {
             firebase.database().ref('chat' + '/' + this.getParamData.bokkingId + '/').update({
@@ -155,7 +156,7 @@ export default class OnlineChat extends Component {
                 msgTime: time,
                 source: "rider"
               })
-              this.sendPushNotification(this.state.carbookedInfo.driver, 'O passageiro ' + this.state.firstNameRider + ', enviou uma mensagem: \n' + inputmessage)
+              this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + inputmessage)
             })
           }
         } else {
@@ -173,7 +174,7 @@ export default class OnlineChat extends Component {
                 msgTime: time,
                 source: "rider"
               })
-              this.sendPushNotification(this.state.carbookedInfo.driver, 'O passageiro ' + this.state.firstNameRider + ', enviou uma mensagem: \n' + inputmessage)
+              this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + inputmessage)
             } 
           })
         }
@@ -253,7 +254,6 @@ export default class OnlineChat extends Component {
                 size={30}
                 containerStyle={{ opacity: 0.5 }}
               />
-              {/*<Text style={styles.send}>{languageJSON.send_button_text}</Text>*/}
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>

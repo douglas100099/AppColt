@@ -102,7 +102,6 @@ export default class SideMenu extends React.Component {
                                     bookingData[key].phonenumber = data.mobile;
                                     //this.props.navigation.replace('ratingPage', { data: bookingData[key] });
                                     this.props.navigation.navigate('ratingPage', { data: bookingData[key] });
-                                    console.log("ENTROU AQUI NO CARD DETAILS")
                                 }
                             }
                         }

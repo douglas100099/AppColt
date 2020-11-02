@@ -50,10 +50,11 @@ export default class OnlineChat extends Component {
 
   componentDidMount() {
     this.getParamData = this.props.navigation.getParam('passData');
+    let firstName = this.props.navigation.getParam('firstNameRider');
     let bookingData = firebase.database().ref('bookings/' + this.getParamData.bokkingId)
     bookingData.on('value', response => {
       if (response.val()) {
-        this.setState({ carbookedInfo: response.val() })
+        this.setState({ carbookedInfo: response.val(), firstNameRider: firstName })
       }
     })
     let msgData = firebase.database().ref(`chat/` + this.getParamData.bokkingId + '/message')
@@ -104,7 +105,6 @@ export default class OnlineChat extends Component {
     }
   }
 
-
   sendMessege(inputmessage) {
     var today = new Date();
     var time = today.getHours() + ":" + today.getMinutes();
@@ -119,7 +119,7 @@ export default class OnlineChat extends Component {
     this.setState({ id: totalId })
 
     if (inputmessage == '' || inputmessage == undefined || inputmessage == null) {
-      alert("Please write something...");
+      alert("Por favor, digite algo...");
     } else {
       let chat = firebase.database().ref('chat')
       // if(chat){
@@ -155,7 +155,7 @@ export default class OnlineChat extends Component {
                 msgTime: time,
                 source: "rider"
               })
-              this.sendPushNotification(this.state.carbookedInfo.driver, 'O passageiro ' + this.state.carbookedInfo.customer_name + ', enviou uma mensagem: \n' + inputmessage)
+              this.sendPushNotification(this.state.carbookedInfo.driver, 'O passageiro ' + this.state.firstNameRider + ', enviou uma mensagem: \n' + inputmessage)
             })
           }
         } else {
@@ -173,9 +173,8 @@ export default class OnlineChat extends Component {
                 msgTime: time,
                 source: "rider"
               })
-              this.sendPushNotification(this.state.carbookedInfo.driver, 'O passageiro ' + this.state.carbookedInfo.customer_name + ', enviou uma mensagem: \n' + inputmessage)
-            } else { }
-
+              this.sendPushNotification(this.state.carbookedInfo.driver, 'O passageiro ' + this.state.firstNameRider + ', enviou uma mensagem: \n' + inputmessage)
+            } 
           })
         }
       })
@@ -216,7 +215,7 @@ export default class OnlineChat extends Component {
               <Icon
                 name='chevron-left'
                 type='MaterialIcons'
-                size={ width < 375 ? 35 : 40}
+                size={width < 375 ? 35 : 40}
               />
             </TouchableOpacity>
           </View>

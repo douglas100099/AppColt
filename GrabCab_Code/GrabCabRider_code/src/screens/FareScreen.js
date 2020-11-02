@@ -235,8 +235,8 @@ export default class FareScreen extends React.Component {
 
     //Confirma corrida e começa a procurar motorista
     confirmarCorrida() {
-        console.log(this.state.usedWalletMoney + "MONEY")
         this.setState({ buttonDisabled: true });
+        clearInterval(this.state.intervalDriversTime);
         var curuser = this.state.curUID.uid;
 
         var pickUp = { lat: this.state.region.wherelatitude, lng: this.state.region.wherelongitude, add: this.state.region.whereText };

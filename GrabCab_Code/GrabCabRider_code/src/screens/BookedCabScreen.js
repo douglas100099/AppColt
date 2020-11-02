@@ -82,7 +82,6 @@ export default class BookedCabScreen extends React.Component {
                     droptext: currUserBooking.drop.add
                 }
                 this.setState({
-
                     firstNameRider: currUserBooking.firstNameRider,
                     walletBalance: walletBalance,
                     usedWalletMoney: currUserBooking.pagamento.usedWalletMoney,
@@ -522,7 +521,7 @@ export default class BookedCabScreen extends React.Component {
     }
 
     chat() {
-        this.props.navigation.navigate("onlineChat", { passData: this.getParamData })
+        this.props.navigation.navigate("onlineChat", { passData: this.getParamData, firstNameRider: this.state.firstNameRider })
     }
 
     render() {

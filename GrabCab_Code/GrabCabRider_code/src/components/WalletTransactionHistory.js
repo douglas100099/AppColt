@@ -4,7 +4,7 @@ import { Icon } from 'react-native-elements'
 import { colors } from '../common/theme';
 const devWidth = Dimensions.get("window").width;
 import * as firebase from 'firebase';
-import  languageJSON  from '../common/language';
+import languageJSON from '../common/language';
 import dateStyle from '../common/dateStyle';
 
 export default class WTransactionHistory extends React.Component {
@@ -12,55 +12,51 @@ export default class WTransactionHistory extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            data: [] , 
-            settings:{
-              code:'',
-              symbol:'',
-              cash:false,
-              wallet:false
+            data: [],
+            settings: {
+                code: '',
+                symbol: '',
+                cash: false,
+                wallet: false
             }
-            }
-          };
-    
+        }
+    };
+
 
     _retrieveSettings = async () => {
         try {
-          const value = await AsyncStorage.getItem('settings');
-          if (value !== null) {
-            this.setState({settings:JSON.parse(value)});
-          }
+            const value = await AsyncStorage.getItem('settings');
+            if (value !== null) {
+                this.setState({ settings: JSON.parse(value) });
+            }
         } catch (error) {
             console.log("Asyncstorage issue 31");
         }
     };
 
-    componentDidMount(){
+    componentDidMount() {
         var mS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
-        const root=firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/walletHistory');
-        root.on('value',walletData=>{
-            if(walletData.val()){
-               let wdata = walletData.val()
-               var wallHis = []
-               for(key in wdata){
-                   wdata[key].walletKey = key
-                   let d = wdata[key].date;
-                   let tDate = new Date(d);
-                   wdata[key].date = tDate.toLocaleString(dateStyle);
-                   wallHis.push(wdata[key])
-               }
-               if(wallHis){
-                this.setState({data:wallHis.reverse()},(res)=>{
-                    
-                });  
-               }
-                       
+        const root = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/walletHistory');
+        root.on('value', walletData => {
+            if (walletData.val()) {
+                let wdata = walletData.val()
+                var wallHis = []
+                for (key in wdata) {
+                    wdata[key].walletKey = key
+                    let d = wdata[key].date;
+                    let tDate = new Date(d);
+                    wdata[key].date = tDate.toLocaleString(dateStyle);
+                    wallHis.push(wdata[key])
+                }
+                if (wallHis) {
+                    this.setState({ data: wallHis.reverse() }, (res) => {
+
+                    });
+                }
+
             }
         })
         this._retrieveSettings();
-    }
-
-    onPressButton() {
-        alert("hello");
     }
 
     newData = ({ item }) => {
@@ -91,11 +87,11 @@ export default class WTransactionHistory extends React.Component {
                                 </View>
                             }
                             <View style={styles.statusView}>
-                            {item.type?item.type == 'Credit'?<Text style={styles.historyamounttextStyle}>{item.type + 'ed '+ this.state.settings.symbol + parseFloat(item.amount).toFixed(2) + ' '+ languageJSON.successfully}</Text>:
-                                <Text style={styles.historyamounttextStyle}>{item.type + 'ed '+ this.state.settings.symbol + parseFloat(item.amount).toFixed(2)+ ' '+ languageJSON.form_wallet}</Text>
-                            :null}
-                                   
-                            <Text style={styles.textStyle2}>{item.date}</Text>
+                                {item.type ? item.type == 'Credit' ? <Text style={styles.historyamounttextStyle}>{item.type + 'ed ' + this.state.settings.symbol + parseFloat(item.amount).toFixed(2) + ' ' + languageJSON.successfully}</Text> :
+                                    <Text style={styles.historyamounttextStyle}>{item.type + 'ed ' + this.state.settings.symbol + parseFloat(item.amount).toFixed(2) + ' ' + languageJSON.form_wallet}</Text>
+                                    : null}
+
+                                <Text style={styles.textStyle2}>{item.date}</Text>
                             </View>
                         </View>
                     </View>
@@ -161,7 +157,7 @@ const styles = StyleSheet.create({
     statusStyle: {
         flexDirection: 'row',
         justifyContent: 'center',
-        alignItems : 'center'
+        alignItems: 'center'
     },
     statusView: {
         marginLeft: 10
@@ -170,18 +166,18 @@ const styles = StyleSheet.create({
     textStyle: {
         fontSize: 14,
         fontFamily: 'Roboto-Regular',
-        fontWeight:'500',
-        color:'#979696'
+        fontWeight: '500',
+        color: '#979696'
     },
     historyamounttextStyle: {
         fontSize: 16,
         fontFamily: 'Roboto-Regular',
-        fontWeight:'500'
+        fontWeight: '500'
     },
-    textStyle2:{
+    textStyle2: {
         fontSize: 14,
         fontFamily: 'Roboto-Regular',
-        color:'#979696'
+        color: '#979696'
     },
     textColor: {
         color: colors.GREY.iconPrimary,

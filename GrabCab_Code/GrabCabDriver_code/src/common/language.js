@@ -167,8 +167,8 @@ export default {
     select_country:'Select Country',
     country_blank_error:'Please select the country',
     email_verify_message:'Please verify your email. Email is already sent to your Inbox.',
-    downloading_updates: 'Downloading Updates...',
-    checking_updates: 'Checking For Updates...',
-    fetching_data: 'Fetching Data...',
-    loading_assets:'Loading Assets...'
+    downloading_updates: 'Baixando atualizações...',
+    checking_updates: 'Verificando atualizações...',
+    fetching_data: 'Buscando dados...',
+    loading_assets:'Carregando arquivos...'
 }

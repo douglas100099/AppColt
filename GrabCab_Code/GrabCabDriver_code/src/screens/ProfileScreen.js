@@ -308,7 +308,7 @@ export default class ProfileScreen extends React.Component {
                                 </View>
                                 <View style={{ width: 1, height: '50%', backgroundColor: colors.GREY1 }}></View>
                                 <View style={styles.viewAnos}>
-                                    <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK }}>{this.state.dataCriado == 0 ? '1' : this.state.dataCriado}</Text>
+                                    <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK }}>{this.state.dataCriado + 1}</Text>
                                     <Text style={{ fontSize: 14, fontFamily: 'Inter-Regular', color: colors.BLACK }}>{this.state.dataCriado == 0 ? 'Mês' : 'Meses'}</Text>
                                 </View>
                             </View>

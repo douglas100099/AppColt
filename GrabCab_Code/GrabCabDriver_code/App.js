@@ -106,7 +106,16 @@ export default class App extends React.Component {
       this.state.assetsLoaded ?
         <AppContainer />
         :
-        null
+        <View style={styles.container}>
+          <ImageBackground
+            source={require("./assets/images/splash.png")}
+            resizeMode={'contain'}
+            style={styles.imagebg}
+          >
+            <ActivityIndicator />
+            <Text style={{ paddingBottom: 100, fontWeight: '600', color: '#fff' }}> {this.state.updateMsg} </Text>
+          </ImageBackground>
+        </View>
     );
   }
 }

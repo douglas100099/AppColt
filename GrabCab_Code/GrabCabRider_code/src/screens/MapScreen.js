@@ -17,6 +17,7 @@ import { colors } from '../common/theme';
 
 import * as Constants from 'expo-constants';
 import * as Location from 'expo-location';
+import { getPixelSize } from '../common/utils';
 import * as Permissions from 'expo-permissions';
 var { height, width } = Dimensions.get('window');
 import * as firebase from 'firebase'
@@ -62,7 +63,7 @@ export default class MapScreen extends React.Component {
                 cash: false,
                 wallet: false
             },
-            geolocationFetchComplete: false,
+            geolocationFetchComplete: true,
         }
     }
 
@@ -112,6 +113,11 @@ export default class MapScreen extends React.Component {
                     })
                     this.getDrivers()
                 })
+            }
+            else {
+                setTimeout(() =>{
+                    this.getLocationUser()
+                },500)
             }
         })
     }
@@ -301,7 +307,7 @@ export default class MapScreen extends React.Component {
                             />
                             <Text style={{ color: "#0cab03", fontSize: 28, textAlign: "center", position: "absolute", marginTop: 170 }}>{languageJSON.congratulation}</Text>
                             <View>
-                                <Text style={{ color: "#000", fontSize: 16, marginTop: 12, textAlign: "center" }}>{languageJSON.refferal_bonus_messege_text} {this.state.settings.code}{this.bonusAmmount}</Text>
+                                <Text style={{ color: "#000", fontSize: 16, marginTop: 12, textAlign: "center" }}>Você ganhou R${this.bonusAmmount},00 na sua carteira Colt. Aproveite!</Text>
                             </View>
                             <View style={styles.buttonContainer}>
                                 <Button
@@ -318,6 +324,28 @@ export default class MapScreen extends React.Component {
                 </View>
             </Modal>
         );
+    }
+
+    loadingLocationModal(){
+        return(
+            <Modal
+            animationType="fade"
+            transparent={true}
+            visible={this.state.geolocationFetchComplete == false && this.state.giftModal == false}
+        >
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.WHITE }}>
+
+                <Image
+                    style={{ width: 150, height: 150, backgroundColor: colors.TRANSPARENT }}
+                    source={require('../../assets/images/loading.gif')}
+                />
+                <View style={styles.viewTextLoading}>
+                    <Text style={styles.textLoading}>Carregando sua localização, aguarde...</Text>
+                </View>
+            </View>
+        </Modal>
+
+        )
     }
 
     getNameUser() {
@@ -396,6 +424,13 @@ export default class MapScreen extends React.Component {
         this.props.navigation.replace('FareDetails', { data: dataDetails, minTimeEconomico: minTimeEco, minTimeConfort: minTimeCon });
     }
 
+    
+    showLocationUser(){
+        this.mapView.fitToCoordinates([{ latitude: this.state.region.wherelatitude, longitude: this.state.region.wherelongitude }, { latitude: this.state.region.droplatitude, longitude: this.state.region.droplongitude }], {
+            edgePadding: { top: getPixelSize(50), right: getPixelSize(50), bottom: getPixelSize(50), left: getPixelSize(50) },
+            animated: true,
+        })
+    }
 
     render() {
         return (
@@ -409,26 +444,9 @@ export default class MapScreen extends React.Component {
                             mapRegion={this.state.region}
                             nearby={this.state.freeCars}
                             //initialRegion={this.state.region}
-                            pickup={this.state.pinSearch ? this.state.region : null}
                         />
                         :
-                        <Modal
-                            animationType="fade"
-                            transparent={true}
-                            visible={true}
-                        >
-                            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.WHITE }}>
-
-                                <Image
-                                    style={{ width: 150, height: 150, backgroundColor: colors.TRANSPARENT }}
-                                    source={require('../../assets/images/loading.gif')}
-                                />
-                                <View style={styles.viewTextLoading}>
-                                    <Text style={styles.textLoading}>Carregando sua localização, aguarde...</Text>
-                                </View>
-                            </View>
-                        </Modal>
-
+                        null
                     }
                     {/* ICONE MENU */}
                     <View style={styles.bordaIconeMenu}>
@@ -441,6 +459,18 @@ export default class MapScreen extends React.Component {
                             />
                         </TouchableOpacity>
                     </View>
+
+                    <View style={styles.bordaIconeMenu2}>
+                        <TouchableOpacity onPress={() => { this.showLocationUser() }}>
+                            <Icon
+                                name='dehaze'
+                                type='material'
+                                color={colors.BLACK}
+                                size={23}
+                            />
+                        </TouchableOpacity>
+                    </View>
+                    
                 </View>
 
                 {this.state.geolocationFetchComplete ?
@@ -488,6 +518,9 @@ export default class MapScreen extends React.Component {
                             : null}
                     </View>
                     : null}
+                {
+                    this.loadingLocationModal()
+                }
                 {
                     this.bonusModal()
                 }
@@ -645,13 +678,13 @@ const styles = StyleSheet.create({
     },
 
     buttonTitleText: {
-        color: colors.GREY.default,
-        fontFamily: 'Inter-Medium',
+        color: colors.WHITE,
+        fontFamily: 'Inter-Bold',
         fontSize: 20,
         alignSelf: 'flex-end'
     },
     cancelButtonStyle: {
-        backgroundColor: "#edede8",
+        backgroundColor: colors.DEEPBLUE,
         elevation: 0,
         width: "60%",
         borderRadius: 5,

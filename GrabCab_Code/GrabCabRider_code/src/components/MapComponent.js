@@ -3,6 +3,7 @@ import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import IconCarMap from '../../assets/svg/IconCarMap';
 import { colors } from '../common/theme';
 import LocationUser from '../../assets/svg/LocationUser';
+import mapStyleJson from '../../mapStyle.json';
 
 export default class MapComponent extends Component {
     constructor(props) {
@@ -13,21 +14,21 @@ export default class MapComponent extends Component {
     }
 
     render() {
-        const { mapRegion, mapStyle, nearby, pickup } = this.props;
+        const { mapRegion, mapStyle, nearby } = this.props;
         return (
             <MapView.Animated
                 provider={PROVIDER_GOOGLE}
                 showsUserLocation={true}
                 loadingEnabled
                 showsMyLocationButton={false}
-                style={[mapStyle, { marginBottom: this.state.marginBottom }]}
+                style={mapStyle}
                 initialRegion={mapRegion}
                 onMapReady={() => this.setState({ marginBottom: 1 })}
                 enablePoweredByContainer={true}
                 showsCompass={false}
                 showsScale={false}
                 rotateEnabled={false}
-            //customMapStyle={mapStyleCustom}
+                customMapStyle={mapStyleJson}
             >
                 {nearby ? nearby.map((item, index) => {
                     return (
@@ -49,18 +50,6 @@ export default class MapComponent extends Component {
                         </Marker.Animated>
                     )
                 })
-                    : null}
-
-                {pickup ?
-                    <Marker
-                        coordinate={{ latitude: (pickup.latitude), longitude: (pickup.longitude) }}
-                        anchor={{ x: 0, y: 0 }}
-                    >
-                        <LocationUser
-                            width={25}
-                            height={25}
-                        />
-                    </Marker>
                     : null}
             </MapView.Animated>
         );

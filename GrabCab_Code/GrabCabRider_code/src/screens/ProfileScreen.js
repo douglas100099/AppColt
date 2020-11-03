@@ -221,7 +221,7 @@ export default class ProfileScreen extends React.Component {
                                 {
                                      this.state.loader == true ? this.loader() : 
                                      this.state.userImage ? 
-                                     <TouchableOpacity>
+                                     <TouchableOpacity onPress={this.showActionSheet}>
                                          <Image source={{ uri: this.state.userImage }} style={{ width: 95, height: 95, borderRadius: 50 }} /> 
                                      </TouchableOpacity>
                                      :

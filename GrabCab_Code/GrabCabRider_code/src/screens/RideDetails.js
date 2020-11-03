@@ -306,7 +306,7 @@ export default class RideDetails extends React.Component {
                                 </View>
                                 <Text style={{ fontFamily: 'Inter-Bold', fontSize: width < 375 ? 17 : 21, position: 'absolute', right: 20 }}>
                                     <Text style={{ fontFamily: 'Inter-Bold', fontSize: 13 }}>R$</Text>
-                                    {this.state.paramData.pagamento.customer_paid}
+                                    {parseFloat(this.state.paramData.pagamento.customer_paid).toFixed(2)}
                                 </Text>
                             </View>
                             : null}

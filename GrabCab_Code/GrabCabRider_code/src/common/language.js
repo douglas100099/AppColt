@@ -79,7 +79,7 @@ export default {
     driver_finding_alert:'Procurando motoristas pra você',
     no_driver_found_alert_title:'Alerta!',
     no_driver_found_alert_OK_button:'OK',
-    congratulation:'Congratulations!',
+    congratulation:'Parabéns!',
     refferal_bonus_messege_text:'Bônus do código de referência -',
     map_screen_title:'Colt',
     cab_selection_title:'Qual categoria que deseja?',

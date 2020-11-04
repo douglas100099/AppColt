@@ -159,7 +159,7 @@ exports.timerIgnoreBooking = functions.database.ref('/bookings/{bookingsId}/requ
             admin.database().ref('/bookings/' + bookingId).once("value", data =>{ 
                 if (requested === snapshot.val() && data.status === 'NEW') {
                     console.log("ENTROU NO IF")
-                    let arrayRejected = []
+                    /*let arrayRejected = []
                     if( data.rejectedDrivers ){
                         for( let key in data.rejectedDrivers ){
                             data.rejectedDrivers[key]
@@ -176,15 +176,15 @@ exports.timerIgnoreBooking = functions.database.ref('/bookings/{bookingsId}/requ
                         })
                     }
                     
-                    admin.database().ref("/users/" + requested + "/waiting_riders_list/" + bookingId).remove();
                     admin.database().ref("/users/" + requested + "/in_reject_progress").update({
                         punido: false
                     });
                     admin.database().ref("/users/" + requested ).update({
                         driverActiveStatus: false,
                         queue: false
-                    });
-
+                    });*/
+                    
+                    admin.database().ref("/users/" + requested + "/waiting_riders_list/" + bookingId).remove();
                     admin.database().ref("/bookings/" + bookingId + "/requestedDriver").remove();
                     admin.database().ref('/bookings/' + bookingId).update({
                         status: 'REJECTED',

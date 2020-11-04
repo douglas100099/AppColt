@@ -8,8 +8,6 @@ export function VerifyCupom(item, index, estimateFare) {
     var fexpDate = expiryMonth + '/' + expiryDay + '/' + expiryYear
     var expDate = new Date(fexpDate)
 
-    console.log("PROMO CODE ---- " + item.promo)
-
     if (estimateFare > item.min_order) {
         var userAvail = item.user_avail
 
@@ -107,6 +105,6 @@ export function VerifyCupom(item, index, estimateFare) {
         }
         //Caso o valor da corrida seja menor que o valor limite da promoção
     } else {
-        return languageJSON.promo_eligiblity
+        return "O valor da corrida é menor que o mínimo para essa promoção"
     }
 }

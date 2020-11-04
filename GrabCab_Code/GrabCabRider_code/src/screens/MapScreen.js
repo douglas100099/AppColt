@@ -12,12 +12,13 @@ import {
 } from 'react-native';
 import { TouchableOpacity, TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { MapComponent } from '../components';
+import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
+import mapStyleJson from '../../mapStyle.json';
 import { Icon, Button, Avatar } from 'react-native-elements';
 import { colors } from '../common/theme';
 
 import * as Constants from 'expo-constants';
 import * as Location from 'expo-location';
-import { getPixelSize } from '../common/utils';
 import * as Permissions from 'expo-permissions';
 var { height, width } = Dimensions.get('window');
 import * as firebase from 'firebase'
@@ -63,13 +64,15 @@ export default class MapScreen extends React.Component {
                 cash: false,
                 wallet: false
             },
-            geolocationFetchComplete: true,
+            dontAnimateRegion: false,
+            geolocationFetchComplete: false,
         }
     }
 
     async UNSAFE_componentWillMount() {
         if (Platform.OS === 'android' && !Constants.default.isDevice) {
             this.setState({
+                
                 errorMessage: 'Ops, isso não funciona com Sketch no emulador Android. Tente usar em seu dispositivo!'
             });
         } else {
@@ -90,9 +93,23 @@ export default class MapScreen extends React.Component {
         var curuser = firebase.auth().currentUser.uid;
         const userLocation = firebase.database().ref('users/' + curuser + '/location');
 
-        userLocation.once('value', location => {
+        userLocation.on('value', location => {
             if (location.val()) {
                 let loc = location.val();
+
+                if (this.state.region.lat != loc.lat || this.state.region.longitude != loc.lng) {
+                    let region = {
+                        latitude: loc.lat,
+                        longitude: loc.lng,
+                        latitudeDelta: 0.0143,
+                        longitudeDelta: 0.0134,
+                    }
+                    if( this._isMounted && this.state.dontAnimateRegion == false ){
+                        setTimeout(() => {
+                            this.mapView.animateToRegion(region, 500)
+                        },1000)
+                    }
+                }
 
                 this.setState({
                     region: {
@@ -115,9 +132,9 @@ export default class MapScreen extends React.Component {
                 })
             }
             else {
-                setTimeout(() =>{
+                setTimeout(() => {
                     this.getLocationUser()
-                },500)
+                }, 500)
             }
         })
     }
@@ -326,24 +343,24 @@ export default class MapScreen extends React.Component {
         );
     }
 
-    loadingLocationModal(){
-        return(
+    loadingLocationModal() {
+        return (
             <Modal
-            animationType="fade"
-            transparent={true}
-            visible={this.state.geolocationFetchComplete == false && this.state.giftModal == false}
-        >
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.WHITE }}>
+                animationType="fade"
+                transparent={true}
+                visible={this.state.geolocationFetchComplete == false && this.state.giftModal == false}
+            >
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.WHITE }}>
 
-                <Image
-                    style={{ width: 150, height: 150, backgroundColor: colors.TRANSPARENT }}
-                    source={require('../../assets/images/loading.gif')}
-                />
-                <View style={styles.viewTextLoading}>
-                    <Text style={styles.textLoading}>Carregando sua localização, aguarde...</Text>
+                    <Image
+                        style={{ width: 150, height: 150, backgroundColor: colors.TRANSPARENT }}
+                        source={require('../../assets/images/loading.gif')}
+                    />
+                    <View style={styles.viewTextLoading}>
+                        <Text style={styles.textLoading}>Carregando sua localização, aguarde...</Text>
+                    </View>
                 </View>
-            </View>
-        </Modal>
+            </Modal>
 
         )
     }
@@ -395,6 +412,7 @@ export default class MapScreen extends React.Component {
     }
 
     tapAddress = (selection) => {
+        this.setState({ dontAnimateRegion: true })
         this.props.navigation.navigate('Search', { old: this.state.passData, allCars: this.state.allCars ? this.state.allCars : null });
     };
 
@@ -424,27 +442,58 @@ export default class MapScreen extends React.Component {
         this.props.navigation.replace('FareDetails', { data: dataDetails, minTimeEconomico: minTimeEco, minTimeConfort: minTimeCon });
     }
 
-    
-    showLocationUser(){
-        this.mapView.fitToCoordinates([{ latitude: this.state.region.wherelatitude, longitude: this.state.region.wherelongitude }, { latitude: this.state.region.droplatitude, longitude: this.state.region.droplongitude }], {
-            edgePadding: { top: getPixelSize(50), right: getPixelSize(50), bottom: getPixelSize(50), left: getPixelSize(50) },
-            animated: true,
-        })
+    animateToRegion() {
+        this.mapView.animateToRegion(this.state.region, 500)
+        setTimeout(() => {
+            this.setState({ showsMyLocationBtn: false })
+        }, 600)
     }
 
     render() {
         return (
             <View style={styles.mainViewStyle}>
                 <View style={styles.mapcontainer}>
-                    {this.state.geolocationFetchComplete ?
-                        <MapComponent
+                    {this.state.geolocationFetchComplete && this._isMounted ?
+                        <MapView.Animated
+                            provider={PROVIDER_GOOGLE}
+                            showsUserLocation={true}
                             ref={(ref) => this.mapView = ref}
-                            markerRef={marker => { this.marker = marker; }}
-                            mapStyle={styles.map}
-                            mapRegion={this.state.region}
-                            nearby={this.state.freeCars}
-                            //initialRegion={this.state.region}
-                        />
+                            loadingEnabled
+                            showsMyLocationButton={false}
+                            style={styles.map}
+                            initialRegion={this.state.region}
+                            onRegionChange={() => { this.setState({ showsMyLocationBtn: true }) }}
+                            //region={}
+                            //onMapReady={() => this.setState({ marginBottom: 1 })}
+                            enablePoweredByContainer={true}
+                            showsCompass={false}
+                            showsScale={false}
+                            rotateEnabled={false}
+                            customMapStyle={mapStyleJson}
+                        >
+                            {this.state.freeCars ? this.state.freeCars.map((item, index) => {
+                                return (
+                                    <Marker.Animated
+                                        coordinate={{ latitude: item.location ? item.location.lat : 0.00, longitude: item.location ? item.location.lng : 0.00 }}
+                                        key={index}
+                                    >
+                                        <IconCarMap
+                                            width={35}
+                                            height={35}
+                                            style={{
+                                                transform: [{ rotate: item.location.angle + "deg" }],
+                                                shadowColor: colors.BLACK,
+                                                shadowOpacity: 0.2,
+                                                shadowOffset: { x: 0.1, y: 0.1 },
+                                                shadowRadius: 5,
+                                                elevation: 3
+                                            }}
+                                        />
+                                    </Marker.Animated>
+                                )
+                            })
+                                : null}
+                        </MapView.Animated>
                         :
                         null
                     }
@@ -455,76 +504,80 @@ export default class MapScreen extends React.Component {
                                 name='dehaze'
                                 type='material'
                                 color={colors.BLACK}
-                                size={23}
+                                size={26}
                             />
                         </TouchableOpacity>
                     </View>
 
-                    <View style={styles.bordaIconeMenu2}>
-                        <TouchableOpacity onPress={() => { this.showLocationUser() }}>
-                            <Icon
-                                name='dehaze'
-                                type='material'
-                                color={colors.BLACK}
-                                size={23}
-                            />
-                        </TouchableOpacity>
-                    </View>
-                    
+                    {this.state.showsMyLocationBtn ?
+                        <View style={styles.showsMyLocationBtn}>
+                            <TouchableOpacity onPress={() => { this.animateToRegion() }}>
+                                <Icon
+                                    name='ios-locate'
+                                    type='ionicon'
+                                    color={colors.BLACK}
+                                    size={24}
+                                />
+                            </TouchableOpacity>
+                        </View>
+                        : null}
+
                 </View>
 
-                {this.state.geolocationFetchComplete ?
-                    <View style={[styles.viewStyleTop, {
-                        flex: this.state.locationCasa != null ? width < 375 ? 1.4 : 1.1 : width < 375 ? 1 : 0.7
-                    }]}>
-                        <View>
-                            <Text style={{ marginHorizontal: 15, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 13 : 15, margin: 10 }}> Olá
+                {
+                    this.state.geolocationFetchComplete ?
+                        <View style={[styles.viewStyleTop, {
+                            flex: this.state.locationCasa != null ? width < 375 ? 1.4 : 1.1 : width < 375 ? 1 : 0.7
+                        }]}>
+                            <View>
+                                <Text style={{ marginHorizontal: 15, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 13 : 15, margin: 10 }}> Olá
                             <Text style={{ fontSize: width < 375 ? 17 : 18 }}> {this.state.nameUser ? this.state.nameUser : null}</Text>, que bom te ver novamente.
                         </Text>
-                            <TouchableWithoutFeedback style={{ height: 63 }} onPress={() => this.tapAddress()}>
-                                <View style={styles.inputDrop}>
-                                    <View style={styles.textIconStyle}>
-                                        <Icon
-                                            name='search'
-                                            type='feather'
-                                            color={colors.DEEPBLUE}
-                                            size={18}
-                                            containerStyle={{ left: 10, opacity: 0.8 }}
-                                        />
-                                        <Text numberOfLines={1} style={[styles.textStyleDrop, { fontSize: 18, color: colors.GREY.iconSecondary }]}>Para onde vamos?</Text>
+                                <TouchableWithoutFeedback style={{ height: 63 }} onPress={() => this.tapAddress()}>
+                                    <View style={styles.inputDrop}>
+                                        <View style={styles.textIconStyle}>
+                                            <Icon
+                                                name='search'
+                                                type='feather'
+                                                color={colors.DEEPBLUE}
+                                                size={18}
+                                                containerStyle={{ left: 10, opacity: 0.8 }}
+                                            />
+                                            <Text numberOfLines={1} style={[styles.textStyleDrop, { fontSize: 18, color: colors.GREY.iconSecondary }]}>Para onde vamos?</Text>
+                                        </View>
                                     </View>
-                                </View>
-                            </TouchableWithoutFeedback>
-                        </View>
+                                </TouchableWithoutFeedback>
+                            </View>
 
-                        {this.state.locationCasa != null ?
-                            <TouchableOpacity onPress={() => this.goToFareByMap()}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', height: width < 375 ? 50 : 60, width: width }}>
-                                    <View style={{ left: 12, flex: 0.2 }}>
-                                        <Icon
-                                            name='ios-home'
-                                            type='ionicon'
-                                            color={colors.GREY2}
-                                            size={25}
-                                            containerStyle={{ opacity: 0.4 }}
-                                        />
+                            {this.state.locationCasa != null ?
+                                <TouchableOpacity onPress={() => this.goToFareByMap()}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', height: width < 375 ? 50 : 60, width: width }}>
+                                        <View style={{ left: 12, flex: 0.2 }}>
+                                            <Icon
+                                                name='ios-home'
+                                                type='ionicon'
+                                                color={colors.GREY2}
+                                                size={25}
+                                                containerStyle={{ opacity: 0.4 }}
+                                            />
+                                        </View>
+                                        <View style={{ left: 12, flex: 2 }}>
+                                            <Text style={{ fontFamily: 'Inter-Medium', fontSize: width < 375 ? 17 : 19 }}> Casa </Text>
+                                            <Text numberOfLines={1} style={{ paddingTop: 3, opacity: 0.4, maxWidth: width - 60, fontFamily: 'Inter-Medium', fontSize: width < 375 ? 13 : 14 }}> {this.state.locationCasa.add.split('-')[0]} </Text>
+                                        </View>
                                     </View>
-                                    <View style={{ left: 12, flex: 2 }}>
-                                        <Text style={{ fontFamily: 'Inter-Medium', fontSize: width < 375 ? 17 : 19 }}> Casa </Text>
-                                        <Text numberOfLines={1} style={{ paddingTop: 3, opacity: 0.4, maxWidth: width - 60, fontFamily: 'Inter-Medium', fontSize: width < 375 ? 13 : 14 }}> {this.state.locationCasa.add.split('-')[0]} </Text>
-                                    </View>
-                                </View>
-                            </TouchableOpacity>
-                            : null}
-                    </View>
-                    : null}
+                                </TouchableOpacity>
+                                : null}
+                        </View>
+                        : null
+                }
                 {
                     this.loadingLocationModal()
                 }
                 {
                     this.bonusModal()
                 }
-            </View>
+            </View >
         );
     }
 }
@@ -584,16 +637,16 @@ const styles = StyleSheet.create({
         //top: Platform.select({ ios: 60, android: 40 }),
         width: width,
     },
-    bordaIconeMenu2: {
+    showsMyLocationBtn: {
         width: 37,
         height: 37,
-        left: 200,
-        top: 40,
+        right: 15,
+        bottom: 15,
         position: 'absolute',
         alignItems: 'center',
         alignSelf: 'center',
         justifyContent: 'center',
-        backgroundColor: colors.DEEPBLUE,
+        backgroundColor: colors.WHITE,
         borderRadius: 50,
         elevation: 5,
         shadowColor: '#000',
@@ -602,9 +655,9 @@ const styles = StyleSheet.create({
         shadowRadius: 15,
     },
     bordaIconeMenu: {
-        width: 37,
-        height: 37,
-        left: width < 375 ? 10 : 20,
+        width: 41,
+        height: 41,
+        left: width < 375 ? 5 : 20,
         top: Platform.OS == 'ios' ? 55 : 40,
         position: 'absolute',
         alignItems: 'center',

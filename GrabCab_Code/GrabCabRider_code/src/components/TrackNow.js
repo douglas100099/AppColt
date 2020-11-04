@@ -172,10 +172,17 @@ export default class TrackNow extends React.Component {
             return coords
         }
         catch (error) {
-            alert(error)
+            alert("Não foi possível carregar a rota")
             return error
         }
     }
+
+    /*animateToRegion() {
+        this.mapView.animateToRegion(this.state.region, 500)
+        setTimeout(() => {
+            this.setState({ showsMyLocationBtn: false })
+        }, 600)
+    }*/
 
     render() {
         return (
@@ -191,6 +198,7 @@ export default class TrackNow extends React.Component {
                         showsCompass={false}
                         showsScale={false}
                         rotateEnabled={false}
+                        //onRegionChange={ () => { this.setState({ showsMyLocationBtn: true }) } }
                         showsMyLocationButton={false}
                         //region={this.getMapRegion()}
                         initialRegion={{
@@ -203,13 +211,13 @@ export default class TrackNow extends React.Component {
                         {this.state.coords ?
                             <MapView.Polyline
                                 coordinates={this.state.coords}
-                                strokeWidth={2.5}
+                                strokeWidth={4}
                                 strokeColor={colors.DEEPBLUE}
                             />
                             : null}
-                        {this.state.routeCoordinates ?
+                        {/*this.state.routeCoordinates ?
                             <MapView.Polyline strokeColor={colors.DEEPBLUE} coordinates={this.state.routeCoordinates} strokeWidth={3} />
-                            : null}
+                        : null*/}
                         {this.state.allData ?
                             <Marker
                                 coordinate={{ latitude: this.state.allData.wherelatitude, longitude: this.state.allData.wherelongitude }}

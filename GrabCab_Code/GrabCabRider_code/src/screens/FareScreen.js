@@ -426,8 +426,12 @@ export default class FareScreen extends React.Component {
     }
 
     //Verifica se o cupom digitado é valido
-    async checkPromo(item, index) {
-        if (item != null && index != null) {
+    async checkPromo(item, index, param) {
+        if (param) {
+            this.setState({ checkPromoBtn: false })
+            alert("Você já possui um cupom ativo!")
+        }
+        else if (item != null && index != null) {
             let verifyCupomData = {}
             if (this.state.selected == 0) {
                 verifyCupomData = VerifyCupom(item, index, this.state.estimatePrice1);
@@ -552,19 +556,18 @@ export default class FareScreen extends React.Component {
                             errorMessage={this.state.promoCodeValid ? null : languageJSON.first_name_blank_error}
                         />
                     </View>
-                    <Button
-                        title={"Confirmar"}
-                        loading={false}
-                        loadingProps={{ size: "large", color: colors.BLUE.default.primary }}
-                        titleStyle={styles.textConfirmarPromoModal}
-                        disabled={this.state.checkPromoBtn}
-                        onPress={() => { this.checkPromo() }}
-                        buttonStyle={styles.btnConfirmarPromoModal}
-                    />
+                    <TouchableOpacity style={styles.btnConfirmarPromoModal} disabled={this.state.checkPromoBtn} onPress={() => { this.checkPromo() }}>
+                        <Text style={styles.textConfirmarPromoModal}> Confirmar </Text>
+                    </TouchableOpacity>
+                    
                     <View style={{ justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
                         <Text style={{ fontFamily: 'Inter-Medium', fontSize: 15 }}> ou escolha uma das promoções abaixo. </Text>
                     </View>
-                    <PromoComp onPressButton={(item, index) => { this.checkPromo(item, index) }}></PromoComp>
+                    {this.state.payDetails ?
+                        <PromoComp onPressButton={(item, index) => { this.checkPromo(item, index, true) }}></PromoComp>
+                        :
+                        <PromoComp onPressButton={(item, index) => { this.checkPromo(item, index, false) }}></PromoComp>
+                    }
                 </View>
             </Modal>
         )

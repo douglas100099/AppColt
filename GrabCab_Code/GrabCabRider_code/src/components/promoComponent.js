@@ -63,7 +63,7 @@ export default class PromoComp extends React.Component {
           this.setState({
             data: allPromoData
           }, () => {
-            console.log("this.state")
+           
           })
         }
       }
@@ -103,14 +103,9 @@ export default class PromoComp extends React.Component {
 
             </View>
             <View style={styles.applyBtnPosition} >
-              <Button
-                title={languageJSON.apply}
-                TouchableComponent={TouchableOpacity}
-                titleStyle={styles.buttonTitleStyle}
-                buttonStyle={styles.confButtonStyle}
-                disabled={this.state.btnDisable}
-                onPress={() => this.onPressButton(item, index)}
-              />
+              <TouchableOpacity disabled={this.state.btnDisable } style={{ justifyContent: 'center', alignItems: 'center', borderRadius: 5, backgroundColor: 'rgba(63,220,90,0.6)', height: 30 }} onPress={() => this.onPressButton(item, index)}>
+                <Text style={{ alignSelf: 'center', fontFamily: 'Inter-Bold', color: colors.WHITE }}> {languageJSON.apply} </Text>
+              </TouchableOpacity>
             </View>
           </View>
           <View style={styles.borderBottomStyle} />
@@ -174,7 +169,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   timeTextStyle: {
-    color: "#a6a6a6",
+    //color: "#a6a6a6",
     marginTop: 2
   },
   buttonContainerStyle: {
@@ -183,7 +178,7 @@ const styles = StyleSheet.create({
   },
   buttonTitleStyle: {
     textAlign: "center",
-    color: '#fff',
+    //color: '#fff',
     fontFamily: 'Inter-Bold',
     fontSize: 11,
     paddingBottom: 0,

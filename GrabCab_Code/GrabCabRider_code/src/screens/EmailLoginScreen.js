@@ -122,6 +122,7 @@ export default class EmailLoginScreen extends Component {
             if (!passwordValid) {
                 this.passInput.focus();
                 alert(languageJSON.password_blank_messege);
+                this.setState({ btnDisabled: false })
             }
         }
         else if (complexity == 'alphanumeric') {
@@ -129,7 +130,7 @@ export default class EmailLoginScreen extends Component {
             if (!passwordValid) {
                 this.passInput.focus();
                 alert(languageJSON.password_alphaNumeric_check);
-
+                this.setState({ btnDisabled: false })
             }
         }
         else if (complexity == 'complex') {
@@ -137,6 +138,7 @@ export default class EmailLoginScreen extends Component {
             if (!passwordValid) {
                 this.passInput.focus();
                 alert(languageJSON.password_complexity_check);
+                this.setState({ btnDisabled: false })
             }
         }
         return passwordValid

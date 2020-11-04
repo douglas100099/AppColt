@@ -63,7 +63,6 @@ export default class BookedCabScreen extends React.Component {
     componentDidMount() {
         this._isMounted = true;
         this.state.bookingDataState == null ? this.getParamData = this.props.navigation.getParam('passData') : this.getParamData = this.state.bookingDataState
-        this.props.navigation.getParam('riderName') ? this.state.riderName = this.props.navigation.getParam('riderName') : null
         const walletBalance = this.props.navigation.getParam('walletBallance')
 
         this.searchDriver(this.getParamData.bokkingId)
@@ -142,7 +141,7 @@ export default class BookedCabScreen extends React.Component {
 
                     this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
                 } else if (currUserBooking.status == "REJECTED") {
-
+                    
                     this.searchDriver(this.getParamData.bokkingId);
                 }
             }
@@ -216,7 +215,6 @@ export default class BookedCabScreen extends React.Component {
                             }
                         }
                     }
-                    console.log("RODANDO FOR")
                 }
 
                 this.getBookingData(param)

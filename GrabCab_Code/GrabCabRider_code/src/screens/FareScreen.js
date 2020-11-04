@@ -231,8 +231,6 @@ export default class FareScreen extends React.Component {
                 })
             })
         }
-        if (this.state.usedWalletMoney > 0)
-            this.sendPushNotification(this.state.curUID.uid, 'Você usou ' + this.state.usedWalletMoney + ' da carteira Colt!')
     }
 
     //Confirma corrida e começa a procurar motorista
@@ -288,7 +286,7 @@ export default class FareScreen extends React.Component {
             bookingDate: today,
 
             imageRider: this.state.userDetails.profile_image ? this.state.userDetails.profile_image : null,
-            ratingRider: this.state.userDetails.ratings ? this.state.userDetails.ratings.userrating : null,
+            ratingRider: this.state.userDetails.ratings ? this.state.userDetails.ratings.userrating : '5.0',
         }
 
         var MyBooking = {

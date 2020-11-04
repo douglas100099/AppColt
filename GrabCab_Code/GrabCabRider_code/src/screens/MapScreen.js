@@ -26,7 +26,9 @@ import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import Geocoder from 'react-native-geocoding';
 import distanceCalc from '../common/distanceCalc';
+import { NavigationActions, StackActions } from 'react-navigation';
 
+import IconCarMap from '../../assets/svg/IconCarMap';
 
 export default class MapScreen extends React.Component {
     _isMounted = false;
@@ -72,7 +74,7 @@ export default class MapScreen extends React.Component {
     async UNSAFE_componentWillMount() {
         if (Platform.OS === 'android' && !Constants.default.isDevice) {
             this.setState({
-                
+
                 errorMessage: 'Ops, isso não funciona com Sketch no emulador Android. Tente usar em seu dispositivo!'
             });
         } else {
@@ -90,8 +92,7 @@ export default class MapScreen extends React.Component {
     }
 
     getLocationUser() {
-        var curuser = firebase.auth().currentUser.uid;
-        const userLocation = firebase.database().ref('users/' + curuser + '/location');
+        const userLocation = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location');
 
         userLocation.on('value', location => {
             if (location.val()) {
@@ -104,10 +105,10 @@ export default class MapScreen extends React.Component {
                         latitudeDelta: 0.0143,
                         longitudeDelta: 0.0134,
                     }
-                    if( this._isMounted && this.state.dontAnimateRegion == false ){
+                    if (this._isMounted && this.state.dontAnimateRegion == false) {
                         setTimeout(() => {
                             this.mapView.animateToRegion(region, 500)
-                        },1000)
+                        }, 1000)
                     }
                 }
 
@@ -140,8 +141,7 @@ export default class MapScreen extends React.Component {
     }
 
     getSavedLocations() {
-        var curuser = firebase.auth().currentUser.uid;
-        firebase.database().ref('users/' + curuser + '/savedLocations').on('value', snap => {
+        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/savedLocations').on('value', snap => {
             if (snap.val()) {
                 let locationCasa = {}
                 locationCasa.lat = snap.val().lat,
@@ -165,7 +165,7 @@ export default class MapScreen extends React.Component {
             if (allCars.val()) {
                 let cars = allCars.val()
                 let arr = [];
-                for (key in cars) {
+                for (let key in cars) {
                     cars[key].minTime = ''
                     cars[key].available = true;
                     cars[key].active = false;
@@ -179,6 +179,7 @@ export default class MapScreen extends React.Component {
     componentDidMount() {
         this._isMounted = true;
         this._retrieveSettings();
+        this.tripSatusCheck()
 
         this.intervalGetDrivers = setInterval(() => {
             if (this._isMounted) {
@@ -366,11 +367,11 @@ export default class MapScreen extends React.Component {
     }
 
     getNameUser() {
-        var curuser = firebase.auth().currentUser.uid;
-        const userRoot = firebase.database().ref('users/' + curuser);
+        const userRoot = firebase.database().ref('users/' + firebase.auth().currentUser.uid);
         userRoot.once('value', userData => {
             if (userData.val()) {
                 this.setState({
+                    walletBalance: userData.val().walletBalance,
                     nameUser: userData.val().firstName
                 })
             }
@@ -379,8 +380,7 @@ export default class MapScreen extends React.Component {
 
     //Verificação de cadastro via referal ID
     onPressModal() {
-        var curuser = firebase.auth().currentUser.uid;
-        const userRoot = firebase.database().ref('users/' + curuser);
+        const userRoot = firebase.database().ref('users/' + firebase.auth().currentUser.uid);
         userRoot.once('value', userData => {
             if (userData.val()) {
                 if (userData.val().refferalId == undefined) {
@@ -412,8 +412,12 @@ export default class MapScreen extends React.Component {
     }
 
     tapAddress = (selection) => {
-        this.setState({ dontAnimateRegion: true })
-        this.props.navigation.navigate('Search', { old: this.state.passData, allCars: this.state.allCars ? this.state.allCars : null });
+        if (!this.state.statusCorrida) {
+            this.setState({ dontAnimateRegion: true })
+            this.props.navigation.navigate('Search', { old: this.state.passData, allCars: this.state.allCars ? this.state.allCars : null });
+        } else {
+            alert("Você já possui uma corrida em andamento")
+        }
     };
 
     goToFareByMap() {
@@ -441,6 +445,57 @@ export default class MapScreen extends React.Component {
 
         this.props.navigation.replace('FareDetails', { data: dataDetails, minTimeEconomico: minTimeEco, minTimeConfort: minTimeCon });
     }
+
+    redirectRider() {
+        this.getNameUser();
+        if (this.state.statusCorrida == 'ACCEPTED') {
+            let obj = {
+                bokkingId: this.state.bookingParam.bookingKey,
+                coords: this.state.bookingParam.coords,
+            }
+            this.props
+                .navigation
+                .dispatch(StackActions.reset({
+                    index: 0,
+                    actions: [
+                        NavigationActions.navigate({
+                            routeName: 'BookedCab',
+                            params: { passData: obj, walletBallance: this.state.walletBalance },
+                        }),
+                    ],
+                }))
+        } else if (this.state.statusCorrida == 'START') {
+            this.props.navigation.replace('trackRide', { data: this.state.bookingParam, bId: this.state.bookingParam.bookingKey, });
+        } 
+    }
+
+    tripSatusCheck = () => {
+        const userData = firebase.database().ref('users/' + firebase.auth().currentUser.uid);
+        userData.on('value', userData => {
+            if (userData.val()) {
+                var data = userData.val()
+                if (data['my-booking']) {
+                    let bookingData = data['my-booking']
+                    for (let key in bookingData) {
+                        bookingData[key].bookingKey = key
+
+                        if (bookingData[key].status == "ACCEPTED") {
+                            this.setState({
+                                statusCorrida: "ACCEPTED",
+                                bookingParam: bookingData[key]
+                            })
+                        } else if (bookingData[key].status == "START") {
+                            this.setState({
+                                statusCorrida: "START",
+                                bookingParam: bookingData[key]
+                            })
+                        } 
+                    }
+                }
+            }
+        })
+    }
+
 
     animateToRegion() {
         this.mapView.animateToRegion(this.state.region, 500)
@@ -522,7 +577,24 @@ export default class MapScreen extends React.Component {
                         </View>
                         : null}
 
+                    {this.state.statusCorrida ?
+                        <View style={styles.viewCorrida}>
+                            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }} onPress={() => { this.animateToRegion() }} onPress={() => { this.redirectRider() }}>
+                                <Icon
+                                    name='car'
+                                    type='material-community'
+                                    color={colors.GREY2}
+                                    size={35}
+                                    containerStyle={{ left: 10, opacity: 0.8 }}
+                                />
+                                <Text style={{ fontFamily: 'Inter-Bold', paddingEnd: 10, paddingStart: 15 }}> Você possui uma corrida em andamento </Text>
+                            </TouchableOpacity>
+                        </View>
+                        : null}
+
                 </View>
+
+
 
                 {
                     this.state.geolocationFetchComplete ?
@@ -549,7 +621,7 @@ export default class MapScreen extends React.Component {
                                 </TouchableWithoutFeedback>
                             </View>
 
-                            {this.state.locationCasa != null ?
+                            {this.state.locationCasa != null && !this.state.statusCorrida ?
                                 <TouchableOpacity onPress={() => this.goToFareByMap()}>
                                     <View style={{ flexDirection: 'row', alignItems: 'center', height: width < 375 ? 50 : 60, width: width }}>
                                         <View style={{ left: 12, flex: 0.2 }}>
@@ -584,8 +656,7 @@ export default class MapScreen extends React.Component {
 
 const styles = StyleSheet.create({
     mapcontainer: {
-        justifyContent: 'center',
-        alignItems: 'center',
+
         flex: 3,
     },
     textLoading: {
@@ -636,6 +707,23 @@ const styles = StyleSheet.create({
         backgroundColor: colors.WHITE,
         //top: Platform.select({ ios: 60, android: 40 }),
         width: width,
+    },
+    viewCorrida: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        bottom: 50,
+        alignSelf: 'center',
+        position: 'absolute',
+        backgroundColor: colors.WHITE,
+        borderWidth: 1,
+        borderColor: colors.GREY1,
+        borderRadius: 15,
+        height: 55,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowOffset: { x: 0, y: 0 },
+        shadowRadius: 15,
     },
     showsMyLocationBtn: {
         width: 37,

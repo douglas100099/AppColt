@@ -187,7 +187,7 @@ export default class TrackNow extends React.Component {
     render() {
         return (
             <View style={styles.innerContainer}>
-                {this.state.allData ?
+                {this.state.allData && this._isMounted ?
                     <MapView
                         ref={map => { this.map = map }}
                         style={styles.map}

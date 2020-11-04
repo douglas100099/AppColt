@@ -187,7 +187,9 @@ export default class DriverTripComplete extends React.Component {
 
                         <View style={{ flex: 2, justifyContent: 'center', alignItems: "center" }}>
                             {this.state.getDetails ?
-                                this.state.getDetails.driver_image != '' ? <Image source={{ uri: this.state.getDetails.driver_image }} style={{ height: 68, width: 68, borderRadius: 78 / 2 }} /> :
+                                this.state.getDetails.driver_image != '' ?
+                                    <Image source={{ uri: this.state.getDetails.driver_image }} style={{ height: 68, width: 68, borderRadius: 78 / 2 }} />
+                                    :
                                     <AvatarUser
                                         width={68}
                                         height={68}

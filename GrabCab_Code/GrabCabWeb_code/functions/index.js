@@ -156,12 +156,36 @@ exports.timerIgnoreBooking = functions.database.ref('/bookings/{bookingsId}/requ
 
     setTimeout(() => {
         admin.database().ref('/bookings/' + bookingId + '/requestedDriver/').once("value", (snapshot) => {
-            admin.database().ref('bookings/' + bookingId).once("value", data =>{ 
-                if (requested === snapshot.val() && data.status === 'NEW') {
-                
-                    admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove();
-                    admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove();
-                    admin.database().ref('bookings/' + bookingId).update({
+            admin.database().ref('/bookings/' + bookingId).once("value", data =>{ 
+                if (requested === snapshot.val() && data.status === "NEW") {
+                    let arrayRejected = []
+                    if( data.rejectedDrivers ){
+                        for( let key in data.rejectedDrivers ){
+                            data.rejectedDrivers[key]
+                            arrayRejected.push(data.rejectedDrivers[key])
+                        }
+                        arrayRejected.push(requested)
+                        admin.database().ref('/bookings/' + bookingId).update({
+                            rejectedDrivers: arrayRejected
+                        }) 
+                    } else {
+                        arrayRejected.push(requested)
+                        admin.database().ref('/bookings/' + bookingId).update({
+                            rejectedDrivers: arrayRejected
+                        })
+                    }
+                    
+                    admin.database().ref("/users/" + requested + "/waiting_riders_list/" + bookingId).remove();
+                    admin.database().ref("/users/" + requested + "/in_reject_progress").update({
+                        punido: false
+                    });
+                    admin.database().ref("/users/" + requested ).update({
+                        driverActiveStatus: false,
+                        queue: false
+                    });
+
+                    admin.database().ref("/bookings/" + bookingId + "/requestedDriver").remove();
+                    admin.database().ref('/bookings/' + bookingId).update({
                         status: 'REJECTED',
                     });
                     return true;

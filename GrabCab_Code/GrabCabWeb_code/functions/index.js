@@ -158,6 +158,7 @@ exports.timerIgnoreBooking = functions.database.ref('/bookings/{bookingsId}/requ
         admin.database().ref('/bookings/' + bookingId + '/requestedDriver/').once("value", (snapshot) => {
             admin.database().ref('/bookings/' + bookingId).once("value", data =>{ 
                 if (requested === snapshot.val() && data.status === 'NEW') {
+                    console.log("ENTROU NO IF")
                     let arrayRejected = []
                     if( data.rejectedDrivers ){
                         for( let key in data.rejectedDrivers ){
@@ -190,6 +191,7 @@ exports.timerIgnoreBooking = functions.database.ref('/bookings/{bookingsId}/requ
                     });
                     return true;
                 } else {
+                    console.log("RETORNOU FALSE")
                     return false;
                 }
             })

@@ -132,6 +132,18 @@ export default class BookedCabScreen extends React.Component {
                                     ],
                                 }))
                         })
+                    } else {
+                        alert("O motorista cancelou a corrida atual!")
+                        this.props
+                            .navigation
+                            .dispatch(StackActions.reset({
+                                index: 0,
+                                actions: [
+                                    NavigationActions.navigate({
+                                        routeName: 'Map',
+                                    }),
+                                ],
+                            }))
                     }
                 }
                 else if (currUserBooking.status == "EMBARQUE") {
@@ -141,7 +153,7 @@ export default class BookedCabScreen extends React.Component {
 
                     this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
                 } else if (currUserBooking.status == "REJECTED") {
-                    
+
                     this.searchDriver(this.getParamData.bokkingId);
                 }
             }
@@ -205,7 +217,7 @@ export default class BookedCabScreen extends React.Component {
                                     if (allUsers[key].carType == this.state.carType) {
                                         //Salva sempre o mais proximo
                                         if (distance < distanciaValue) {
-                                            if(!allUsers[key].waiting_riders_list){
+                                            if (!allUsers[key].waiting_riders_list) {
                                                 distanciaValue = distance;
                                                 driverUidnovo = key;
                                             }

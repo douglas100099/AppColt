@@ -209,7 +209,7 @@ export default class RideDetails extends React.Component {
                                     {this.state.paramData ?
                                         <Marker
                                             coordinate={{ latitude: this.state.paramData ? (this.state.paramData.pickup.lat) : 0.00, longitude: this.state.paramData ? (this.state.paramData.pickup.lng) : 0.00 }}
-                                            title={'marker_title_1'}
+                                            title={this.state.paramData.pickup.add.split(',')[0]}
                                             anchor={{ x: 0.5, y: 0.5 }}
                                             description={this.state.paramData ? this.state.paramData.pickup.add : null}
                                         >
@@ -219,7 +219,7 @@ export default class RideDetails extends React.Component {
                                     {this.state.paramData ?
                                         <Marker
                                             coordinate={{ latitude: (this.state.paramData.drop.lat), longitude: (this.state.paramData.drop.lng) }}
-                                            title={'marker_title_2'}
+                                            title={this.state.paramData.drop.add.split(',')[0]}
                                             anchor={{ x: 0.5, y: 0.5 }}
                                             description={this.state.paramData.drop.add}
                                             pinColor={colors.GREEN.default}
@@ -315,136 +315,8 @@ export default class RideDetails extends React.Component {
                             <Text style={{ fontFamily: "Inter-Bold", color: colors.RED, fontSize:  width < 375 ? 17 : 19 }}> Relatar problema </Text>
                         </View>
                         </TouchableOpacity>
-
-                        {/*<View>
-                            <View style={styles.location}>
-                                {this.state.paramData && this.state.paramData.trip_start_time ?
-                                    <View>
-                                        <Text style={styles.timeStyle}>{this.state.paramData.trip_start_time}</Text>
-                                    </View>
-                                    : null}
-                                {this.state.paramData && this.state.paramData.pickup ?
-                                    <View style={styles.address}>
-                                        <View style={styles.redDot} />
-                                        <Text style={styles.adressStyle}>{this.state.paramData.pickup.add}</Text>
-                                    </View>
-                                    : null}
-                            </View>
-
-                            <View style={styles.location}>
-                                {this.state.paramData && this.state.paramData.trip_end_time ?
-                                    <View>
-                                        <Text style={styles.timeStyle}>{this.state.paramData.trip_end_time}</Text>
-                                    </View>
-                                    : null}
-                                {this.state.paramData && this.state.paramData.drop ?
-                                    <View style={styles.address}>
-                                        <View style={styles.greenDot} />
-                                        <Text style={styles.adressStyle}>{this.state.paramData.drop.add}</Text>
-                                    </View>
-                                    : null}
-                            </View>
-                        </View>
-
-                        
-
-                        <View style={styles.userDesc}>
-                            
-                            {this.state.paramData ?
-                                this.state.paramData.driver_image != '' ?
-                                    <Avatar
-                                        size="small"
-                                        rounded
-                                        source={{ uri: this.state.paramData.driver_image }}
-                                        activeOpacity={0.7}
-                                    />
-                                    : null
-                                : null}
-                            <View style={styles.userView}>
-                                
-                                {this.state.paramData && this.state.paramData.driver_name != '' ? <Text style={styles.personStyle}>{this.state.paramData.driver_name}</Text> : null}
-                                {this.state.paramData && this.state.paramData.driverRating > 0 ?
-
-                                    <View style={styles.personTextView}>
-                                        
-                                        <Text style={styles.ratingText}>{languageJSON.you_rated_text}</Text>
-                                        <Rating
-                                            showRating
-                                            type="star"
-                                            fractions={3}
-                                            startingValue={parseFloat(this.state.paramData.driverRating)}
-                                            readonly
-                                            imageSize={15}
-                                            onFinishRating={this.ratingCompleted}
-                                            style={{ paddingVertical: 10 }}
-                                            showRating={false}
-                                        />
-                                    </View>
-                                    : null}
-                            </View>
-                        </View>
-                        
-                        {this.state.paramData && this.state.paramData.carType ?
-                            <View style={[styles.userDesc, styles.avatarView]}>
-
-                                <Avatar
-                                    size="small"
-                                    rounded
-                                    source={this.state.paramData.carImage ? { uri: this.state.paramData.carImage } : null}
-                                    activeOpacity={0.7}
-                                />
-                                <View style={styles.userView}>
-                                    <Text style={styles.carNoStyle}>{this.state.paramData.vehicle_number ? this.state.paramData.vehicle_number : <Text> {languageJSON.car_no_not_found}</Text>}</Text>
-                                    <Text style={styles.carNoStyleSubText}>{this.state.paramData.carType}</Text>
-                                </View>
-                            </View>
-
-                            : null}
-
-                        <View style={styles.userDesc}>
-
-                            <View style={styles.userView}>
-                                <Text style={styles.textStyle}>{this.state.settings.symbol}{this.state.paramData && this.state.paramData.customer_paid ? parseFloat(this.state.paramData.customer_paid).toFixed(2) : this.state.paramData && this.state.paramData.estimate ? this.state.paramData.estimate : 0}</Text>
-                            </View>
-                        </View>
-                        */}
+                 
                     </View>
-
-                    {/* <View style={styles.locationView}> */}
-
-                    {this.state.paramData ? this.state.paramData.status == "ACCEPTED" ?
-                        <View style={styles.locationView}>
-                            <Button
-
-                                title={languageJSON.call_driver}
-
-                                loading={false}
-                                loadingProps={{ size: "large", color: colors.GREEN.default }}
-                                onPress={() => { this.onPressCall('tel:' + this.state.paramData.driver_contact) }}
-                                containerStyle={styles.callButtonContainerStyle1}
-                            />
-                            <Button
-                                title={languageJSON.track_now_button}
-                                loading={false}
-                                loadingProps={{ size: "large", color: colors.GREEN.default }}
-                                titleStyle={styles.buttonTitleText2}
-                                onPress={() => { this.trackNow(this.state.paramData) }}
-                                containerStyle={styles.callButtonContainerStyle2}
-                            />
-
-                        </View> : null : null}
-
-                    {this.state.paramData ? this.state.paramData.status == "START" ?
-                        <View style={styles.locationView2}>
-                            <Button
-                                title={languageJSON.track_now_button}
-                                loading={false}
-                                loadingProps={{ size: "large", color: colors.GREEN.default }}
-                                titleStyle={styles.buttonTitleText2}
-                                onPress={() => { this.trackNow(this.state.paramData) }}
-                                containerStyle={styles.callButtonContainerStyle2}
-                            />
-                        </View> : null : null}
 
                     {this.state.paramData && this.state.paramData.payment_status ? this.state.paramData.payment_status == "IN_PROGRESS" || this.state.paramData.payment_status == "PAID" || this.state.paramData.payment_status == "WAITING" ?
                         <View style={styles.billView}>

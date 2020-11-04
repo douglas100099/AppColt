@@ -484,7 +484,7 @@ export default class BookedCabScreen extends React.Component {
                         </View>
                         <View style={{ flex: 3, flexDirection: 'column', }}>
                             <Text style={{ marginHorizontal: 10, fontSize: 15, textAlign: 'center', fontFamily: 'Inter-Medium' }}> Essa corrida já está em andamento e você já ultrapassou o tempo máximo de cancelamento. </Text>
-                            <Text style={{ marginHorizontal: 10, fontSize: 15, marginTop: 10, textAlign: 'center', fontFamily: 'Inter-Medium' }}> Ao cancelar, será cobrada uma taxa no valor de R${parseFloat(this.state.settings.cancell_value)},00 na próxima corrida! </Text>
+                            <Text style={{ marginHorizontal: 10, fontSize: 15, marginTop: 10, textAlign: 'center', fontFamily: 'Inter-Medium' }}> Ao cancelar, será cobrada uma taxa no valor de R$3,00 na próxima corrida! </Text>
                         </View>
 
                         <View style={{}}>

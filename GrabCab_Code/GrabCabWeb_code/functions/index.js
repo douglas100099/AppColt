@@ -155,7 +155,7 @@ exports.manageWalletMoney = functions.region('southamerica-east1').database.ref(
     admin.database().ref('bookings/' + context.params.bookingsId).on("value", (data) => {
         let dataBooking = data.val();
         if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'PAID') {
-            const value = dataBooking.pagamente.usedWalletMoney
+            let value = dataBooking.pagamento.usedWalletMoney
 
             let walletMoney
             admin.database().ref("users/" + dataBooking.customer).once("value", (wallet) => {

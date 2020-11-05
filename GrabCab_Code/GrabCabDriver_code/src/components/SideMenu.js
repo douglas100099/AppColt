@@ -95,7 +95,7 @@ export default class SideMenu extends React.Component{
     //navigation to screens from side menu
     navigateToScreen = (route) => () => {
         const checkRide=firebase.database().ref('users/'+ firebase.auth().currentUser.uid  + '/emCorrida');
-        checkRide.on('value',checkRider=>{
+        checkRide.once('value',checkRider=>{
             if(!checkRider.val()){
                 const navigateAction = NavigationActions.navigate({
                   routeName: route

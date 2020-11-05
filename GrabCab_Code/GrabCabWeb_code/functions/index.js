@@ -158,10 +158,15 @@ exports.manageWalletMoney = functions.region('southamerica-east1').database.ref(
             let value = dataBooking.pagamento.usedWalletMoney
 
             let walletMoney
-            admin.database().ref("users/" + dataBooking.customer).once("value", (wallet) => {
-                walletMoney = wallet.val().walletBalance
+            admin.database().ref("users/" + dataBooking.customer).once("value", (userData) => {
+                if (userData.val()) {
+                    walletMoney = userData.val().walletBalance
+                }
             })
-            return (admin.database().ref("users/" + dataBooking.customer).update({ walletBalance: walletMoney - value }))
+            let newValue = parseFloat(walletMoney) - parseFloat(value)
+            return (admin.database().ref("users/" + dataBooking.customer).update({
+                walletBalance: newValue
+            }))
         }
     })
 })
@@ -203,7 +208,7 @@ exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref
 
                     admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove();
                     admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove();
-                    
+
                     return (admin.database().ref('bookings/' + bookingId).update({ status: 'REJECTED', }))
                 } else {
                     return 0;

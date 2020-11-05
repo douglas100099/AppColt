@@ -67,7 +67,7 @@ export default class MapScreen extends React.Component {
                 wallet: false
             },
             dontAnimateRegion: false,
-            geolocationFetchComplete: true,
+            geolocationFetchComplete: false,
         }
     }
 
@@ -94,7 +94,7 @@ export default class MapScreen extends React.Component {
     getLocationUser() {
         const userLocation = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location');
 
-        userLocation.on('value', location => {
+        userLocation.once('value', location => {
             if (location.val()) {
                 let loc = location.val();
 

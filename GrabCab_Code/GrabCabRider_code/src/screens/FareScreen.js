@@ -102,7 +102,7 @@ export default class FareScreen extends React.Component {
                     buttonDisabled: false,
                     selected: 0
                 }, () => {
-                    if (this._isMounted = false) {
+                    if (this._isMounted = true) {
                         this.getWalletBalance();
                         this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
                         const userData = firebase.database().ref('users/' + this.state.curUID.uid);

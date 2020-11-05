@@ -219,22 +219,6 @@ export default class FareScreen extends React.Component {
         })
     }
 
-    setNewWallerBalance(params) {
-        if (this.state.usedWalletMoney > 0) {
-            let tDate = new Date();
-            firebase.database().ref('users/' + this.state.curUID.uid + '/walletHistory').push({
-                type: 'Debit',
-                amount: this.state.usedWalletMoney,
-                date: tDate.toString(),
-                txRef: params,
-            }).then(() => {
-                firebase.database().ref('users/' + this.state.curUID.uid + '/').update({
-                    walletBalance: this.state.walletBallance - this.state.usedWalletMoney
-                })
-            })
-        }
-    }
-
     //Confirma corrida e começa a procurar motorista
     confirmarCorrida() {
         this.setState({ buttonDisabled: true });
@@ -263,6 +247,8 @@ export default class FareScreen extends React.Component {
             promoKey: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : "",
             cancellValue: this.state.cancellValue ? this.state.cancellValue : 0
         }
+
+        this.state.usedWalletMoney > 0 ? pagamentoObj.usedWallet = true : null
 
         var data = {
             carImage: this.state.carImage,
@@ -315,7 +301,6 @@ export default class FareScreen extends React.Component {
 
         firebase.database().ref('bookings/').push(data).then((res) => {
             var bookingKey = res.key;
-            this.setNewWallerBalance(bookingKey)
             firebase.database().ref('users/' + curuser + '/my-booking/' + bookingKey + '/').set(MyBooking).then((res) => {
 
                 let bookingItens = {
@@ -324,7 +309,7 @@ export default class FareScreen extends React.Component {
                 }
                 setTimeout(() => {
                     this.setState({ buttonDisabled: false }, () => {
-                        this.props.navigation.replace('BookedCab', { passData: bookingItens, riderName: data.customer_name, walletBallance: this.state.walletBallance - this.state.usedWalletMoney });
+                        this.props.navigation.replace('BookedCab', { passData: bookingItens, riderName: data.customer_name});
                     })
                 }, 500)
             })

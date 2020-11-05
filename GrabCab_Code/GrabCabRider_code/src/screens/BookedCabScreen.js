@@ -63,7 +63,6 @@ export default class BookedCabScreen extends React.Component {
     componentDidMount() {
         this._isMounted = true;
         this.state.bookingDataState == null ? this.getParamData = this.props.navigation.getParam('passData') : this.getParamData = this.state.bookingDataState
-        const walletBalance = this.props.navigation.getParam('walletBallance')
 
         this.searchDriver(this.getParamData.bokkingId)
 
@@ -82,7 +81,6 @@ export default class BookedCabScreen extends React.Component {
                 }
                 this.setState({
                     firstNameRider: currUserBooking.firstNameRider,
-                    walletBalance: walletBalance,
                     usedWalletMoney: currUserBooking.pagamento.usedWalletMoney,
                     coords: this.getParamData.coords,
                     region: region,
@@ -115,36 +113,17 @@ export default class BookedCabScreen extends React.Component {
                     })
                 }
                 else if (currUserBooking.status == "CANCELLED") {
-                    if (currUserBooking.pagamento.usedWalletMoney != 0) {
-                        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/').update({
-                            walletBalance: currUserBooking.pagamento.usedWalletMoney + walletBalance
-                        }).then(() => {
-
-                            alert("O motorista cancelou a corrida atual!")
-                            this.props
-                                .navigation
-                                .dispatch(StackActions.reset({
-                                    index: 0,
-                                    actions: [
-                                        NavigationActions.navigate({
-                                            routeName: 'Map',
-                                        }),
-                                    ],
-                                }))
-                        })
-                    } else {
-                        alert("O motorista cancelou a corrida atual!")
-                        this.props
-                            .navigation
-                            .dispatch(StackActions.reset({
-                                index: 0,
-                                actions: [
-                                    NavigationActions.navigate({
-                                        routeName: 'Map',
-                                    }),
-                                ],
-                            }))
-                    }
+                    alert("O motorista cancelou a corrida atual!")
+                    this.props
+                        .navigation
+                        .dispatch(StackActions.reset({
+                            index: 0,
+                            actions: [
+                                NavigationActions.navigate({
+                                    routeName: 'Map',
+                                }),
+                            ],
+                        }))
                 }
                 else if (currUserBooking.status == "EMBARQUE") {
                     this.setState({ embarque: true })
@@ -259,7 +238,7 @@ export default class BookedCabScreen extends React.Component {
         const ref = firebase.database().ref('bookings/' + param + '/');
         ref.on('value', snapshot => {
             let dataBooking = snapshot.val();
-            if( dataBooking.status == "REJECTED" ){
+            if (dataBooking.status == "REJECTED") {
                 dataBooking.status = "NEW"
             }
             this.setState({
@@ -323,12 +302,6 @@ export default class BookedCabScreen extends React.Component {
                         firebase.database().ref('bookings/' + this.state.currentBookingId + '/requestedDriver/').remove();
                     }
                 })
-            }).then(() => {
-                if (this.state.usedWalletMoney != 0) {
-                    firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/').update({
-                        walletBalance: this.state.usedWalletMoney + this.state.walletBalance
-                    })
-                }
             })
         //Atualiza o status da corrida em "bookings" no firebase
         firebase.database().ref(`bookings/` + this.state.currentBookingId + '/').update({
@@ -382,14 +355,7 @@ export default class BookedCabScreen extends React.Component {
                     }
                 }
             })
-        }).then(() => {
-            if (this.state.usedWalletMoney != 0) {
-                firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/').update({
-                    walletBalance: this.state.usedWalletMoney + this.state.walletBalance
-                })
-            }
         })
-
     }
 
     //Botao ligar pro motorista

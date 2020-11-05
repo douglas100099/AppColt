@@ -150,7 +150,7 @@ const RequestPushMsg = (token, msg) => {
     return true;
 }
 
-exports.timerIgnoreBooking = functions.database.ref('bookings/{bookingsId}/requestedDriver/').onCreate((snap, context) => {
+exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/requestedDriver/').onCreate((snap, context) => {
     const bookingId = context.params.bookingsId;
     const requested = snap.val()
 

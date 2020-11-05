@@ -129,7 +129,7 @@ export default class DriverStartTrip extends React.Component {
     }
 
     _getLocationAsync = async () => {
-        
+
         this.location = await Location.watchPositionAsync({
             accuracy: Location.Accuracy.Highest,
             distanceInterval: 1,
@@ -362,7 +362,7 @@ export default class DriverStartTrip extends React.Component {
                                 this.setState({ loader: false })
                                 this.props.navigation.replace('DriverTripComplete', { allDetails: this.state.allData, startTime: startTime, regionUser: this.state.region });
 
-                                this.sendPushNotification(this.state.allData.customer, this.state.allData.driver_firstName);
+                                this.sendPushNotification2(this.state.allData.customer, 'O motorista iniciou sua corrida.');
                             })
                         })
                     })
@@ -386,16 +386,6 @@ export default class DriverStartTrip extends React.Component {
                 1000
             );
         }
-    }
-
-    sendPushNotification(customerUID, firstName) {
-        const customerRoot = firebase.database().ref('users/' + customerUID);
-        customerRoot.once('value', customerData => {
-            if (customerData.val()) {
-                let allData = customerData.val()
-                RequestPushMsg(allData.pushToken ? allData.pushToken : null, firstName + ' o motorista iniciou sua corrida')
-            }
-        })
     }
 
     sendPushNotification2(customerUID, msg) {
@@ -502,11 +492,11 @@ export default class DriverStartTrip extends React.Component {
                     cancelledByDriver: true,
                 }).then(() => {
                     firebase.database().ref(`/users/` + this.state.curUid + '/').update({ queue: false })
-                    this.sendPushNotification2(this.state.rideDetails.customer, this.state.rideDetails.driver_firstName + ' cancelou a corrida atual!')
                 }).then(() => {
                     firebase.database().ref(`/users/` + this.state.curUid + '/emCorrida').remove()
                 })
             })
+        this.sendPushNotification2(this.state.rideDetails.customer, 'O motorista cancelou a corrida atual!')
     }
 
     dissMissCancel() {

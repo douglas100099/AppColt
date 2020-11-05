@@ -94,7 +94,7 @@ export default class RideList extends React.Component {
                         <View style={styles.headerView} onPress={() => this.onPressButton(item, index)}>
                             <View style={styles.nomePhoto}>
                                 <Image source={item.imageRider ? { uri: item.imageRider } : require('../../assets/images/profilePic.png')} style={styles.fotoPassageiro} />
-                                <Text style={styles.txtPassageiro}>{item.customer_name ? item.customer_name : 'Sem nome'}</Text>
+                                <Text style={styles.txtPassageiro}>{item.firstNameRider ? item.firstNameRider : 'Sem nome'}</Text>
                             </View>
                             <View style={{flexDirection: 'row'}}>
                                 <View style={{ marginRight: 5 }}>

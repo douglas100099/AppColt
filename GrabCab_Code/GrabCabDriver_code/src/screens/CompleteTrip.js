@@ -463,9 +463,6 @@ export default class DriverCompleteTrip extends React.Component {
                 animationType="fade"
                 transparent={true}
                 visible={this.state.loadingModal}
-                onRequestClose={() => {
-                    this.setState({ loadingModal: false })
-                }}
             >
                 <View style={{ flex: 1, backgroundColor: "rgba(22,22,22,0.8)", justifyContent: 'center', alignItems: 'center' }}>
                     <View style={{ width: '85%', backgroundColor: colors.WHITE, borderRadius: 10, flex: 1, maxHeight: 280 }}>

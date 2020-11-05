@@ -51,7 +51,13 @@ export default class DriverTripAccept extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            region: null,
+            region: {
+                latitude: 0,
+                longitude: 0,
+                latitudeDelta: 0.0143,
+                longitudeDelta: 0.0134,
+                angle: 0,
+            },
             starCount: 5,
             modalVisible: false,
             coords: [],
@@ -471,8 +477,12 @@ export default class DriverTripAccept extends React.Component {
                     this.setState({ chegouCorrida: true })
                 } else if (this.state.chegouCorrida == true) {
                     this.setState({ chegouCorrida: false })
-
                 }
+                /*if(snapshot.val().in_reject_progress) {
+                    if(snapshot.val().in_reject_progress.punido == false){
+                        this.props.navigation.replace('BookingCancel')
+                    }
+                }*/
                 this.setState({ tasklist: jobs.reverse() });
                 this.jobs = jobs;
             });
@@ -522,13 +532,14 @@ export default class DriverTripAccept extends React.Component {
                 driver_contact: this.state.driverDetails.mobile,
                 vehicle_number: this.state.driverDetails.vehicleNumber,
                 vehicleModelName: this.state.driverDetails.vehicleModel,
-                driverRating: this.state.driverDetails.ratings ? this.state.driverDetails.ratings.userrating : "0",
+                driverRating: this.state.driverDetails.ratings ? this.state.driverDetails.ratings.userrating : "5.0",
                 drop: item.drop,
                 pickup: item.pickup,
                 imageRider: item.imageRider ? item.imageRider : null,
                 estimateDistance: item.estimateDistance,
                 serviceType: item.serviceType,
                 status: "ACCEPTED",
+                firstNameRider: item.firstNameRider,
                 total_trip_time: item.total_trip_time,
                 trip_end_time: item.trip_end_time,
                 trip_start_time: item.trip_start_time,
@@ -547,8 +558,10 @@ export default class DriverTripAccept extends React.Component {
                 driver_contact: this.state.driverDetails.mobile,
                 vehicle_number: this.state.driverDetails.vehicleNumber,
                 vehicleModelName: this.state.driverDetails.vehicleModel,
-                driverRating: this.state.driverDetails.ratings ? this.state.driverDetails.ratings.userrating : "0",
+                driverRating: this.state.driverDetails.ratings ? this.state.driverDetails.ratings.userrating : "5.0",
                 drop: item.drop,
+                firstNameRider: item.firstNameRider,
+                ratingRider: item.ratingRider,
                 otp: item.otp,
                 pickup: item.pickup,
                 estimateDistance: item.estimateDistance,
@@ -578,7 +591,7 @@ export default class DriverTripAccept extends React.Component {
                     })
                     this.setState({ currentBId: item.bookingId }, () => {
                         this.checking();
-                        this.sendPushNotification(item.customer, item.driver_firstName + ' aceitou seu chamado, aguarde')
+                        this.sendPushNotification(item.customer, this.state.driverDetails.firstName + ' aceitou seu chamado, aguarde.')
                     })
                 }).catch((error) => {
                     console.log(error)
@@ -632,7 +645,7 @@ export default class DriverTripAccept extends React.Component {
                                 userDbRef.update({
                                     status: "REJECTED",
                                 });
-                                this.props.navigation.navigate('BookingCancel', { allDetails: item })
+                                this.props.navigation.navigate('BookingCancel')
                                 this.setState({ loader: false, chegouCorrida: false });
                             })
 
@@ -656,7 +669,7 @@ export default class DriverTripAccept extends React.Component {
                                 userDbRef.update({
                                     status: "REJECTED",
                                 });
-                                this.props.navigation.navigate('BookingCancel', { allDetails: item })
+                                this.props.navigation.navigate('BookingCancel')
                                 this.setState({ loader: false, chegouCorrida: false });
                             })
 
@@ -855,6 +868,13 @@ export default class DriverTripAccept extends React.Component {
                                                     <View style={styles.imgModalView}>
                                                         <Image source={item.imageRider ? { uri: item.imageRider } : require('../../assets/images/profilePic.png')} style={styles.imagemModal} />
                                                         <Text style={styles.nomePessoa}>{item.firstNameRider}</Text>
+                                                        <Icon
+                                                            size={18}
+                                                            name='ios-star'
+                                                            type='ionicon'
+                                                            color={colors.YELLOW.primary}
+                                                        />
+                                                        <Text style={{ fontSize: 14, fontFamily: 'Inter-Regular', color: colors.BLACK, marginLeft: 5, }}>{item.ratingRider}</Text>
                                                     </View>
                                                     <View style={styles.iconPgt}>
                                                         <View style={styles.formaPgt}>
@@ -865,7 +885,7 @@ export default class DriverTripAccept extends React.Component {
                                                                 color={colors.DEEPBLUE}
                                                             />
                                                         </View>
-                                                        <Text style={styles.txtTempo}>{item.pagamento.payment_mode}</Text>
+                                                    <Text style={styles.txtTempo}>{item.pagamento.payment_mode}</Text>
                                                     </View>
                                                 </View>
                                                 <View style={styles.viewmainBtn}>
@@ -915,7 +935,7 @@ export default class DriverTripAccept extends React.Component {
                                     </Marker.Animated>
                                     : null}
                             </MapView>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
                                 {/* BOTÃO MENU VOLTAR */}
                                 <TouchableOpacity style={styles.touchaVoltar} onPress={() => { this.props.navigation.toggleDrawer(); }}>
                                     <IconMenuSVG height={28} width={28} />
@@ -1167,7 +1187,8 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter-Bold',
         fontSize: 14,
         color: colors.BLACK,
-        marginLeft: 8
+        marginLeft: 8,
+        marginRight: 8,
     },
 
     viewEndereco: {

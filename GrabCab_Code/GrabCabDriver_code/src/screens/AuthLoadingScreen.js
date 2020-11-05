@@ -37,7 +37,8 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data: { locations }, error }
           firebase.database().ref('users/' + uid + '/location').update({
             add: address,
             lat: location.coords.latitude,
-            lng: location.coords.longitude
+            lng: location.coords.longitude,
+            angle: location.coords.heading,
           });
         }
       }
@@ -47,6 +48,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data: { locations }, error }
       alert('Ops, tivemos um problema ao gerar localização em segundo plano.')
     });
 });
+
 
 export class AuthLoadingScreen extends React.Component {
   constructor(props) {
@@ -61,11 +63,13 @@ export class AuthLoadingScreen extends React.Component {
       console.log('Setando update do background')
       await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
         accuracy: Location.Accuracy.Highest,
-        timeInterval: 2000,
         showsBackgroundLocationIndicator: true,
+        distanceInterval: 100,
+        foregroundService: {
+          notificationTitle: 'Colt Motorista',
+          notificationBody: 'Você está conectado',
+        }
       });
-      let verificar = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME)
-      console.log(verificar)
     } else {
       firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/driverActiveStatus').set(false);
       alert('Localização desativada, habilite sua localização')
@@ -210,7 +214,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: 'center',
     backgroundColor: "#1152FD"
-    
+
   },
   imagebg: {
     position: 'absolute',

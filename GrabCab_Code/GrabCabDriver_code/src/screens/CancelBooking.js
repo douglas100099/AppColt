@@ -21,6 +21,7 @@ export default class CancelBooking extends React.Component {
             blocked: false,
             motivo: "",
             numeroPorcentagem: '0%',
+            curUid: firebase.auth().currentUser.uid
         };
         this.motivo1 = "Motorista bloqueado, por atingir mais de 50% da taxa de cancelamento."
         this.motivo2 = "Motorista bloqueado, por antigir o limite diário de cancelamento em sequência."
@@ -28,11 +29,6 @@ export default class CancelBooking extends React.Component {
     }
 
     UNSAFE_componentWillMount() {
-        const allDetails = this.props.navigation.getParam('allDetails')
-        this.setState({
-            rideDetails: allDetails,
-            curUid: firebase.auth().currentUser.uid
-        })
         const userDetails = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/');
         userDetails.once('value', customerData => {
             let userDetails = customerData.val()

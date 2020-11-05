@@ -108,7 +108,7 @@ export default class DriverTripComplete extends React.Component {
                                         }),
                                     ],
                                 }))
-                            this.sendPushNotification2(item.customer, item.bookingId);
+                            this.sendPushNotification2(item.customer);
                         });
                     })
                 })
@@ -174,23 +174,12 @@ export default class DriverTripComplete extends React.Component {
         });
     }
 
-
-    sendPushNotification(customerUID, bookingId) {
+    sendPushNotification2(customerUID) {
         const customerRoot = firebase.database().ref('users/' + customerUID);
         customerRoot.once('value', customerData => {
             if (customerData.val()) {
                 let allData = customerData.val()
-                RequestPushMsg(allData.pushToken ? allData.pushToken : null, languageJSON.driver_requested_for_payment + bookingId)
-            }
-        })
-    }
-
-    sendPushNotification2(customerUID, bookingId) {
-        const customerRoot = firebase.database().ref('users/' + customerUID);
-        customerRoot.once('value', customerData => {
-            if (customerData.val()) {
-                let allData = customerData.val()
-                RequestPushMsg(allData.pushToken ? allData.pushToken : null, 'Sua corrida foi finalizada, obrigado por utilizar o Colt' + bookingId)
+                RequestPushMsg(allData.pushToken ? allData.pushToken : null, 'Sua corrida foi finalizada, obrigado por utilizar o Colt')
             }
         })
     }

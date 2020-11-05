@@ -216,7 +216,7 @@ export default class OnlineChat extends Component {
     );
   }
 
-  sendPushNotification(customerUID, bookingId, msg) {
+  sendPushNotification(customerUID, msg) {
     const customerRoot = firebase.database().ref('users/' + customerUID);
     customerRoot.once('value', customerData => {
       if (customerData.val()) {

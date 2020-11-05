@@ -49,6 +49,11 @@ export default class SideMenu extends React.Component{
                         let ratings = currentUserData.val().ratings.userrating
                         this.setState({rating: ratings })
                     }
+                    /*if(currentUserData.val().waiting_riders_list){
+                        if(this.props.navigation.state.routeName != 'DriverTripAccept'){
+                            this.props.navigation.navigate('DriverTripAccept')
+                        }
+                    }*/
                 });    
             }
         })
@@ -89,10 +94,17 @@ export default class SideMenu extends React.Component{
 
     //navigation to screens from side menu
     navigateToScreen = (route) => () => {
-        const navigateAction = NavigationActions.navigate({
-          routeName: route
-        });
-        this.props.navigation.dispatch(navigateAction);
+        const checkRide=firebase.database().ref('users/'+ firebase.auth().currentUser.uid  + '/emCorrida');
+        checkRide.on('value',checkRider=>{
+            if(!checkRider.val()){
+                const navigateAction = NavigationActions.navigate({
+                  routeName: route
+                });
+                this.props.navigation.dispatch(navigateAction);
+            } else {
+                alert('Você possuí uma corrida em andamento')
+            }
+        })
     }
 
     //sign out and clear all async storage

@@ -8,10 +8,12 @@ import {
     TouchableOpacity,
     Image,
     Platform,
+    TextInput,
+    Modal,
     AsyncStorage
 } from 'react-native';
 var { height, width } = Dimensions.get('window');
-import { Icon } from 'react-native-elements';
+import { Icon, Input } from 'react-native-elements';
 import * as firebase from 'firebase';
 import { colors } from '../common/theme';
 import ProfileSVG from '../SVG/ProfileSVG';
@@ -28,7 +30,9 @@ export default class RideDetails extends React.Component {
             currency: {
                 code: '',
                 symbol: ''
-            }
+            },
+            loadingModal: false,
+            loderTick: false,
         }
         this.getRideDetails = this.props.navigation.getParam('data');
         //console.log(this.getRideDetails)
@@ -66,6 +70,74 @@ export default class RideDetails extends React.Component {
 
 
         }
+    }
+
+    enviarProblema(){
+        this.setState({loaderTick: true})
+        let dbRef = firebase.database().ref('users/' + this.state.curUid + '/my_bookings/' + this.state.paramData.bookingUid + '/');
+        dbRef.once('value',(snap)=> {
+            let checkTick = snap.val()
+            if(checkTick && !checkTick.ticket){
+                if( this.state.msgProblema && this.state.msgProblema.length > 5 ){
+                    firebase.database().ref('tickets/' + 'corridas/').push({
+                        id: this.state.paramData ? this.state.paramData.bookingUid : null, 
+                        msg: this.state.msgProblema ? this.state.msgProblema : null,
+                    }).then(() =>
+                        {firebase.database().ref('users/' + this.state.curUid + '/my_bookings/' + this.state.paramData.bookingUid + '/' ).update({
+                            ticket: true
+                        })
+                    }).then(
+                        () => {this.setState({loadingModal: false, loaderTick: false})}
+                    )
+                } else {
+                    alert('Digite corretamente o problema.')
+                    this.setState({loaderTick: false})
+                }
+            } else {
+                alert('Você já possuí um ticket aberto para essa corrida, aguarde seu ticket ser resolvido.')
+                this.setState({loadingModal: false})
+            }
+        })
+    }
+
+    loading() {
+        return (
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={this.state.loadingModal}
+                onRequestClose={() => {
+                    this.setState({ loadingModal: false })
+                }}
+            >
+                <View style={{ flex: 1, backgroundColor: "rgba(22,22,22,0.8)", justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ width: '85%', backgroundColor: colors.WHITE, borderRadius: 10, flex: 1, maxHeight: 350 }}>
+                        <View style={{ flexDirection: 'column', flex: 1 }}>
+                            <View>
+                                <Text style={{ color: colors.BLACK, fontSize: 20, fontFamily: 'Inter-Bold', marginTop: 15, textAlign: 'center' }}>Informe o problema.</Text>
+                                <TextInput
+                                    style={{ marginTop: 10, marginBottom: 22, paddingTop: 10, paddingLeft: 8, marginHorizontal: 15, borderWidth: 1, borderColor: colors.GREY1, borderRadius: 10, height: 200, textAlignVertical: 'top', fontSize: 14, color: colors.BLACK, fontFamily: 'Inter-Regular' }}
+                                    maxLength={150}
+                                    onChangeText={(text) => this.setState({ msgProblema: text})}
+                                    editable={this.state.loaderTick}
+                                    multiline={true}
+                                    numberOfLines={6}
+                                />
+                            </View>
+                            <View>
+                                <TouchableOpacity 
+                                    style={{justifyContent: 'center', alignItems: 'center', height: 50, borderRadius: 15, marginHorizontal: 50, backgroundColor: colors.DEEPBLUE}} 
+                                    onPress={() => this.enviarProblema()}
+                                    disabled={this.state.loderTick}
+                                >
+                                    <Text style={{ fontSize: 16, color: colors.WHITE, fontFamily: 'Inter-Bold' }}>Enviar</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+        )
     }
 
     //go back
@@ -107,129 +179,129 @@ export default class RideDetails extends React.Component {
                     </View>
                 </View>
                 <ScrollView>
-                <View style={styles.mainMap}>
-                    <Text style={{ marginRight: 20, fontSize: 14, fontFamily: 'Inter-Bold', color: colors.BLACK, alignSelf: 'flex-end' }}>{this.state.paramData ? this.dataAtualFormatada() : null}</Text>
-                    <View style={styles.viewEndereco}>
-                        <View style={styles.endereco}>
-                            <View style={styles.partida}>
-                                <Text style={styles.txtHrfim}>{this.state.paramData ? this.state.paramData.trip_start_time : null}</Text>
-                                <Icon
-                                    name='arrow-right-circle'
-                                    size={15}
-                                    type='feather'
-                                    color={colors.DEEPBLUE}
-                                />
-                                <Text style={styles.txtPartida}>{this.state.paramData ? this.state.paramData.pickup.add : null}</Text>
-                            </View>
-                            <View style={styles.destino}>
-                                <Text style={styles.txtHrfim}>{this.state.paramData ? this.state.paramData.trip_end_time : null}</Text>
-                                <Icon
-                                    name='arrow-down-circle'
-                                    size={15}
-                                    type='feather'
-                                    color={colors.RED}
-                                />
-                                <Text style={styles.txtPartida}>{this.state.paramData ? this.state.paramData.drop.add : null}</Text>
-                            </View>
-                        </View>
-                    </View>
-                </View>
-                <View style={styles.viewDriver}>
-                    <View style={styles.viewPassageiro}>
-                        <Text style={styles.txtPassageiro}>Passageiro</Text>
-                    </View>
-                    <View style={styles.viewInfoPassageiro}>
-                        <View style={styles.viewSubInfo}>
-                            <View style={styles.photoPassageiro}>
-                                {this.state.paramData ? this.state.paramData.imageRider ? 
-                                    <Image source={{ uri: this.state.paramData.imageRider }} style={styles.imagemPerfil} />
-                                : 
-                                    <ProfileSVG/>
-                                :
-                                    <ProfileSVG/>
-                                }
-                            </View>
-                            <View style={styles.infoPassageiro}>
-                                <Text style={styles.txtNomePassageiro}>{this.state.paramData ? this.state.paramData.customer_name : null}</Text>
-                                <View style={{ flexDirection: 'row' }}>
+                    <View style={styles.mainMap}>
+                        <Text style={{ marginRight: 20, fontSize: 14, fontFamily: 'Inter-Bold', color: colors.BLACK, alignSelf: 'flex-end' }}>{this.state.paramData ? this.dataAtualFormatada() : null}</Text>
+                        <View style={styles.viewEndereco}>
+                            <View style={styles.endereco}>
+                                <View style={styles.partida}>
+                                    <Text style={styles.txtHrfim}>{this.state.paramData ? this.state.paramData.trip_start_time : null}</Text>
                                     <Icon
-                                        name='ios-star'
-                                        size={18}
-                                        type='ionicon'
-                                        color={colors.YELLOW.primary}
+                                        name='arrow-right-circle'
+                                        size={15}
+                                        type='feather'
+                                        color={colors.DEEPBLUE}
                                     />
-                                    <Text style={{ fontSize: 14, fontFamily: 'Inter-Regular', color: colors.BLACK, marginLeft: 5, }}>5.0</Text>
+                                    <Text style={styles.txtPartida}>{this.state.paramData ? this.state.paramData.pickup.add : null}</Text>
+                                </View>
+                                <View style={styles.destino}>
+                                    <Text style={styles.txtHrfim}>{this.state.paramData ? this.state.paramData.trip_end_time : null}</Text>
+                                    <Icon
+                                        name='arrow-down-circle'
+                                        size={15}
+                                        type='feather'
+                                        color={colors.RED}
+                                    />
+                                    <Text style={styles.txtPartida}>{this.state.paramData ? this.state.paramData.drop.add : null}</Text>
                                 </View>
                             </View>
                         </View>
                     </View>
-                </View>
-                <View style={styles.viewPgt}>
-                    <View style={styles.viewPagamento}>
-                        <Text style={styles.txtPagamento}>Pagamento</Text>
-                    </View>
-                    <View style={styles.viewInfosPgt}>
-                        <View style={styles.mainPgt}>
-                            <View style={{ flexDirection: 'row' }}>
-                                <Icon
-                                    name='ios-cash'
-                                    size={25}
-                                    type='ionicon'
-                                    color={colors.DEEPBLUE}
-                                />
-                                <Text style={styles.txtMetodo}>{this.state.paramData ? this.state.paramData.pagamento.payment_mode ? this.state.paramData.pagamento.payment_mode : 'Indefinido' : 'Indefinido'}</Text>
+                    <View style={styles.viewDriver}>
+                        <View style={styles.viewPassageiro}>
+                            <Text style={styles.txtPassageiro}>Passageiro</Text>
+                        </View>
+                        <View style={styles.viewInfoPassageiro}>
+                            <View style={styles.viewSubInfo}>
+                                <View style={styles.photoPassageiro}>
+                                    {this.state.paramData ? this.state.paramData.imageRider ?
+                                        <Image source={{ uri: this.state.paramData.imageRider }} style={styles.imagemPerfil} />
+                                        :
+                                        <ProfileSVG />
+                                        :
+                                        <ProfileSVG />
+                                    }
+                                </View>
+                                <View style={styles.infoPassageiro}>
+                                    <Text style={styles.txtNomePassageiro}>{this.state.paramData ? this.state.paramData.firstNameRider : null}</Text>
+                                    <View style={{ flexDirection: 'row' }}>
+                                        <Icon
+                                            name='ios-star'
+                                            size={18}
+                                            type='ionicon'
+                                            color={colors.YELLOW.primary}
+                                        />
+                                        <Text style={{ fontSize: 14, fontFamily: 'Inter-Regular', color: colors.BLACK, marginLeft: 5, }}>5.0</Text>
+                                    </View>
+                                </View>
                             </View>
-                            <Text style={styles.txtDinheiro}>R$ {this.state.paramData ? parseFloat(this.state.paramData.pagamento.trip_cost).toFixed(2) : ' 0'}</Text>
                         </View>
                     </View>
-                </View>
-                <View style={{marginTop: 10}}>
-                    <View style={{marginLeft: 15}}>
-                        <Text style={styles.txtPagamento}>Detalhes</Text>
+                    <View style={styles.viewPgt}>
+                        <View style={styles.viewPagamento}>
+                            <Text style={styles.txtPagamento}>Pagamento</Text>
+                        </View>
+                        <View style={styles.viewInfosPgt}>
+                            <View style={styles.mainPgt}>
+                                <View style={{ flexDirection: 'row' }}>
+                                    <Icon
+                                        name='ios-cash'
+                                        size={25}
+                                        type='ionicon'
+                                        color={colors.DEEPBLUE}
+                                    />
+                                    <Text style={styles.txtMetodo}>{this.state.paramData && this.state.paramData.pagamento.payment_mode ? this.state.paramData.pagamento.payment_mode : 'Indefinido'}</Text>
+                                </View>
+                                <Text style={styles.txtDinheiro}>R$ {this.state.paramData ? parseFloat(this.state.paramData.pagamento.trip_cost).toFixed(2) : ' 0'}</Text>
+                            </View>
+                        </View>
                     </View>
-                    <View style={{ marginTop: 5, backgroundColor: colors.GREY1, paddingVertical: 20, borderRadius: 15, marginHorizontal: 15,}}>
-                        <Text style={styles.itemDetalhes}>Preço da corrida: R$ {this.state.paramData && this.state.paramData.pagamento.trip_cost ? parseFloat(this.state.paramData.pagamento.trip_cost).toFixed(2) : ' 0'}</Text>
-                        <Text style={styles.itemDetalhes}>Preço estimado da corrida: R$ {this.state.paramData && this.state.paramData.pagamento.estimate ? parseFloat(this.state.paramData.pagamento.estimate).toFixed(2) : ' 0'}</Text>
+                    <View style={{ marginTop: 10 }}>
+                        <View style={{ marginLeft: 15 }}>
+                            <Text style={styles.txtPagamento}>Detalhes</Text>
+                        </View>
+                        <View style={{ marginTop: 5, backgroundColor: colors.GREY1, paddingVertical: 20, borderRadius: 15, marginHorizontal: 15, }}>
+                            <Text style={styles.itemDetalhes}>Preço da corrida: R$ {this.state.paramData && this.state.paramData.pagamento.trip_cost ? parseFloat(this.state.paramData.pagamento.trip_cost).toFixed(2) : ' 0'}</Text>
 
-                        {this.state.paramData ?
-                        (this.state.paramData.pagamento.discount_amount > 0 ?
-                        <Text style={styles.itemDetalhes}>Desconto aplicado: R$ {parseFloat(this.state.paramData.pagamento.discount_amount).toFixed(2)}</Text>
-                        : null)
-                        : null}
+                            <Text style={styles.itemDetalhes}>Preço estimado da corrida: R$ {this.state.paramData && this.state.paramData.pagamento.estimate ? parseFloat(this.state.paramData.pagamento.estimate).toFixed(2) : ' 0'}</Text>
 
-                        {this.state.paramData ?
-                        (this.state.paramData.pagamento.cashPaymentAmount > 0 ?
-                        <Text style={styles.itemDetalhes}>Valor pago dinheiro: R$ {parseFloat(this.state.paramData.pagamento.cashPaymentAmount).toFixed(2)}</Text>
-                        : null)
-                        : null}
+                            {this.state.paramData ?
+                                (this.state.paramData.pagamento.discount_amount > 0 ?
+                                    <Text style={styles.itemDetalhes}>Desconto aplicado: R$ {parseFloat(this.state.paramData.pagamento.discount_amount).toFixed(2)}</Text>
+                                    : null)
+                                : null}
 
-                        {this.state.paramData ?
-                        (this.state.paramData.pagamento.usedWalletMoney > 0 ?
-                        <Text style={styles.itemDetalhes}>Valor pago carteira: R$ {parseFloat(this.state.paramData.pagamento.usedWalletMoney).toFixed(2)}</Text>
-                        : null)
-                        : null}
+                            {this.state.paramData ?
+                                (this.state.paramData.pagamento.cashPaymentAmount > 0 ?
+                                    <Text style={styles.itemDetalhes}>Valor pago dinheiro: R$ {parseFloat(this.state.paramData.pagamento.cashPaymentAmount).toFixed(2)}</Text>
+                                    : null)
+                                : null}
 
-                        {this.state.paramData ?
-                        (this.state.paramData.pagamento.customer_paid > 0 ?
-                        <Text style={styles.itemDetalhes}>Pago pelo passageiro: R$ {parseFloat(this.state.paramData.pagamento.customer_paid).toFixed(2)}</Text>
-                        : null)
-                        : null}
-                           
-                        <Text style={styles.itemDetalhes}>Método de pagamento: {this.state.paramData && this.state.paramData.pagamento.payment_mode ? parseFloat(this.state.paramData.pagamento.payment_mode).toFixed(2) : 'Dinheiro'}</Text>
+                            {this.state.paramData ?
+                                (this.state.paramData.pagamento.usedWalletMoney > 0 ?
+                                    <Text style={styles.itemDetalhes}>Valor pago carteira: R$ {parseFloat(this.state.paramData.pagamento.usedWalletMoney).toFixed(2)}</Text>
+                                    : null)
+                                : null}
 
-                        <Text style={styles.itemDetalhes}>Ganho do motorista: R$ {this.state.paramData && this.state.paramData.pagamento.driver_share ? parseFloat(this.state.paramData.pagamento.driver_share).toFixed(2) : ' 0'}</Text>
-                        
-                        <Text style={styles.itemDetalhes}>Taxa do Colt: R$ {this.state.paramData && this.state.paramData.pagamento.convenience_fees ? parseFloat(this.state.paramData.pagamento.convenience_fees).toFixed(2) : ' 0'}</Text>
+                            {this.state.paramData ?
+                                (this.state.paramData.pagamento.customer_paid > 0 ?
+                                    <Text style={styles.itemDetalhes}>Pago pelo passageiro: R$ {parseFloat(this.state.paramData.pagamento.customer_paid).toFixed(2)}</Text>
+                                    : null)
+                                : null}
+
+                            <Text style={styles.itemDetalhes}>Ganho do motorista: R$ {this.state.paramData && this.state.paramData.pagamento.driver_share ? parseFloat(this.state.paramData.pagamento.driver_share).toFixed(2) : ' 0'}</Text>
+
+                            <Text style={styles.itemDetalhes}>Taxa do Colt: R$ {this.state.paramData && this.state.paramData.pagamento.convenience_fees ? parseFloat(this.state.paramData.pagamento.convenience_fees).toFixed(2) : ' 0'}</Text>
+                        </View>
                     </View>
-                </View>
-                <View style={styles.viewBtn}>
-                    <View style={{justifyContent: 'flex-end' }}>
-                        <TouchableOpacity style={styles.btn}>
-                            <Text style={{ fontSize: 16, color: colors.WHITE, fontFamily: 'Inter-Bold' }}>Relatar problema</Text>
-                        </TouchableOpacity>
+                    <View style={styles.viewBtn}>
+                        <View style={{ justifyContent: 'flex-end' }}>
+                            <TouchableOpacity style={styles.btn} onPress={() => this.setState({ loadingModal: true })}>
+                                <Text style={{ fontSize: 16, color: colors.WHITE, fontFamily: 'Inter-Bold' }}>Relatar problema</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                </View>
                 </ScrollView>
+                {this.loading()}
             </View>
         )
     }

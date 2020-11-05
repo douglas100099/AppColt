@@ -4,14 +4,11 @@ import {
     StyleSheet,
     View,
     Text,
-    StatusBar,
     TouchableOpacity,
-    TouchableWithoutFeedback
   } from 'react-native';
-import { Header, Icon } from 'react-native-elements';
+import { Icon } from 'react-native-elements';
 import { colors } from '../common/theme';
 import * as firebase from 'firebase';
-import  languageJSON  from '../common/language';
 
 export default class RideListPage extends React.Component {
     constructor(props){

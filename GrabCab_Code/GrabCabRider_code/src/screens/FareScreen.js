@@ -102,12 +102,14 @@ export default class FareScreen extends React.Component {
                     buttonDisabled: false,
                     selected: 0
                 }, () => {
-                    this.getWalletBalance();
-                    this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
-                    const userData = firebase.database().ref('users/' + this.state.curUID.uid);
-                    userData.once('value', userData => {
-                        this.setState({ userDetails: userData.val() });
-                    })
+                    if (this._isMounted = false) {
+                        this.getWalletBalance();
+                        this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
+                        const userData = firebase.database().ref('users/' + this.state.curUID.uid);
+                        userData.once('value', userData => {
+                            this.setState({ userDetails: userData.val() });
+                        })
+                    }
                 })
             }
         })
@@ -557,7 +559,7 @@ export default class FareScreen extends React.Component {
                     <TouchableOpacity style={styles.btnConfirmarPromoModal} disabled={this.state.checkPromoBtn} onPress={() => { this.checkPromo() }}>
                         <Text style={styles.textConfirmarPromoModal}> Confirmar </Text>
                     </TouchableOpacity>
-                    
+
                     <View style={{ justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
                         <Text style={{ fontFamily: 'Inter-Medium', fontSize: 15 }}> ou escolha uma das promoções abaixo. </Text>
                     </View>

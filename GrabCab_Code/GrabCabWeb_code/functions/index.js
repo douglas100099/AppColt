@@ -155,35 +155,37 @@ exports.timerIgnoreBooking = functions.database.ref('bookings/{bookingsId}/reque
     const requested = snap.val()
 
     setTimeout(() => {
-        admin.database().ref('bookings/' + bookingId + '/requestedDriver/').once("value", (snapshot) => {
-            admin.database().ref('bookings/' + bookingId).once("value", data =>{ 
-                if (requested === snapshot.val() && data.status === 'NEW') {
-                    console.log("ENTROU NO IF")
-                    /*let arrayRejected = []
+        admin.database().ref('bookings/' + bookingId).once("value", (data) => {
+            let dataBooking = data.val()
+            if (dataBooking) {
+
+                if (requested === dataBooking['requestedDriver'] && dataBooking.status === 'NEW') {
+
+                    let arrayRejected = []
                     if( data.rejectedDrivers ){
                         for( let key in data.rejectedDrivers ){
                             data.rejectedDrivers[key]
                             arrayRejected.push(data.rejectedDrivers[key])
                         }
                         arrayRejected.push(requested)
-                        admin.database().ref('/bookings/' + bookingId).update({
+                        admin.database().ref('bookings/' + bookingId).update({
                             rejectedDrivers: arrayRejected
                         }) 
                     } else {
                         arrayRejected.push(requested)
-                        admin.database().ref('/bookings/' + bookingId).update({
+                        admin.database().ref('bookings/' + bookingId).update({
                             rejectedDrivers: arrayRejected
                         })
                     }
                     
-                    admin.database().ref("/users/" + requested + "/in_reject_progress").update({
+                    admin.database().ref("users/" + requested + "/in_reject_progress").update({
                         punido: false
                     });
-                    admin.database().ref("/users/" + requested ).update({
+                    admin.database().ref("users/" + requested ).update({
                         driverActiveStatus: false,
                         queue: false
-                    });*/
-                    
+                    });
+
                     admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove();
                     admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove();
                     admin.database().ref('bookings/' + bookingId).update({
@@ -194,9 +196,10 @@ exports.timerIgnoreBooking = functions.database.ref('bookings/{bookingsId}/reque
                     console.log("RETORNOU FALSE")
                     return false;
                 }
-            })
+            }
         })
-    }, 5000)
+
+    }, 10000)
 })
 
 exports.bookingScheduler = functions.pubsub.schedule('every 5 minutes').onRun((context) => {

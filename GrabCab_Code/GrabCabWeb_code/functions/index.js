@@ -150,6 +150,22 @@ const RequestPushMsg = (token, msg) => {
     return true;
 }
 
+exports.manageWalletMoney = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/usedWallet').onCreate((snap, context) => {
+
+    admin.database().ref('bookings/' + context.params.bookingsId).on("value", (data) => {
+        let dataBooking = data.val();
+        if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'PAID') {
+            const value = dataBooking.pagamente.usedWalletMoney
+
+            let walletMoney
+            admin.database().ref("users/" + dataBooking.customer).once("value", (wallet) => {
+                walletMoney = wallet.val().walletBalance
+            })
+            return (admin.database().ref("users/" + dataBooking.customer).update({ walletBalance: walletMoney - value }))
+        }
+    })
+})
+
 exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/requestedDriver/').onCreate((snap, context) => {
     const bookingId = context.params.bookingsId;
     const requested = snap.val()
@@ -158,47 +174,42 @@ exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref
         admin.database().ref('bookings/' + bookingId).once("value", (data) => {
             let dataBooking = data.val()
             if (dataBooking) {
-
                 if (requested === dataBooking['requestedDriver'] && dataBooking.status === 'NEW') {
 
                     let arrayRejected = []
-                    if( data.rejectedDrivers ){
-                        for( let key in data.rejectedDrivers ){
+                    if (data.rejectedDrivers) {
+                        for (let key in data.rejectedDrivers) {
                             data.rejectedDrivers[key]
                             arrayRejected.push(data.rejectedDrivers[key])
                         }
                         arrayRejected.push(requested)
                         admin.database().ref('bookings/' + bookingId).update({
                             rejectedDrivers: arrayRejected
-                        }) 
+                        })
                     } else {
                         arrayRejected.push(requested)
                         admin.database().ref('bookings/' + bookingId).update({
                             rejectedDrivers: arrayRejected
                         })
                     }
-                    
+
                     admin.database().ref("users/" + requested + "/in_reject_progress").update({
                         punido: false
                     });
-                    admin.database().ref("users/" + requested ).update({
+                    admin.database().ref("users/" + requested).update({
                         driverActiveStatus: false,
                         queue: false
                     });
 
                     admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove();
                     admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove();
-                    admin.database().ref('bookings/' + bookingId).update({
-                        status: 'REJECTED',
-                    });
-                    return true;
+                    
+                    return (admin.database().ref('bookings/' + bookingId).update({ status: 'REJECTED', }))
                 } else {
-                    console.log("RETORNOU FALSE")
-                    return false;
+                    return 0;
                 }
             }
         })
-
     }, 10000)
 })
 

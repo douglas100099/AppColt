@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
     },
     mainViewStyle: {
         flex: 1,
-        backgroundColor: colors.WHITE,
+        //backgroundColor: colors.WHITE,
         flexDirection: 'column',
     },
     pickUpStyle: {

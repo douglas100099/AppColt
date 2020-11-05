@@ -147,13 +147,10 @@ export default class BookedCabScreen extends React.Component {
                     }
                 }
                 else if (currUserBooking.status == "EMBARQUE") {
-
                     this.setState({ embarque: true })
                 } else if (currUserBooking.status == "START") {
-
                     this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
                 } else if (currUserBooking.status == "REJECTED") {
-
                     this.searchDriver(this.getParamData.bokkingId);
                 }
             }
@@ -242,6 +239,7 @@ export default class BookedCabScreen extends React.Component {
 
                         //Atualiza o Bookings do firebase com os dados do motorista selecionado
                         firebase.database().ref('bookings/' + param + '/').update({
+                            status: "NEW",
                             requestedDriver: driverUidnovo
                         }).then((res) => {
                             this.setState({ bookingDataState: bookingData })
@@ -251,7 +249,7 @@ export default class BookedCabScreen extends React.Component {
                     setTimeout(() => {
                         if (this.state.driverSerach)
                             this.searchDriver(param)
-                    }, 1500)
+                    }, 1000)
                 }
             }
         })
@@ -260,8 +258,12 @@ export default class BookedCabScreen extends React.Component {
     getBookingData(param) {
         const ref = firebase.database().ref('bookings/' + param + '/');
         ref.on('value', snapshot => {
+            let dataBooking = snapshot.val();
+            if( dataBooking.status == "REJECTED" ){
+                dataBooking.status = "NEW"
+            }
             this.setState({
-                bookingdataDetails: snapshot.val()
+                bookingdataDetails: dataBooking
             })
         })
     }
@@ -416,7 +418,7 @@ export default class BookedCabScreen extends React.Component {
         return (
             <Modal
                 animationType='slide'
-                transparent={false}
+                transparent={true}
                 visible={this.state.modalVisible}
                 onRequestClose={() => {
                     this.setState({ modalVisible: false })
@@ -465,7 +467,7 @@ export default class BookedCabScreen extends React.Component {
         return (
             <Modal
                 animationType="slide"
-                transparent={false}
+                transparent={true}
                 visible={this.state.modalInfoVisible}
                 onRequestClose={() => {
                     this.setState({ modalInfoVisible: false })

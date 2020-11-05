@@ -64,7 +64,7 @@ export default class ProfileScreen extends React.Component {
             userData.on('value', userData => {
                 if (userData.val()) {
                     var str = userData.val().location.add
-                    var tempAdd = str.split(",")[3] + ',' + str.split(",")[4];
+                    var tempAdd = str.split(",")[2] + ',' + str.split(",")[4];
                     this.setState({ tempAddress: tempAdd, userImage: userData.val().profile_image });
                     this.setState(userData.val(), (res) => {
                     });

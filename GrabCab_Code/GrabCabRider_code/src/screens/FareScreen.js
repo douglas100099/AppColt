@@ -984,15 +984,9 @@ export default class FareScreen extends React.Component {
                         <View style={[styles.viewBotao, {
                             shadowOpacity: this.state.buttonDisabled ? 0 : 0.4
                         }]}>
-                            <Button
-                                title={languageJSON.confrim_booking}
-                                loading={false}
-                                loadingProps={{ size: "large", color: colors.BLUE.default.primary }}
-                                titleStyle={styles.buttonText}
-                                disabled={this.state.buttonDisabled}
-                                onPress={() => { this.confirmarCorrida() }}
-                                buttonStyle={styles.confirmButtonStyle}
-                            />
+                            <TouchableOpacity style={styles.confirmButtonStyle} disabled={this.state.buttonDisabled} onPress={() => { this.confirmarCorrida() }}>
+                                <Text style={styles.buttonText}> Confirmar corrida </Text>
+                            </TouchableOpacity>
                         </View>
                     </View>
                     : null

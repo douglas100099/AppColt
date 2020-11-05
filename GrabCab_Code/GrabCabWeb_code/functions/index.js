@@ -150,13 +150,13 @@ const RequestPushMsg = (token, msg) => {
     return true;
 }
 
-exports.timerIgnoreBooking = functions.database.ref('/bookings/{bookingsId}/requestedDriver/').onCreate((snap, context) => {
+exports.timerIgnoreBooking = functions.database.ref('bookings/{bookingsId}/requestedDriver/').onCreate((snap, context) => {
     const bookingId = context.params.bookingsId;
     const requested = snap.val()
 
     setTimeout(() => {
-        admin.database().ref('/bookings/' + bookingId + '/requestedDriver/').once("value", (snapshot) => {
-            admin.database().ref('/bookings/' + bookingId).once("value", data =>{ 
+        admin.database().ref('bookings/' + bookingId + '/requestedDriver/').once("value", (snapshot) => {
+            admin.database().ref('bookings/' + bookingId).once("value", data =>{ 
                 if (requested === snapshot.val() && data.status === 'NEW') {
                     console.log("ENTROU NO IF")
                     /*let arrayRejected = []
@@ -184,9 +184,9 @@ exports.timerIgnoreBooking = functions.database.ref('/bookings/{bookingsId}/requ
                         queue: false
                     });*/
                     
-                    admin.database().ref("/users/" + requested + "/waiting_riders_list/" + bookingId).remove();
-                    admin.database().ref("/bookings/" + bookingId + "/requestedDriver").remove();
-                    admin.database().ref('/bookings/' + bookingId).update({
+                    admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove();
+                    admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove();
+                    admin.database().ref('bookings/' + bookingId).update({
                         status: 'REJECTED',
                     });
                     return true;
@@ -196,7 +196,7 @@ exports.timerIgnoreBooking = functions.database.ref('/bookings/{bookingsId}/requ
                 }
             })
         })
-    }, 10000)
+    }, 5000)
 })
 
 exports.bookingScheduler = functions.pubsub.schedule('every 5 minutes').onRun((context) => {

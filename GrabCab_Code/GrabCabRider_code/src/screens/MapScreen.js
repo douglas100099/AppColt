@@ -67,7 +67,7 @@ export default class MapScreen extends React.Component {
                 wallet: false
             },
             dontAnimateRegion: false,
-            geolocationFetchComplete: false,
+            geolocationFetchComplete: true,
         }
     }
 

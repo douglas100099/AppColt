@@ -190,15 +190,15 @@ exports.addDetailsToPromo = functions.region('southamerica-east1').database.ref(
 
                 let user_avail = offerData.user_avail;
                 if (user_avail) {
-                    admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
-                        userId: dataBooking.customer
-                    })
                     admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: user_avail.count + 1 })
-                } else {
                     admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
                         userId: dataBooking.customer
                     })
+                } else {
                     admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: 1 })
+                    admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
+                        userId: dataBooking.customer
+                    })
                 }
             })
         }
@@ -214,6 +214,17 @@ exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref
             let dataBooking = data.val()
             if (dataBooking) {
                 if (requested === dataBooking['requestedDriver'] && dataBooking.status === 'NEW') {
+
+                    admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove();
+                    admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove();
+                    
+                    admin.database().ref("users/" + requested + "/in_reject_progress").update({
+                        punido: false
+                    });
+                    admin.database().ref("users/" + requested).update({
+                        driverActiveStatus: false,
+                        queue: false
+                    });
 
                     let arrayRejected = []
                     if (data.rejectedDrivers) {
@@ -232,20 +243,7 @@ exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref
                         })
                     }
 
-                    admin.database().ref("users/" + requested + "/in_reject_progress").update({
-                        punido: false
-                    });
-                    admin.database().ref("users/" + requested).update({
-                        driverActiveStatus: false,
-                        queue: false
-                    });
-
-                    admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove();
-                    admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove();
-
-                    return (admin.database().ref('bookings/' + bookingId).update({ status: 'REJECTED', }))
-                } else {
-                    return 0;
+                    admin.database().ref('bookings/' + bookingId).update({ status: 'REJECTED' })
                 }
             }
         })

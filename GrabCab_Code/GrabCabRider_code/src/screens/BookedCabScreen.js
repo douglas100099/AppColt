@@ -126,16 +126,18 @@ export default class BookedCabScreen extends React.Component {
                         }))
                 }
                 else if (currUserBooking.status == "TIMEOUT") {
-                    this.props
-                        .navigation
-                        .dispatch(StackActions.reset({
-                            index: 0,
-                            actions: [
-                                NavigationActions.navigate({
-                                    routeName: 'Map',
-                                }),
-                            ],
-                        }))
+                    firebase.database().ref(`/users/` + this.state.currentUser.uid + '/my-booking/' + this.state.currentBookingId + '/').remove().then(() => {
+                        this.props
+                            .navigation
+                            .dispatch(StackActions.reset({
+                                index: 0,
+                                actions: [
+                                    NavigationActions.navigate({
+                                        routeName: 'Map',
+                                    }),
+                                ],
+                            }))
+                    })
                 }
                 else if (currUserBooking.status == "EMBARQUE") {
                     this.setState({ embarque: true })
@@ -306,10 +308,7 @@ export default class BookedCabScreen extends React.Component {
                 requestedDriver.once('value', drivers => {
                     if (drivers.val()) {
                         let requestedDriver = drivers.val();
-                        var ref = firebase.database().ref(`/users/` + requestedDriver + '/waiting_riders_list/' + this.state.currentBookingId + '/')
-                        if (ref) {
-                            ref.remove();
-                        }
+                        firebase.database().ref(`/users/` + requestedDriver + '/waiting_riders_list/' + this.state.currentBookingId + '/').remove()
                         firebase.database().ref('bookings/' + this.state.currentBookingId + '/requestedDriver/').remove();
                     }
                 })
@@ -319,6 +318,16 @@ export default class BookedCabScreen extends React.Component {
             status: 'CANCELLED',
         }).then(() => {
             this.setState({ driverSerach: false })
+            this.props
+                .navigation
+                .dispatch(StackActions.reset({
+                    index: 0,
+                    actions: [
+                        NavigationActions.navigate({
+                            routeName: 'Map',
+                        }),
+                    ],
+                }))
         })
     }
 
@@ -347,6 +356,7 @@ export default class BookedCabScreen extends React.Component {
                             firebase.database().ref(`/users/` + this.state.driverUID + '/').update({ queue: false })
                             this.sendPushNotification(curbookingData.val().driver, this.state.currentBookingId, this.state.firstNameRider + ' cancelou a corrida atual!')
                         }).then(() => {
+                            console.log("ENTROU NO CANCELLED")
                             firebase.database().ref(`/users/` + this.state.currentUser.uid + '/my-booking/' + this.state.currentBookingId + '/').update({
                                 status: 'CANCELLED',
                                 reason: this.state.radio_props[this.state.value].label

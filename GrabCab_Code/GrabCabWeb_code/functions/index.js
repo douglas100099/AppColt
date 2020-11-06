@@ -151,27 +151,21 @@ const RequestPushMsg = (token, msg) => {
 }
 
 exports.manageWalletMoney = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/usedWallet').onCreate((snap, context) => {
-
     admin.database().ref('bookings/' + context.params.bookingsId).on("value", (data) => {
         let dataBooking = data.val();
         if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'PAID') {
             let value = dataBooking.pagamento.usedWalletMoney
-            console.log("VALOR USADO -> " + value)
 
-            let walletMoney
-            admin.database().ref("users/" + dataBooking.customer).once("value", (userData) => {
+            admin.database().ref("users/" + dataBooking.customer + "/walletBalance").once("value", (userData) => {
                 if (userData.val()) {
-                    walletMoney = userData.val().walletBalance
+                    let walletMoney = userData.val()
+                    let newValue = parseFloat(walletMoney) - parseFloat(value)
+
+                    admin.database().ref("users/" + dataBooking.customer + '/').update({
+                        walletBalance: newValue
+                    })
                 }
             })
-            console.log("VALOR DA CARTEIRA -> " + walletMoney)
-            let newValue = parseFloat(walletMoney) - parseFloat(value)
-
-            console.log("RESULTADO DA CONTA -> " + newValue)
-
-            return (admin.database().ref("users/" + dataBooking.customer + '/').update({
-                walletBalance: newValue
-            }))
         }
     })
 })

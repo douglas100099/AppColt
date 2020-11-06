@@ -70,17 +70,7 @@ export default class DriverTripComplete extends React.Component {
 
             })
         }
-        this.removeCancellValue()
         this._retrieveSettings();
-    }
-
-    removeCancellValue() {
-        let cancelData = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/cancell_details/')
-        cancelData.once('value', data => {
-            if (data.val()) {
-                firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/cancell_details/').remove()
-            }
-        })
     }
 
     //rating

@@ -74,24 +74,23 @@ export default class MapScreen extends React.Component {
     async UNSAFE_componentWillMount() {
         if (Platform.OS === 'android' && !Constants.default.isDevice) {
             this.setState({
-
                 errorMessage: 'Ops, isso não funciona com Sketch no emulador Android. Tente usar em seu dispositivo!'
             });
         } else {
             if (!this.props.navigation.state.params) {
-
-                this.getLocationUser();
-                this.getNameUser();
-                this.getSavedLocations()
                 //this._getLocationAsync();
             }
         }
+        this.getLocationUser();
+        this.getNameUser();
+        this.getSavedLocations()
 
         this.allCarsData();
         this.onPressModal();
     }
 
     getLocationUser() {
+        console.log("TESTE")
         const userLocation = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location');
 
         userLocation.once('value', location => {
@@ -466,7 +465,7 @@ export default class MapScreen extends React.Component {
                 }))
         } else if (this.state.statusCorrida == 'START') {
             this.props.navigation.replace('trackRide', { data: this.state.bookingParam, bId: this.state.bookingParam.bookingKey, });
-        } 
+        }
     }
 
     tripSatusCheck = () => {
@@ -489,7 +488,7 @@ export default class MapScreen extends React.Component {
                                 statusCorrida: "START",
                                 bookingParam: bookingData[key]
                             })
-                        } 
+                        }
                     }
                 }
             }

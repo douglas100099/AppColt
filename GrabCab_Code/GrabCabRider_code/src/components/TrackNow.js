@@ -104,7 +104,7 @@ export default class TrackNow extends React.Component {
                                     var distance = distanceCalc(location1, location2);
                                     var originalDistance = distance * 1000;
 
-                                    if (originalDistance && originalDistance < 50) {
+                                    if (originalDistance && originalDistance < 100) {
                                         if (!this.state.allData.flag) {
                                             this.setState({
                                                 flag: false

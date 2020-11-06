@@ -156,6 +156,7 @@ exports.manageWalletMoney = functions.region('southamerica-east1').database.ref(
         let dataBooking = data.val();
         if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'PAID') {
             let value = dataBooking.pagamento.usedWalletMoney
+            console.log("VALOR USADO -> " + value)
 
             let walletMoney
             admin.database().ref("users/" + dataBooking.customer).once("value", (userData) => {
@@ -163,8 +164,12 @@ exports.manageWalletMoney = functions.region('southamerica-east1').database.ref(
                     walletMoney = userData.val().walletBalance
                 }
             })
+            console.log("VALOR DA CARTEIRA -> " + walletMoney)
             let newValue = parseFloat(walletMoney) - parseFloat(value)
-            return (admin.database().ref("users/" + dataBooking.customer).update({
+
+            console.log("RESULTADO DA CONTA -> " + newValue)
+
+            return (admin.database().ref("users/" + dataBooking.customer + '/').update({
                 walletBalance: newValue
             }))
         }
@@ -218,7 +223,7 @@ exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref
     }, 10000)
 })
 
-exports.bookingScheduler = functions.pubsub.schedule('every 5 minutes').onRun((context) => {
+/*exports.bookingScheduler = functions.pubsub.schedule('every 5 minutes').onRun((context) => {
     admin.database().ref('/bookings').orderByChild("status").equalTo('NEW').once("value", (snapshot) => {
         let bookings = snapshot.val();
         if (bookings) {
@@ -275,4 +280,4 @@ exports.bookingScheduler = functions.pubsub.schedule('every 5 minutes').onRun((c
             }
         }
     });
-});
+});*/

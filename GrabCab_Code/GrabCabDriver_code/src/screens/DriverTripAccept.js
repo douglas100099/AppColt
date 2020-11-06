@@ -47,7 +47,7 @@ export default class DriverTripAccept extends React.Component {
             });
         }
     }
-    
+
     constructor(props) {
         super(props);
         this.state = {
@@ -75,6 +75,7 @@ export default class DriverTripAccept extends React.Component {
             intervalCheckGps: null,
             batteryLevel: null,
         }
+        this._getLocationAsync();
     }
 
     _activate = () => {
@@ -211,19 +212,6 @@ export default class DriverTripAccept extends React.Component {
     }*/
 
     async componentDidMount() {
-        const { status } = await Permissions.askAsync(Permissions.LOCATION);
-        const gpsActived = await Location.hasServicesEnabledAsync()
-
-        if (status === "granted" && gpsActived) {
-            this._getLocationAsync();
-        } else {
-            this.setState({ error: "Locations services needed" });
-            this.openAlert();
-            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/driverActiveStatus').set(false);
-            if (this.state.intervalCheckGps == null) {
-                this.checkingGps();
-            }
-        }
         this._isMounted = true;
         this._subscribe();
         await this.getRiders();
@@ -236,15 +224,12 @@ export default class DriverTripAccept extends React.Component {
     async componentWillUnmount() {
         this._isMounted = false
         if (this.location != undefined) {
-            console.log('REMOVEU O WATCH')
             this.location.remove()
         }
         if (this.state.intervalCheckGps) {
-            clearInterval(this.state.intervalCheckGps);
-            console.log('REMOVEU CHECK GPS INTERVAL')
+            clearInterval(this.state.intervalCheckGps)
         }
         this._unsubscribe();
-        console.log('DESMONTOU')
     }
 
     // VERIFICAR BATERIA
@@ -254,14 +239,14 @@ export default class DriverTripAccept extends React.Component {
         this._subscription = Battery.addBatteryLevelListener(({ batteryLevel }) => {
             this.setState({ batteryLevel });
         });
-        if(this.state.batteryLevel) {
-            if(this.state.batteryLevel <= 0.10) {
-                if(this.state.statusDetails != null) {
-                    if(this.state.statusDetails){
+        if (this.state.batteryLevel) {
+            if (this.state.batteryLevel <= 0.10) {
+                if (this.state.statusDetails != null) {
+                    if (this.state.statusDetails) {
                         firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/driverActiveStatus/').set(false);
-                        alert('Você foi desconectado, nivel de bateria abaixo de 10%, para aceitar corridas. Nivel: ' + parseFloat(this.state.batteryLevel).toFixed(2)*100 + '%')
+                        alert('Você foi desconectado, nivel de bateria abaixo de 10%, para aceitar corridas. Nivel: ' + parseFloat(this.state.batteryLevel).toFixed(2) * 100 + '%')
                     } else {
-                        alert('Nivel de bateria abaixo de 10%, carregue e volte a ficar online. Nivel: ' + parseFloat(this.state.batteryLevel).toFixed(2)*100 + '%')
+                        alert('Nivel de bateria abaixo de 10%, carregue e volte a ficar online. Nivel: ' + parseFloat(this.state.batteryLevel).toFixed(2) * 100 + '%')
                     }
                 }
             }
@@ -371,27 +356,40 @@ export default class DriverTripAccept extends React.Component {
 
     // NOVA FORMA DE PEGAR A LOCALIZAÇÃO DO USUARIO
     _getLocationAsync = async () => {
-        this.location = await Location.watchPositionAsync({
-            accuracy: Location.Accuracy.Highest,
-            distanceInterval: 1,
-            timeInterval: 2000
-        },
-            newLocation => {
-                let { coords } = newLocation;
-                // console.log(coords);
-                let region = {
-                    latitude: coords.latitude,
-                    longitude: coords.longitude,
-                    latitudeDelta: 0.045,
-                    longitudeDelta: 0.045,
-                    angle: coords.heading,
-                };
-                this.setState({ region: region });
-                this.setLocationDB(region.latitude, region.longitude, region.angle)
+
+        let { status } = await Permissions.askAsync(Permissions.LOCATION);
+        let gpsActived = await Location.hasServicesEnabledAsync()
+
+        if (status === "granted" && gpsActived) {
+            this.location = await Location.watchPositionAsync({
+                accuracy: Location.Accuracy.Highest,
+                distanceInterval: 1,
+                timeInterval: 2000
             },
-            error => console.log(error)
-        );
-        return this.location
+                newLocation => {
+                    let { coords } = newLocation;
+                    // console.log(coords);
+                    let region = {
+                        latitude: coords.latitude,
+                        longitude: coords.longitude,
+                        latitudeDelta: 0.045,
+                        longitudeDelta: 0.045,
+                        angle: coords.heading,
+                    };
+                    this.setState({ region: region });
+                    this.setLocationDB(region.latitude, region.longitude, region.angle)
+                },
+                error => console.log(error)
+            );
+            return this.location
+        } else {
+            this.setState({ error: "Locations services needed" });
+            this.openAlert();
+            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/driverActiveStatus').set(false);
+            if (this.state.intervalCheckGps == null) {
+                this.checkingGps();
+            }
+        }
     };
 
     // SALVA NO BANCO A NOVA LOCALIZAÇÃO
@@ -885,7 +883,7 @@ export default class DriverTripAccept extends React.Component {
                                                                 color={colors.DEEPBLUE}
                                                             />
                                                         </View>
-                                                    <Text style={styles.txtTempo}>{item.pagamento.payment_mode}</Text>
+                                                        <Text style={styles.txtTempo}>{item.pagamento.payment_mode}</Text>
                                                     </View>
                                                 </View>
                                                 <View style={styles.viewmainBtn}>

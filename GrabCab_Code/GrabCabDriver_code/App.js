@@ -76,6 +76,8 @@ export default class App extends React.Component {
   };
 
   async componentDidMount() {
+    // MENTIRA DIEGÃO PRESENTE, PRA DEV VOTE DIEGO LESSA PSDB
+
     if (__DEV__) {
       this.setState({ updateMsg: languageJSON.loading_assets });
       this._loadResourcesAsync().then(() => {

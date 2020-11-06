@@ -308,12 +308,18 @@ export default class TrackNow extends React.Component {
                         </View>
 
                     </View>
-                    <View style={{ flex: 1.6, marginLeft: 25 }}>
-                        <View style={{ flexDirection: 'row', marginTop: 15 }}>
+                    <View style={{ flex: 1.6, marginLeft: 15 }}>
+                        <View style={{ flexDirection: 'row', marginTop: 20 }}>
                             <CircleLineTriangle style={{}} />
                             <View style={{ justifyContent: 'space-around' }}>
-                                <Text style={{ fontFamily: 'Inter-Medium' }}> {this.state.allData ? this.state.allData.pickup.add : null} </Text>
-                                <Text style={{ fontFamily: 'Inter-Medium' }}> {this.state.allData ? this.state.allData.drop.add : null} </Text>
+                                <Text style={{ fontFamily: 'Inter-Medium' }}> {this.state.allData ?
+                                    this.state.allData.pickup.add.split(",")[0] + ',' + this.state.allData.pickup.add.split(",")[1]
+                                    : null}
+                                </Text>
+                                <Text style={{ fontFamily: 'Inter-Medium' }}> {this.state.allData ?
+                                    this.state.allData.drop.add.split(',')[0] + ',' + this.state.allData.drop.add.split(',')[1]
+                                    : null}
+                                </Text>
                             </View>
                         </View>
                     </View>
@@ -391,7 +397,7 @@ const styles = StyleSheet.create({
     containerFoto: {
         alignItems: 'center',
         flex: 1,
-        marginTop: 25,
+        marginTop: 15,
     },
     ImageStyle: {
         width: 90,

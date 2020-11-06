@@ -124,7 +124,7 @@ export default class TrackNow extends React.Component {
                         }
                     }
                 })
-            }, 7000)
+            }, 5000)
         }
     }
 
@@ -241,7 +241,6 @@ export default class TrackNow extends React.Component {
                                 />
                             </Marker>
                             : null}
-
                     </MapView>
                     : null}
             </View>
@@ -280,7 +279,14 @@ const styles = StyleSheet.create({
     map: {
         ...StyleSheet.absoluteFillObject,
         flex: 1,
+    },
+    btnLocation: {
 
+        backgroundColor: colors.RED,
+        width: width,
+        position: 'absolute',
+        top: 0,
+        height: 50
     },
     bubble: {
         flex: 1,

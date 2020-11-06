@@ -166,10 +166,14 @@ export default class DriverTripComplete extends React.Component {
                         keyExtractor={(item) => item.key}
                         renderItem={({ item }) =>
                             <View style={styles.pickUpStyle}>
-                                <Text style={styles.addressViewTextStyle}>{item.place}</Text>
+                                {item.type == 'pickup' ?
+                                    <Text style={styles.addressViewTextStyle}>{item.place.split(',')[0] + ',' + item.place.split(',')[1]}</Text>
+                                    :
+                                    <Text style={styles.addressViewTextStyle}>{item.place.split(',')[0] + ',' + item.place.split(',')[1]}</Text>
+                                }
                             </View>
                         }
-                        height={80}
+                        height={100}
                     />
                 </View>
 

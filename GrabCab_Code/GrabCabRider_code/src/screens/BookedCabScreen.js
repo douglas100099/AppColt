@@ -10,6 +10,7 @@ import {
     AsyncStorage,
     Linking,
     ActivityIndicator,
+    Platform,
 } from 'react-native';
 import { Icon, Button } from 'react-native-elements';
 import RadioForm from 'react-native-simple-radio-button';
@@ -439,8 +440,8 @@ export default class BookedCabScreen extends React.Component {
                     this.setState({ modalInfoVisible: false })
                 }}
             >
-                <View style={{ flex: 1, backgroundColor: colors.WHITE, width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
-                    <View style={{ height: 400, backgroundColor: colors.WHITE, borderRadius: 25, marginHorizontal: 20 }}>
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ height: 400, backgroundColor: colors.WHITE, borderRadius: 15, marginHorizontal: 20 }}>
                         <View style={{ flex: 2, flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                             <Icon
                                 name="ios-alert"
@@ -500,141 +501,138 @@ export default class BookedCabScreen extends React.Component {
         this.props.navigation.navigate("onlineChat", { passData: this.getParamData, firstNameRider: this.state.firstNameRider })
     }
 
-    render() {
-        return (
-            <View style={styles.mainContainer}>
-                <View style={styles.mapcontainer}>
-                    {this.state.driverUID && this.state.region && this.state.bookingStatus && this.state.driverSerach == false ?
-                        <TrackNow duid={this.state.driverUID} alldata={this.state.region} bookingStatus={this.state.bookingStatus} />
-                        : null}
-
-                    {this.state.driverSerach == false ?
-                        <View>
-                            <TouchableOpacity style={styles.btnTeste}>
-                                <Icon
-                                    name="navigation"
-                                    type="feather"
-                                    // icon: 'chat', color: '#fff',
-                                    size={23}
-                                    color={colors.DEEPBLUE}
-                                />
-                            </TouchableOpacity>
-
-
-                            <TouchableOpacity style={styles.btnChatMotorista} onPress={() => this.chat()}>
-                                <View>
-                                    <Text style={styles.txtChatMotorista}> Chat </Text>
-                                </View>
-                            </TouchableOpacity>
-                        </View>
-                        : null}
-                </View>
-
-                {this.state.driverSerach == false ?
-                    <View style={{ backgroundColor: colors.GREY1, height: 25, justifyContent: 'center', alignItems: 'center' }}>
-                        <View style={styles.viewInfo}>
-                            <Text style={{ color: colors.WHITE, fontFamily: 'Inter-Bold', fontSize: 14, alignSelf: 'center' }}> Confira as informações e a placa do carro!</Text>
-                        </View>
-                    </View>
-                    : null}
-
-                {this.state.embarque ?
-                    <View style={{ borderBottomWidth: 2, borderColor: colors.GREY.background, backgroundColor: colors.GREY3, opacity: 0.6, height: 60, justifyContent: 'center', alignItems: 'center' }}>
-                        <View style={styles.viewInfo}>
-                            <Text style={{ color: colors.BLACK, fontFamily: 'Inter-Medium', fontSize: width < 375 ? 17 : 19, textAlign: 'center' }}> Encontre o motorista em {this.state.region.whereText.split("-")[0]} </Text>
-                        </View>
-                    </View>
-                    : null}
-
-                {this.state.driverSerach == false ?
-                    <View style={[styles.containerBottom, { flex: this.state.embarque ? 4.5 : width < 375 ? 4.5 : 3.5 }]}>
-                        <View style={styles.containerFoto}>
-                            <View style={{ borderWidth: 1.5, borderColor: colors.DEEPBLUE, borderRadius: 100 }}>
-                                {this.state.driverPic ?
-                                    <Image source={{ uri: this.state.driverPic }} style={{ width: 72, height: 72, borderRadius: 50 }} />
-                                    :
-                                    <AvatarUser
-                                        style={{ margin: 3 }}
-                                    />
-                                }
-                            </View>
-
-                            <Text style={styles.nameDriver}> {this.state.driverName ? this.state.driverName.split(" ")[0] : null} </Text>
-                            <View style={styles.rating}>
-                                <Icon
-                                    name="star"
-                                    type="feather"
-                                    // icon: 'chat', color: '#fff',
-                                    size={23}
-                                    color={colors.YELLOW.secondary}
-                                />
-                                <Text style={{ fontFamily: 'Inter-Bold', fontSize: 15, fontWeight: '600' }}> {this.state.starCount ? this.state.starCount : null} </Text>
-                            </View>
-                        </View>
-
-                        <View style={styles.containerCarDetails}>
-                            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                                {this.state.carType == "Colt econômico" ?
-                                    width < 375 ?
-                                        <ColtEconomicoCar
-                                            width={80}
-                                            height={50}
-                                        />
-                                        :
-                                        <ColtEconomicoCar />
-                                    :
-                                    width < 375 ?
-                                        <ColtConfortCar
-                                            width={80}
-                                            height={50}
-                                        />
-                                        :
-                                        <ColtConfortCar />
-                                }
-                                <Text style={{ fontSize: width < 375 ? 16 : 18, fontFamily: 'Inter-Medium', fontWeight: "500", textAlign: 'center', marginBottom: 5 }}> {this.state.carType} </Text>
-                            </View>
-
-                            <View style={styles.boxPlacaCarro}>
-                                <Text style={styles.placaCarro} > {this.state.carNo ? this.state.carNo : null} </Text>
-                            </View>
-                            <View style={styles.containerTxtCarro}>
-                                <Text style={styles.marcaCarro}> {this.state.carModel ? this.state.carModel : null} </Text>
-                            </View>
-                        </View>
-
-                        <View style={styles.containerBtn}>
-                            <TouchableOpacity style={styles.btnLigarMotorista} onPress={() => { this.onPressCall('tel: ' + this.state.driverContact) }}>
-                                <View>
-                                    <Text style={styles.txtLigarMotorista}> Ligar pro motorista </Text>
-                                </View>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.btnCancelarCorrida} onPress={() => { this.onPressCancellBtn() }}>
-                                <View style={styles.bordaIcon}>
-                                    <Icon
-                                        name="x"
-                                        type="feather"
-                                        // icon: 'chat', color: '#fff',
-                                        size={35}
-                                        color={colors.WHITE}
-                                    />
-                                </View>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                    : null}
-
-                {
-                    this.infoModal()
-                }
-                {
-                    this.searchModal()
-                }
-                {
-                    this.cancelModal()
-                }
-            </View>
-        );
+    animateToUser(){
+        this.mapView.animateToRegion(this.state.region, 500)
+        setTimeout(() => {
+            this.setState({ showsMyLocationBtn: false })
+        }, 600)
     }
+    
+
+render() {
+    return (
+        <View style={styles.mainContainer}>
+            <View style={styles.mapcontainer}>
+                {this.state.driverUID && this.state.region && this.state.bookingStatus && this.state.driverSerach == false ?
+                    <TrackNow duid={this.state.driverUID} alldata={this.state.region} bookingStatus={this.state.bookingStatus} />
+                    : null}
+
+                {this.state.driverSerach == false ?
+                    <View>
+                        <TouchableOpacity style={styles.btnChatMotorista} onPress={() => this.chat()}>
+                            <View>
+                                <Text style={styles.txtChatMotorista}> Chat </Text>
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+                    : null}
+            </View>
+
+            {this.state.driverSerach == false ?
+                <View style={{ backgroundColor: colors.GREY1, height: 25, justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={styles.viewInfo}>
+                        <Text style={{ color: colors.WHITE, fontFamily: 'Inter-Bold', fontSize: 14, alignSelf: 'center' }}> Confira as informações e a placa do carro!</Text>
+                    </View>
+                </View>
+                : null}
+
+            {this.state.embarque ?
+                <View style={{ borderBottomWidth: 2, borderColor: colors.GREY.background, backgroundColor: colors.GREY3, opacity: 0.6, height: 60, justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={styles.viewInfo}>
+                        <Text style={{ color: colors.BLACK, fontFamily: 'Inter-Medium', fontSize: width < 375 ? 17 : 19, textAlign: 'center' }}> Encontre o motorista em {this.state.region.whereText.split("-")[0]} </Text>
+                    </View>
+                </View>
+                : null}
+
+            {this.state.driverSerach == false ?
+                <View style={[styles.containerBottom, { flex: this.state.embarque ? 4.5 : width < 375 ? 4.5 : 4 }]}>
+                    <View style={styles.containerFoto}>
+                        <View style={{ borderWidth: 1.5, borderColor: colors.DEEPBLUE, borderRadius: 100 }}>
+                            {this.state.driverPic ?
+                                <Image source={{ uri: this.state.driverPic }} style={{ width: 72, height: 72, borderRadius: 50 }} />
+                                :
+                                <AvatarUser
+                                    style={{ margin: 3 }}
+                                />
+                            }
+                        </View>
+
+                        <Text style={styles.nameDriver}> {this.state.driverName ? this.state.driverName.split(" ")[0] : null} </Text>
+                        <View style={styles.rating}>
+                            <Icon
+                                name="star"
+                                type="feather"
+                                // icon: 'chat', color: '#fff',
+                                size={23}
+                                color={colors.YELLOW.secondary}
+                            />
+                            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 15, fontWeight: '600' }}> {this.state.starCount ? this.state.starCount : null} </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.containerCarDetails}>
+                        <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                            {this.state.carType == "Colt econômico" ?
+                                width < 375 ?
+                                    <ColtEconomicoCar
+                                        width={80}
+                                        height={50}
+                                    />
+                                    :
+                                    <ColtEconomicoCar />
+                                :
+                                width < 375 ?
+                                    <ColtConfortCar
+                                        width={80}
+                                        height={50}
+                                    />
+                                    :
+                                    <ColtConfortCar />
+                            }
+                            <Text style={{ fontSize: width < 375 ? 16 : 18, fontFamily: 'Inter-Medium', fontWeight: "500", textAlign: 'center', marginBottom: 5 }}> {this.state.carType} </Text>
+                        </View>
+
+                        <View style={styles.boxPlacaCarro}>
+                            <Text style={styles.placaCarro} > {this.state.carNo ? this.state.carNo : null} </Text>
+                        </View>
+                        <View style={styles.containerTxtCarro}>
+                            <Text style={styles.marcaCarro}> {this.state.carModel ? this.state.carModel : null} </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.containerBtn}>
+                        <TouchableOpacity style={styles.btnLigarMotorista} onPress={() => { this.onPressCall('tel: ' + this.state.driverContact) }}>
+                            <View>
+                                <Text style={styles.txtLigarMotorista}> Ligar pro motorista </Text>
+                            </View>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.btnCancelarCorrida} onPress={() => { this.onPressCancellBtn() }}>
+                            <View style={styles.bordaIcon}>
+                                <Icon
+                                    name="x"
+                                    type="feather"
+                                    // icon: 'chat', color: '#fff',
+                                    size={35}
+                                    color={colors.WHITE}
+                                />
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+                : null}
+
+            {
+                this.infoModal()
+            }
+            {
+                this.searchModal()
+            }
+            {
+                this.cancelModal()
+            }
+        </View>
+    );
+}
 }
 
 const styles = StyleSheet.create({
@@ -678,10 +676,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         right: 0,
-        height: 50,
+        height: 45,
+        width: 45,
         borderRadius: 50,
         backgroundColor: colors.WHITE,
-        width: 50,
         bottom: 50,
         marginBottom: 8,
         marginRight: 10,
@@ -810,7 +808,8 @@ const styles = StyleSheet.create({
     cancelModalContainer: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+       
     },
     cancelModalInnerContainer: {
         height: 450,
@@ -927,7 +926,7 @@ const styles = StyleSheet.create({
     containerBtn: {
         position: 'absolute',
         bottom: 0,
-        marginBottom: 30,
+        marginBottom: Platform.OS == 'ios' ? 30 : 15 ,
         flexDirection: 'row',
         alignItems: 'center',
         alignSelf: 'center',
@@ -972,10 +971,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         opacity: 0.5,
-        marginTop: 10,
+        marginTop: 0,
     },
     placaCarro: {
-        fontSize: width < 375 ? 20 : 25,
+        fontSize: width < 375 ? 20 : 23,
         fontFamily: 'Inter-Bold',
         fontWeight: '500',
 

@@ -19,6 +19,7 @@ import * as firebase from 'firebase'
 import languageJSON from '../common/language';
 var { height, width } = Dimensions.get('window');
 import { RequestPushMsg } from '../common/RequestPushMsg';
+import AvatarUser from "../../assets/svg/AvatarUser";
 export default class OnlineChat extends Component {
   getParamData;
   constructor(props) {
@@ -175,7 +176,7 @@ export default class OnlineChat extends Component {
                 source: "rider"
               })
               this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + inputmessage)
-            } 
+            }
           })
         }
       })
@@ -192,7 +193,7 @@ export default class OnlineChat extends Component {
       }
     })
   }
-  renderItem({ item }) {
+  renderItem({ item, index }) {
     return (
       item.source == "rider" ?
         <View style={styles.drivermsgStyle}>
@@ -225,15 +226,23 @@ export default class OnlineChat extends Component {
             <Text style={{ fontFamily: 'Inter-Medium', color: colors.GREY2, fontSize: width < 375 ? 14 : 16, marginBottom: 10 }}> {this.state.carbookedInfo.vehicle_number}</Text>
           </View>
           <View style={{ backgroundColor: colors.BLACK, width: 53, justifyContent: 'center', alignItems: 'center', height: 53, position: 'absolute', bottom: 5, right: 10, borderRadius: 100 }}>
-            <Image
-              source={{ uri: this.state.carbookedInfo.driver_image }}
-              style={{ width: 50, height: 50, borderRadius: 50, }}
-            />
+            {this.state.carbookedInfo.driver_image ?
+              <Image
+                source={{ uri: this.state.carbookedInfo.driver_image }}
+                style={{ width: 50, height: 50, borderRadius: 50, }}
+              />
+              :
+              <AvatarUser
+                width={50}
+                height={50}
+              />
+            }
           </View>
         </View>
         <FlatList
           data={this.state.allChat.reverse()}
           renderItem={this.renderItem}
+          keyExtractor={(item, index) => index.toString()}
           inverted
         />
         <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? 'padding' : 'height'}>

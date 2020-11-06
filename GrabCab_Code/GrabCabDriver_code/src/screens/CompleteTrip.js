@@ -149,8 +149,8 @@ export default class DriverCompleteTrip extends React.Component {
                 let region = {
                     latitude: coords.latitude,
                     longitude: coords.longitude,
-                    latitudeDelta: 0.045,
-                    longitudeDelta: 0.045,
+                    latitudeDelta: 0.0043,
+                    longitudeDelta: 0.0034,
                     angle: coords.heading,
                 };
                 this.setState({ region: region });

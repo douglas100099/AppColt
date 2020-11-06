@@ -64,6 +64,8 @@ export default class DriverStartTrip extends React.Component {
             fitCordinates: false,
             loader: false,
             modalCancel: false,
+            viewInfos: false,
+            loaderCancel: false,
         }
         //this.getLocationDriver();
     }
@@ -141,8 +143,8 @@ export default class DriverStartTrip extends React.Component {
                 let region = {
                     latitude: coords.latitude,
                     longitude: coords.longitude,
-                    latitudeDelta: 0.045,
-                    longitudeDelta: 0.045,
+                    latitudeDelta: 0.0043,
+                    longitudeDelta: 0.0034,
                     angle: coords.heading
                 }
 
@@ -188,9 +190,7 @@ export default class DriverStartTrip extends React.Component {
     checkStatus() {
         let tripRef = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my_bookings/' + this.state.rideDetails.bookingId + '/');
         tripRef.on('value', (snap) => {
-            console.log(this.state.rideDetails.bookingId)
             let tripData = snap.val();
-            console.log('tripData', tripData)
             if (tripData) {
                 this.setState({ status: tripData.status })
                 if (tripData.status == "CANCELLED") {
@@ -360,8 +360,8 @@ export default class DriverStartTrip extends React.Component {
                                 console.log(startTime + ' Start Time da tela Start trip')
                                 this.setState({ notificarChegada: false })
                                 this.setState({ loader: false })
+                                AsyncStorage.removeItem('timeEmbarque')
                                 this.props.navigation.replace('DriverTripComplete', { allDetails: this.state.allData, startTime: startTime, regionUser: this.state.region });
-
                                 this.sendPushNotification2(this.state.allData.customer, 'O motorista iniciou sua corrida.');
                             })
                         })
@@ -459,7 +459,10 @@ export default class DriverStartTrip extends React.Component {
                 status: 'EMBARQUE',
             })
             this.sendPushNotification2(this.state.rideDetails.customer, this.state.rideDetails.driver_firstName + ' chegou ao local de embarque.')
-            this.setState({ loader: false })
+            let timeEmbarque = new Date().getTime().toString();
+            AsyncStorage.setItem('timeEmbarque', timeEmbarque).then(
+                this.setState({ loader: false })
+            )
         })
     }
 
@@ -475,27 +478,50 @@ export default class DriverStartTrip extends React.Component {
         })
     }
 
+    checkTime = async () => {
+        this.setState({ loaderCancel: true })
+        try {
+            let endTimeEmbarque = new Date().getTime();
+            const valueTime = await AsyncStorage.getItem('timeEmbarque')
+
+            let resultStart = parseInt(valueTime) / 60000
+            let resultEnd = endTimeEmbarque / 60000
+            let result = resultEnd - resultStart
+            if(result > 5){
+                firebase.database().ref(`/users/` + this.state.curUid + '/in_reject_progress').update({
+                    punido: false,
+                }).then(() => {
+                    firebase.database().ref(`/users/` + this.state.curUid + '/').update({ driverActiveStatus: false })
+                }).then(this.onCancelConfirm())
+            } else {
+                firebase.database().ref(`/users/` + this.state.curUid + '/').update({ 
+                    queue: false 
+                }).then(this.onCancelConfirm())
+            }
+        } catch (error) {
+            console.log(error)
+            alert('Ops, tivemos um problema')
+        }
+    }
+
     onCancelConfirm() {
-        console.log(this.state.rideDetails.bookingId)
         firebase.database().ref(`bookings/` + this.state.rideDetails.bookingId + '/').update({
             status: 'CANCELLED',
         })
         firebase.database().ref(`/users/` + this.state.curUid + '/my_bookings/' + this.state.rideDetails.bookingId + '/').update({
             status: 'CANCELLED',
             reason: this.state.radio_props[this.state.value].label
-        })
-            .then(() => {
-                this.setState({ modalCancel: false })
-                firebase.database().ref(`/users/` + this.state.rideDetails.customer + '/my-booking/' + this.state.rideDetails.bookingId + '/').update({
-                    status: 'CANCELLED',
-                    reason: this.state.radio_props[this.state.value].label,
-                    cancelledByDriver: true,
-                }).then(() => {
-                    firebase.database().ref(`/users/` + this.state.curUid + '/').update({ queue: false })
-                }).then(() => {
-                    firebase.database().ref(`/users/` + this.state.curUid + '/emCorrida').remove()
-                })
+        }).then(() => {
+            this.setState({ modalCancel: false })
+            firebase.database().ref(`/users/` + this.state.rideDetails.customer + '/my-booking/' + this.state.rideDetails.bookingId + '/').update({
+                status: 'CANCELLED',
+                reason: this.state.radio_props[this.state.value].label,
+                cancelledByDriver: true,
+            }).then(() => {
+                firebase.database().ref(`/users/` + this.state.curUid + '/emCorrida').remove()
             })
+        })
+        this.setState({ loaderCancel: false })
         this.sendPushNotification2(this.state.rideDetails.customer, 'O motorista cancelou a corrida atual!')
     }
 
@@ -540,6 +566,8 @@ export default class DriverStartTrip extends React.Component {
                                     title='Não cancelar'
                                     titleStyle={styles.signInTextStyle}
                                     onPress={() => { this.dissMissCancel() }}
+                                    disabled={this.state.loaderCancel}
+                                    loading={this.state.loaderCancel}
                                     buttonStyle={styles.cancelModalButttonStyle}
                                     containerStyle={styles.cancelModalButtonContainerStyle}
                                 />
@@ -549,7 +577,9 @@ export default class DriverStartTrip extends React.Component {
                                 <Button
                                     title='OK'
                                     titleStyle={styles.signInTextStyle}
-                                    onPress={() => { this.onCancelConfirm() }}
+                                    onPress={() => { this.checkTime() }}
+                                    disabled={this.state.loaderCancel}
+                                    loading={this.state.loaderCancel}
                                     buttonStyle={styles.cancelModalButttonStyle}
                                     containerStyle={styles.cancelModalButtonContainerStyle}
                                 />
@@ -655,62 +685,88 @@ export default class DriverStartTrip extends React.Component {
                             color={colors.BLACK}
                         />
                     </TouchableOpacity>
-                    {this.state.notificarChegada ?
+                        {this.state.status != 'ACCEPTED' ?
                         <View style={styles.alertView}>
-                            <Text style={styles.txtAlert}>Informamos ao passageiro de sua chegada, aguarde</Text>
+                            <Text style={styles.txtAlert}>Informamos ao passageiro de sua chegada, aguarde 10 min.</Text>
                         </View>
                         : null}
                 </View>
 
                 {/* MODAL DOS DETALHES AQUI */}
 
-                <View style={styles.viewDetails}>
+                <View style={[styles.viewDetails, { flex: this.state.viewInfos ? 1.5 : 0.4 }]}>
+
                     <View style={styles.viewPhotoName}>
                         <View style={styles.viewPhoto}>
                             <Image source={this.state.rideDetails.imageRider ? { uri: this.state.rideDetails.imageRider } : require('../../assets/images/profilePic.png')} style={styles.fotoPassageiro} />
                         </View>
                         <Text style={styles.nomePassageiro}>{this.state.rideDetails.firstNameRider}</Text>
-                    </View>
-
-                    <View style={styles.viewEndereco}>
-                        <View style={styles.viewPartidaEndereco}>
-                            <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.DEEPBLUE, marginRight: 5, marginLeft: 5 }}></View>
-                            <Text style={styles.TxtEnderecoPartida}>{this.state.rideDetails.pickup.add}</Text>
-                        </View>
-                        <View style={styles.viewDestinoEndereco}>
-                            <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.RED, marginRight: 5, marginLeft: 5 }}></View>
-                            <Text style={styles.TxtEnderecoDestino}>{this.state.rideDetails.drop.add}</Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.viewIcones}>
-                        <View style={{ flex: 1 }}>
-                            <TouchableOpacity
-                                style={styles.btnLigar}
-                                onPress={() => this.callToCustomer(this.state.rideDetails)}
-                            >
-                                <CellphoneSVG />
-                            </TouchableOpacity>
-                        </View>
-
-                        <View style={{ flex: 1 }}>
-                            <TouchableOpacity
-                                style={styles.btnLigar}
-                                onPress={() => this.chat()}
-                            >
-                                <ChatSVG />
-                            </TouchableOpacity>
-                        </View>
-
-                        <View style={{ flex: 1 }}>
-                            <TouchableOpacity
-                                style={styles.btnLigar}
-                                onPress={() => this.setState({ modalCancel: true })}
-                            >
-                                <IconCloseSVG />
-                            </TouchableOpacity>
+                        <View style={{ position: 'absolute', right: 0, left: 0, top: -25 }}>
+                            <View style={{ height: 55, width: 55, borderRadius: 100, backgroundColor: colors.WHITE, elevation: 2, alignItems: 'center', alignSelf: 'center', justifyContent: 'center' }}>
+                                {this.state.viewInfos ?
+                                    <Icon
+                                        name='arrow-down'
+                                        type='feather'
+                                        size={32}
+                                        color={colors.BLACK}
+                                        onPress={() => this.setState({ viewInfos: false })}
+                                    />
+                                    :
+                                    <Icon
+                                        name='arrow-up'
+                                        type='feather'
+                                        size={28}
+                                        color={colors.BLACK}
+                                        onPress={() => this.setState({ viewInfos: true })}
+                                    />
+                                }
+                            </View>
                         </View>
                     </View>
+
+                    {this.state.viewInfos ?
+                        <View style={styles.viewEndereco}>
+                            <View style={styles.viewPartidaEndereco}>
+                                <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.DEEPBLUE, marginRight: 5, marginLeft: 5 }}></View>
+                                <Text style={styles.TxtEnderecoPartida}>{this.state.rideDetails.pickup.add}</Text>
+                            </View>
+                            <View style={styles.viewDestinoEndereco}>
+                                <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.RED, marginRight: 5, marginLeft: 5 }}></View>
+                                <Text style={styles.TxtEnderecoDestino}>{this.state.rideDetails.drop.add}</Text>
+                            </View>
+                        </View>
+                        : null}
+
+                    {this.state.viewInfos ?
+                        <View style={styles.viewIcones}>
+                            <View style={{ flex: 1 }}>
+                                <TouchableOpacity
+                                    style={styles.btnLigar}
+                                    onPress={() => this.callToCustomer(this.state.rideDetails)}
+                                >
+                                    <CellphoneSVG />
+                                </TouchableOpacity>
+                            </View>
+
+                            <View style={{ flex: 1 }}>
+                                <TouchableOpacity
+                                    style={styles.btnLigar}
+                                    onPress={() => this.chat()}
+                                >
+                                    <ChatSVG />
+                                </TouchableOpacity>
+                            </View>
+
+                            <View style={{ flex: 1 }}>
+                                <TouchableOpacity
+                                    style={styles.btnLigar}
+                                    onPress={() => this.setState({ modalCancel: true })}
+                                >
+                                    <IconCloseSVG />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                        : null}
                     <View style={{ flex: 1 }}>
                         {this.state.status == 'ACCEPTED' ?
                             <TouchableOpacity style={{ backgroundColor: colors.DEEPBLUE, position: 'absolute', right: 0, left: 0, bottom: 0, top: 0, alignItems: 'center', justifyContent: "center" }}
@@ -757,7 +813,6 @@ const styles = StyleSheet.create({
     },
 
     viewDetails: {
-        flex: 1.5,
         backgroundColor: colors.WHITE,
     },
 

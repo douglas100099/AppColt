@@ -100,19 +100,20 @@ export class AuthLoadingScreen extends React.Component {
                   const bookingData = firebase.database().ref('bookings/' + userData.val().emCorrida + '/')
                   bookingData.once('value', item => {
                     var itemData = item.val()
-                    if (itemData.status == 'START' || itemData.status == 'END') {
+                    itemData.bookingId = userData.val().emCorrida
+                    if (itemData.status == 'START') {
                       if (itemData) {
+                        console.log('TESTE')
                         AsyncStorage.getItem('startTime', (err, result) => {
                           if (result) {
-                            itemData.bookingId = userData.val().emCorrida;
+                            console.log('ENTROU NO ASYC')
                             this.props.navigation.navigate('DriverTripComplete', { allDetails: itemData, startTime: parseInt(result) })
                           }
                         });
                       }
-                    } else if (itemData.status == 'ACCEPTED') {
+                    } else if (itemData.status == 'ACCEPTED' || itemData.status == 'EMBARQUE') {
                       console.log('ENTROU NO ACCEPTED')
                       if (itemData) {
-                        itemData.bookingId = userData.val().emCorrida;
                         let currentObj = {}
                         if (itemData.current) {
                           currentObj.latitude = itemData.current.lat
@@ -120,6 +121,10 @@ export class AuthLoadingScreen extends React.Component {
                           currentObj.angle = itemData.current.angle
                         }
                         this.props.navigation.navigate('DriverTripStart', { allDetails: itemData, regionUser: currentObj.latitude ? currentObj : null })
+                      }
+                    } else if (itemData.status == 'END') {
+                      if(itemData) {
+                        this.props.navigation.navigate('DriverFare', { allDetails: itemData, trip_cost: itemData.pagamento.trip_cost, trip_end_time: itemData.trip_end_time })
                       }
                     }
                   })

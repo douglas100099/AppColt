@@ -476,11 +476,11 @@ export default class DriverTripAccept extends React.Component {
                 } else if (this.state.chegouCorrida == true) {
                     this.setState({ chegouCorrida: false })
                 }
-                /*if(snapshot.val().in_reject_progress) {
+                if(snapshot.val().in_reject_progress) {
                     if(snapshot.val().in_reject_progress.punido == false){
                         this.props.navigation.replace('BookingCancel')
                     }
-                }*/
+                }
                 this.setState({ tasklist: jobs.reverse() });
                 this.jobs = jobs;
             });
@@ -866,13 +866,15 @@ export default class DriverTripAccept extends React.Component {
                                                     <View style={styles.imgModalView}>
                                                         <Image source={item.imageRider ? { uri: item.imageRider } : require('../../assets/images/profilePic.png')} style={styles.imagemModal} />
                                                         <Text style={styles.nomePessoa}>{item.firstNameRider}</Text>
-                                                        <Icon
-                                                            size={18}
-                                                            name='ios-star'
-                                                            type='ionicon'
-                                                            color={colors.YELLOW.primary}
-                                                        />
-                                                        <Text style={{ fontSize: 14, fontFamily: 'Inter-Regular', color: colors.BLACK, marginLeft: 5, }}>{item.ratingRider}</Text>
+                                                        <View style={{ marginLeft: 5, height: 25, paddingHorizontal: 10, backgroundColor: colors.GREY1, borderRadius: 15, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                                                            <Icon
+                                                                size={18}
+                                                                name='ios-star'
+                                                                type='ionicon'
+                                                                color={colors.YELLOW.primary}
+                                                            />
+                                                            <Text style={{ fontSize: 14, fontFamily: 'Inter-Bold', color: colors.BLACK, marginLeft: 5, }}>{item.ratingRider}</Text>
+                                                        </View>
                                                     </View>
                                                     <View style={styles.iconPgt}>
                                                         <View style={styles.formaPgt}>

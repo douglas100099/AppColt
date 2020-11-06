@@ -190,14 +190,20 @@ exports.addDetailsToPromo = functions.region('southamerica-east1').database.ref(
 
                 let user_avail = offerData.user_avail;
                 if (user_avail) {
-                    admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: user_avail.count + 1 })
                     admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
                         userId: dataBooking.customer
+                    }).then(() => {
+                        return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: user_avail.count + 1 })
+                    }).catch(error => {
+                        return error
                     })
                 } else {
-                    admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: 1 })
                     admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
                         userId: dataBooking.customer
+                    }).then(() => {
+                        return (admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: 1 }))
+                    }).catch(error => {
+                        return error
                     })
                 }
             })
@@ -217,7 +223,7 @@ exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref
 
                     admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove();
                     admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove();
-                    
+
                     admin.database().ref("users/" + requested + "/in_reject_progress").update({
                         punido: false
                     });

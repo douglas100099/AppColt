@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
         marginBottom: 20,
         paddingLeft: 10,
-        paddingRight: 10
+        paddingRight: 30
     },
     drpIconStyle: {
         color: colors.RED,
@@ -169,8 +169,8 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         borderRadius: 15,
         marginTop: 20,
-        marginLeft: 20,
-        marginRight: 20,
+        marginLeft: 15,
+        marginRight: 15,
         shadowColor: '#000',
         shadowOffset: { x: 0, y: 5 },
         shadowOpacity: 0.1,

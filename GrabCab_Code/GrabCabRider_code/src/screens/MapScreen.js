@@ -555,10 +555,10 @@ export default class MapScreen extends React.Component {
                     <View style={styles.bordaIconeMenu}>
                         <TouchableOpacity onPress={() => { this.props.navigation.toggleDrawer() }}>
                             <Icon
-                                name='dehaze'
-                                type='material'
+                                name='ios-list'
+                                type='ionicon'
                                 color={colors.BLACK}
-                                size={26}
+                                size={30}
                             />
                         </TouchableOpacity>
                     </View>
@@ -742,8 +742,8 @@ const styles = StyleSheet.create({
         shadowRadius: 15,
     },
     bordaIconeMenu: {
-        width: 41,
-        height: 41,
+        width: 45,
+        height: 45,
         left: width < 375 ? 5 : 20,
         top: Platform.OS == 'ios' ? 55 : 40,
         position: 'absolute',

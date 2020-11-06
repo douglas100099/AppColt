@@ -252,7 +252,7 @@ export default class RideDetails extends React.Component {
                                     {this.state.paramData && this.state.paramData.pickup ?
                                         <Text style={{ fontFamily: 'Inter-Medium', marginRight: 20 }}> {this.state.paramData.pickup.add.split(',')[0] + ', ' + this.state.paramData.pickup.add.split(',')[1]} </Text>
                                         : null}
-                                    {this.state.paramData && this.state.paramData.pickup ?
+                                    {this.state.paramData && this.state.paramData.drop ?
                                         <Text style={{ fontFamily: 'Inter-Medium', marginRight: 20 }}> {this.state.paramData.drop.add.split(',')[0] + ', ' + this.state.paramData.drop.add.split(',')[1]} </Text>
                                         : null}
                                 </View>
@@ -311,14 +311,16 @@ export default class RideDetails extends React.Component {
                             </View>
                             : null}
                         <TouchableOpacity >
-                        <View style={styles.btnProblem}>
-                            <Text style={{ fontFamily: "Inter-Bold", color: colors.RED, fontSize:  width < 375 ? 17 : 19 }}> Relatar problema </Text>
-                        </View>
+                            <View style={styles.btnProblem}>
+                                <Text style={{ fontFamily: "Inter-Bold", color: colors.RED, fontSize: width < 375 ? 17 : 19 }}> Relatar problema </Text>
+                            </View>
                         </TouchableOpacity>
-                 
+
                     </View>
 
-                    {this.state.paramData && this.state.paramData.payment_status ? this.state.paramData.payment_status == "IN_PROGRESS" || this.state.paramData.payment_status == "PAID" || this.state.paramData.payment_status == "WAITING" ?
+
+
+                    {/*{this.state.paramData && this.state.paramData.payment_status ? this.state.paramData.payment_status == "IN_PROGRESS" || this.state.paramData.payment_status == "PAID" || this.state.paramData.payment_status == "WAITING" ?
                         <View style={styles.billView}>
                             <View style={styles.billView}>
                                 <Text style={styles.billTitle}>{languageJSON.bill_details_title}</Text>
@@ -407,7 +409,7 @@ export default class RideDetails extends React.Component {
                                 onPress={() => { this.PayNow(this.state.paramData) }}
                                 containerStyle={styles.paynowButton}
                             />
-                        </View> : null : null}
+                            </View> : null : null}*/}
                 </ScrollView>
             </View>
         )

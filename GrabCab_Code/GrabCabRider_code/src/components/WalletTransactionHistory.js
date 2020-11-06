@@ -87,9 +87,7 @@ export default class WTransactionHistory extends React.Component {
                                 </View>
                             }
                             <View style={styles.statusView}>
-                                {item.type ? item.type == 'Credit' ? <Text style={styles.historyamounttextStyle}>{item.type + 'ed ' + this.state.settings.symbol + parseFloat(item.amount).toFixed(2) + ' ' + languageJSON.successfully}</Text> :
-                                    <Text style={styles.historyamounttextStyle}>{item.type + 'ed ' + this.state.settings.symbol + parseFloat(item.amount).toFixed(2) + ' ' + languageJSON.form_wallet}</Text>
-                                    : null}
+                                 <Text style={styles.historyamounttextStyle}>Você usou {this.state.settings.symbol + parseFloat(item.amount).toFixed(2)}</Text>                                   
 
                                 <Text style={styles.textStyle2}>{item.date}</Text>
                             </View>

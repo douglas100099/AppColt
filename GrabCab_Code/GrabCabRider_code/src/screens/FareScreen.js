@@ -248,7 +248,7 @@ export default class FareScreen extends React.Component {
             cancellValue: this.state.cancellValue ? this.state.cancellValue : 0
         }
 
-        this.state.payDetails.promo_details.promo_discount_value > 0 ? pagamentoObj.usedDiscount = true : null
+        this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value  > 0 ? pagamentoObj.usedDiscount = true : null : null
         this.state.usedWalletMoney > 0 ? pagamentoObj.usedWallet = true : null
 
         var data = {
@@ -343,7 +343,6 @@ export default class FareScreen extends React.Component {
 
     //Pega o tempo dos motoristas mais proximos
     async prepareDrivers(allUsers) {
-        let arr = {};
         let riderLocation = [this.state.region.wherelatitude, this.state.region.wherelongitude];
         let startLoc = '"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"';
         for (let key in allUsers) {
@@ -441,9 +440,9 @@ export default class FareScreen extends React.Component {
         else if (this.state.promoCode != null) {
             var promo = {}
             promo = await this.consultPromo()
-            if (promo.key != undefined) {
+            if (promo.promoKey != undefined) {
                 let verifyCupomData = {}
-                verifyCupomData = VerifyCupom(promo.promoData, promo.key, this.state.estimateFare);
+                verifyCupomData = VerifyCupom(promo, promo.promoKey, this.state.estimateFare);
 
                 setTimeout(() => {
                     if (verifyCupomData.promo_applied) {
@@ -476,18 +475,17 @@ export default class FareScreen extends React.Component {
             if (promoData.val()) {
                 let promo = promoData.val();
                 for (let key in promo) {
+                    promo[key].promoKey = key
                     if (promo[key].promoCode) {
                         if (promo[key].promoCode == this.state.promoCode.toUpperCase()) {
-                            promoDetails = {
-                                key: key,
-                                promoData: promo[key],
-                            }
+                            promoDetails = promo[key]
                             break
                         }
                     }
                 }
             }
         })
+        
         return promoDetails
     }
 

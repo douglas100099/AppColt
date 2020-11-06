@@ -326,10 +326,6 @@ export default class BookedCabScreen extends React.Component {
         //Atualiza o status da corrida em "bookings" no firebase
         firebase.database().ref(`bookings/` + this.state.currentBookingId + '/').update({
             status: 'CANCELLED',
-        })
-        firebase.database().ref(`/users/` + this.state.currentUser.uid + '/my-booking/' + this.state.currentBookingId + '/').update({
-            status: 'CANCELLED',
-            reason: this.state.radio_props[this.state.value].label
         }).then(() => {
             //Essa parte serve pra caso o motorista ter aceito a corrida e o passageiro cancelar em seguida
             firebase.database().ref(`/users/` + this.state.driverUID + '/my_bookings/' + this.state.currentBookingId + '/').on('value', curbookingData => {
@@ -351,16 +347,10 @@ export default class BookedCabScreen extends React.Component {
                             firebase.database().ref(`/users/` + this.state.driverUID + '/').update({ queue: false })
                             this.sendPushNotification(curbookingData.val().driver, this.state.currentBookingId, this.state.firstNameRider + ' cancelou a corrida atual!')
                         }).then(() => {
-                            this.props
-                                .navigation
-                                .dispatch(StackActions.reset({
-                                    index: 0,
-                                    actions: [
-                                        NavigationActions.navigate({
-                                            routeName: 'Map',
-                                        }),
-                                    ],
-                                }))
+                            firebase.database().ref(`/users/` + this.state.currentUser.uid + '/my-booking/' + this.state.currentBookingId + '/').update({
+                                status: 'CANCELLED',
+                                reason: this.state.radio_props[this.state.value].label
+                            })
                         })
                     }
                 }

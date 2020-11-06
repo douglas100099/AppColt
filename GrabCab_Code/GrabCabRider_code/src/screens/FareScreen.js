@@ -796,7 +796,7 @@ export default class FareScreen extends React.Component {
                             <Icon
                                 name='chevron-left'
                                 type='MaterialIcons'
-                                size={35}
+                                size={40}
                             />
                         </TouchableOpacity>
                     </View>
@@ -1145,8 +1145,8 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: Platform.OS == 'android' ? 35 : 45,
         backgroundColor: colors.WHITE,
-        width: 40,
-        height: 40,
+        width: 42,
+        height: 42,
         borderRadius: 50,
         elevation: 5,
         justifyContent: 'center',

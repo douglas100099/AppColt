@@ -109,7 +109,7 @@ export default class SelectGatewayPage extends React.Component {
   onCanceledHandler = () => {
     if (this.state.userdata.paymentType) {
       setTimeout(() => {
-        this.props.navigation.navigate('CardDetails')
+        //this.props.navigation.navigate('CardDetails')
       }, 5000)
     } else {
       setTimeout(() => {

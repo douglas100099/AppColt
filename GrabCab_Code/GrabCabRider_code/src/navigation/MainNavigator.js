@@ -3,7 +3,6 @@ import { createDrawerNavigator } from 'react-navigation-drawer';
 import {
     DriverTripCompleteSreen,
     ProfileScreen,
-    CardDetailsScreen,
     RideListPage,
     MapScreen,
     BookedCabScreen,
@@ -43,12 +42,6 @@ export const AppStack = {
 
     Profile: {
         screen: ProfileScreen,
-        navigationOptions: {
-            headerShown: false
-        }
-    },
-    CardDetails: {
-        screen: CardDetailsScreen,
         navigationOptions: {
             headerShown: false
         }
@@ -187,10 +180,6 @@ const DrawerRoutes = {
     'About': {
         name: 'About',
         screen: createStackNavigator(AppStack, { initialRouteName: 'About', headerMode: 'none' })
-    },
-    'CardDetails': {
-        name: 'CardDetails',
-        screen: createStackNavigator(AppStack, { initialRouteName: 'CardDetails', headerMode: 'none' })
     },
     'wallet': {
         name: 'wallet',

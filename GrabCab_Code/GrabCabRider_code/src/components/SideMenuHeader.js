@@ -10,7 +10,7 @@ const SideMenuHeader = ({ headerStyle, userPhoto, userName, userEmail, userPhone
         <View style={[styles.viewStyle, headerStyle]}>
             <View style={styles.userImageView} >
                 {userPhoto ?
-                    <Image source={{ uri: userPhoto }} style={{ width: 75, height: 75, borderRadius: 50 }} />
+                    <Image source={{ uri: userPhoto }} style={{ width: 70, height: 70, borderRadius: 50 }} />
                     :
                     <AvatarUser
                         width={76}
@@ -63,8 +63,8 @@ const styles = {
 
     },
     userImageView: {
-        width: 84,
-        height: 84,
+        width: 80,
+        height: 80,
         borderRadius: 50,
         overflow: 'hidden',
         marginLeft: 10,
@@ -78,7 +78,7 @@ const styles = {
         fontFamily: 'Inter-Bold',
         color: colors.WHITE,
         marginLeft: 10,
-        fontSize: 15
+        fontSize: 17
 
     },
     iconViewStyle: {

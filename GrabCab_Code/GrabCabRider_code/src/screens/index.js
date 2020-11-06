@@ -6,7 +6,6 @@ import RegistrationPage from './Registration';
 import DriverTripCompleteSreen from './driverTripComplete';
 import MobileLoginScreen from './MobileLoginScreen';
 import ProfileScreen from './ProfileScreen';
-import CardDetailsScreen from './CardDetails'
 import RideDetails from './RideDetails';
 import SearchScreen from './SearchScreen';
 import EditProfilePage from './EditProfile';
@@ -34,7 +33,6 @@ export {
     AboutPage,
     TrackNow,
     OnlineChat,
-    CardDetailsScreen,
     WalletDetails,
     AddMoneyScreen,
     SelectGatewayPage,

@@ -179,6 +179,19 @@ exports.manageWalletMoney = functions.region('southamerica-east1').database.ref(
     })
 })
 
+exports.cancelSearchDriver = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}').onCreate((snap, context) => {
+    setTimeout(() => {
+        admin.database().ref('bookings/' + context.params.bookingsId).once("value", (data) => {
+            let dataBooking = data.val();
+            if (dataBooking.status === 'NEW') {
+                admin.database().ref('users/' + dataBooking.customer + '/my-booking').orderByChild("status").equalTo('NEW').update({ status: 'TIMEOUT' })
+
+                return admin.database().ref('bookings/' + context.params.bookingsId).update({ status: 'TIMEOUT' })
+            }
+        })
+    }, 10000)
+})
+
 exports.removeCancelValue = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/cancelRate').onCreate((snap, context) => {
 
     admin.database().ref('bookings/' + context.params.bookingsId).on("value", (data) => {

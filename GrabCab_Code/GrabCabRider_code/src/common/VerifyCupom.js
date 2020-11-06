@@ -29,7 +29,7 @@ export function VerifyCupom(item, index, estimateFare) {
                         let data = {}
                         data.discount = discount
                         data.promo_applied = true
-                        data.promo_details = { promo_code: item.promoCode ? item.promoCode : '', promo_key: index, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
+                        data.promo_details = { promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
                         data.payableAmmount = (estimateFare - discount) < 0 ? 0 : (estimateFare - discount).toFixed(2)
                         data.metodoPagamento = "Dinheiro"
 
@@ -39,7 +39,7 @@ export function VerifyCupom(item, index, estimateFare) {
                         let data = {}
                         data.discount = discount
                         data.promo_applied = true
-                        data.promo_details = { promo_code: item.promoCode ? item.promoCode : '', promo_key: index, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
+                        data.promo_details = { promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
                         data.payableAmmount = (estimateFare - discount) < 0 ? 0 : (estimateFare - discount).toFixed(2)
                         data.metodoPagamento = "Dinheiro"
 
@@ -52,7 +52,7 @@ export function VerifyCupom(item, index, estimateFare) {
                     let data = {}
                     data.discount = discount
                     data.promo_applied = true
-                    data.promo_details = {promo_code: item.promoCode ? item.promoCode : '', promo_key: index, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
+                    data.promo_details = {promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
                     data.payableAmmount = discount < 0 ? 0 : discount.toFixed(2)
                     data.metodoPagamento = "Dinheiro"
 
@@ -73,7 +73,7 @@ export function VerifyCupom(item, index, estimateFare) {
                         let data = {}
                         data.discount = discount
                         data.promo_applied = true
-                        data.promo_details = {promo_code: item.promoCode ? item.promoCode : '', promo_key: index, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
+                        data.promo_details = {promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
                         data.payableAmmount = (estimateFare - discount) < 0 ? 0 : (estimateFare - discount).toFixed(2)
                         data.metodoPagamento = "Dinheiro"
 
@@ -83,7 +83,7 @@ export function VerifyCupom(item, index, estimateFare) {
                         let data = {}
                         data.discount = discount
                         data.promo_applied = true
-                        data.promo_details = {promo_code: item.promoCode ? item.promoCode : '', promo_key: index, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
+                        data.promo_details = {promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
                         data.payableAmmount = (estimateFare - discount) < 0 ? 0 : (estimateFare - discount).toFixed(2)
                         data.metodoPagamento = "Dinheiro"
 
@@ -95,7 +95,7 @@ export function VerifyCupom(item, index, estimateFare) {
                     let data = {}
                     data.discount = discount
                     data.promo_applied = true
-                    data.promo_details = {promo_code: item.promoCode ? item.promoCode : '', promo_key: index, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
+                    data.promo_details = {promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
                     data.payableAmmount = discount < 0 ? 0 : discount.toFixed(2)
                     data.metodoPagamento = "Dinheiro"
 

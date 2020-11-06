@@ -248,6 +248,7 @@ export default class FareScreen extends React.Component {
             cancellValue: this.state.cancellValue ? this.state.cancellValue : 0
         }
 
+        this.state.payDetails.promo_details.promo_discount_value > 0 ? pagamentoObj.usedDiscount = true : null
         this.state.usedWalletMoney > 0 ? pagamentoObj.usedWallet = true : null
 
         var data = {

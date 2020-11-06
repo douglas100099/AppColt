@@ -170,38 +170,31 @@ exports.manageWalletMoney = functions.region('southamerica-east1').database.ref(
     })
 })
 
-/*exports.addDetailsToPromo  = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/usedDiscount').onCreate((snap, context) => { 
-    
+exports.addDetailsToPromo = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/usedDiscount').onCreate((snap, context) => {
+
     admin.database().ref('bookings/' + context.params.bookingsId).on("value", (data) => {
         let dataBooking = data.val();
 
+        if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'PAID') {
+            admin.database().ref('offers/' + dataBooking.pagamento.promoKey).on("value", (dataOffer) => {
+                let offerData = dataOffer.val()
 
+                let user_avail = offerData.user_avail;
+                if (user_avail) {
+                    admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
+                        userId: dataBooking.customer
+                    })
+                    admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: user_avail.count + 1 })
+                } else {
+                    admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
+                        userId: dataBooking.customer
+                    })
+                    admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: 1 })
+                }
+            })
+        }
     })
-
-    addDetailsToPromo(offerkey, curUId) {
-        const promoData = firebase.database().ref('offers/' + offerkey);
-        promoData.once('value', promo => {
-          if (promo.val()) {
-            let promoData = promo.val();
-            let user_avail = promoData.user_avail;
-            if (user_avail) {
-              firebase.database().ref('offers/' + offerkey + '/user_avail/details').push({
-                userId: curUId
-              }).then(() => {
-                firebase.database().ref('offers/' + offerkey + '/user_avail/').update({ count: user_avail.count + 1 })
-              })
-            } else {
-              firebase.database().ref('offers/' + offerkey + '/user_avail/details').push({
-                userId: curUId
-              }).then(() => {
-                firebase.database().ref('offers/' + offerkey + '/user_avail/').update({ count: 1 })
-              })
-            }
-          }
-        })
-      }
-
-})*/
+})
 
 exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/requestedDriver/').onCreate((snap, context) => {
     const bookingId = context.params.bookingsId;

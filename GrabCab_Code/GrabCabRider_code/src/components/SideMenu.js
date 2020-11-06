@@ -111,29 +111,6 @@ export default class SideMenu extends React.Component {
         })
     }
 
-    addDetailsToPromo(offerkey, curUId) {
-        const promoData = firebase.database().ref('offers/' + offerkey);
-        promoData.once('value', promo => {
-          if (promo.val()) {
-            let promoData = promo.val();
-            let user_avail = promoData.user_avail;
-            if (user_avail) {
-              firebase.database().ref('offers/' + offerkey + '/user_avail/details').push({
-                userId: curUId
-              }).then(() => {
-                firebase.database().ref('offers/' + offerkey + '/user_avail/').update({ count: user_avail.count + 1 })
-              })
-            } else {
-              firebase.database().ref('offers/' + offerkey + '/user_avail/details').push({
-                userId: curUId
-              }).then(() => {
-                firebase.database().ref('offers/' + offerkey + '/user_avail/').update({ count: 1 })
-              })
-            }
-          }
-        })
-      }
-
     render() {
         return (
             <View style={styles.mainViewStyle}>

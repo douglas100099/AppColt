@@ -39,22 +39,8 @@ export default class CardDetailsScreen extends React.Component {
     }
   }
 
-  _retrieveSettings = async () => {
-    try {
-      const value = await AsyncStorage.getItem('settings');
-      if (value !== null) {
-        this.setState({ settings: JSON.parse(value) });
-      }
-    } catch (error) {
-      console.log("Asyncstorage issue 6");
-    }
-  };
-
   componentDidMount() {
     this._isMounted = true
-    this._retrieveSettings();
-    this.setValueToDB()
-    console.log("CHAAMOU")
   }
 
   async UNSAFE_componentWillMount() {
@@ -72,90 +58,23 @@ export default class CardDetailsScreen extends React.Component {
         loadingPayment: true,
         usedWalletAmmount: pdata.pagamento.usedWalletMoney
       })
-      if (pdata.promoKey != "") {
-        //this.addDetailsToPromo(pdata.promoKey, firebase.auth().currentUser.uid)
-      }
     }
-    this.loadWalletCash()
   }
 
   componentWillUnmount() {
     this._isMounted = false
   }
 
-  addDetailsToPromo(offerkey, curUId) {
-    const promoData = firebase.database().ref('offers/' + offerkey);
-    promoData.once('value', promo => {
-      if (promo.val()) {
-        let promoData = promo.val();
-        let user_avail = promoData.user_avail;
-        if (user_avail) {
-          firebase.database().ref('offers/' + offerkey + '/user_avail/details').push({
-            userId: curUId
-          }).then(() => {
-            firebase.database().ref('offers/' + offerkey + '/user_avail/').update({ count: user_avail.count + 1 })
-          })
-        } else {
-          firebase.database().ref('offers/' + offerkey + '/user_avail/details').push({
-            userId: curUId
-          }).then(() => {
-            firebase.database().ref('offers/' + offerkey + '/user_avail/').update({ count: 1 })
-          })
-        }
-      }
-    })
-  }
-
-  loadWalletCash() {
-    const uRoot = firebase.database().ref('users/' + firebase.auth().currentUser.uid);
-    uRoot.on('value', uval => {
-      if (uval.val()) {
-        let data = uval.val()
-        if (data.walletBalance && data.walletBalance > 0) {
-          this.setState({ walletBalance: data.walletBalance })
-        }
-      }
-    })
-  }
-
   setValueToDB() {
-    let paramData = this.state.userData;
-    console.log(paramData.driver + "TESTE")
-    firebase.database().ref('users/' + paramData.driver + '/my_bookings/' + paramData.bookingKey + '/pagamento/').update({
-      payment_status: "PAID",
+    let tDate = new Date();
+    firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/walletHistory').push({
+      type: 'Debit',
+      amount: this.state.usedWalletAmmount,
+      date: tDate.toString(),
+      txRef: this.state.payDetails.txRef,
     }).then(() => {
-      firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my-booking/' + paramData.bookingKey + '/pagamento/').update({
-        payment_status: "PAID",
-      }).then(() => {
-        firebase.database().ref('bookings/' + paramData.bookingKey + '/pagamento/').update({
-          payment_status: "PAID",
-        }).then(() => {
-          this.setState({ loadingPayment: false });
-
-          if (this.state.usedWalletAmmount) {
-            if (this.state.usedWalletAmmount > 0) {
-              let tDate = new Date();
-              firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/walletHistory').push({
-                type: 'Debit',
-                amount: this.state.usedWalletAmmount,
-                date: tDate.toString(),
-                txRef: this.state.payDetails.txRef,
-              }).then(() => {
-                firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/').update({
-                  walletBalance: this.state.walletBalance - this.state.usedWalletAmmount
-                })
-              })
-            }
-          }
-        }).then(() => {
-          let cancelData = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/cancell_details/')
-          cancelData.once('value', data => {
-            if (data.val()) {
-              firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/cancell_details/').remove()
-            }
-          })
-        })
-        this.props.navigation.replace('ratingPage', { data: paramData });
+      firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/').update({
+        walletBalance: this.state.walletBalance - this.state.usedWalletAmmount
       })
     })
   }

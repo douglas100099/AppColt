@@ -165,7 +165,7 @@ export default class RideDetails extends React.Component {
                                 bookingData.lastname = udata.lastName;
                                 bookingData.email = udata.email;
                                 bookingData.phonenumber = udata.mobile;
-                                this.props.navigation.navigate('CardDetails', { data: bookingData });
+                                //this.props.navigation.navigate('CardDetails', { data: bookingData });
                             }
                         }
                     })

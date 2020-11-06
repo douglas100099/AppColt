@@ -143,18 +143,18 @@ export default class SelectGatewayPage extends React.Component {
               {
               this.state.providers.map((provider) => {
                   return (
-                    <View style={[styles.box, { marginTop: 12 }]} key={provider.name}>
                       <TouchableHighlight onPress={this.selectProvider.bind(this, provider)} underlayColor='#99d9f4'>
+                    <View style={[styles.box, { marginTop: 12 }]} key={provider.name}>
                         <Image
                           style={styles.thumb}
                           source={{uri: provider.image}}
                         />
-                      </TouchableHighlight>
                     </View>
+                      </TouchableHighlight>
                   );
                 })
               } 
-          </ScrollView>
+          </ScrollView> 
           :null
         }
       </View>

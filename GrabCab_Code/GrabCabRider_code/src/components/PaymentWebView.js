@@ -11,6 +11,7 @@ export default class PaymentWebView extends Component {
   onLoadStart = (syntheticEvent) => {
     const { nativeEvent } = syntheticEvent;
     let matchUrl = nativeEvent.url.split('?');
+    console.log(nativeEvent)
     if (matchUrl[0] === cloud_function_server_url + '/success') {
       var obj = { gateway: this.props.provider.name };
       if (matchUrl[1]) {

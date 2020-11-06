@@ -151,6 +151,7 @@ const RequestPushMsg = (token, msg) => {
 }
 
 exports.manageWalletMoney = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/usedWallet').onCreate((snap, context) => {
+    const bookingId = context.params.bookingsId;
     admin.database().ref('bookings/' + context.params.bookingsId).on("value", (data) => {
         let dataBooking = data.val();
         if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'PAID') {
@@ -165,6 +166,14 @@ exports.manageWalletMoney = functions.region('southamerica-east1').database.ref(
                         walletBalance: newValue
                     })
                 }
+
+                let tDate = new Date();
+                admin.database().ref('users/' + dataBooking.customer + '/walletHistory').push({
+                    type: 'Debit',
+                    amount: dataBooking.pagamento.usedWalletMoney,
+                    date: tDate.toString(),
+                    txRef: bookingId,
+                })
             })
         }
     })

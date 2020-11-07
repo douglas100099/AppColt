@@ -20,6 +20,7 @@ import { RequestPushMsg } from '../common/RequestPushMsg';
 import { NavigationActions, StackActions } from 'react-navigation';
 import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 var { width } = Dimensions.get('window');
+import * as Animatable from 'react-native-animatable';
 
 export default class DriverTripComplete extends React.Component {
 

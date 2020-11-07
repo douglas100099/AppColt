@@ -25,6 +25,7 @@ import dateStyle from '../common/dateStyle';
 import CellphoneSVG from '../SVG/CellphoneSVG';
 import MarkerDropSVG from '../SVG/MarkerDropSVG';
 import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
+import * as Animatable from 'react-native-animatable';
 
 export default class DriverCompleteTrip extends React.Component {
 
@@ -627,7 +628,7 @@ export default class DriverCompleteTrip extends React.Component {
                         />
                     </TouchableOpacity>
                     <View style={styles.iconeKm}>
-                        <Text style={{ textAlign: 'center', fontSize: 14, fontFamily: 'Inter-Bold', color: colors.WHITE }}>{parseFloat(this.state.kmRestante).toFixed(2)}</Text>
+                        <Animatable.Text animation='fadeIn' useNativeDriver={true} style={{ textAlign: 'center', fontSize: 14, fontFamily: 'Inter-Bold', color: colors.WHITE }}>{parseFloat(this.state.kmRestante).toFixed(2)}</Animatable.Text>
                         <Text style={{ textAlign: 'center', fontSize: 12, fontFamily: 'Inter-Bold', color: colors.WHITE, marginLeft: 5 }}>KM</Text>
                     </View>
                 </View>

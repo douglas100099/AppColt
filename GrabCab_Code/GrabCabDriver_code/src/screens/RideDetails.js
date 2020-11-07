@@ -124,9 +124,16 @@ export default class RideDetails extends React.Component {
                                     numberOfLines={6}
                                 />
                             </View>
-                            <View>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 20}}>
                                 <TouchableOpacity 
-                                    style={{justifyContent: 'center', alignItems: 'center', height: 50, borderRadius: 15, marginHorizontal: 50, backgroundColor: colors.DEEPBLUE}} 
+                                    style={{justifyContent: 'center', alignItems: 'center', height: 50, paddingHorizontal: 15,borderRadius: 15, backgroundColor: colors.RED}} 
+                                    onPress={() => this.setState({ loadingModal: false })}
+                                    disabled={this.state.loderTick}
+                                >
+                                    <Text style={{ fontSize: 16, color: colors.WHITE, fontFamily: 'Inter-Bold' }}>Cancelar</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity 
+                                    style={{justifyContent: 'center', alignItems: 'center', height: 50, borderRadius: 15, paddingHorizontal: 15, backgroundColor: colors.DEEPBLUE}} 
                                     onPress={() => this.enviarProblema()}
                                     disabled={this.state.loderTick}
                                 >
@@ -230,7 +237,7 @@ export default class RideDetails extends React.Component {
                                             type='ionicon'
                                             color={colors.YELLOW.primary}
                                         />
-                                        <Text style={{ fontSize: 14, fontFamily: 'Inter-Regular', color: colors.BLACK, marginLeft: 5, }}>5.0</Text>
+                                        <Text style={{ fontSize: 14, fontFamily: 'Inter-Regular', color: colors.BLACK, marginLeft: 5}}>{this.state.paramData ? this.state.paramData.firstNameRider : '5.0'}</Text>
                                     </View>
                                 </View>
                             </View>

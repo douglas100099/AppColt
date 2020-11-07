@@ -115,7 +115,6 @@ export default class App extends React.Component {
             style={styles.imagebg}
           >
             <ActivityIndicator />
-            <Text style={{ paddingBottom: 100, fontWeight: '600', color: '#fff' }}> {this.state.updateMsg} </Text>
           </ImageBackground>
         </View>
     );

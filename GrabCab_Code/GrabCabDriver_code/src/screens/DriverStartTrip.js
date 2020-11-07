@@ -37,6 +37,7 @@ import * as IntentLauncher from 'expo-intent-launcher';
 import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 import RadioForm from 'react-native-simple-radio-button';
 const LOCATION_TASK_NAME = 'background-location-task';
+import * as Animatable from 'react-native-animatable';
 
 export default class DriverStartTrip extends React.Component {
 
@@ -658,7 +659,7 @@ export default class DriverStartTrip extends React.Component {
 
                 {/* MAPA VIEW AQUI */}
 
-                <View style={styles.viewMap}>
+                <Animatable.View animation={this.state.viewInfos ? 'slideInUp' : 'slideInDown'} style={styles.viewMap}>
                     <MapView
                         ref={map => { this.map = map }}
                         style={styles.map}
@@ -735,24 +736,24 @@ export default class DriverStartTrip extends React.Component {
                     </TouchableOpacity>
                     : null}
                     {this.state.status != 'ACCEPTED' ?
-                        <View style={styles.alertView}>
+                        <Animatable.View animation='fadeInLeft' useNativeDriver={true} style={styles.alertView}>
                             {((new Date().getTime() - parseInt(this.state.horaEmbarque))/60000) < 5 ?
                                 <Text style={styles.txtAlert}>Informamos ao passageiro de sua chegada, aguarde 5 min.</Text>
                                 :
                                 <Text style={styles.txtAlert2}>Passageiro atrasado, cancelamento sem punição.</Text>
                             }
-                        </View>
+                        </Animatable.View>
                         : null}
-                </View>
+                </Animatable.View>
 
                 {/* MODAL DOS DETALHES AQUI */}
 
-                <View style={[styles.viewDetails, { flex: this.state.viewInfos ? 1.5 : 0.4 }]}>
+                <Animatable.View animation={this.state.viewInfos ? 'slideInUp' : 'slideInDown'} style={[styles.viewDetails, { flex: this.state.viewInfos ? 1.5 : 0.4 }]}>
 
                     <View style={styles.viewPhotoName}>
                         <View style={styles.viewPhoto}>
-                            <Image source={this.state.rideDetails.imageRider ? { uri: this.state.rideDetails.imageRider } : require('../../assets/images/profilePic.png')} style={styles.fotoPassageiro} />
-                            <Text style={styles.nomePassageiro}>{this.state.rideDetails.firstNameRider}</Text>
+                            <Animatable.Image animation="fadeInUp" useNativeDriver={true} source={this.state.rideDetails.imageRider ? { uri: this.state.rideDetails.imageRider } : require('../../assets/images/profilePic.png')} style={styles.fotoPassageiro} />
+                            <Animatable.Text animation='fadeInLeft' useNativeDriver={true} style={styles.nomePassageiro}>{this.state.rideDetails.firstNameRider}</Animatable.Text>
                         </View>
                         <View style={{ position: 'absolute',top: -25, right: 5, left: 0, bottom: 0 }}>
                             <View style={{ height: 55, width: 55, borderRadius: 100, backgroundColor: colors.WHITE, elevation: 2, alignItems: 'center', alignSelf: 'center', justifyContent: 'center' }}>
@@ -784,7 +785,7 @@ export default class DriverStartTrip extends React.Component {
                             </View>
                         </View>
                         <View style={{ marginRight: 10,justifyContent: 'center', backgroundColor: colors.GREY1, height: 25, paddingHorizontal: 15, borderRadius: 15 }}>
-                            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 14, color: colors.BLACK }}>{parseFloat(this.state.kmRestante).toFixed(2)} KM</Text>
+                            <Animatable.Text animation='fadeIn' useNativeDriver={true} style={{ fontFamily: 'Inter-Bold', fontSize: 14, color: colors.BLACK }}>{parseFloat(this.state.kmRestante).toFixed(2)} KM</Animatable.Text>
                         </View>    
                     </View>
 
@@ -870,7 +871,7 @@ export default class DriverStartTrip extends React.Component {
                             </TouchableOpacity>
                             : null}
                     </View>
-                </View>
+                </Animatable.View>
                 {
                     this.cancelModal()
                 }
@@ -910,7 +911,7 @@ const styles = StyleSheet.create({
     },
 
     viewPhoto: {
-        width: 32,
+        paddingRight: 10,
         height: 32,
         borderRadius: 50,
         flexDirection: 'row',
@@ -921,6 +922,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter-SemiBold',
         marginLeft: 5,
         fontSize: 13,
+
         color: colors.BLACK,
     },
 

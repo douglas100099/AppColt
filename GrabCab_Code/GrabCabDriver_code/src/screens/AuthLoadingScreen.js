@@ -126,6 +126,10 @@ export class AuthLoadingScreen extends React.Component {
                       if(itemData) {
                         this.props.navigation.navigate('DriverFare', { allDetails: itemData, trip_cost: itemData.pagamento.trip_cost, trip_end_time: itemData.trip_end_time })
                       }
+                    } else if (itemData.status == 'CANCELLED') {
+                      firebase.database().ref('users/' + user.uid + '/emCorrida/').remove().then(
+                        this.props.navigation.navigate('DriverRoot')
+                      )
                     }
                   })
                 }
@@ -206,7 +210,6 @@ export class AuthLoadingScreen extends React.Component {
           style={styles.imagebg}
         >
           <ActivityIndicator />
-          <Text style={{ paddingBottom: 100, color: '#fff', fontFamily: 'Inter-Bold' }}>{languageJSON.fetching_data}</Text>
         </ImageBackground>
       </View>
     );

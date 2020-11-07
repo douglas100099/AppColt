@@ -19,11 +19,13 @@ import { Audio } from 'expo-av';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Battery from 'expo-battery';
+import * as Animatable from 'react-native-animatable';
 
 import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
 import CellphoneSVG from '../SVG/CellphoneSVG';
 import MarkerPicSVG from '../SVG/MarkerPicSVG';
+import { useAssets } from 'expo-asset';
 
 const soundObject = new Audio.Sound();
 Geocoder.init(google_map_key);
@@ -74,6 +76,7 @@ export default class DriverTripAccept extends React.Component {
             acceptBtnDisable: false,
             intervalCheckGps: null,
             batteryLevel: null,
+            animatedGrana: true,
         }
         this._getLocationAsync();
     }
@@ -532,6 +535,7 @@ export default class DriverTripAccept extends React.Component {
                 vehicleModelName: this.state.driverDetails.vehicleModel,
                 driverRating: this.state.driverDetails.ratings ? this.state.driverDetails.ratings.userrating : "5.0",
                 drop: item.drop,
+                ratingRider: item.ratingRider,
                 pickup: item.pickup,
                 imageRider: item.imageRider ? item.imageRider : null,
                 estimateDistance: item.estimateDistance,
@@ -943,47 +947,56 @@ export default class DriverTripAccept extends React.Component {
 
                                 {/* BOTÃO GANHOS CENTRO */}
                                 <TouchableOpacity style={styles.touchaGanhos} disabled={this.state.loaderBtn} onPress={() => { this.carteira() }}>
-                                    <Text style={styles.touchaValor}>R$ {this.state.today ? parseFloat(this.state.today).toFixed(2) : '0'}</Text>
+                                    {this.state.animatedGrana && this.state.today > 0 ?
+                                    <Animatable.Text useNativeDriver={true} delay={1100} onAnimationEnd={() => this.setState({ animatedGrana: false })} animation="fadeInLeft" style={{ position: 'absolute', left: 5, color: '#49c33b', fontSize: 22, fontFamily: 'Inter-Bold'}}>+</Animatable.Text>
+                                    :
+                                    null}
+                                    <Animatable.Text useNativeDriver={true} animation="bounceInLeft" style={styles.touchaValor}>R$ {this.state.today ? parseFloat(this.state.today).toFixed(2) : '0'}</Animatable.Text>
                                 </TouchableOpacity>
 
                                 {/* BOTÃO FOTOS */}
                                 <TouchableOpacity style={styles.touchaFoto} disabled={this.state.loaderBtn} onPress={() => { this.photoPerfil() }}>
-                                    <Image source={this.state.photoDriver ? { uri: this.state.photoDriver } : require('../../assets/images/profilePic.png')} style={styles.imagemPerfil} />
+                                    <Animatable.Image useNativeDriver={true} animation="fadeIn" source={this.state.photoDriver ? { uri: this.state.photoDriver } : require('../../assets/images/profilePic.png')} style={styles.imagemPerfil} />
                                 </TouchableOpacity>
                             </View>
                             {region ?
-                                <TouchableOpacity style={styles.touchaVoltar2} onPress={() => { this.centerFollowMap() }}>
-                                    <Icon
-                                        name='crosshair'
-                                        type='feather'
-                                        size={25}
-                                        color={colors.BLACK}
-                                    />
-                                </TouchableOpacity>
+                                <Animatable.View useNativeDriver={true} animation="fadeIn" style={styles.touchaVoltar2}>
+                                    <TouchableOpacity onPress={() => { this.centerFollowMap() }}>
+                                        <Icon
+                                            name='crosshair'
+                                            type='feather'
+                                            size={25}
+                                            color={colors.BLACK}
+                                        />
+                                    </TouchableOpacity>
+                                </Animatable.View>
                                 : null}
                         </View>
 
                         {/* BOTÃO LIGAR E DESLIGAR */}
                         {this.state.chegouCorrida == false ?
                             (this.state.statusDetails ?
-                                <View style={{ alignItems: 'center', }}>
-                                    <TouchableOpacity style={styles.btnOnOff} onPress={() => { this.onChangeFunction(this.state.driverActiveStatus); }}>
-                                        <Pulse size={150} color="#49c33b" style={{ position: 'absolute' }} />
-                                        <Icon
-                                            name='navigation-2'
-                                            type='feather'
-                                            size={25}
-                                            color={colors.WHITE}
-                                        />
-                                        <Text style={styles.textConectar}>ONLINE</Text>
+                                <View style={{ alignItems: 'center'}}>
+                                    <Animatable.View animation={this.state.statusDetails ? 'fadeInUp' : 'fadeInDown'} useNativeDriver={true} style={styles.btnOnOff}>
+                                    <Pulse size={150} color="#49c33b" style={{ position: 'absolute' }} />
+                                    <TouchableOpacity onPress={() => { this.onChangeFunction(this.state.driverActiveStatus); }}>
+                                            <Icon
+                                                name='navigation-2'
+                                                type='feather'
+                                                size={25}
+                                                color={colors.WHITE}
+                                            />
+                                            <Text style={styles.textConectar}>ONLINE</Text>
                                     </TouchableOpacity>
+                                    </Animatable.View>
                                 </View>
 
                                 :
 
                                 <View>
                                     <View style={{ alignItems: 'center', }}>
-                                        <TouchableOpacity style={styles.btnOnOff2} onPress={() => { this.onChangeFunction(this.state.driverActiveStatus); }}>
+                                        <Animatable.View style={styles.btnOnOff2} animation={this.state.statusDetails ? 'fadeInDown' : 'fadeInUp'} useNativeDriver={true}>
+                                        <TouchableOpacity onPress={() => { this.onChangeFunction(this.state.driverActiveStatus); }}>
                                             <Icon
                                                 name='navigation-2'
                                                 type='feather'
@@ -992,6 +1005,7 @@ export default class DriverTripAccept extends React.Component {
                                             />
                                             <Text style={styles.textConectar2}>OFFLINE</Text>
                                         </TouchableOpacity>
+                                        </Animatable.View>
                                     </View>
                                 </View>
                             )
@@ -1041,6 +1055,7 @@ const styles = StyleSheet.create({
 
     touchaGanhos: {
         position: 'absolute',
+        flexDirection: 'row',
         borderWidth: 1.5,
         justifyContent: 'center',
         alignItems: 'center',

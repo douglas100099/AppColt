@@ -20,7 +20,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#1152FD"
     },
-
+    "backgroundColor": "#1152FD",
     "androidNavigationBar": {
       "visible": "sticky-immersive"
     },

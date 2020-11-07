@@ -329,9 +329,8 @@ export default class BookedCabScreen extends React.Component {
             //Essa parte serve pra caso o motorista ter aceito a corrida e o passageiro cancelar em seguida
             firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').on('value', curbookingData => {
                 if (curbookingData.val()) {
-                    console.log(curbookingData.val().status)
                     if (curbookingData.val().status == 'ACCEPTED' || curbookingData.val().status == 'EMBARQUE') {
-                        this.setState({ modalVisible: false })
+                        firebase.database().ref('users/' + curbookingData.val().driver + '/emCorrida').remove()
                         firebase.database().ref('users/' + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
                             status: 'CANCELLED',
                             reason: this.state.radio_props[this.state.value].label
@@ -344,7 +343,7 @@ export default class BookedCabScreen extends React.Component {
                                 })
                             }
                         }).then(() => {
-                            firebase.database().ref('users/' +  curbookingData.val().driver + '/').update({ queue: false })
+                            firebase.database().ref('users/' + curbookingData.val().driver + '/').update({ queue: false })
                             this.sendPushNotification(curbookingData.val().driver, this.state.currentBookingId, this.state.firstNameRider + ' cancelou a corrida atual!')
                         }).then(() => {
                             firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').update({
@@ -356,6 +355,7 @@ export default class BookedCabScreen extends React.Component {
                 }
             })
         })
+        this.setState({ modalVisible: false })
     }
 
     //Botao ligar pro motorista

@@ -184,27 +184,27 @@ exports.cancelSearchDriver = functions.region('southamerica-east1').database.ref
         admin.database().ref('bookings/' + context.params.bookingsId).once("value", (data) => {
             let dataBooking = data.val();
             if (dataBooking.status === 'NEW') {
-                admin.database().ref('users/' + dataBooking.customer + '/my-booking').orderByChild('status').equalTo('NEW').once((snap, contextBooking) => {
-                    admin.database().ref('bookings/' + contextBooking.params.bookingsId).update({ status: 'TIMEOUT' })
-                    return admin.database().ref('bookings/' + context.params.bookingsId).update({ status: 'TIMEOUT' })
-                })
+                admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + context.params.bookingsId).update({ status: 'TIMEOUT' })
+                return admin.database().ref('bookings/' + context.params.bookingsId).update({ status: 'TIMEOUT' })
+            } else {
+                return false
             }
         })
-    }, 10000)
+    }, 300000)
 })
 
 exports.removeCancelValue = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/cancelRate').onCreate((snap, context) => {
-
     admin.database().ref('bookings/' + context.params.bookingsId).on("value", (data) => {
         let dataBooking = data.val();
         if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'PAID') {
             return admin.database().ref('users/' + dataBooking.customer + '/cancell_details/').remove()
+        } else {
+            return false
         }
     })
 })
 
 exports.addDetailsToPromo = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/usedDiscount').onCreate((snap, context) => {
-
     admin.database().ref('bookings/' + context.params.bookingsId).on("value", (data) => {
         let dataBooking = data.val();
 
@@ -231,6 +231,8 @@ exports.addDetailsToPromo = functions.region('southamerica-east1').database.ref(
                     })
                 }
             })
+        } else {
+            return false
         }
     })
 })

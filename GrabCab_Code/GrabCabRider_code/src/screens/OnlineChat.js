@@ -196,14 +196,18 @@ export default class OnlineChat extends Component {
   renderItem({ item, index }) {
     return (
       item.source == "rider" ?
-        <View style={styles.drivermsgStyle}>
-          <Text style={styles.msgTextStyle}>{item ? item.message : languageJSON.chat_not_found}</Text>
-          <Text style={styles.msgTimeStyle}>{item ? item.msgTime : null}</Text>
+        <View style={{ width: width }}>
+          <View style={styles.drivermsgStyle}>
+            <Text style={styles.msgTextStyle}>{item ? item.message : languageJSON.chat_not_found}</Text>
+            <Text style={styles.msgTimeStyle}>{item ? item.msgTime : null}</Text>
+          </View>
         </View>
         :
-        <View style={styles.riderMsgStyle}>
-          <Text style={styles.riderMsgText}>{item ? item.message : languageJSON.chat_not_found}</Text>
-          <Text style={styles.riderMsgTime}>{item ? item.msgTime : null}</Text>
+        <View style={{ width: width }} >
+          <View style={styles.riderMsgStyle}>
+            <Text style={styles.riderMsgText}>{item ? item.message : languageJSON.chat_not_found}</Text>
+            <Text style={styles.riderMsgTime}>{item ? item.msgTime : null}</Text>
+          </View>
         </View>
     );
   }

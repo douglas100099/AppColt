@@ -224,7 +224,7 @@ export default class DriverTripComplete extends React.Component {
         return (
             <SafeAreaView style={styles.mainView}>
                 <View style={styles.subView}>
-                    <View style={styles.viewIcon}>
+                    <Animatable.View animation='fadeInDownBig' useNativeDriver={true} style={styles.viewIcon}>
                         <View style={styles.Icon}>
                             <Icon
                                 name='check'
@@ -233,10 +233,10 @@ export default class DriverTripComplete extends React.Component {
                                 color={colors.DEEPBLUE}
                             />
                         </View>
-                        <View style={styles.viewTxtIcon}>
+                        <Animatable.View animation='fadeInLeftBig' delay={1100} useNativeDriver={true} style={styles.viewTxtIcon}>
                             <Text style={styles.txtIcon}>Corrida finalizada!</Text>
-                        </View>
-                    </View>
+                        </Animatable.View>
+                    </Animatable.View>
                     <View style={styles.viewEndereco}>
                         <View style={styles.viewPartida}>
                             <Icon

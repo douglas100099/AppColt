@@ -66,6 +66,7 @@ export default class DriverStartTrip extends React.Component {
             modalCancel: false,
             viewInfos: false,
             loaderCancel: false,
+            kmRestante: 0,
         }
         //this.getLocationDriver();
     }
@@ -81,7 +82,6 @@ export default class DriverStartTrip extends React.Component {
     async UNSAFE_componentWillMount() {
         const allDetails = this.props.navigation.getParam('allDetails')
         const regionUser = this.props.navigation.getParam('regionUser') ? this.props.navigation.getParam('regionUser') : null
-        console.log(allDetails);
         this.setState({
             rideDetails: allDetails,
             region: regionUser != null ? regionUser : this.state.region,
@@ -91,7 +91,6 @@ export default class DriverStartTrip extends React.Component {
         })
         const { status } = await Permissions.askAsync(Permissions.LOCATION);
         const gpsActived = await Location.hasServicesEnabledAsync()
-        console.log(gpsActived)
         if (status === "granted" && gpsActived) {
             this._getLocationAsync();
         } else {
@@ -118,7 +117,7 @@ export default class DriverStartTrip extends React.Component {
     openAlert() {
         Alert.alert(
             'Localização necessária',
-            'Para receber corrida e ficar online, precisamos de sua localização ativa, por favor ative-a em configurações.',
+            'Precisamos de sua localização ativa, por favor ative-a em configurações.',
             [{
                 text: "Cancelar",
                 onPress: () => console.log("Cancel Pressed"),
@@ -139,7 +138,6 @@ export default class DriverStartTrip extends React.Component {
         },
             newLocation => {
                 let { coords } = newLocation;
-                // console.log(coords);
                 let region = {
                     latitude: coords.latitude,
                     longitude: coords.longitude,
@@ -149,7 +147,8 @@ export default class DriverStartTrip extends React.Component {
                 }
 
                 this.setState({ region: region });
-                this.setLocationDB(region.latitude, region.longitude, region.angle)
+                this.setLocationDB(region.latitude, region.longitude, region.angle);
+                this.checkDistKM();
             },
             error => console.log(error)
         )
@@ -158,6 +157,14 @@ export default class DriverStartTrip extends React.Component {
         }, 500)
         return this.location
     };
+
+    checkDistKM(){
+        var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
+        var location2 = [this.state.rideDetails.pickup.lat, this.state.rideDetails.pickup.lng];   //Driver lat and lang
+        //calculate the distance of two locations
+        var distance = distanceCalc(location1, location2);
+        this.setState({ kmRestante: distance })
+    }
 
     setLocationDB(lat, lng, angle) {
         let uid = firebase.auth().currentUser.uid;
@@ -194,18 +201,38 @@ export default class DriverStartTrip extends React.Component {
             if (tripData) {
                 this.setState({ status: tripData.status })
                 if (tripData.status == "CANCELLED") {
-                    firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/emCorrida').remove().then(() => {
-                        this.props
-                            .navigation
-                            .dispatch(StackActions.reset({
-                                index: 0,
-                                actions: [
-                                    NavigationActions.navigate({
-                                        routeName: 'DriverTripAccept',
-                                    }),
-                                ],
-                            }))
-                        alert('Corrida atual foi cancelada')
+                    AsyncStorage.getItem('horaEmbarque', (err, result) => {
+                        if(result) {
+                            AsyncStorage.removeItem('horaEmbarque') 
+                        } else {
+                            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/emCorrida').remove().then(() => {
+                                this.props
+                                    .navigation
+                                    .dispatch(StackActions.reset({
+                                        index: 0,
+                                        actions: [
+                                            NavigationActions.navigate({
+                                                routeName: 'DriverTripAccept',
+                                            }),
+                                        ],
+                                    }))
+                                alert('Corrida atual foi cancelada')
+                            })
+                        }
+                    })
+                }
+                if (tripData.status == "EMBARQUE") {
+                    AsyncStorage.getItem('horaEmbarque', (err, result) => {
+                        if (result) {
+                            console.log(result)
+                            let horaEmbarque = result
+                            this.setState({ horaEmbarque: horaEmbarque })
+                            console.log(this.state.horaEmbarque)
+                        } else {
+                            let horaEmbarque = new Date().getTime().toString()
+                            AsyncStorage.setItem('horaEmbarque', horaEmbarque)
+                            this.setState({ horaEmbarque: horaEmbarque })
+                        }
                     })
                 }
             }
@@ -233,8 +260,7 @@ export default class DriverStartTrip extends React.Component {
     }
 
     checkDist(item) {
-        this.setState({ loader: true })
-        this.setState({ allData: item },
+        this.setState({ allData: item, loader: true},
             () => {
                 var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
                 var location2 = [this.state.rideDetails.pickup.lat, this.state.rideDetails.pickup.lng];   //Driver lat and lang
@@ -357,10 +383,9 @@ export default class DriverStartTrip extends React.Component {
                                 this.closeModal();
                                 let startTime = new Date().getTime().toString();
                                 AsyncStorage.setItem('startTime', startTime);
-                                console.log(startTime + ' Start Time da tela Start trip')
                                 this.setState({ notificarChegada: false })
                                 this.setState({ loader: false })
-                                AsyncStorage.removeItem('timeEmbarque')
+                                AsyncStorage.removeItem('horaEmbarque')
                                 this.props.navigation.replace('DriverTripComplete', { allDetails: this.state.allData, startTime: startTime, regionUser: this.state.region });
                                 this.sendPushNotification2(this.state.allData.customer, 'O motorista iniciou sua corrida.');
                             })
@@ -458,11 +483,8 @@ export default class DriverStartTrip extends React.Component {
             firebase.database().ref(`/users/` + this.state.rideDetails.customer + '/my-booking/' + this.state.allData.bookingId + '/').update({
                 status: 'EMBARQUE',
             })
-            this.sendPushNotification2(this.state.rideDetails.customer, this.state.rideDetails.driver_firstName + ' chegou ao local de embarque.')
-            let timeEmbarque = new Date().getTime().toString();
-            AsyncStorage.setItem('timeEmbarque', timeEmbarque).then(
-                this.setState({ loader: false })
-            )
+            this.sendPushNotification2(this.state.rideDetails.customer, 'O motorista chegou ao local de embarque.')
+            this.setState({ loader: false })
         })
     }
 
@@ -473,7 +495,6 @@ export default class DriverStartTrip extends React.Component {
                 this.setState({
                     radio_props: reasons.val()
                 })
-                console.log(reasons.val())
             }
         })
     }
@@ -482,22 +503,29 @@ export default class DriverStartTrip extends React.Component {
         this.setState({ loaderCancel: true })
         try {
             let endTimeEmbarque = new Date().getTime();
-            const valueTime = await AsyncStorage.getItem('timeEmbarque')
-
-            let resultStart = parseInt(valueTime) / 60000
-            let resultEnd = endTimeEmbarque / 60000
-            let result = resultEnd - resultStart
-            if(result > 5){
-                firebase.database().ref(`/users/` + this.state.curUid + '/in_reject_progress').update({
-                    punido: false,
-                }).then(() => {
-                    firebase.database().ref(`/users/` + this.state.curUid + '/').update({ driverActiveStatus: false })
-                }).then(this.onCancelConfirm())
-            } else {
-                firebase.database().ref(`/users/` + this.state.curUid + '/').update({ 
-                    queue: false 
-                }).then(this.onCancelConfirm())
-            }
+            await AsyncStorage.getItem('horaEmbarque', (err, resultt) => {
+                if (resultt) {
+                    let resultStart = parseInt(resultt)
+                    let resultEnd = endTimeEmbarque
+                    let result = resultEnd - resultStart
+                    console.log(result/60000)
+                    if ((result/60000) < 5) {
+                        firebase.database().ref(`/users/` + this.state.curUid + '/in_reject_progress').update({
+                            punido: false,
+                        }).then(() => {
+                            firebase.database().ref(`/users/` + this.state.curUid + '/').update({ driverActiveStatus: false })
+                        }).then(this.onCancelConfirm())
+                    } else {
+                        this.onCancelConfirm()
+                    }
+                } else {
+                    firebase.database().ref(`/users/` + this.state.curUid + '/in_reject_progress').update({
+                        punido: false,
+                    }).then(() => {
+                        firebase.database().ref(`/users/` + this.state.curUid + '/').update({ driverActiveStatus: false })
+                    }).then(this.onCancelConfirm())
+                }
+            })
         } catch (error) {
             console.log(error)
             alert('Ops, tivemos um problema')
@@ -519,6 +547,10 @@ export default class DriverStartTrip extends React.Component {
                 cancelledByDriver: true,
             }).then(() => {
                 firebase.database().ref(`/users/` + this.state.curUid + '/emCorrida').remove()
+            }).then(() => {
+                firebase.database().ref(`/users/` + this.state.curUid + '/').update({
+                    queue: false
+                })
             })
         })
         this.setState({ loaderCancel: false })
@@ -544,6 +576,13 @@ export default class DriverStartTrip extends React.Component {
                         <View style={styles.cancelContainer}>
                             <View style={styles.cancelReasonContainer}>
                                 <Text style={styles.cancelReasonText}>Qual o motivo do cancelamento?</Text>
+                                <View style={{ marginTop: 15, alignItems: 'center', marginHorizontal: 15, }}>
+                                    {((new Date().getTime() - parseInt(this.state.horaEmbarque))/60000) < 5 ?
+                                    <Text style={{ fontSize: 14, color: colors.RED, fontFamily: 'Inter-Bold', textAlign: 'center' }}>Você será punido caso queira cancelar, aguarde os 5 min</Text>
+                                    :
+                                    <Text style={{ fontSize: 14, color: colors.BLACK, fontFamily: 'Inter-Bold', textAlign: 'center' }}>Você não será punido caso queira cancelar</Text>
+                                    }
+                                </View>
                             </View>
 
                             <View style={styles.radioContainer}>
@@ -580,7 +619,7 @@ export default class DriverStartTrip extends React.Component {
                                     onPress={() => { this.checkTime() }}
                                     disabled={this.state.loaderCancel}
                                     loading={this.state.loaderCancel}
-                                    buttonStyle={styles.cancelModalButttonStyle}
+                                    buttonStyle={styles.cancelModalButttonStyle2}
                                     containerStyle={styles.cancelModalButtonContainerStyle}
                                 />
                             </View>
@@ -637,20 +676,20 @@ export default class DriverStartTrip extends React.Component {
                         <Marker.Animated
                             coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
                             style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
-                            anchor={{ x: 0, y: 0 }}
+                            anchor={{ x: 0.5, y: 0.5 }}
                         >
-                            <CarMarkerSVG
-                                width={45}
-                                height={45}
+                            <CellphoneSVG
+                                width={40}
+                                height={40}
                             />
                         </Marker.Animated>
                         <Marker.Animated
                             coordinate={{ latitude: this.state.rideDetails.pickup.lat, longitude: this.state.rideDetails.pickup.lng, }}
-                            anchor={{ x: 0, y: 0 }}
+                            anchor={{ x: 0.5, y: 1 }}
                         >
                             <MarkerPicSVG
-                                width={45}
-                                height={45}
+                                width={40}
+                                height={40}
                             />
                         </Marker.Animated>
                         {this.state.coords ?
@@ -665,7 +704,7 @@ export default class DriverStartTrip extends React.Component {
                         <Icon
                             name="crosshair"
                             type="feather"
-                            size={25}
+                            size={30}
                             color={colors.BLACK}
                         />
                     </TouchableOpacity>
@@ -673,7 +712,7 @@ export default class DriverStartTrip extends React.Component {
                         <Icon
                             name="map-pin"
                             type="feather"
-                            size={25}
+                            size={30}
                             color={colors.BLACK}
                         />
                     </TouchableOpacity>
@@ -681,13 +720,27 @@ export default class DriverStartTrip extends React.Component {
                         <Icon
                             name="navigation"
                             type="feather"
-                            size={25}
+                            size={30}
                             color={colors.BLACK}
                         />
                     </TouchableOpacity>
-                        {this.state.status != 'ACCEPTED' ?
+                    {!this.state.viewInfos ?
+                    <TouchableOpacity style={styles.iconeChat} onPress={() => this.chat()}>
+                        <Icon
+                            name="message-circle"
+                            type="feather"
+                            size={30}
+                            color={colors.BLACK}
+                        />
+                    </TouchableOpacity>
+                    : null}
+                    {this.state.status != 'ACCEPTED' ?
                         <View style={styles.alertView}>
-                            <Text style={styles.txtAlert}>Informamos ao passageiro de sua chegada, aguarde 10 min.</Text>
+                            {((new Date().getTime() - parseInt(this.state.horaEmbarque))/60000) < 5 ?
+                                <Text style={styles.txtAlert}>Informamos ao passageiro de sua chegada, aguarde 5 min.</Text>
+                                :
+                                <Text style={styles.txtAlert2}>Passageiro atrasado, cancelamento sem punição.</Text>
+                            }
                         </View>
                         : null}
                 </View>
@@ -699,29 +752,40 @@ export default class DriverStartTrip extends React.Component {
                     <View style={styles.viewPhotoName}>
                         <View style={styles.viewPhoto}>
                             <Image source={this.state.rideDetails.imageRider ? { uri: this.state.rideDetails.imageRider } : require('../../assets/images/profilePic.png')} style={styles.fotoPassageiro} />
+                            <Text style={styles.nomePassageiro}>{this.state.rideDetails.firstNameRider}</Text>
                         </View>
-                        <Text style={styles.nomePassageiro}>{this.state.rideDetails.firstNameRider}</Text>
-                        <View style={{ position: 'absolute', right: 0, left: 0, top: -25 }}>
+                        <View style={{ position: 'absolute',top: -25, right: 5, left: 0, bottom: 0 }}>
                             <View style={{ height: 55, width: 55, borderRadius: 100, backgroundColor: colors.WHITE, elevation: 2, alignItems: 'center', alignSelf: 'center', justifyContent: 'center' }}>
                                 {this.state.viewInfos ?
-                                    <Icon
-                                        name='arrow-down'
-                                        type='feather'
-                                        size={32}
-                                        color={colors.BLACK}
+                                    <TouchableOpacity
+                                        style={{height: 55, width: 55, borderRadius: 100, justifyContent: 'center', alignItems: 'center'}}
                                         onPress={() => this.setState({ viewInfos: false })}
-                                    />
+                                    >
+                                        <Icon
+                                            name='arrow-down'
+                                            type='feather'
+                                            size={32}
+                                            color={colors.BLACK}
+                                        />     
+                                    </TouchableOpacity>
                                     :
-                                    <Icon
-                                        name='arrow-up'
-                                        type='feather'
-                                        size={28}
-                                        color={colors.BLACK}
+                                    <TouchableOpacity
+                                        style={{height: 55, width: 55, borderRadius: 100, justifyContent: 'center', alignItems: 'center'}}
                                         onPress={() => this.setState({ viewInfos: true })}
-                                    />
+                                    >
+                                        <Icon
+                                            name='arrow-up'
+                                            type='feather'
+                                            size={32}
+                                            color={colors.BLACK}
+                                        />
+                                    </TouchableOpacity>
                                 }
                             </View>
                         </View>
+                        <View style={{ marginRight: 10,justifyContent: 'center', backgroundColor: colors.GREY1, height: 25, paddingHorizontal: 15, borderRadius: 15 }}>
+                            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 14, color: colors.BLACK }}>{parseFloat(this.state.kmRestante).toFixed(2)} KM</Text>
+                        </View>    
                     </View>
 
                     {this.state.viewInfos ?
@@ -744,7 +808,12 @@ export default class DriverStartTrip extends React.Component {
                                     style={styles.btnLigar}
                                     onPress={() => this.callToCustomer(this.state.rideDetails)}
                                 >
-                                    <CellphoneSVG />
+                                    <Icon
+                                        name="phone-call"
+                                        type="feather"
+                                        size={30}
+                                        color={colors.BLACK}
+                                    />
                                 </TouchableOpacity>
                             </View>
 
@@ -753,7 +822,12 @@ export default class DriverStartTrip extends React.Component {
                                     style={styles.btnLigar}
                                     onPress={() => this.chat()}
                                 >
-                                    <ChatSVG />
+                                    <Icon
+                                        name="message-circle"
+                                        type="feather"
+                                        size={30}
+                                        color={colors.BLACK}
+                                    />
                                 </TouchableOpacity>
                             </View>
 
@@ -762,7 +836,12 @@ export default class DriverStartTrip extends React.Component {
                                     style={styles.btnLigar}
                                     onPress={() => this.setState({ modalCancel: true })}
                                 >
-                                    <IconCloseSVG />
+                                    <Icon
+                                        name="x"
+                                        type="feather"
+                                        size={30}
+                                        color={colors.RED}
+                                    />
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -820,7 +899,7 @@ const styles = StyleSheet.create({
         flex: 0.7,
         flexDirection: 'row',
         marginLeft: 12,
-        justifyContent: 'flex-start',
+        justifyContent: 'space-between',
         alignItems: 'center'
     },
 
@@ -828,14 +907,14 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 50,
-
     },
 
     viewPhoto: {
         width: 32,
         height: 32,
         borderRadius: 50,
-
+        flexDirection: 'row',
+        alignItems: 'center',
     },
 
     nomePassageiro: {
@@ -920,42 +999,55 @@ const styles = StyleSheet.create({
     },
 
     iconeMap: {
-        height: 40,
-        width: 40,
+        height: 45,
+        width: 45,
         borderRadius: 50,
         position: 'absolute',
         backgroundColor: colors.WHITE,
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 4,
-        bottom: 45,
+        bottom: 65,
         right: 22,
     },
 
     iconeFit: {
-        height: 40,
-        width: 40,
+        height: 45,
+        width: 45,
         borderRadius: 50,
         position: 'absolute',
         backgroundColor: colors.WHITE,
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 4,
-        bottom: 100,
+        bottom: 125,
         right: 22,
     },
 
     iconeNav: {
-        height: 40,
-        width: 40,
+        height: 45,
+        width: 45,
         borderRadius: 50,
         position: 'absolute',
         backgroundColor: colors.WHITE,
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 4,
-        top: 30,
+        top: 40,
         right: 22,
+    },
+
+    iconeChat:{
+        height: 45,
+        width: 45,
+        borderRadius: 50,
+        position: 'absolute',
+        backgroundColor: colors.WHITE,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 4,
+        bottom: 65,
+        left: 22,
     },
 
     alertView: {
@@ -966,7 +1058,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: colors.WHITE,
         borderRadius: 10,
-        bottom: 7,
+        elevation: 2,
+        bottom: 30,
         right: 0,
         left: 0,
     },
@@ -976,12 +1069,11 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: colors.DEEPBLUE,
     },
-
-
-
-
-
-
+    txtAlert2: {
+        fontFamily: 'Inter-SemiBold',
+        fontSize: 12,
+        color: colors.RED,
+    },
 
     textContainer: {
         textAlign: "center",
@@ -1099,13 +1191,13 @@ const styles = StyleSheet.create({
         backgroundColor: colors.GREY.background
     },
     cancelModalInnerContainer: {
-        height: 400,
+        height: 430,
         width: width * 0.85,
         padding: 0,
         backgroundColor: colors.WHITE,
         alignItems: 'center',
         alignSelf: 'center',
-        borderRadius: 7
+        borderRadius: 15
     },
     cancelContainer: {
         flex: 1,
@@ -1113,7 +1205,7 @@ const styles = StyleSheet.create({
         width: (width * 0.85)
     },
     cancelReasonContainer: {
-        flex: 1
+        flex: 1.5
     },
     cancelReasonText: {
         top: 10,
@@ -1123,8 +1215,8 @@ const styles = StyleSheet.create({
         alignSelf: 'center'
     },
     radioContainer: {
-        flex: 8,
-        alignItems: 'center'
+        flex: 7,
+        alignItems: 'flex-start'
     },
     radioText: {
         fontSize: 15,
@@ -1139,11 +1231,10 @@ const styles = StyleSheet.create({
         paddingBottom: 25
     },
     cancelModalButtosContainer: {
-        flex: 1,
         flexDirection: 'row',
-        backgroundColor: colors.GREY.iconSecondary,
-        alignItems: 'center',
-        justifyContent: 'center'
+        backgroundColor: colors.GREY.WHITE,
+        alignItems: 'flex-end',
+        justifyContent: 'flex-end'
     },
     buttonSeparataor: {
         height: height / 35,
@@ -1153,8 +1244,12 @@ const styles = StyleSheet.create({
         marginTop: 3
     },
     cancelModalButttonStyle: {
-        backgroundColor: colors.GREY.iconSecondary,
-        borderRadius: 0
+        backgroundColor: colors.DEEPBLUE,
+        borderBottomLeftRadius: 15
+    },
+    cancelModalButttonStyle2: {
+        backgroundColor: colors.DEEPBLUE,
+        borderBottomRightRadius: 15
     },
     cancelModalButtonContainerStyle: {
         flex: 1,

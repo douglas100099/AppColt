@@ -22,7 +22,7 @@ import * as Permissions from 'expo-permissions';
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import { google_map_key } from '../common/key';
 import dateStyle from '../common/dateStyle';
-import CarMakerSVG from '../SVG/CarMarkerSVG';
+import CellphoneSVG from '../SVG/CellphoneSVG';
 import MarkerDropSVG from '../SVG/MarkerDropSVG';
 import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 
@@ -43,6 +43,7 @@ export default class DriverCompleteTrip extends React.Component {
                 angle: 0,
             },
             followMap: true,
+            kmRestante: 0,
         }
     }
 
@@ -154,7 +155,8 @@ export default class DriverCompleteTrip extends React.Component {
                     angle: coords.heading,
                 };
                 this.setState({ region: region });
-                this.setLocationDB(region.latitude, region.longitude, region.angle)
+                this.setLocationDB(region.latitude, region.longitude, region.angle);
+                this.checkDistKM();
             },
             error => console.log(error)
         );
@@ -218,6 +220,14 @@ export default class DriverCompleteTrip extends React.Component {
             alert('Ops, tivemos um problema ao marcar a direção no mapa.')
             return error
         }
+    }
+
+    checkDistKM(){
+        var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
+        var location2 = [this.state.rideDetails.drop.lat, this.state.rideDetails.drop.lng];   //Driver lat and lang
+        //calculate the distance of two locations
+        var distance = distanceCalc(location1, location2);
+        this.setState({ kmRestante: distance })
     }
 
     checkDist(item) {
@@ -301,7 +311,7 @@ export default class DriverCompleteTrip extends React.Component {
         let driverShare = (finalFare - convenience_fees);
         let usedWalletMoney = item.pagamento.usedWalletMoney;
         
-        if(item.pagamento.payment_mode == 'Carteira') {
+        /*if(item.pagamento.payment_mode == 'Carteira') {
             if(customerPaid != item.pagamento.usedWalletMoney){
                 let refw = firebase.database().ref('users/' + riderID + '/walletBalance/');
                 refw.once('value', checkWallet => {
@@ -334,7 +344,7 @@ export default class DriverCompleteTrip extends React.Component {
                     }
                 })
             }
-        }
+        }*/
 
         var pagamentoObj = {
             trip_cost: tripCost > 0 ? parseFloat(tripCost) : 0,
@@ -350,6 +360,7 @@ export default class DriverCompleteTrip extends React.Component {
             promoCodeApplied: item.pagamento.promoCodeApplied,
             promoKey: item.pagamento.promoKey,
             cancellValue: item.pagamento.cancellValue,
+            checkFinalCard: item.pagamento.payment_mode === 'Dinheiro' ? null : true,
         }
         var data = {
             status: "END",
@@ -567,21 +578,21 @@ export default class DriverCompleteTrip extends React.Component {
                         <Marker.Animated
                             coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
                             style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
-                            anchor={{ x: 0, y: 0 }}
+                            anchor={{ x: 0.5, y: 0.5 }}
                         >
-                            <CarMakerSVG
-                                width={45}
-                                height={45}
+                            <CellphoneSVG
+                                width={40}
+                                height={40}
                             />
                         </Marker.Animated>
                         : null}
                         <Marker.Animated
                             coordinate={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng, }}
-                            anchor={{ x: 0, y: 0 }}
+                            anchor={{ x: 0.5, y: 1 }}
                         >
                             <MarkerDropSVG
-                                width={45}
-                                height={45} 
+                                width={40}
+                                height={40} 
                             />
                         </Marker.Animated>
                         <MapView.Polyline
@@ -595,7 +606,7 @@ export default class DriverCompleteTrip extends React.Component {
                         <Icon
                             name="crosshair"
                             type="feather"
-                            size={25}
+                            size={30}
                             color={colors.BLACK}
                         />
                     </TouchableOpacity>
@@ -603,7 +614,7 @@ export default class DriverCompleteTrip extends React.Component {
                         <Icon
                             name="map-pin"
                             type="feather"
-                            size={25}
+                            size={30}
                             color={colors.BLACK}
                         />
                     </TouchableOpacity>
@@ -611,10 +622,14 @@ export default class DriverCompleteTrip extends React.Component {
                         <Icon
                             name="navigation"
                             type="feather"
-                            size={25}
+                            size={30}
                             color={colors.BLACK}
                         />
                     </TouchableOpacity>
+                    <View style={styles.iconeKm}>
+                        <Text style={{ textAlign: 'center', fontSize: 14, fontFamily: 'Inter-Bold', color: colors.WHITE }}>{parseFloat(this.state.kmRestante).toFixed(2)}</Text>
+                        <Text style={{ textAlign: 'center', fontSize: 12, fontFamily: 'Inter-Bold', color: colors.WHITE, marginLeft: 5 }}>KM</Text>
+                    </View>
                 </View>
                 <View style={styles.buttonViewStyle}>
                     <Button
@@ -710,7 +725,7 @@ const styles = StyleSheet.create({
     },
     buttonViewStyle: {
         justifyContent: 'flex-end',
-        maxHeight: 70,
+        height: 60,
     },
     innerStyle: {
         marginLeft: 10,
@@ -724,7 +739,7 @@ const styles = StyleSheet.create({
         borderWidth: 0,
         borderRadius: 0,
         elevation: 0,
-        height: 70,
+        height: 60,
     },
     titleViewStyle: {
         fontFamily: 'Inter-Bold',
@@ -733,42 +748,55 @@ const styles = StyleSheet.create({
     },
 
     iconeMap: {
-        height: 40,
-        width: 40,
+        height: 45,
+        width: 45,
         borderRadius: 50,
         position: 'absolute',
         backgroundColor: colors.WHITE,
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 4,
-        bottom: 45,
+        bottom: 65,
         right: 22,
     },
 
     iconeFit: {
-        height: 40,
-        width: 40,
+        height: 45,
+        width: 45,
         borderRadius: 50,
         position: 'absolute',
         backgroundColor: colors.WHITE,
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 4,
-        bottom: 100,
+        bottom: 125,
         right: 22,
     },
 
     iconeNav: {
-        height: 40,
-        width: 40,
+        height: 45,
+        width: 45,
         borderRadius: 50,
         position: 'absolute',
         backgroundColor: colors.WHITE,
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 4,
-        top: 30,
+        top: 40,
         right: 22,
     },
 
+    iconeKm: {
+        height: 25,
+        flexDirection: 'row',
+        paddingHorizontal: 10,
+        borderRadius: 15,
+        position: 'absolute',
+        backgroundColor: colors.DEEPBLUE,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 4,
+        bottom: 65,
+        left: 22,
+    },
 });

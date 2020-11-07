@@ -20,7 +20,8 @@ import {
     IntroScreen
 } from '../screens';
 import SideMenu from '../components/SideMenu';
-import  { Dimensions } from 'react-native';
+import { colors } from '../common/theme';
+import  { ColorPropType, Dimensions } from 'react-native';
 var { width, height } = Dimensions.get('window');
 
 //app stack for user end
@@ -169,5 +170,5 @@ var { width, height } = Dimensions.get('window');
         drawerWidth: width/1.53,
         initialRouteName:'DriverTripAccept',
         contentComponent: SideMenu,
-        drawerType: 'slide', 
+        drawerType: 'slide',
     });

@@ -20,11 +20,11 @@ export default class SideMenu extends React.Component{
             heightIphoneX :false,
             heightIphoneXsMax :false,
             sideMenuList: [
-                {key: 1, name: languageJSON.booking_request, navigationName: 'DriverTripAccept', icon: 'ios-navigate', type: 'ionicon', child: 'firstChild'},
-                {key: 2, name: languageJSON.profile_settings, navigationName: 'Profile', icon: 'ios-person', type: 'ionicon', child: 'secondChild'},
-                {key: 4, name: languageJSON.incomeText, navigationName: 'MyEarning', icon: 'ios-wallet', type: 'ionicon', child: 'ninethChild'},
-                {key: 3, name: languageJSON.my_bookings, navigationName: 'RideList', icon: 'ios-speedometer', type: 'ionicon', child: 'thirdChild'},
-                {key: 9, name: languageJSON.about_us, navigationName: 'About', icon: 'ios-headset', type: 'ionicon', child: 'ninethChild'},
+                {key: 1, name: languageJSON.booking_request, navigationName: 'DriverTripAccept', icon: 'map-pin', type: 'feather', child: 'firstChild'},
+                {key: 2, name: languageJSON.profile_settings, navigationName: 'Profile', icon: 'user', type: 'feather', child: 'secondChild'},
+                {key: 4, name: languageJSON.incomeText, navigationName: 'MyEarning', icon: 'dollar-sign', type: 'feather', child: 'ninethChild'},
+                {key: 3, name: languageJSON.my_bookings, navigationName: 'RideList', icon: 'clipboard', type: 'feather', child: 'thirdChild'},
+                {key: 9, name: languageJSON.about_us, navigationName: 'About', icon: 'headphones', type: 'feather', child: 'ninethChild'},
                 {key: 10, name: languageJSON.sign_out, icon: 'ios-log-out', type: 'ionicon', child: 'lastChild'}
             ],
             profile_image:null,
@@ -142,12 +142,12 @@ export default class SideMenu extends React.Component{
                                     <Icon
                                         name={item.icon}
                                         type={item.type}
-                                        color={colors.BLACK}
-                                        size={18}
+                                        color={colors.DEEPBLUE}
+                                        size={25}
                                         containerStyle={styles.iconStyle}
                                     />
                                 </View>
-                                <Text style={styles.menuName}>{item.name.toUpperCase()}</Text>
+                                <Text style={styles.menuName}>{item.name}</Text>
                             </TouchableOpacity>
                     } />
                 </View>
@@ -162,8 +162,6 @@ const styles = StyleSheet.create({
         marginTop:0,   
     },
     vertialLine: {
-        width: 1,
-        backgroundColor: colors.GREY2,
         position: 'absolute',
         left: 25,
         top: 24
@@ -178,12 +176,10 @@ const styles = StyleSheet.create({
         paddingRight: 10,
     },
     viewIcon: {
-        width: 30,
-        height: 30,
-        borderRadius: 50,
+        width: 40,
+        height: 40,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: colors.WHITE,
         shadowColor:colors.BLACK,
         shadowOffset:{width:0,height:3},
         shadowOpacity:0.3,
@@ -192,6 +188,7 @@ const styles = StyleSheet.create({
     },
     menuName: {
         color: colors.BLACK,
+        fontSize: 16,
         fontWeight: 'bold',
         marginLeft: 12,
         width: "100%"

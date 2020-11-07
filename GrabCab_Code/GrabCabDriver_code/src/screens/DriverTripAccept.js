@@ -22,7 +22,7 @@ import * as Battery from 'expo-battery';
 
 import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
-import CarMakerSVG from '../SVG/CarMarkerSVG';
+import CellphoneSVG from '../SVG/CellphoneSVG';
 import MarkerPicSVG from '../SVG/MarkerPicSVG';
 
 const soundObject = new Audio.Sound();
@@ -776,25 +776,24 @@ export default class DriverTripAccept extends React.Component {
                                                 }}
 
                                             >
-
                                                 <Marker.Animated
                                                     ref={marker => { this.marker = marker }}
                                                     coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
-                                                    anchor={{ x: 0, y: 0 }}
+                                                    anchor={{ x: 0.5, y: 0.5 }}
                                                     style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
                                                 >
-                                                    <CarMakerSVG
-                                                        width={45}
-                                                        height={45}
+                                                    <CellphoneSVG
+                                                        width={35}
+                                                        height={35}
                                                     />
                                                 </Marker.Animated>
                                                 <Marker
                                                     coordinate={{ latitude: item.pickup.lat, longitude: item.pickup.lng }}
-                                                    anchor={{ x: 0, y: 0 }}
+                                                    anchor={{ x: 0.5, y: 1 }}
                                                 >
                                                     <MarkerPicSVG
-                                                        width={45}
-                                                        height={45}
+                                                        width={40}
+                                                        height={40}
                                                     />
                                                 </Marker>
 
@@ -925,12 +924,12 @@ export default class DriverTripAccept extends React.Component {
                                     <Marker.Animated
                                         ref={marker => { this.marker = marker }}
                                         coordinate={{ latitude: region ? this.state.region.latitude : 0.00, longitude: region ? this.state.region.longitude : 0.00 }}
-                                        anchor={{ x: 0, y: 0 }}
+                                        anchor={{ x: 0.5, y: 0.5 }}
                                         style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
                                     >
-                                        <CarMakerSVG
-                                            height={40}
-                                            width={40}
+                                        <CellphoneSVG
+                                            height={35}
+                                            width={35}
                                         />
                                     </Marker.Animated>
                                     : null}

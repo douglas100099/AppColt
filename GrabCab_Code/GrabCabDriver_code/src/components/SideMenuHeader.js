@@ -20,8 +20,8 @@ const SideMenuHeader = ({ headerStyle, userPhoto, userName, userCorridas, userRa
             <View style={styles.iconViewStyle}>
                 <View style={styles.viewRating}>
                     <Icon
-                        name='ios-star'
-                        type='ionicon'
+                        name='star'
+                        type='feather'
                         color={colors.BLACK}
                         size={18}
                     />
@@ -29,8 +29,8 @@ const SideMenuHeader = ({ headerStyle, userPhoto, userName, userCorridas, userRa
                 </View>
                 <View style={styles.viewCorridas}>
                     <Icon
-                        name='ios-speedometer'
-                        type='ionicon'
+                        name='clipboard'
+                        type='feather'
                         color={colors.BLACK}
                         size={18}
                     />

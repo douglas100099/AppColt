@@ -304,10 +304,12 @@ export default class RideDetails extends React.Component {
                                     />
                                     <Text style={{ fontFamily: 'Inter-Medium', marginLeft: 3, fontSize: width < 375 ? 17 : 19 }}> {this.state.paramData.pagamento.payment_mode} </Text>
                                 </View>
-                                <Text style={{ fontFamily: 'Inter-Bold', fontSize: width < 375 ? 17 : 21, position: 'absolute', right: 20 }}>
-                                    <Text style={{ fontFamily: 'Inter-Bold', fontSize: 13 }}>R$</Text>
-                                    {parseFloat(this.state.paramData.pagamento.customer_paid).toFixed(2)}
-                                </Text>
+                                {this.state.paramData.pagamento.customer_paid ?
+                                    <Text style={{ fontFamily: 'Inter-Bold', fontSize: width < 375 ? 17 : 21, position: 'absolute', right: 20 }}>
+                                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: 13 }}>R$</Text>
+                                        {parseFloat(this.state.paramData.pagamento.customer_paid).toFixed(2)}
+                                    </Text>
+                                    : null}
                             </View>
                             : null}
                         <TouchableOpacity >

@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Modal, Image, Text, Dimensions } from 'react-native';
+import { StyleSheet, View, Modal, Image, Text, Dimensions, Platform } from 'react-native';
 import haversine from "haversine";
 import MapView, {
     Marker,
@@ -19,6 +19,7 @@ import distanceCalc from '../common/distanceCalc';
 
 import LocationUser from '../../assets/svg/LocationUser';
 import IconCarMap from '../../assets/svg/IconCarMap';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 
 export default class TrackNow extends React.Component {
@@ -32,7 +33,8 @@ export default class TrackNow extends React.Component {
             distanceTravelled: 0,
             prevLatLng: {},
             coordinate: null,
-            checkDirection: true
+            checkDirection: true,
+            showsMyLocationBtn: false
         };
         this._isMounted = false;
     }
@@ -177,18 +179,26 @@ export default class TrackNow extends React.Component {
         }
     }
 
-    /*animateToRegion() {
-        this.mapView.animateToRegion(this.state.region, 500)
+    locationUser() {
+        let region = {
+            latitude: this.state.latitude,
+            longitude: this.state.longitude,
+            latitudeDelta: 0.0043,
+            longitudeDelta: 0.0034
+        }
+        if (this.map) {
+            this.map.animateToRegion(region, 500)
+        }
         setTimeout(() => {
             this.setState({ showsMyLocationBtn: false })
         }, 600)
-    }*/
+    }
 
     render() {
         return (
             <View style={styles.innerContainer}>
                 {this.state.allData && this._isMounted ?
-                    <MapView
+                    <MapView.Animated
                         ref={map => { this.map = map }}
                         style={styles.map}
                         provider={PROVIDER_GOOGLE}
@@ -196,6 +206,7 @@ export default class TrackNow extends React.Component {
                         followUserLocation
                         loadingEnabled
                         showsCompass={false}
+                        onRegionChange={() => { this.setState({ showsMyLocationBtn: true }) }}
                         showsScale={false}
                         rotateEnabled={false}
                         //onRegionChange={ () => { this.setState({ showsMyLocationBtn: true }) } }
@@ -221,7 +232,7 @@ export default class TrackNow extends React.Component {
                         {this.state.allData ?
                             <Marker
                                 coordinate={{ latitude: this.state.allData.wherelatitude, longitude: this.state.allData.wherelongitude }}
-                                anchor={{ x: 0, y: 0 }}
+                                anchor={{ x: 0.5, y: 0.5 }}
                             >
                                 <LocationUser
                                     width={25}
@@ -232,7 +243,7 @@ export default class TrackNow extends React.Component {
                         {this.state.latitude ?
                             <Marker
                                 coordinate={{ latitude: this.state.latitude, longitude: this.state.longitude }}
-                                anchor={{ x: 0, y: 0 }}
+                                anchor={{ x: 0.5, y: 0.5 }}
                             >
                                 <IconCarMap
                                     width={45}
@@ -241,69 +252,44 @@ export default class TrackNow extends React.Component {
                                 />
                             </Marker>
                             : null}
-                    </MapView>
+                    </MapView.Animated>
+                    : null}
+                {this.state.showsMyLocationBtn == true ?
+                    <TouchableOpacity style={styles.iconLocation} onPress={() => this.locationUser()}>
+                        <Icon
+                            name="car"
+                            type="material-community"
+                            // icon: 'chat', color: '#fff',
+                            size={25}
+                            color={colors.DEEPBLUE}
+                            containerStyle={{ opacity: .7 }}
+                        />
+                    </TouchableOpacity>
                     : null}
             </View>
-
         );
     }
 
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.WHITE,
-        // marginTop: StatusBar.currentHeight,
-    },
     innerContainer: {
         flex: 1,
         backgroundColor: colors.WHITE,
-        justifyContent: "flex-end",
-        alignItems: "center",
-
     },
-    headerStyle: {
-        backgroundColor: colors.GREY.default,
-        borderBottomWidth: 0
-    },
-    headerInnerStyle: {
-        marginLeft: 10,
-        marginRight: 10
-    },
-    headerTitleStyle: {
-        color: colors.WHITE,
-        fontFamily: 'Roboto-Bold',
-        fontSize: 18
+    iconLocation: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: Platform.OS == 'ios' ?  50 : 25,
+        alignSelf: 'flex-end',
+        marginRight: 15,
+        backgroundColor: colors.WHITE,
+        width: 40,
+        height: 40,
+        borderRadius: 50
     },
     map: {
         ...StyleSheet.absoluteFillObject,
         flex: 1,
     },
-    btnLocation: {
-
-        backgroundColor: colors.RED,
-        width: width,
-        position: 'absolute',
-        top: 0,
-        height: 50
-    },
-    bubble: {
-        flex: 1,
-        backgroundColor: "rgba(255,255,255,0.7)",
-        paddingHorizontal: 18,
-        paddingVertical: 12,
-        borderRadius: 20
-    },
-    latlng: {
-        width: 200,
-        alignItems: "stretch"
-    },
-    textLoading: {
-        fontFamily: 'Inter-Bold',
-        fontSize: 18,
-        textAlign: 'center',
-        fontWeight: "600",
-    },
-
 });

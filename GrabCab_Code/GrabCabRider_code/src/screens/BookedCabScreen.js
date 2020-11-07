@@ -52,12 +52,19 @@ export default class BookedCabScreen extends React.Component {
                 otp_secure: false
             },
             value: 0,
-            driverSerach: true,
+            driverSerach: false,
             bookingDataState: null,
             punisherCancell: false,
             embarque: false,
             modalInfoVisible: false,
             searchDisabled: false,
+        }
+    }
+
+    UNSAFE_componentWillMount() {
+        let param = this.props.navigation.getParam('byMapScreen')
+        if (!param) {
+            this.setState({ driverSerach: true })
         }
     }
 
@@ -81,6 +88,7 @@ export default class BookedCabScreen extends React.Component {
                     droptext: currUserBooking.drop.add
                 }
                 this.setState({
+                    cashPaymentAmount: currUserBooking.pagamento.cashPaymentAmount,
                     firstNameRider: currUserBooking.firstNameRider,
                     usedWalletMoney: currUserBooking.pagamento.usedWalletMoney,
                     coords: this.getParamData.coords,
@@ -89,7 +97,7 @@ export default class BookedCabScreen extends React.Component {
                     estimateFare: this.getParamData.estimate,
                     estimateTime: 0,
                     currentBookingId: this.getParamData.bokkingId,
-                    currentUser: curuser,
+                    currentUser: curuser.uid,
                     customer_name: currUserBooking.customer_name,
                     bookingStatus: currUserBooking.status,
                     carType: currUserBooking.carType,
@@ -126,18 +134,7 @@ export default class BookedCabScreen extends React.Component {
                         }))
                 }
                 else if (currUserBooking.status == "TIMEOUT") {
-                    firebase.database().ref(`/users/` + this.state.currentUser.uid + '/my-booking/' + this.state.currentBookingId + '/').remove().then(() => {
-                        this.props
-                            .navigation
-                            .dispatch(StackActions.reset({
-                                index: 0,
-                                actions: [
-                                    NavigationActions.navigate({
-                                        routeName: 'Map',
-                                    }),
-                                ],
-                            }))
-                    })
+                    this.onCancellSearchBooking()
                 }
                 else if (currUserBooking.status == "EMBARQUE") {
                     this.setState({ embarque: true })
@@ -275,7 +272,7 @@ export default class BookedCabScreen extends React.Component {
     //Cancell Button Press
     async onPressCancellBtn() {
         const value = await AsyncStorage.getItem('startTripTime');
-        firebase.database().ref(`/users/` + this.state.driverUID + '/my_bookings/' + this.state.currentBookingId + '/').on('value', curbookingData => {
+        firebase.database().ref(`/users/` + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').on('value', curbookingData => {
             if (curbookingData.val()) {
                 if (curbookingData.val().status == 'ACCEPTED' || curbookingData.val().status == 'EMBARQUE') {
                     const timeCurrent = new Date().getTime();
@@ -287,7 +284,7 @@ export default class BookedCabScreen extends React.Component {
                     }
                 }
                 else if (curbookingData.val().status == 'NEW') {
-                    this.onCancellSearchBooking()
+                    this.onCancellSearchBooking(true)
                 }
             }
         })
@@ -298,10 +295,10 @@ export default class BookedCabScreen extends React.Component {
     }
 
     //Cancelar corrida antes do motorista ter aceito
-    onCancellSearchBooking() {
+    onCancellSearchBooking(params) {
 
         //Remove a corrida do perfil do passageiro
-        firebase.database().ref(`/users/` + this.state.currentUser.uid + '/my-booking/' + this.state.currentBookingId + '/').remove()
+        firebase.database().ref(`/users/` + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').remove()
             .then(() => {
                 //Remove booking request do requested drivers no firebase
                 const requestedDriver = firebase.database().ref('bookings/' + this.state.currentBookingId + '/requestedDriver');
@@ -313,51 +310,44 @@ export default class BookedCabScreen extends React.Component {
                     }
                 })
             })
-        //Atualiza o status da corrida em "bookings" no firebase
-        firebase.database().ref(`bookings/` + this.state.currentBookingId + '/').update({
-            status: 'CANCELLED',
-        }).then(() => {
-            this.setState({ driverSerach: false })
-            this.props
-                .navigation
-                .dispatch(StackActions.reset({
-                    index: 0,
-                    actions: [
-                        NavigationActions.navigate({
-                            routeName: 'Map',
-                        }),
-                    ],
-                }))
-        })
+        if (params) {
+            //Atualiza o status da corrida em "bookings" no firebase
+            firebase.database().ref(`bookings/` + this.state.currentBookingId + '/').update({
+                status: 'CANCELLED',
+            })
+        }
+
+        this.setState({ driverSerach: false })
+        this.props.navigation.replace('FareDetails', { data: this.state.region });
     }
 
     onCancelConfirm() {
         //Atualiza o status da corrida em "bookings" no firebase
-        firebase.database().ref(`bookings/` + this.state.currentBookingId + '/').update({
+        firebase.database().ref('bookings/' + this.state.currentBookingId + '/').update({
             status: 'CANCELLED',
         }).then(() => {
             //Essa parte serve pra caso o motorista ter aceito a corrida e o passageiro cancelar em seguida
-            firebase.database().ref(`/users/` + this.state.driverUID + '/my_bookings/' + this.state.currentBookingId + '/').on('value', curbookingData => {
+            firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').on('value', curbookingData => {
                 if (curbookingData.val()) {
-                    if (curbookingData.val().status == 'ACCEPTED') {
+                    console.log(curbookingData.val().status)
+                    if (curbookingData.val().status == 'ACCEPTED' || curbookingData.val().status == 'EMBARQUE') {
                         this.setState({ modalVisible: false })
-                        firebase.database().ref(`/users/` + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
+                        firebase.database().ref('users/' + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
                             status: 'CANCELLED',
                             reason: this.state.radio_props[this.state.value].label
                         }).then(() => {
                             if (this.state.punisherCancell) {
-                                firebase.database().ref(`/users/` + this.state.currentUser.uid + '/cancell_details/').update({
+                                firebase.database().ref('users/' + this.state.currentUser + '/cancell_details/').update({
                                     bookingId: this.state.currentBookingId,
                                     data: new Date().toString(),
                                     value: 3
                                 })
                             }
                         }).then(() => {
-                            firebase.database().ref(`/users/` + this.state.driverUID + '/').update({ queue: false })
+                            firebase.database().ref('users/' +  curbookingData.val().driver + '/').update({ queue: false })
                             this.sendPushNotification(curbookingData.val().driver, this.state.currentBookingId, this.state.firstNameRider + ' cancelou a corrida atual!')
                         }).then(() => {
-                            console.log("ENTROU NO CANCELLED")
-                            firebase.database().ref(`/users/` + this.state.currentUser.uid + '/my-booking/' + this.state.currentBookingId + '/').update({
+                            firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').update({
                                 status: 'CANCELLED',
                                 reason: this.state.radio_props[this.state.value].label
                             })
@@ -498,7 +488,7 @@ export default class BookedCabScreen extends React.Component {
                     {/*<Image source={require('../../assets/images/searchDrivers.gif')} style={styles.styleGif} />*/}
                     <Text style={styles.textGif}> Procurando motoristas próximos </Text>
                     <ActivityIndicator size='large' color={colors.DEEPBLUE} />
-                    <TouchableOpacity disabled={this.state.searchDisabled} style={styles.touchView} onPress={() => { this.setState({ searchDisabled: true }), this.onCancellSearchBooking() }}>
+                    <TouchableOpacity disabled={this.state.searchDisabled} style={styles.touchView} onPress={() => { this.setState({ searchDisabled: true }), this.onPressCancellBtn() }}>
                         <Text style={styles.textCancel}> Cancelar </Text>
                     </TouchableOpacity>
                 </View>
@@ -529,8 +519,15 @@ export default class BookedCabScreen extends React.Component {
                     {this.state.driverSerach == false ?
                         <View>
                             <TouchableOpacity style={styles.btnChatMotorista} onPress={() => this.chat()}>
-                                <View>
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                     <Text style={styles.txtChatMotorista}> Chat </Text>
+                                    <Icon
+                                        name="message-circle"
+                                        type="feather"
+                                        // icon: 'chat', color: '#fff',
+                                        size={20}
+                                        color={colors.DEEPBLUE}
+                                    />
                                 </View>
                             </TouchableOpacity>
                         </View>
@@ -548,65 +545,72 @@ export default class BookedCabScreen extends React.Component {
                 {this.state.embarque ?
                     <View style={{ borderBottomWidth: 2, borderColor: colors.GREY.background, backgroundColor: colors.GREY3, opacity: 0.6, height: 60, justifyContent: 'center', alignItems: 'center' }}>
                         <View style={styles.viewInfo}>
-                            <Text style={{ color: colors.BLACK, fontFamily: 'Inter-Medium', fontSize: width < 375 ? 17 : 19, textAlign: 'center' }}> Encontre o motorista em {this.state.region.whereText.split("-")[0]} </Text>
+                            <Text style={{ color: colors.BLACK, fontFamily: 'Inter-Medium', fontSize: width < 375 ? 15 : 17, textAlign: 'center' }}> Encontre o motorista em {this.state.region.whereText.split("-")[0]} </Text>
                         </View>
                     </View>
                     : null}
 
                 {this.state.driverSerach == false ?
                     <View style={[styles.containerBottom, { flex: this.state.embarque ? 4.5 : width < 375 ? 4.5 : 4 }]}>
-                        <View style={styles.containerFoto}>
-                            <View style={{ borderWidth: 1.5, borderColor: colors.DEEPBLUE, borderRadius: 100 }}>
-                                {this.state.driverPic ?
-                                    <Image source={{ uri: this.state.driverPic }} style={{ width: 72, height: 72, borderRadius: 50 }} />
-                                    :
-                                    <AvatarUser
-                                        style={{ margin: 3 }}
+                        <View style={{ flex: 3 }}>
+                            <View style={styles.containerFoto}>
+                                <View style={{ borderWidth: 1.5, borderColor: colors.GREY2, borderRadius: 100 }}>
+                                    {this.state.driverPic ?
+                                        <Image source={{ uri: this.state.driverPic }} style={{ width: 72, height: 72, borderRadius: 50 }} />
+                                        :
+                                        <AvatarUser
+                                            style={{ margin: 3 }}
+                                        />
+                                    }
+                                </View>
+
+                                <View style={styles.rating}>
+                                    <Text style={{ fontFamily: 'Inter-Bold', fontSize: 15, top: 1, paddingStart: 7 }}> {this.state.starCount ? this.state.starCount : null} </Text>
+                                    <Icon
+                                        name="ios-star"
+                                        type="ionicon"
+                                        // icon: 'chat', color: '#fff',
+                                        size={18}
+                                        color={colors.DARK}
+                                        containerStyle={{ paddingEnd: 7 }}
                                     />
-                                }
+                                </View>
+                                <Text style={styles.nameDriver}> {this.state.driverName ? this.state.driverName.split(" ")[0] : null} </Text>
                             </View>
 
-                            <Text style={styles.nameDriver}> {this.state.driverName ? this.state.driverName.split(" ")[0] : null} </Text>
-                            <View style={styles.rating}>
-                                <Icon
-                                    name="star"
-                                    type="feather"
-                                    // icon: 'chat', color: '#fff',
-                                    size={23}
-                                    color={colors.YELLOW.secondary}
-                                />
-                                <Text style={{ fontFamily: 'Inter-Bold', fontSize: 15, fontWeight: '600' }}> {this.state.starCount ? this.state.starCount : null} </Text>
+                            <View style={styles.containerCarDetails}>
+                                <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                                    {this.state.carType == "Colt econômico" ?
+                                        width < 375 ?
+                                            <ColtEconomicoCar
+                                                width={80}
+                                                height={50}
+                                            />
+                                            :
+                                            <ColtEconomicoCar />
+                                        :
+                                        width < 375 ?
+                                            <ColtConfortCar
+                                                width={80}
+                                                height={50}
+                                            />
+                                            :
+                                            <ColtConfortCar />
+                                    }
+                                    <Text style={{ fontSize: width < 375 ? 16 : 18, fontFamily: 'Inter-Medium', fontWeight: "500", textAlign: 'center', marginBottom: 5 }}> {this.state.carType} </Text>
+                                </View>
+
+                                <View style={styles.boxPlacaCarro}>
+                                    <Text style={styles.placaCarro} > {this.state.carNo ? this.state.carNo : null} </Text>
+                                </View>
+                                <View style={styles.containerTxtCarro}>
+                                    <Text style={styles.marcaCarro}> {this.state.carModel ? this.state.carModel : null} </Text>
+                                </View>
                             </View>
                         </View>
 
-                        <View style={styles.containerCarDetails}>
-                            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                                {this.state.carType == "Colt econômico" ?
-                                    width < 375 ?
-                                        <ColtEconomicoCar
-                                            width={80}
-                                            height={50}
-                                        />
-                                        :
-                                        <ColtEconomicoCar />
-                                    :
-                                    width < 375 ?
-                                        <ColtConfortCar
-                                            width={80}
-                                            height={50}
-                                        />
-                                        :
-                                        <ColtConfortCar />
-                                }
-                                <Text style={{ fontSize: width < 375 ? 16 : 18, fontFamily: 'Inter-Medium', fontWeight: "500", textAlign: 'center', marginBottom: 5 }}> {this.state.carType} </Text>
-                            </View>
-
-                            <View style={styles.boxPlacaCarro}>
-                                <Text style={styles.placaCarro} > {this.state.carNo ? this.state.carNo : null} </Text>
-                            </View>
-                            <View style={styles.containerTxtCarro}>
-                                <Text style={styles.marcaCarro}> {this.state.carModel ? this.state.carModel : null} </Text>
-                            </View>
+                        <View style={{ justifyContent: 'center', alignItems: 'center', flex: .1, alignSelf: 'center' }}>
+                            <View style={{ height: 1, width: width - 30, backgroundColor: colors.GREY2 }} />
                         </View>
 
                         <View style={styles.containerBtn}>
@@ -663,6 +667,8 @@ const styles = StyleSheet.create({
         height: 30,
         borderRadius: 50,
         backgroundColor: colors.WHITE,
+        borderWidth: 1,
+        borderColor: colors.DEEPBLUE,
         width: 100,
         bottom: 0,
         marginBottom: 8,
@@ -908,7 +914,6 @@ const styles = StyleSheet.create({
         borderRadius: 100
     },
     nameDriver: {
-        marginTop: width < 375 ? 0 : 5,
         fontFamily: 'Inter-Bold',
         fontSize: width < 375 ? 17 : 19,
         fontWeight: "600",
@@ -925,6 +930,14 @@ const styles = StyleSheet.create({
     rating: {
         flexDirection: 'row',
         alignItems: 'center',
+        borderRadius: 50,
+        backgroundColor: colors.WHITE,
+        top: -10,
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+        elevation: 5,
     },
     containerCarDetails: {
         position: 'absolute',
@@ -933,9 +946,7 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
     },
     containerBtn: {
-        position: 'absolute',
-        bottom: 0,
-        marginBottom: Platform.OS == 'ios' ? 30 : 15,
+        flex: 1.3,
         flexDirection: 'row',
         alignItems: 'center',
         alignSelf: 'center',

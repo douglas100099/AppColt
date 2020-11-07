@@ -262,7 +262,7 @@ export default class TrackNow extends React.Component {
                 <View style={styles.containerBottom}>
                     <View style={{ flex: 2, flexDirection: 'row' }}>
                         <View style={styles.containerFoto}>
-                            <View style={{ borderWidth: 1.5, width: 80, height: 80, justifyContent: 'center', alignItems: 'center', borderColor: colors.DEEPBLUE, borderRadius: 100 }}>
+                            <View style={{ borderWidth: 1.5, width: 80, height: 80, justifyContent: 'center', alignItems: 'center', borderColor: colors.GREY1, borderRadius: 100 }}>
                                 {this.state.allData ?
                                     <Image
                                         source={this.state.allData ? { uri: this.state.allData.driver_image } : null}
@@ -274,16 +274,17 @@ export default class TrackNow extends React.Component {
                                 }
                             </View>
 
-                            <Text style={styles.nameDriver}> {this.state.allData ? this.state.allData.driver_firstName : null} </Text>
                             <View style={styles.rating}>
+                                <Text style={{ fontFamily: 'Inter-Bold', fontSize: 15, top: 1, paddingStart: 7 }}> {this.state.allData ? this.state.allData.driverRating : null} </Text>
                                 <Icon
                                     name="ios-star"
                                     type="ionicon"
-                                    size={20}
-                                    color={colors.YELLOW.secondary}
+                                    size={18}
+                                    color={colors.DARK}
+                                    containerStyle={{ paddingEnd: 7 }}
                                 />
-                                <Text style={{ fontFamily: 'Inter-Bold', alignSelf: 'center', marginTop: 2, fontSize: 15, fontWeight: '600' }}> {this.state.allData ? this.state.allData.driverRating : null} </Text>
                             </View>
+                            <Text style={styles.nameDriver}> {this.state.allData ? this.state.allData.driver_firstName : null} </Text>
                         </View>
 
                         <View style={styles.containerCarDetails}>
@@ -422,12 +423,15 @@ const styles = StyleSheet.create({
     },
     rating: {
         flexDirection: 'row',
-        width: 70,
-        backgroundColor: colors.WHITE,
+        alignItems: 'center',
         borderRadius: 50,
-        justifyContent: 'center',
-        borderWidth: 1,
-        marginTop: 5
+        backgroundColor: colors.WHITE,
+        top: -10,
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+        elevation: 5,
     },
     containerCarDetails: {
         flexDirection: 'column',

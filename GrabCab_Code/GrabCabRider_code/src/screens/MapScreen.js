@@ -90,7 +90,6 @@ export default class MapScreen extends React.Component {
     }
 
     getLocationUser() {
-        console.log("TESTE")
         const userLocation = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location');
 
         userLocation.once('value', location => {
@@ -420,29 +419,34 @@ export default class MapScreen extends React.Component {
     };
 
     goToFareByMap() {
-        let dataDetails = {}
-        var minTimeEco = null
-        var minTimeCon = null
+        if (this.state.statusCorrida) {
+            alert("Você já possui uma corrida em andamento!")
+        } else {
 
-        dataDetails.droplatitude = this.state.locationCasa.lat
-        dataDetails.droplongitude = this.state.locationCasa.lng
-        dataDetails.droptext = this.state.locationCasa.add
+            let dataDetails = {}
+            var minTimeEco = null
+            var minTimeCon = null
 
-        dataDetails.wherelatitude = this.state.passData.wherelatitude
-        dataDetails.wherelongitude = this.state.passData.wherelongitude
-        dataDetails.whereText = this.state.passData.whereText
+            dataDetails.droplatitude = this.state.locationCasa.lat
+            dataDetails.droplongitude = this.state.locationCasa.lng
+            dataDetails.droptext = this.state.locationCasa.add
 
-        if (this.state.allCars != null) {
-            for (key in this.state.allCars) {
-                if (key == 0) {
-                    minTimeEco = this.state.allCars[key].minTime != '' ? this.state.allCars[key].minTime : null
-                } else if (key == 1) {
-                    minTimeCon = this.state.allCars[key].minTime != '' ? this.state.allCars[key].minTime : null
+            dataDetails.wherelatitude = this.state.passData.wherelatitude
+            dataDetails.wherelongitude = this.state.passData.wherelongitude
+            dataDetails.whereText = this.state.passData.whereText
+
+            if (this.state.allCars != null) {
+                for (key in this.state.allCars) {
+                    if (key == 0) {
+                        minTimeEco = this.state.allCars[key].minTime != '' ? this.state.allCars[key].minTime : null
+                    } else if (key == 1) {
+                        minTimeCon = this.state.allCars[key].minTime != '' ? this.state.allCars[key].minTime : null
+                    }
                 }
             }
-        }
 
-        this.props.navigation.replace('FareDetails', { data: dataDetails, minTimeEconomico: minTimeEco, minTimeConfort: minTimeCon });
+            this.props.navigation.replace('FareDetails', { data: dataDetails, minTimeEconomico: minTimeEco, minTimeConfort: minTimeCon });
+        }
     }
 
     redirectRider() {
@@ -459,11 +463,28 @@ export default class MapScreen extends React.Component {
                     actions: [
                         NavigationActions.navigate({
                             routeName: 'BookedCab',
-                            params: { passData: obj, walletBallance: this.state.walletBalance },
+                            params: { passData: obj, byMapScreen: true },
                         }),
                     ],
                 }))
-        } else if (this.state.statusCorrida == 'START') {
+        } else if (this.state.statusCorrida == 'EMBARQUE') {
+            let obj = {
+                bokkingId: this.state.bookingParam.bookingKey,
+                coords: this.state.bookingParam.coords,
+            }
+            this.props
+                .navigation
+                .dispatch(StackActions.reset({
+                    index: 0,
+                    actions: [
+                        NavigationActions.navigate({
+                            routeName: 'BookedCab',
+                            params: { passData: obj, byMapScreen: true },
+                        }),
+                    ],
+                }))
+        }
+        else if (this.state.statusCorrida == 'START') {
             this.props.navigation.replace('trackRide', { data: this.state.bookingParam, bId: this.state.bookingParam.bookingKey, });
         }
     }
@@ -483,7 +504,14 @@ export default class MapScreen extends React.Component {
                                 statusCorrida: "ACCEPTED",
                                 bookingParam: bookingData[key]
                             })
-                        } else if (bookingData[key].status == "START") {
+                        }
+                        else if (bookingData[key].status == "EMBARQUE") {
+                            this.setState({
+                                statusCorrida: "EMBARQUE",
+                                bookingParam: bookingData[key]
+                            })
+                        }
+                        else if (bookingData[key].status == "START") {
                             this.setState({
                                 statusCorrida: "START",
                                 bookingParam: bookingData[key]
@@ -529,6 +557,7 @@ export default class MapScreen extends React.Component {
                                 return (
                                     <Marker.Animated
                                         coordinate={{ latitude: item.location ? item.location.lat : 0.00, longitude: item.location ? item.location.lng : 0.00 }}
+                                        anchor={{ x: 0.5, y: 0.5 }}
                                         key={index}
                                     >
                                         <IconCarMap
@@ -620,7 +649,7 @@ export default class MapScreen extends React.Component {
                                 </TouchableWithoutFeedback>
                             </View>
 
-                            {this.state.locationCasa != null && !this.state.statusCorrida ?
+                            {this.state.locationCasa != null ?
                                 <TouchableOpacity onPress={() => this.goToFareByMap()}>
                                     <View style={{ flexDirection: 'row', alignItems: 'center', height: width < 375 ? 50 : 60, width: width }}>
                                         <View style={{ left: 12, flex: 0.2 }}>

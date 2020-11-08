@@ -28,7 +28,6 @@ export default class SideMenu extends React.Component{
                 {key: 10, name: languageJSON.sign_out, icon: 'ios-log-out', type: 'ionicon', child: 'lastChild'}
             ],
             profile_image:null,
-            myBookingarr: []
         }
         
     }
@@ -45,33 +44,7 @@ export default class SideMenu extends React.Component{
                             driverActiveStatus:true
                         })
                     }
-                    if(currentUserData.val().ratings) {
-                        let ratings = currentUserData.val().ratings.userrating
-                        this.setState({rating: ratings })
-                    }
-                    /*if(currentUserData.val().waiting_riders_list){
-                        if(this.props.navigation.state.routeName != 'DriverTripAccept'){
-                            this.props.navigation.navigate('DriverTripAccept')
-                        }
-                    }*/
                 });    
-            }
-        })
-        let ref = firebase.database().ref('users/' + curuser + '/ganhos');
-        ref.on('value', allBookings => {
-            if (allBookings.val()) {
-                let data = allBookings.val();
-                var myBookingarr = [];
-                for (let k in data) {
-                    data[k].bookingKey = k
-                    myBookingarr.push(data[k])
-                }
-
-                if (myBookingarr) {
-                    this.setState({ myBooking: myBookingarr.length }, () => {
-                    })
-
-                }
             }
         })
     }
@@ -102,7 +75,7 @@ export default class SideMenu extends React.Component{
                 });
                 this.props.navigation.dispatch(navigateAction);
             } else {
-                alert('Você possuí uma corrida em andamento')
+                alert('Você possuí uma corrida em andamento.')
             }
         })
     }
@@ -118,7 +91,7 @@ export default class SideMenu extends React.Component{
     render(){
         return(
             <View style={styles.mainViewStyle}>
-                <SideMenuHeader onPress={this.navigateToScreen("Profile") } headerStyle={styles.myHeader} userPhoto={this.state.profile_image} userCorridas={this.state.myBooking} userRating={this.state.rating} userName ={this.state.firstName + ' '+ this.state.lastName}></SideMenuHeader> 
+                <SideMenuHeader onPress={this.navigateToScreen("Profile") } headerStyle={styles.myHeader} userPhoto={this.state.profile_image} userName ={this.state.firstName + ' '+ this.state.lastName}></SideMenuHeader> 
                 
                 <View style={styles.compViewStyle}>
                     <View style={[styles.vertialLine,{height: (width <= 320) ? width/1.53 : width/1.68 }]}></View>

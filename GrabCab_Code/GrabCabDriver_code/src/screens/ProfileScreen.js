@@ -270,7 +270,8 @@ export default class ProfileScreen extends React.Component {
                         </TouchableOpacity>
                     </View>
                     <View style={{ position: 'absolute', marginTop: Platform.select({ ios: 55, android: 45 }), zIndex: 999, right: 20, }}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
+                            //onPress={() => this.props.navigation.replace('Welcome')}
                             disabled={this.state.loaderBtn}
                         >
                             <Icon

@@ -17,10 +17,10 @@ import {
     DriverIncomePage,
     EmailLoginScreen,
     MobileLoginScreen,
+    ScreenWelcome,
     IntroScreen
 } from '../screens';
 import SideMenu from '../components/SideMenu';
-import { colors } from '../common/theme';
 import  { ColorPropType, Dimensions } from 'react-native';
 var { width, height } = Dimensions.get('window');
 
@@ -134,7 +134,13 @@ var { width, height } = Dimensions.get('window');
             navigationOptions:{
                 headerShown: false,
             }
-        }   
+        },
+        Welcome:{
+            screen: ScreenWelcome,
+            navigationOptions:{
+                headerShown: false,
+            }
+        },
     },{
         initialRouteName: 'Intro',
     });

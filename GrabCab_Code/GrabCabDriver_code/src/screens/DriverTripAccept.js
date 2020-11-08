@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal, Image, Platform, Alert, ActivityIndicator } from 'react-native';
 import { Icon } from 'react-native-elements';
 import Polyline from '@mapbox/polyline';
-import MapView, { PROVIDER_GOOGLE, Marker, AnimatedRegion, ProviderPropType } from 'react-native-maps';
+import MapView, { PROVIDER_GOOGLE, Marker, AnimatedRegion } from 'react-native-maps';
 import { colors } from '../common/theme';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
@@ -41,15 +41,6 @@ export default class DriverTripAccept extends React.Component {
 
     _isMounted = false;
 
-    setModalVisible(visible, data) {
-        if (this._isMounted) {
-            this.setState({
-                modalVisible: visible,
-                modalData: data
-            });
-        }
-    }
-
     constructor(props) {
         super(props);
         this.state = {
@@ -61,7 +52,6 @@ export default class DriverTripAccept extends React.Component {
                 angle: 0,
             },
             starCount: 5,
-            modalVisible: false,
             coords: [],
             value: 0,
             tasklist: [],
@@ -88,21 +78,6 @@ export default class DriverTripAccept extends React.Component {
     _deactivate = () => {
         deactivateKeepAwake();
     };
-
-    //checking booking status
-    checking() {
-        if (this.state.currentBId) {
-            let curUid = firebase.auth().currentUser.uid
-            let bookingId = this.state.currentBId;
-            const userData = firebase.database().ref('users/' + curUid + '/my_bookings/' + bookingId + '/');
-            userData.on('value', bookingDetails => {
-                if (bookingDetails.val()) {
-                    let curstatus = bookingDetails.val().status;
-                    this.setState({ status: curstatus })
-                }
-            })
-        }
-    }
 
     // ESSE .ON AI PEGA E LER O VALOR DO BANCO QUANDO CHAMADO, E FICA ATUALIZANDO
     getStatusDetails() {
@@ -131,7 +106,7 @@ export default class DriverTripAccept extends React.Component {
                 const past = new Date(checkBlock.blocked.data); // Outra data no passado
                 const diff = Math.abs(now.getTime() - past.getTime()); // Subtrai uma data pela outra
                 const hours = Math.ceil(diff / (1000 * 60 * 60)); // Divide o total pelo total de milisegundos correspondentes a 1 dia. (1000 milisegundos = 1 segundo).
-                if (checkBlock.blocked && hours == 0) {
+                if (checkBlock.blocked && hours == 24) {
                     alert(checkBlock.blocked.motivo + ' Tempo restante: ' + (24 - hours) + ' Horas')
                 } else {
                     firebase.database().ref(`/users/` + this.state.curUid + '/blocked').remove().then(
@@ -147,7 +122,6 @@ export default class DriverTripAccept extends React.Component {
                     firebase.database().ref(`/users/` + this.state.curUid + '/').update({
                         driverActiveStatus: false
                     }).then(() => {
-                        this.setState({ driverActiveStatus: false });
                         this.checkingGps();
                     })
                 } else {
@@ -159,7 +133,7 @@ export default class DriverTripAccept extends React.Component {
                             firebase.database().ref(`/users/` + this.state.curUid + '/').update({
                                 driverActiveStatus: true
                             }).then(() => {
-                                this.setState({ driverActiveStatus: true, alertIsOpen: false, requestPermission: false });
+                                this.setState({ alertIsOpen: false, requestPermission: false });
                                 //clearInterval(this.state.intervalCheckGps);
                             })
                         } else {
@@ -196,7 +170,7 @@ export default class DriverTripAccept extends React.Component {
     getPhotoDriver() {
         if (this._isMounted) {
             let ref = firebase.database().ref('users/' + this.state.curUid + '/profile_image/');
-            ref.on('value', (snapshot) => {
+            ref.once('value', (snapshot) => {
                 this.setState({
                     photoDriver: snapshot.val()
                 })
@@ -217,9 +191,9 @@ export default class DriverTripAccept extends React.Component {
     async componentDidMount() {
         this._isMounted = true;
         this._subscribe();
-        await this.getRiders();
-        await this.getPhotoDriver();
-        await this.getStatusDetails();
+        this.getRiders();
+        this.getPhotoDriver();
+        this.getStatusDetails();
         this.getInfoEraning();
         this._activate();
     }
@@ -333,11 +307,8 @@ export default class DriverTripAccept extends React.Component {
                 }
             }
             this.setState({
-                totalEarning: totTrans,
                 today: tdTrans,
-                thisMothh: mnTrans,
             })
-            //console.log('today- '+tdTrans +' monthly- '+ mnTrans + ' Total-'+ totTrans);
         }
     }
 
@@ -386,7 +357,6 @@ export default class DriverTripAccept extends React.Component {
             );
             return this.location
         } else {
-            this.setState({ error: "Locations services needed" });
             this.openAlert();
             firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/driverActiveStatus').set(false);
             if (this.state.intervalCheckGps == null) {
@@ -431,14 +401,14 @@ export default class DriverTripAccept extends React.Component {
                             this.location.remove()
                             this.location = null
                         }
-                        if (this.state.driverActiveStatus) {
+                        if (this.state.statusDetails) {
                             if (this.state.curUid) {
                                 firebase.database().ref('users/' + this.state.curUid + '/driverActiveStatus').set(false);
                             }
                         }
                     }
                 } else {
-                    if (this.state.driverActiveStatus) {
+                    if (this.state.statusDetails) {
                         if (this.state.curUid) {
                             firebase.database().ref('users/' + this.state.curUid + '/driverActiveStatus').set(false);
                         }
@@ -479,26 +449,14 @@ export default class DriverTripAccept extends React.Component {
                 } else if (this.state.chegouCorrida == true) {
                     this.setState({ chegouCorrida: false })
                 }
-                if(snapshot.val().in_reject_progress) {
-                    if(snapshot.val().in_reject_progress.punido == false){
+                if (snapshot.val().in_reject_progress) {
+                    if (snapshot.val().in_reject_progress.punido == false) {
                         this.props.navigation.replace('BookingCancel')
                     }
                 }
                 this.setState({ tasklist: jobs.reverse() });
                 this.jobs = jobs;
             });
-        }
-    }
-
-    //get booking details function
-    getBookingDetails() {
-        if (this._isMounted) {
-            let ref = firebase.database().ref('bookings/' + item.bookingId + '/');
-            ref.on('value', (snapshot) => {
-                this.setState({
-                    bookingDetails: snapshot.val()
-                })
-            })
         }
     }
 
@@ -583,18 +541,21 @@ export default class DriverTripAccept extends React.Component {
                         firebase.database().ref('bookings/' + item.bookingId).once('value', (snap) => {
                             let requestedDriver = snap.val().requestedDriver;
                             if (requestedDriver) {
-                                firebase.database().ref('users/' + requestedDriver + '/waiting_riders_list/' + item.bookingId + '/').remove().then(() => {
+                                firebase.database().ref('users/' + requestedDriver + '/waiting_riders_list/' + item.bookingId + '/').remove().then()
+                                .then(() => {
                                     this.setState({ loader: false, chegouCorrida: false })
-                                }).then(() => {
                                     this.props.navigation.replace('DriverTripStart', { allDetails: item, regionUser: this.state.region })
+                                }).catch((error) => {
+                                    console.log(error)
+                                    alert('Ops, tivemos um problema')
                                 })
                             }
+                        }).catch((error) => {
+                            console.log(error)
+                            alert('Ops, tivemos um problema')
                         })
                     })
-                    this.setState({ currentBId: item.bookingId }, () => {
-                        this.checking();
-                        this.sendPushNotification(item.customer, this.state.driverDetails.firstName + ' aceitou seu chamado, aguarde.')
-                    })
+                    this.sendPushNotification(item.customer, this.state.driverDetails.firstName + ' aceitou seu chamado, aguarde.')
                 }).catch((error) => {
                     console.log(error)
                     alert('Ops, tivemos um problema.')
@@ -632,7 +593,6 @@ export default class DriverTripAccept extends React.Component {
                         firebase.database().ref(`bookings/` + item.bookingId + '/').update({
                             rejectedDrivers: arr,
                             status: "REJECTED",
-                            //requestDriver: [],
                         }).then(() => {
                             firebase.database().ref('users/' + this.state.curUid + '/driverActiveStatus').set(false)
 
@@ -657,7 +617,6 @@ export default class DriverTripAccept extends React.Component {
                         firebase.database().ref(`bookings/` + item.bookingId + '/').update({
                             rejectedDrivers: arr,
                             status: "REJECTED",
-                            //requestDriver: [],
                         }).then(() => {
                             firebase.database().ref('users/' + this.state.curUid + '/driverActiveStatus').set(false);
                         }).then(() => {
@@ -665,7 +624,6 @@ export default class DriverTripAccept extends React.Component {
                                 punido: false,
                             })
                         })
-
                             .then(() => {
                                 let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/');
                                 userDbRef.update({
@@ -679,10 +637,7 @@ export default class DriverTripAccept extends React.Component {
                     }
                 }
             });
-
-            firebase.database().ref('users/' + this.state.curUid + '/waiting_riders_list/' + item.bookingId + '/').remove().then(() => {
-                this.setModalVisible(false, null)
-            });
+            firebase.database().ref('users/' + this.state.curUid + '/waiting_riders_list/' + item.bookingId + '/').remove()
         }
 
     }
@@ -948,9 +903,9 @@ export default class DriverTripAccept extends React.Component {
                                 {/* BOTÃO GANHOS CENTRO */}
                                 <TouchableOpacity style={styles.touchaGanhos} disabled={this.state.loaderBtn} onPress={() => { this.carteira() }}>
                                     {this.state.animatedGrana && this.state.today > 0 ?
-                                    <Animatable.Text useNativeDriver={true} delay={1100} onAnimationEnd={() => this.setState({ animatedGrana: false })} animation="fadeInLeft" style={{ position: 'absolute', left: 5, color: '#49c33b', fontSize: 22, fontFamily: 'Inter-Bold'}}>+</Animatable.Text>
-                                    :
-                                    null}
+                                        <Animatable.Text useNativeDriver={true} delay={1100} onAnimationEnd={() => this.setState({ animatedGrana: false })} animation="fadeInLeft" style={{ position: 'absolute', left: 5, color: '#49c33b', fontSize: 22, fontFamily: 'Inter-Bold' }}>+</Animatable.Text>
+                                        :
+                                        null}
                                     <Animatable.Text useNativeDriver={true} animation="bounceInLeft" style={styles.touchaValor}>R$ {this.state.today ? parseFloat(this.state.today).toFixed(2) : '0'}</Animatable.Text>
                                 </TouchableOpacity>
 
@@ -976,10 +931,10 @@ export default class DriverTripAccept extends React.Component {
                         {/* BOTÃO LIGAR E DESLIGAR */}
                         {this.state.chegouCorrida == false ?
                             (this.state.statusDetails ?
-                                <View style={{ alignItems: 'center'}}>
+                                <View style={{ alignItems: 'center' }}>
                                     <Animatable.View animation={this.state.statusDetails ? 'fadeInUp' : 'fadeInDown'} useNativeDriver={true} style={styles.btnOnOff}>
-                                    <Pulse size={150} color="#49c33b" style={{ position: 'absolute' }} />
-                                    <TouchableOpacity onPress={() => { this.onChangeFunction(this.state.driverActiveStatus); }}>
+                                        <Pulse size={150} color="#49c33b" style={{ position: 'absolute' }} />
+                                        <TouchableOpacity onPress={() => { this.onChangeFunction(this.state.statusDetails); }}>
                                             <Icon
                                                 name='navigation-2'
                                                 type='feather'
@@ -987,7 +942,7 @@ export default class DriverTripAccept extends React.Component {
                                                 color={colors.WHITE}
                                             />
                                             <Text style={styles.textConectar}>ONLINE</Text>
-                                    </TouchableOpacity>
+                                        </TouchableOpacity>
                                     </Animatable.View>
                                 </View>
 
@@ -996,15 +951,15 @@ export default class DriverTripAccept extends React.Component {
                                 <View>
                                     <View style={{ alignItems: 'center', }}>
                                         <Animatable.View style={styles.btnOnOff2} animation={this.state.statusDetails ? 'fadeInDown' : 'fadeInUp'} useNativeDriver={true}>
-                                        <TouchableOpacity onPress={() => { this.onChangeFunction(this.state.driverActiveStatus); }}>
-                                            <Icon
-                                                name='navigation-2'
-                                                type='feather'
-                                                size={25}
-                                                color={colors.WHITE}
-                                            />
-                                            <Text style={styles.textConectar2}>OFFLINE</Text>
-                                        </TouchableOpacity>
+                                            <TouchableOpacity onPress={() => { this.onChangeFunction(this.state.statusDetails); }}>
+                                                <Icon
+                                                    name='navigation-2'
+                                                    type='feather'
+                                                    size={25}
+                                                    color={colors.WHITE}
+                                                />
+                                                <Text style={styles.textConectar2}>OFFLINE</Text>
+                                            </TouchableOpacity>
                                         </Animatable.View>
                                     </View>
                                 </View>
@@ -1019,9 +974,6 @@ export default class DriverTripAccept extends React.Component {
     }
 }
 
-DriverTripAccept.propTypes = {
-    provider: ProviderPropType,
-};
 
 //Screen Styling
 const styles = StyleSheet.create({

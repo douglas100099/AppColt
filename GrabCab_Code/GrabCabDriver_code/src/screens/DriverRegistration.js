@@ -63,7 +63,7 @@ export default class DriverRegistrationPage extends React.Component {
         else {
           firebase.database().ref(`users/${this.state.uid}`).update({
             approved: true,
-            driverActiveStatus: true,
+            driverActiveStatus: false,
             queue: false,
           });
           this.props.navigation.navigate("DriverRoot");

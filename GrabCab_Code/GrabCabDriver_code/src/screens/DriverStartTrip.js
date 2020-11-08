@@ -104,6 +104,9 @@ export default class DriverStartTrip extends React.Component {
     componentDidMount() {
         this._isMounted = true;
         this.getCancelReasons();
+        setTimeout(() => {
+            this.getDirectionss('"' + this.state.region.latitude + ',' + this.state.region.longitude + '"', '"' + this.state.rideDetails.pickup.lat + ',' + this.state.rideDetails.pickup.lng + '"')
+        }, 500)
     }
 
     componentWillUnmount() {
@@ -153,9 +156,6 @@ export default class DriverStartTrip extends React.Component {
             },
             error => console.log(error)
         )
-        setTimeout(() => {
-            this.getDirectionss('"' + this.state.region.latitude + ',' + this.state.region.longitude + '"', '"' + this.state.rideDetails.pickup.lat + ',' + this.state.rideDetails.pickup.lng + '"')
-        }, 500)
         return this.location
     };
 
@@ -356,6 +356,8 @@ export default class DriverStartTrip extends React.Component {
                             promoKey: this.state.allData.pagamento.promoKey,
                             payment_status: 'DUE',
                             cancellValue: this.state.allData.pagamento.cancellValue,
+                            finalCalcBooking: true,
+                            manageMoney: true,
                         },
                         trip_start_time: new Date().toLocaleTimeString(dateStyle),
                     }

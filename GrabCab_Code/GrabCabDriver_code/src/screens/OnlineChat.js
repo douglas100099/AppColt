@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Dimensions,
   Keyboard,
+  Platform,
   TouchableWithoutFeedback,
   StatusBar,
   TextInput
@@ -16,7 +17,7 @@ import { colors } from "../common/theme";
 import { Icon, Header } from "react-native-elements";
 import * as firebase from 'firebase'
 import { RequestPushMsg } from '../common/RequestPushMsg';
-var { height } = Dimensions.get('window');
+var { height, width } = Dimensions.get('window');
 import languageJSON from '../common/language';
 
 export default class OnlineChat extends Component {
@@ -69,7 +70,7 @@ export default class OnlineChat extends Component {
 
       }
       this.setState({ allChat: allMessages }, () => {
-      this.chatData(this.state.allChat)
+        this.chatData(this.state.allChat)
       })
     })
 
@@ -166,7 +167,7 @@ export default class OnlineChat extends Component {
                       msgTime: time,
                       source: "driver"
                     })
-                    this.sendPushNotification(this.state.carbookedInfo.customer, this.getParamData.bookingId, languageJSON.driver + this.state.carbookedInfo.driver_name + languageJSON.send_msg + inputmessage);
+                    this.sendPushNotification(this.state.carbookedInfo.customer, 'O motorista ' + this.state.carbookedInfo.driver_firstName + ', enviou uma mensagem: \n' + inputmessage);
                   })
                 }
               } else {
@@ -184,7 +185,7 @@ export default class OnlineChat extends Component {
                       msgTime: time,
                       source: "driver"
                     })
-                    this.sendPushNotification(this.state.carbookedInfo.customer, this.getParamData.bookingId, languageJSON.driver + this.state.carbookedInfo.driver_name + languageJSON.send_msg + inputmessage);
+                    this.sendPushNotification(this.state.carbookedInfo.customer, 'O motorista ' + this.state.carbookedInfo.driver_firstName + ', enviou uma mensagem: \n' + inputmessage);
                   } else {
                     //alert("ID not found");
                   }
@@ -229,13 +230,32 @@ export default class OnlineChat extends Component {
   render() {
     return (
       <View style={styles.container}>
-        
+        <View style={styles.viewHeader}>
+          <View style={styles.bordaIconeVoltar}>
+            <TouchableOpacity onPress={() => { this.props.navigation.goBack() }}>
+              <Icon
+                name='chevron-left'
+                type='MaterialIcons'
+                size={width < 375 ? 35 : 40}
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={{ flexDirection: 'column', alignItems: 'center' }}>
+            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20, }}> {this.state.carbookedInfo.customer_name}</Text>
+          </View>
+          <View style={{ backgroundColor: colors.BLACK, width: 53, justifyContent: 'center', alignItems: 'center', height: 53, position: 'absolute', bottom: 5, right: 10, borderRadius: 100 }}>
+            <Image
+              source={this.state.carbookedInfo.imageRider ? { uri: this.state.carbookedInfo.imageRider } : require('../../assets/images/profilePic.png')}
+              style={{ width: 50, height: 50, borderRadius: 50, }}
+            />
+          </View>
+        </View>
         <FlatList
           data={this.state.allChat.reverse()}
           renderItem={this.renderItem}
           inverted
         />
-        <KeyboardAvoidingView behavior="padding">
+        <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? 'padding' : 'height'}>
           <View style={styles.footer}>
             <TextInput
               value={this.state.inputmessage}
@@ -245,8 +265,15 @@ export default class OnlineChat extends Component {
               onChangeText={text => this.setState({ inputmessage: text })}
             />
 
-            <TouchableOpacity onPress={() => this.sendMessege(this.state.inputmessage)}>
-              <Text style={styles.send}>{languageJSON.send}</Text>
+            <TouchableOpacity style={{ right: 25 }} onPress={() => this.sendMessege(this.state.inputmessage)}>
+              <Icon
+                name='ios-paper-plane'
+                type='ionicon'
+                color={colors.DEEPBLUE}
+                size={30}
+                containerStyle={{ opacity: 0.5 }}
+              />
+              {/*<Text style={styles.send}>{languageJSON.send_button_text}</Text>*/}
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -259,8 +286,36 @@ export default class OnlineChat extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.GREY.btnSecondary,
+    backgroundColor: colors.WHITE,
     //marginTop: StatusBar.currentHeight,
+  },
+  viewHeader: {
+    backgroundColor: colors.WHITE,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-around',
+    height: Platform.OS == 'ios' ? 100 : 85,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { x: 0, y: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+  },
+  bordaIconeVoltar: {
+    position: 'absolute',
+    backgroundColor: colors.WHITE,
+    width: width < 375 ? 35 : 40,
+    height: width < 375 ? 35 : 40,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    bottom: 10,
+    left: 15,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { x: 0, y: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
   },
   container1: {
     height: height - 150
@@ -280,7 +335,7 @@ const styles = StyleSheet.create({
   },
   headerTitleStyle: {
     color: colors.WHITE,
-    fontSize: 18,
+    fontSize: 17,
     textAlign: 'center',
   },
   headerStyle: {
@@ -316,7 +371,12 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: 'row',
-    backgroundColor: '#eee'
+    backgroundColor: colors.WHITE,
+    marginBottom: 25,
+    height: 40,
+    alignItems: 'center',
+    borderTopWidth: 2,
+    borderColor: colors.GREY.background,
   },
   input: {
     paddingHorizontal: 20,
@@ -331,30 +391,35 @@ const styles = StyleSheet.create({
     padding: 20
   },
   drivermsgStyle: {
-    backgroundColor: colors.GREY.default,
+    backgroundColor: colors.DEEPBLUE,
     marginBottom: 5,
-    marginTop: 5,
+    marginTop: 10,
     marginRight: 10,
     marginLeft: 30,
-    borderRadius: 20,
+    borderBottomLeftRadius: 50,
+    borderTopLeftRadius: 50,
+    borderTopRightRadius: 30,
+    justifyContent: 'flex-end',
+
     elevation: 5,
-    shadowOpacity: 0.75,
+    shadowOpacity: 0.1,
     shadowRadius: 5,
-    shadowColor: colors.GREY.Deep_Nobel,
+    shadowColor: "#fff",
     shadowOffset: { height: 1, width: 0 },
   },
   msgTextStyle: {
     marginStart: 15,
-    marginEnd: 15,
+    marginEnd: 35,
     marginTop: 10,
     textAlign: "right",
+    fontFamily: 'Inter-Bold',
     fontSize: 18,
     color: "#fff"
   },
   msgTimeStyle: {
     marginStart: 15,
     marginBottom: 10,
-    marginEnd: 15,
+    marginEnd: 40,
     textAlign: "right",
     fontSize: 12,
     color: "#fff"
@@ -365,21 +430,24 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginRight: 30,
     marginLeft: 10,
-    borderRadius: 20,
+    borderBottomLeftRadius: 50,
+    borderBottomRightRadius: 50,
+    borderTopLeftRadius: 50,
+    borderTopRightRadius: 50,
     shadowOpacity: 0.75,
     shadowRadius: 5,
     shadowColor: colors.GREY.Deep_Nobel,
     shadowOffset: { height: 1, width: 0 },
   },
   riderMsgText: {
-    marginStart: 15,
+    marginStart: 25,
     textAlign: "left",
     fontSize: 18,
-    color: "#000",
+    color: colors.DEEPBLUE,
     marginTop: 10
   },
   riderMsgTime: {
-    marginStart: 15,
+    marginStart: 30,
     textAlign: "left",
     fontSize: 12,
     color: "#000",

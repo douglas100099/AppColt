@@ -14,6 +14,7 @@ import languageJSON from '../common/language';
 import { google_map_key } from '../common/key';
 import * as TaskManager from 'expo-task-manager';
 import * as Location from 'expo-location';
+var { width, height } = Dimensions.get('window');
 
 const LOCATION_TASK_NAME = 'background-location-task';
 
@@ -183,7 +184,7 @@ export class AuthLoadingScreen extends React.Component {
                 email: user.email ? user.email : '',
                 mobile: user.phoneNumber ? user.phoneNumber.replace('"', '') : '',
               };
-              this.props.navigation.navigate("DriverReg", { requireData: data })
+              this.props.navigation.navigate("Welcome", { requireData: data })
             }
             else {
               alert(languageJSON.email_verify_message);

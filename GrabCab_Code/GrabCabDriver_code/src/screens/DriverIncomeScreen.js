@@ -28,6 +28,7 @@ export default class DriverIncomePage extends React.Component {
                 symbol: ''
             },
             loaderBtn: false,
+            saldo: 0,
             myBookingarr: [],
         };
         this.objetoPrincipal = {
@@ -57,6 +58,7 @@ export default class DriverIncomePage extends React.Component {
     componentDidMount() {
         let userUid = firebase.auth().currentUser.uid;
         let ref = firebase.database().ref('users/' + userUid + '/ganhos');
+        let refSaldo = firebase.database().ref('users/' + userUid + '/saldo');
         ref.on('value', allBookings => {
             if (allBookings.val()) {
                 let data = allBookings.val();
@@ -72,6 +74,12 @@ export default class DriverIncomePage extends React.Component {
                     })
 
                 }
+            }
+        })
+        refSaldo.on('value', saldoData => {
+            if(saldoData.val()) {
+                const saldo = saldoData.val()
+                this.setState({ saldo: saldo })
             }
         })
 
@@ -122,6 +130,22 @@ export default class DriverIncomePage extends React.Component {
             })
             this.teste();
 
+        }
+    }
+
+    sacarSaldo() {
+        if(this.state.saldo >= 30) {
+            alert('Envie uma mensagem ao suporte, para poder sacar seu saldo.')
+        } else {
+            alert('Não é possivel realizar saque abaixo de R$30,00.')
+        }
+    }
+
+    pagarSaldo() {
+        if(this.state.saldo >= -25) {
+            alert('Envie uma mensagem ao suporte, para poder realizar o pagamento e desbloquear sua conta.')
+        } else {
+            alert('Você ainda não atingiu o limite de taxa negativa da Colt, mas, você pode realizar o pagamento, entre em contato com o suporte.')
         }
     }
 
@@ -307,7 +331,7 @@ export default class DriverIncomePage extends React.Component {
 
                 <ScrollView style={{flex: 0.5}}>
                 <View style={{justifyContent: 'center'}}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: 5, marginBottom: 10, marginTop: 15, height: 50, backgroundColor: colors.GREY3 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: 5, marginBottom: 25, marginTop: 15, height: 55, backgroundColor: colors.GREY3 }}>
                         <View style={{marginLeft: 15}}>
                             <Icon
                                 name='ios-wallet'
@@ -315,26 +339,19 @@ export default class DriverIncomePage extends React.Component {
                                 color='#32db64'
                             />
                         </View>
-                        <Text style={{ marginLeft: 10, fontSize: 16, fontFamily: 'Inter-Regular', color: colors.BLACK }}>Saldo disponível:</Text>
-                        <Text style={{ marginLeft: 5, fontSize: 16, fontFamily: 'Inter-Bold', color: '#32db64' }}>R$451,00</Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: 5, marginBottom: 20, height: 50, backgroundColor: colors.GREY3 }}>
-                        <View style={{marginLeft: 15}}>
-                            <Icon
-                                name='ios-trending-down'
-                                type='ionicon'
-                                color={colors.RED}
-                            />
-                        </View>
-                        <Text style={{ marginLeft: 10, fontSize: 16, fontFamily: 'Inter-Regular', color: colors.BLACK }}>Saldo de corridas:</Text>
-                        <Text style={{ marginLeft: 5, fontSize: 16, fontFamily: 'Inter-Bold', color: colors.RED }}>-R$251,00</Text>
+                        <Text style={{ marginLeft: 10, fontSize: 18, fontFamily: 'Inter-Regular', color: colors.BLACK }}>Saldo:</Text>
+                        <Text style={{ marginLeft: 5, fontSize: 18, fontFamily: 'Inter-Bold', color: this.state.saldo >= 0 ? '#32db64' : colors.RED }}>{this.state.saldo ? this.state.saldo : '0'}</Text>
                     </View>
                     <View style={{alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 20}}>
-                        <TouchableOpacity style={{flexDirection: 'row', width: width/2.5, height: 40, backgroundColor: colors.DEEPBLUE, borderRadius: 15, justifyContent: 'center', alignItems: 'center'}}>
+                        <TouchableOpacity style={{flexDirection: 'row', width: width/2.5, height: 40, backgroundColor: colors.DEEPBLUE, borderRadius: 15, justifyContent: 'center', alignItems: 'center'}}
+                            onPress={() => this.pagarSaldo()}
+                        >
                             <Text style={{ marginLeft: 5, fontSize: 16, fontFamily: 'Inter-Bold', color: colors.WHITE }}>Pagar saldo</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={{flexDirection: 'row', width: width/2.5, height: 40, backgroundColor: colors.DEEPBLUE, borderRadius: 15, justifyContent: 'center', alignItems: 'center'}}>
+                        <TouchableOpacity style={{flexDirection: 'row', width: width/2.5, height: 40, backgroundColor: colors.DEEPBLUE, borderRadius: 15, justifyContent: 'center', alignItems: 'center'}}
+                            onPress={() => this.sacarSaldo()}     
+                        >
                             <Text style={{ marginLeft: 5, fontSize: 16, fontFamily: 'Inter-Bold', color: colors.WHITE }}>Sacar saldo</Text>
                         </TouchableOpacity>
                     </View>

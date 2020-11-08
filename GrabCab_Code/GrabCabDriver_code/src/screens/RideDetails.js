@@ -237,7 +237,7 @@ export default class RideDetails extends React.Component {
                                             type='ionicon'
                                             color={colors.YELLOW.primary}
                                         />
-                                        <Text style={{ fontSize: 14, fontFamily: 'Inter-Regular', color: colors.BLACK, marginLeft: 5}}>{this.state.paramData ? this.state.paramData.firstNameRider : '5.0'}</Text>
+                                        <Text style={{ fontSize: 14, fontFamily: 'Inter-Regular', color: colors.BLACK, marginLeft: 5}}>{this.state.paramData ? this.state.paramData.ratingRider : '5.0'}</Text>
                                     </View>
                                 </View>
                             </View>

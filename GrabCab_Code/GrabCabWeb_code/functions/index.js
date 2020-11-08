@@ -228,21 +228,24 @@ exports.manageMoney = functions.region('southamerica-east1').database.ref('booki
                     admin.database().ref('users/' + dataBooking.driver + '/').once('value', driverData => {
                         let saldoDriver = driverData.val().saldo
 
+                        console.log("SALDO ATUAL DO DRIVER -> " + saldoDriver)
+
                         if (dataBooking.pagamento.usedWalletMoney >= dataBooking.pagamento.convenience_fees) {
+                            console.log("O WALLET USADO È MAIOR QUE O CONVENIENCE ")
                             if (saldoDriver) {
-                                let saldoDriver = saldoDriver + (parseFloat(dataBooking.pagamento.usedWalletMoney) - parseFloat(dataBooking.pagamento.convenience_fees))
+                                let newSaldo = saldoDriver + ( dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees)
                                 admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                    saldo: saldoDriver
+                                    saldo: newSaldo
                                 })
                             }
                             else {
                                 admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                    saldo: parseFloat(dataBooking.pagamento.usedWalletMoney) - parseFloat(dataBooking.pagamento.convenience_fees)
+                                    saldo: dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees
                                 })
                             }
                         } else {
                             if (saldoDriver) {
-                                let newSaldo = saldoDriver + (parseFloat(dataBooking.pagamento.usedWalletMoney) - parseFloat(dataBooking.pagamento.convenience_fees))
+                                let newSaldo = saldoDriver + ( dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees)
 
                                 admin.database().ref('users/' + dataBooking.driver + '/').update({
                                     saldo: newSaldo
@@ -250,7 +253,7 @@ exports.manageMoney = functions.region('southamerica-east1').database.ref('booki
                             }
                             else {
                                 admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                    saldo: parseFloat(dataBooking.pagamento.usedWalletMoney) - parseFloat(dataBooking.pagamento.convenience_fees)
+                                    saldo: dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees
                                 })
                             }
                         }
@@ -318,7 +321,7 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                     }
                     //Caso o passageiro tenha menos dinheiro na carteira, ele pagará o restante em dinheiro
                     else if (walletBalance < dataBooking.pagamento.customer_paid) {
-                        let newValue = parseFloat(dataBooking.pagamento.customer_paid) - parseFloat(walletBalance)
+                        let newValue = (dataBooking.pagamento.customer_paid) - (walletBalance)
 
                         admin.database().ref('bookings/' + bookingId + '/pagamento').update({
                             usedWalletMoney: walletBalance,

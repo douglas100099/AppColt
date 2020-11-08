@@ -184,8 +184,9 @@ exports.manageMoney = functions.region('southamerica-east1').database.ref('booki
                             })
                         }
                     })
+                return true
                 }).catch(error => {
-                    return 0
+                    throw new Error("Erro executar função Dinheiro")
                 })
             }
             else if (paymentMode === 'Carteira') {
@@ -212,8 +213,9 @@ exports.manageMoney = functions.region('southamerica-east1').database.ref('booki
                             })
                         }
                     })
+                return true
                 }).catch(error => {
-                    return 0
+                    throw new Error("Erro executar função Carteira")
                 })
             }
             else if (paymentMode === 'Dinheiro/Carteira') {
@@ -253,8 +255,9 @@ exports.manageMoney = functions.region('southamerica-east1').database.ref('booki
                             }
                         }
                     })
+                return true
                 }).catch(error => {
-                    return 0
+                    throw new Error("Erro executar função Dinheiro/Carteira")
                 })
             }
         }
@@ -278,21 +281,21 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                         admin.database().ref('bookings/' + bookingId + '/pagamento').update({
                             usedWalletMoney: dataBooking.pagamento.customer_paid,
                             cashPaymentAmount: 0,
-                            payment_mode: paymentMode == 'Carteira' ? 'Carteira' : 'Dinheiro/Carteira',
+                            payment_mode: paymentMode === 'Carteira' ? 'Carteira' : 'Dinheiro/Carteira',
                             payment_status: 'PAID'
                         })
                             .then(() => {
                                 admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + bookingId + '/pagamento').update({
                                     usedWalletMoney: dataBooking.pagamento.customer_paid,
                                     cashPaymentAmount: 0,
-                                    payment_mode: paymentMode == 'Carteira' ? 'Carteira' : 'Dinheiro/Carteira',
+                                    payment_mode: paymentMode === 'Carteira' ? 'Carteira' : 'Dinheiro/Carteira',
                                     payment_status: 'PAID'
                                 })
                                     .then(() => {
                                         admin.database().ref('users/' + dataBooking.driver + '/my_bookings/' + bookingId + '/pagamento').update({
                                             usedWalletMoney: dataBooking.pagamento.customer_paid,
                                             cashPaymentAmount: 0,
-                                            payment_mode: paymentMode == 'Carteira' ? 'Carteira' : 'Dinheiro/Carteira',
+                                            payment_mode: paymentMode === 'Carteira' ? 'Carteira' : 'Dinheiro/Carteira',
                                             payment_status: 'PAID'
                                         }).then(() => {
 
@@ -300,14 +303,17 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                             admin.database().ref('users/' + dataBooking.customer + '/').update({
                                                 walletBalance: newValue
                                             })
-                                        }).catch(eror => {
-                                            return 0
+                                        return true
+                                        }).catch(error => {
+                                            throw new Error("Erro atualizar carteira Passageiro")
                                         })
+                                    return true
                                     }).catch(error => {
-                                        return 0
+                                        throw new Error("Erro atualizar corrida do Motorista")
                                     })
+                            return true
                             }).catch(error => {
-                                return 0
+                                throw new Error("Erro atualizar corrida do passageiro")
                             })
                     }
                     //Caso o passageiro tenha menos dinheiro na carteira, ele pagará o restante em dinheiro
@@ -336,14 +342,17 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                             admin.database().ref('users/' + dataBooking.customer + '/').update({
                                                 walletBalance: 0
                                             })
-                                        }).catch(eror => {
-                                            return 0
+                                        return true
+                                        }).catch(error => {
+                                            throw new Error("Erro atualizar carteira Passageiro")
                                         })
+                                    return true
                                     }).catch(error => {
-                                        return 0
+                                        throw new Error("Erro atualizar corrida do Motorista")
                                     })
+                            return true
                             }).catch(error => {
-                                return 0
+                                throw new Error("Erro atualizar corrida do passageiro")
                             })
                     }
                 }

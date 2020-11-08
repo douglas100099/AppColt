@@ -369,7 +369,6 @@ export default class MapScreen extends React.Component {
         userRoot.once('value', userData => {
             if (userData.val()) {
                 this.setState({
-                    walletBalance: userData.val().walletBalance,
                     nameUser: userData.val().firstName
                 })
             }

@@ -5,6 +5,7 @@ const admin = require('firebase-admin');
 const paypalcheckout = require('./providers/paypal/checkout');
 const stripecheckout = require('./providers/stripe/checkout');
 const braintreecheckout = require('./providers/braintree/checkout');
+const { user } = require('firebase-functions/lib/providers/auth');
 
 admin.initializeApp();
 
@@ -150,7 +151,209 @@ const RequestPushMsg = (token, msg) => {
     return true;
 }
 
-exports.manageWalletMoney = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/usedWallet').onCreate((snap, context) => {
+exports.manageMoney = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/manageMoney').onCreate((snap, context) => {
+    const bookingId = context.params.bookingsId;
+    admin.database().ref('bookings/' + bookingId).on("value", (data) => {
+        let dataBooking = data.val();
+        let paymentMode = dataBooking.pagamento.payment_mode
+
+        if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'PAID') {
+            let driverShare = parseFloat(dataBooking.pagamento.trip_cost) - parseFloat(dataBooking.pagamento.convenience_fees)
+
+            if (paymentMode === 'Dinheiro') {
+                admin.database().ref('users/' + dataBooking.driver + '/ganhos/' + bookingId + '/').update({
+                    data: new Date().toString(),
+                    ganho: driverShare,
+                    hora: new Date().toLocaleTimeString('pt-BR'),
+                    taxa: dataBooking.pagamento.convenience_fees,
+                }).then(() => {
+                    admin.database().ref('users/' + dataBooking.driver + '/').once('value', driverData => {
+                        let saldoDriver = driverData.val().saldo
+                        if (saldoDriver) {
+                            let newSaldo = saldoDriver - dataBooking.pagamento.convenience_fees
+
+                            //Atualiza negativando o saldo do motorista no banco com a taxa da corrida atual
+                            admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                saldo: newSaldo
+                            })
+                        }
+                        else {
+                            let newSaldo = -dataBooking.pagamento.convenience_fees
+                            admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                saldo: newSaldo
+                            })
+                        }
+                    })
+                }).catch(error => {
+                    return 0
+                })
+            }
+            else if (paymentMode === 'Carteira') {
+                admin.database().ref('users/' + dataBooking.driver + '/ganhos/' + bookingId + '/').update({
+                    data: new Date().toString(),
+                    ganho: driverShare,
+                    hora: new Date().toLocaleTimeString('pt-BR'),
+                    taxa: dataBooking.pagamento.convenience_fees,
+                }).then(() => {
+                    admin.database().ref('users/' + dataBooking.driver + '/').once('value', driverData => {
+                        let saldoDriver = driverData.val().saldo
+                        if (saldoDriver) {
+                            let newValue = driverShare + saldoDriver
+
+                            //ATUALIZA O SALDO DO MOTORISTA
+                            admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                saldo: newValue
+                            })
+                        }
+                        else {
+                            //ATUALIZA O SALDO DO MOTORISTA
+                            admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                saldo: driverShare
+                            })
+                        }
+                    })
+                }).catch(error => {
+                    return 0
+                })
+            }
+            else if (paymentMode === 'Dinheiro/Carteira') {
+                admin.database().ref('users/' + dataBooking.driver + '/ganhos/' + bookingId + '/').update({
+                    data: new Date().toString(),
+                    ganho: driverShare,
+                    hora: new Date().toLocaleTimeString('pt-BR'),
+                    taxa: dataBooking.pagamento.convenience_fees,
+                }).then(() => {
+                    admin.database().ref('users/' + dataBooking.driver + '/').once('value', driverData => {
+                        let saldoDriver = driverData.val().saldo
+
+                        if (dataBooking.pagamento.usedWalletMoney >= dataBooking.pagamento.convenience_fees) {
+                            if (saldoDriver) {
+                                let saldoDriver = saldoDriver + (parseFloat(dataBooking.pagamento.usedWalletMoney) - parseFloat(dataBooking.pagamento.convenience_fees))
+                                admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                    saldo: saldoDriver
+                                })
+                            }
+                            else {
+                                admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                    saldo: parseFloat(dataBooking.pagamento.usedWalletMoney) - parseFloat(dataBooking.pagamento.convenience_fees)
+                                })
+                            }
+                        } else {
+                            if (saldoDriver) {
+                                let newSaldo = saldoDriver + (parseFloat(dataBooking.pagamento.usedWalletMoney) - parseFloat(dataBooking.pagamento.convenience_fees))
+
+                                admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                    saldo: newSaldo
+                                })
+                            }
+                            else {
+                                admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                    saldo: parseFloat(dataBooking.pagamento.usedWalletMoney) - parseFloat(dataBooking.pagamento.convenience_fees)
+                                })
+                            }
+                        }
+                    })
+                }).catch(error => {
+                    return 0
+                })
+            }
+        }
+    })
+})
+
+exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/finalCalcBooking').onCreate((snap, context) => {
+    const bookingId = context.params.bookingsId;
+    admin.database().ref('bookings/' + bookingId).on("value", (data) => {
+        let dataBooking = data.val();
+        let paymentMode = dataBooking.pagamento.payment_mode
+
+        if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'IN_PROGRESS') {
+            admin.database().ref('users/' + dataBooking.customer).once("value", (userData) => {
+                let walletBalance = userData.val().walletBalance
+
+                if (paymentMode === 'Carteira' || paymentMode === 'Dinheiro/Carteira') {
+                    //Caso o passageiro tenha mais dinheiro na carteira do q o valor final da corrida
+                    if (walletBalance >= dataBooking.pagamento.customer_paid) {
+                        let newValue = parseFloat(walletBalance) - parseFloat(dataBooking.pagamento.customer_paid)
+                        admin.database().ref('bookings/' + bookingId + '/pagamento').update({
+                            usedWalletMoney: dataBooking.pagamento.customer_paid,
+                            cashPaymentAmount: 0,
+                            payment_mode: paymentMode == 'Carteira' ? 'Carteira' : 'Dinheiro/Carteira',
+                            payment_status: 'PAID'
+                        })
+                            .then(() => {
+                                admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + bookingId + '/pagamento').update({
+                                    usedWalletMoney: dataBooking.pagamento.customer_paid,
+                                    cashPaymentAmount: 0,
+                                    payment_mode: paymentMode == 'Carteira' ? 'Carteira' : 'Dinheiro/Carteira',
+                                    payment_status: 'PAID'
+                                })
+                                    .then(() => {
+                                        admin.database().ref('users/' + dataBooking.driver + '/my_bookings/' + bookingId + '/pagamento').update({
+                                            usedWalletMoney: dataBooking.pagamento.customer_paid,
+                                            cashPaymentAmount: 0,
+                                            payment_mode: paymentMode == 'Carteira' ? 'Carteira' : 'Dinheiro/Carteira',
+                                            payment_status: 'PAID'
+                                        }).then(() => {
+
+                                            //ATUALIZA A CARTEIRA DO PASSAGEIRO RERTIRANDO O VALOR USADO 
+                                            admin.database().ref('users/' + dataBooking.customer + '/').update({
+                                                walletBalance: newValue
+                                            })
+                                        }).catch(eror => {
+                                            return 0
+                                        })
+                                    }).catch(error => {
+                                        return 0
+                                    })
+                            }).catch(error => {
+                                return 0
+                            })
+                    }
+                    //Caso o passageiro tenha menos dinheiro na carteira, ele pagará o restante em dinheiro
+                    else if (walletBalance < dataBooking.pagamento.customer_paid) {
+                        let newValue = parseFloat(dataBooking.pagamento.customer_paid) - parseFloat(walletBalance)
+
+                        admin.database().ref('bookings/' + bookingId + '/pagamento').update({
+                            usedWalletMoney: walletBalance,
+                            cashPaymentAmount: newValue,
+                            payment_mode: 'Recalculado/Din+Card'
+                        })
+                            .then(() => {
+                                admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + bookingId + '/pagamento').update({
+                                    usedWalletMoney: walletBalance,
+                                    cashPaymentAmount: newValue,
+                                    payment_mode: 'Recalculado/Din+Card'
+                                })
+                                    .then(() => {
+                                        admin.database().ref('users/' + dataBooking.driver + '/my_bookings/' + bookingId + '/pagamento').update({
+                                            usedWalletMoney: walletBalance,
+                                            cashPaymentAmount: newValue,
+                                            payment_mode: 'Recalculado/Din+Card'
+                                        }).then(() => {
+
+                                            //ATUALIZA A CARTEIRA DO PASSAGEIRO RERTIRANDO O VALOR USADO 
+                                            admin.database().ref('users/' + dataBooking.customer + '/').update({
+                                                walletBalance: 0
+                                            })
+                                        }).catch(eror => {
+                                            return 0
+                                        })
+                                    }).catch(error => {
+                                        return 0
+                                    })
+                            }).catch(error => {
+                                return 0
+                            })
+                    }
+                }
+            })
+        }
+    })
+})
+
+
+/*exports.manageWalletMoney = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/usedWallet').onCreate((snap, context) => {
     const bookingId = context.params.bookingsId;
     admin.database().ref('bookings/' + context.params.bookingsId).on("value", (data) => {
         let dataBooking = data.val();
@@ -177,7 +380,7 @@ exports.manageWalletMoney = functions.region('southamerica-east1').database.ref(
             })
         }
     })
-})
+})*/
 
 exports.cancelSearchDriver = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}').onCreate((snap, context) => {
     setTimeout(() => {

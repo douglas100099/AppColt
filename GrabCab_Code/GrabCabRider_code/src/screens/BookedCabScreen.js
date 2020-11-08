@@ -352,6 +352,9 @@ export default class BookedCabScreen extends React.Component {
                             })
                         })
                     }
+                    else {
+                        alert("Não foi possível cancelar essa corrida, ela ja iniciou!")
+                    }
                 }
             })
         })

@@ -323,21 +323,21 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                         admin.database().ref('bookings/' + bookingId + '/pagamento').update({
                             usedWalletMoney: walletBalance,
                             cashPaymentAmount: newValue,
-                            payment_mode: 'Recalculado/Din+Card',
+                            observacao: 'Recalculado/Din+Card',
                             payment_status: 'PAID'
                         })
                             .then(() => {
                                 admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + bookingId + '/pagamento').update({
                                     usedWalletMoney: walletBalance,
                                     cashPaymentAmount: newValue,
-                                    payment_mode: 'Recalculado/Din+Card',
+                                    observacao: 'Recalculado/Din+Card',
                                     payment_status: 'PAID'
                                 })
                                     .then(() => {
                                         admin.database().ref('users/' + dataBooking.driver + '/my_bookings/' + bookingId + '/pagamento').update({
                                             usedWalletMoney: walletBalance,
                                             cashPaymentAmount: newValue,
-                                            payment_mode: 'Recalculado/Din+Card',
+                                            observacao: 'Recalculado/Din+Card',
                                             payment_status: 'PAID'
                                         }).then(() => {
 

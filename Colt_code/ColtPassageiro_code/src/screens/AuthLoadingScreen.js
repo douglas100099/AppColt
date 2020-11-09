@@ -138,7 +138,6 @@ export class AuthLoadingScreen extends React.Component {
         } else {
           firebase.database().ref("settings").once("value", settingdata => {
             let settings = settingdata.val();
-            console.log(user.providerData[0].providerId + "TESTE AQUI oh ")
             if ((user.providerData[0].providerId === "password" && settings.email_verify && user.emailVerified) || !settings.email_verify || user.providerData[0].providerId !== "password" ) {
               var data = {};
               data.profile = {

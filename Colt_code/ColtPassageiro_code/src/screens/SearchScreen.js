@@ -108,8 +108,7 @@ export default class SearchScreen extends Component {
                     this.setState({
                         locationCasa: locationCasa
                     })
-            } else 
-            {
+            } else {
                 this.setState({
                     locationCasa: null
                 })
@@ -135,7 +134,7 @@ export default class SearchScreen extends Component {
     }
 
     deleteSavedLocation() {
-        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/savedLocations/').remove().then(() =>{
+        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/savedLocations/').remove().then(() => {
             this.searchModal.setAddressText("")
         })
     }
@@ -320,7 +319,7 @@ export default class SearchScreen extends Component {
                         </GooglePlacesAutocomplete>
                     </View>
                     {this.state.locationCasa != null ?
-                        <TouchableOpacity style={{ top: Platform.OS == 'ios' ? 30 :  25, alignSelf: 'center' }} onPress={() => { this.deleteSavedLocation() }}>
+                        <TouchableOpacity style={{ top: Platform.OS == 'ios' ? 30 : 25, alignSelf: 'center' }} onPress={() => { this.deleteSavedLocation() }}>
                             <Text style={{ fontFamily: 'Inter-Bold', color: colors.RED, fontSize: width < 375 ? 15 : 16 }}> Excluir </Text>
                         </TouchableOpacity>
                         : null}
@@ -349,7 +348,7 @@ export default class SearchScreen extends Component {
                         />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.iconBack} /*onPress={() => { this.setState({ searchFocused2: false })}}*/>
+                    {/*<TouchableOpacity style={styles.iconBack} onPress={() => { this.setState({ searchFocused2: false })}}>
                         <Icon
                             name='ios-add'
                             type='ionicon'
@@ -357,7 +356,7 @@ export default class SearchScreen extends Component {
                             size={45}
                             containerStyle={{ right: 15 }}
                         />
-                    </TouchableOpacity>
+                    </TouchableOpacity>*/}
                 </View>
 
                 <View style={{ position: 'absolute', left: 20, top: Platform.OS == 'ios' ? 102 : 75, flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>

@@ -215,13 +215,11 @@ export default class BookedCabScreen extends React.Component {
                         }
                     }
                 }
-
                 this.getBookingData(param)
                 let bookingData = {
                     bokkingId: param,
                     coords: this.state.coords,
                 }
-
                 if (driverUidnovo != 0) {
                     setTimeout(() => {
                         firebase.database().ref('users/' + driverUidnovo + '/waiting_riders_list/' + param + '/').set(this.state.bookingdataDetails);
@@ -252,6 +250,7 @@ export default class BookedCabScreen extends React.Component {
             if (dataBooking.status == "REJECTED") {
                 dataBooking.status = "NEW"
             }
+            dataBooking.time_find_driver = new Date().getTime();
             this.setState({
                 bookingdataDetails: dataBooking
             })
@@ -488,9 +487,9 @@ export default class BookedCabScreen extends React.Component {
                 }}
             >
                 <View style={{ flex: 1, backgroundColor: colors.WHITE, width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
-                    {/*<Image source={require('../../assets/images/searchDrivers.gif')} style={styles.styleGif} />*/}
+                    <Image source={require('../../assets/images/searchDrivers.gif')} style={styles.styleGif} />
                     <Text style={styles.textGif}> Procurando motoristas próximos </Text>
-                    <ActivityIndicator size='large' color={colors.DEEPBLUE} />
+                    {/*<ActivityIndicator size='large' color={colors.DEEPBLUE} />*/}
                     <TouchableOpacity disabled={this.state.searchDisabled} style={styles.touchView} onPress={() => { this.setState({ searchDisabled: true }), this.onPressCancellBtn() }}>
                         <Text style={styles.textCancel}> Cancelar </Text>
                     </TouchableOpacity>
@@ -743,7 +742,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
     textGif: {
-        color: colors.GREY2,
+        color: colors.DARK,
         top: 75,
         position: 'absolute',
         fontSize: 20,

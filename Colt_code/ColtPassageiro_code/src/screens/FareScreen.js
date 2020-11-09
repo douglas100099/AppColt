@@ -781,8 +781,8 @@ export default class FareScreen extends React.Component {
                                 anchor={{ x: 0.1, y: 0.1 }}
                                 onPress={() => this.props.navigation.replace('Search', { old: this.state.region })}
                             >
-                                <LocationDrop />
 
+                                <LocationDrop />
                                 <View style={styles.locationBoxDestino}>
                                     <Text numberOfLines={1} style={styles.locationText}> {this.state.region.droptext.split(",", 2)} </Text>
                                 </View>

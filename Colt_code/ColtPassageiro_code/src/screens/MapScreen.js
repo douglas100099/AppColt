@@ -68,10 +68,10 @@ export default class MapScreen extends React.Component {
             },
             dontAnimateRegion: false,
             geolocationFetchComplete: false,
-            
+
         }
         this.viewWidth = 30,
-        this.viewHeight = 30
+            this.viewHeight = 30
     }
 
     async UNSAFE_componentWillMount() {
@@ -543,27 +543,27 @@ export default class MapScreen extends React.Component {
 
         if (zoom <= 21 && zoom > 19) {
             this.viewWidth = 60,
-            this.viewHeight= 60
-        } 
+                this.viewHeight = 60
+        }
         else if (zoom <= 19 && zoom > 18) {
             this.viewWidth = 50,
-            this.viewHeight= 50           
+                this.viewHeight = 50
         }
         else if (zoom <= 18 && zoom > 16) {
             this.viewWidth = 40,
-            this.viewHeight= 40         
+                this.viewHeight = 40
         }
         else if (zoom <= 16 && zoom > 15) {
             this.viewWidth = 30,
-            this.viewHeight= 30          
-        } 
+                this.viewHeight = 30
+        }
         else if (zoom <= 15 && zoom > 10) {
             this.viewWidth = 25,
-            this.viewHeight= 25     
+                this.viewHeight = 25
         }
         else if (zoom <= 10 && zoom > 0) {
             this.viewWidth = 20,
-            this.viewHeight= 20    
+                this.viewHeight = 20
         }
     }
 
@@ -587,7 +587,7 @@ export default class MapScreen extends React.Component {
                             showsCompass={false}
                             showsScale={false}
                             rotateEnabled={false}
-                            customMapStyle={ Platform.OS == 'ios' ?  mapStyleJson : null}
+                            customMapStyle={Platform.OS == 'ios' ? mapStyleJson : null}
                         >
                             {this.state.freeCars ? this.state.freeCars.map((item, index) => {
                                 return (
@@ -635,7 +635,7 @@ export default class MapScreen extends React.Component {
                                     name='ios-locate'
                                     type='ionicon'
                                     color={colors.BLACK}
-                                    size={24}
+                                    size={27}
                                 />
                             </TouchableOpacity>
                         </View>

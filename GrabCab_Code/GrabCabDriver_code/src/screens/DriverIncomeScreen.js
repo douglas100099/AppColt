@@ -142,7 +142,7 @@ export default class DriverIncomePage extends React.Component {
     }
 
     pagarSaldo() {
-        if(this.state.saldo >= -25) {
+        if(this.state.saldo <= -25) {
             alert('Envie uma mensagem ao suporte, para poder realizar o pagamento e desbloquear sua conta.')
         } else {
             alert('Você ainda não atingiu o limite de taxa negativa da Colt, mas, você pode realizar o pagamento, entre em contato com o suporte.')
@@ -340,7 +340,7 @@ export default class DriverIncomePage extends React.Component {
                             />
                         </View>
                         <Text style={{ marginLeft: 10, fontSize: 18, fontFamily: 'Inter-Regular', color: colors.BLACK }}>Saldo:</Text>
-                        <Text style={{ marginLeft: 5, fontSize: 18, fontFamily: 'Inter-Bold', color: this.state.saldo >= 0 ? '#32db64' : colors.RED }}>{this.state.saldo ? this.state.saldo : '0'}</Text>
+                        <Text style={{ marginLeft: 5, fontSize: 18, fontFamily: 'Inter-Bold', color: this.state.saldo >= 0 ? '#32db64' : colors.RED }}>{this.state.saldo ? parseFloat(this.state.saldo).toFixed(2) : '0'}</Text>
                     </View>
                     <View style={{alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 20}}>
                         <TouchableOpacity style={{flexDirection: 'row', width: width/2.5, height: 40, backgroundColor: colors.DEEPBLUE, borderRadius: 15, justifyContent: 'center', alignItems: 'center'}}

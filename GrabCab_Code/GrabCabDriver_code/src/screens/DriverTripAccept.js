@@ -20,6 +20,7 @@ import * as IntentLauncher from 'expo-intent-launcher';
 import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Battery from 'expo-battery';
 import * as Animatable from 'react-native-animatable';
+import MapViewDirections from 'react-native-maps-directions';
 
 import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
@@ -27,15 +28,15 @@ import CellphoneSVG from '../SVG/CellphoneSVG';
 import MarkerPicSVG from '../SVG/MarkerPicSVG';
 import { useAssets } from 'expo-asset';
 
-const soundObject = new Audio.Sound();
 Geocoder.init(google_map_key);
 
 const screen = Dimensions.get('window');
-const ASPECT_RATIO = screen.width / screen.height;
-const LATITUDE = 37.78825;
-const LONGITUDE = -122.4324;
-const LATITUDE_DELTA = 0.0922;
-const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
+
+const LATITUDE = 0;
+const LONGITUDE = 0;
+const LATITUDE_DELTA = 0.0043;
+const LONGITUDE_DELTA = 0.0034;
+const HEADING = 0;
 
 export default class DriverTripAccept extends React.Component {
 
@@ -45,11 +46,11 @@ export default class DriverTripAccept extends React.Component {
         super(props);
         this.state = {
             region: {
-                latitude: 0,
-                longitude: 0,
-                latitudeDelta: 0.0143,
-                longitudeDelta: 0.0134,
-                angle: 0,
+                latitude: LATITUDE,
+                longitude: LONGITUDE,
+                latitudeDelta: LATITUDE_DELTA,
+                longitudeDelta: LONGITUDE_DELTA,
+                angle: HEADING,
             },
             starCount: 5,
             coords: [],
@@ -80,14 +81,18 @@ export default class DriverTripAccept extends React.Component {
     };
 
     // ESSE .ON AI PEGA E LER O VALOR DO BANCO QUANDO CHAMADO, E FICA ATUALIZANDO
-    getStatusDetails() {
-        if (this._isMounted) {
-            let ref = firebase.database().ref('users/' + this.state.curUid + '/driverActiveStatus/');
-            ref.on('value', (snapshot) => {
-                this.setState({
-                    statusDetails: snapshot.val()
+    _getStatusDetails = async () => {
+        try {
+            if (this._isMounted) {
+                let ref = firebase.database().ref('users/' + this.state.curUid + '/driverActiveStatus/');
+                ref.on('value', (snapshot) => {
+                    this.setState({
+                        statusDetails: snapshot.val()
+                    })
                 })
-            })
+            }
+        } catch (err) {
+            alert('Erro ao acessar informações de conexão do motorista.')
         }
     }
 
@@ -167,35 +172,62 @@ export default class DriverTripAccept extends React.Component {
         this.setState({ loaderBtn: false })
     }
 
-    getPhotoDriver() {
-        if (this._isMounted) {
-            let ref = firebase.database().ref('users/' + this.state.curUid + '/profile_image/');
-            ref.once('value', (snapshot) => {
-                this.setState({
-                    photoDriver: snapshot.val()
+    _getPhotoDriver = async () => {
+        try {
+            if (this._isMounted) {
+                console.log('ENTROU NA FOTO PERFIL')
+                let ref = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/profile_image/');
+                ref.once('value', (snapshot) => {
+                    this.setState({
+                        photoDriver: snapshot.val()
+                    })
                 })
-            })
+            }
+        } catch (err) {
+            alert('Erro ao gerar a imagem de perfil.')
         }
     }
 
-    /* = async () => {
-        try {
-            await this.audioPlayer.unloadAsync()
-            await this.audioPlayer.stopAsync()
-        } catch (err) {
-            this.stopAudio()
-            console.warn("Couldn't Stop audio", err)
-        }
-    }*/
+
 
     async componentDidMount() {
         this._isMounted = true;
         this._subscribe();
         this.getRiders();
-        this.getPhotoDriver();
-        this.getStatusDetails();
-        this.getInfoEraning();
         this._activate();
+        await this._getPhotoDriver();
+        await this._getStatusDetails();
+        await this._getInfoEraning();
+        this.configAudio();
+
+        this.sound = new Audio.Sound()
+        const status = {
+            shouldPlay: false
+        };
+        this.sound.loadAsync(require('../../assets/sounds/alerta.mp3'), status, false)
+    }
+
+    configAudio(){
+        console.log('CONFIGURANDO AUDIO')
+        Audio.setAudioModeAsync({
+            allowsRecordingIOS: false,
+            interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DUCK_OTHERS,
+            shouldDuckAndroid: true,
+            staysActiveInBackground: true,
+            playThroughEarpieceAndroid: true,  
+        })
+    }
+
+    playSound() {
+        console.log('PLAY SOUND')
+        this.sound.setIsLoopingAsync(true);
+        this.sound.setVolumeAsync(1);
+        this.sound.playAsync();
+    }
+
+    stopSound() {
+        this.sound.stopAsync();
+        console.log('STOP SOUND')
     }
 
     async componentWillUnmount() {
@@ -207,6 +239,7 @@ export default class DriverTripAccept extends React.Component {
             clearInterval(this.state.intervalCheckGps)
         }
         this._unsubscribe();
+        this.sound.unloadAsync();
     }
 
     // VERIFICAR BATERIA
@@ -236,7 +269,7 @@ export default class DriverTripAccept extends React.Component {
     }
 
     // find your origin and destination point coordinates and pass it to our method.
-    async getDirections(startLoc, destinationLoc, pickuplat, pickuplng, droplat, droplng) {
+    /*async getDirections(startLoc, destinationLoc, pickuplat, pickuplng, droplat, droplng) {
         if (this._isMounted) {
             try {
                 let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=${google_map_key}`)
@@ -264,27 +297,31 @@ export default class DriverTripAccept extends React.Component {
                 return error
             }
         }
-    }
+    }*/
 
-    getInfoEraning() {
-        let userUid = firebase.auth().currentUser.uid;
-        let ref = firebase.database().ref('users/' + userUid + '/ganhos');
-        ref.on('value', allBookings => {
-            if (allBookings.val()) {
-                let data = allBookings.val();
-                var myBookingarr = [];
-                for (let k in data) {
-                    data[k].bookingKey = k
-                    myBookingarr.push(data[k])
-                }
+    _getInfoEraning = async () => {
+        try {
+            let userUid = firebase.auth().currentUser.uid;
+            let ref = firebase.database().ref('users/' + userUid + '/ganhos');
+            ref.on('value', allBookings => {
+                if (allBookings.val()) {
+                    let data = allBookings.val();
+                    var myBookingarr = [];
+                    for (let k in data) {
+                        data[k].bookingKey = k
+                        myBookingarr.push(data[k])
+                    }
 
-                if (myBookingarr) {
-                    this.setState({ myBooking: myBookingarr.reverse() }, () => {
-                        this.eraningCalculation()
-                    })
+                    if (myBookingarr) {
+                        this.setState({ myBooking: myBookingarr.reverse() }, () => {
+                            this.eraningCalculation()
+                        })
+                    }
                 }
-            }
-        })
+            })
+        } catch (err) {
+            alert('Erro ao atualizar ganhos do motorista.')
+        }
     }
     eraningCalculation() {
         if (this.state.myBooking) {
@@ -350,6 +387,7 @@ export default class DriverTripAccept extends React.Component {
                         longitudeDelta: 0.045,
                         angle: coords.heading,
                     };
+
                     this.setState({ region: region });
                     this.setLocationDB(region.latitude, region.longitude, region.angle)
                 },
@@ -437,8 +475,8 @@ export default class DriverTripAccept extends React.Component {
                         waiting_riderData[key].bookingId = key;
                         jobs.push(waiting_riderData[key]);
 
-                        this.getDirections('"' + waiting_riderData[key].pickup.lat + ',' + waiting_riderData[key].pickup.lng + '"', '"' + this.state.region.latitude + ',' + this.state.region.longitude + '"',
-                            waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng, this.state.region.latitude, this.state.region.longitude)
+                        //this.getDirections('"' + waiting_riderData[key].pickup.lat + ',' + waiting_riderData[key].pickup.lng + '"', '"' + this.state.region.latitude + ',' + this.state.region.longitude + '"',
+                        //    waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng, this.state.region.latitude, this.state.region.longitude)
 
                         var location1 = [waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng];
                         var location2 = [this.state.region.latitude, this.state.region.longitude];
@@ -446,6 +484,7 @@ export default class DriverTripAccept extends React.Component {
                         this.setState({ distance: distancee, acceptBtnDisable: false })
                     }
                     this.setState({ chegouCorrida: true })
+                    this.playSound()
                 } else if (this.state.chegouCorrida == true) {
                     this.setState({ chegouCorrida: false })
                 }
@@ -535,6 +574,7 @@ export default class DriverTripAccept extends React.Component {
             }
 
             if (this._isMounted) {
+                this.stopSound()
                 let dbRef = firebase.database().ref('users/' + this.state.curUid + '/my_bookings/' + item.bookingId + '/');
                 dbRef.update(data).then(() => {
                     firebase.database().ref('bookings/' + item.bookingId + '/').update(data).then(() => {
@@ -542,17 +582,11 @@ export default class DriverTripAccept extends React.Component {
                             let requestedDriver = snap.val().requestedDriver;
                             if (requestedDriver) {
                                 firebase.database().ref('users/' + requestedDriver + '/waiting_riders_list/' + item.bookingId + '/').remove().then()
-                                .then(() => {
-                                    this.setState({ loader: false, chegouCorrida: false })
-                                    this.props.navigation.replace('DriverTripStart', { allDetails: item, regionUser: this.state.region })
-                                }).catch((error) => {
-                                    console.log(error)
-                                    alert('Ops, tivemos um problema')
-                                })
+                                    .then(() => {
+                                        this.setState({ loader: false, chegouCorrida: false })
+                                        this.props.navigation.replace('DriverTripStart', { allDetails: item, regionUser: this.state.region })
+                                    })
                             }
-                        }).catch((error) => {
-                            console.log(error)
-                            alert('Ops, tivemos um problema')
                         })
                     })
                     this.sendPushNotification(item.customer, this.state.driverDetails.firstName + ' aceitou seu chamado, aguarde.')
@@ -583,6 +617,7 @@ export default class DriverTripAccept extends React.Component {
         this.setState({ loader: true });
         var arr = [];
         console.log(item.bookingId)
+        this.stopSound()
         if (this._isMounted) {
             firebase.database().ref('bookings/' + item.bookingId + '/').once('value', data => {
                 if (data.val()) {
@@ -756,11 +791,19 @@ export default class DriverTripAccept extends React.Component {
                                                     />
                                                 </Marker>
 
-                                                {this.state.coords ?
-                                                    <MapView.Polyline
-                                                        coordinates={this.state.coords}
-                                                        strokeWidth={3}
+                                                {this.state.region ?
+                                                    <MapViewDirections
+                                                        origin={{ 
+                                                            latitude: this.state.region.latitude,
+                                                            longitude: this.state.region.longitude
+                                                        }}
+                                                        destination={{ 
+                                                            latitude: item.pickup.latitude,
+                                                            longitude: item.pickup.longitude
+                                                        }}
                                                         strokeColor={colors.DEEPBLUE}
+                                                        strokeWidth={3}
+                                                        apikey={google_map_key}
                                                     />
                                                     : null}
                                             </MapView>
@@ -877,12 +920,15 @@ export default class DriverTripAccept extends React.Component {
                                 showsCompass={false}
                                 showsScale={false}
                                 showsMyLocationButton={false}
-                                region={region}
+                                region={this.state.region ? this.state.region : null}
                             >
                                 {region ?
                                     <Marker.Animated
                                         ref={marker => { this.marker = marker }}
-                                        coordinate={{ latitude: region ? this.state.region.latitude : 0.00, longitude: region ? this.state.region.longitude : 0.00 }}
+                                        coordinate={{
+                                            latitude: region ? this.state.region.latitude : 0,
+                                            longitude: region ? this.state.region.longitude : 0
+                                        }}
                                         anchor={{ x: 0.5, y: 0.5 }}
                                         style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
                                     >

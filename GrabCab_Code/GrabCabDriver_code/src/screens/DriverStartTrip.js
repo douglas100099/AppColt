@@ -4,7 +4,6 @@ import {
     View,
     Text,
     Modal,
-    Image,
     Dimensions,
     AsyncStorage,
     Linking,
@@ -26,10 +25,7 @@ import * as firebase from 'firebase';
 import distanceCalc from '../common/distanceCalc';
 import languageJSON from '../common/language';
 import CellphoneSVG from '../SVG/CellphoneSVG'
-import CarMarkerSVG from '../SVG/CarMarkerSVG';
-import ChatSVG from '../SVG/ChatSVG';
 import MarkerPicSVG from '../SVG/MarkerPicSVG';
-import IconCloseSVG from '../SVG/IconCloseSVG';
 var { width, height } = Dimensions.get('window');
 import { google_map_key } from '../common/key';
 import dateStyle from '../common/dateStyle';
@@ -39,6 +35,12 @@ import RadioForm from 'react-native-simple-radio-button';
 const LOCATION_TASK_NAME = 'background-location-task';
 import * as Animatable from 'react-native-animatable';
 
+const LATITUDE = 0;
+const LONGITUDE = 0;
+const LATITUDE_DELTA = 0.0043;
+const LONGITUDE_DELTA = 0.0034;
+const HEADING = 0; 
+
 export default class DriverStartTrip extends React.Component {
 
     _isMounted = false;
@@ -47,16 +49,15 @@ export default class DriverStartTrip extends React.Component {
         super(props);
         this.state = {
             region: {
-                latitude: 0,
-                longitude: 0,
-                latitudeDelta: 0.0143,
-                longitudeDelta: 0.0134,
-                angle: 0,
+                latitude: LATITUDE,
+                longitude: LONGITUDE,
+                latitudeDelta: LATITUDE_DELTA,
+                longitudeDelta: LONGITUDE_DELTA,
+                angle: HEADING,
             },
             mediaSelectModal: false,
             allData: "",
             inputCode: "",
-            modalOpen: false,
             coords: [],
             radio_props: [],
             value: 0,
@@ -69,7 +70,6 @@ export default class DriverStartTrip extends React.Component {
             loaderCancel: false,
             kmRestante: 0,
         }
-        //this.getLocationDriver();
     }
 
     _activate = () => {
@@ -95,7 +95,6 @@ export default class DriverStartTrip extends React.Component {
         if (status === "granted" && gpsActived) {
             this._getLocationAsync();
         } else {
-            this.setState({ error: "Locations services needed" });
             this.openAlert()
         }
         this._activate();
@@ -162,7 +161,6 @@ export default class DriverStartTrip extends React.Component {
     checkDistKM(){
         var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
         var location2 = [this.state.rideDetails.pickup.lat, this.state.rideDetails.pickup.lng];   //Driver lat and lang
-        //calculate the distance of two locations
         var distance = distanceCalc(location1, location2);
         this.setState({ kmRestante: distance })
     }
@@ -300,16 +298,8 @@ export default class DriverStartTrip extends React.Component {
         this.setState({ mediaSelectModal: false })
     }
 
-    openModalInfo() {
-        this.setState({ modalOpen: true })
-    }
-
-    closeModalInfo() {
-        this.setState({ modalOpen: false })
-    }
-
     chat() {
-        this.props.navigation.push("Chat", { passData: this.state.rideDetails });
+        this.props.navigation.navigate("Chat", { passData: this.state.rideDetails });
     }
 
     callToCustomer(data) {
@@ -404,18 +394,6 @@ export default class DriverStartTrip extends React.Component {
 
     }
 
-    informarChegada() {
-        if (this.state.notificarChegada == false) {
-            setTimeout(
-                function () {
-                    this.setState({ notificarChegada: true });
-                }
-                    .bind(this),
-                1000
-            );
-        }
-    }
-
     sendPushNotification2(customerUID, msg) {
         const customerRoot = firebase.database().ref('users/' + customerUID);
         customerRoot.once('value', customerData => {
@@ -493,7 +471,7 @@ export default class DriverStartTrip extends React.Component {
 
     getCancelReasons() {
         const reasonListPath = firebase.database().ref('/cancel_reason_driver/');
-        reasonListPath.on('value', reasons => {
+        reasonListPath.once('value', reasons => {
             if (reasons.val()) {
                 this.setState({
                     radio_props: reasons.val()
@@ -754,8 +732,8 @@ export default class DriverStartTrip extends React.Component {
 
                     <View style={styles.viewPhotoName}>
                         <View style={styles.viewPhoto}>
-                            <Animatable.Image animation="fadeInUp" useNativeDriver={true} source={this.state.rideDetails.imageRider ? { uri: this.state.rideDetails.imageRider } : require('../../assets/images/profilePic.png')} style={styles.fotoPassageiro} />
-                            <Animatable.Text animation='fadeInLeft' useNativeDriver={true} style={styles.nomePassageiro}>{this.state.rideDetails.firstNameRider}</Animatable.Text>
+                            <Image source={this.state.rideDetails.imageRider ? { uri: this.state.rideDetails.imageRider } : require('../../assets/images/profilePic.png')} style={styles.fotoPassageiro} />
+                            <Text style={styles.nomePassageiro}>{this.state.rideDetails.firstNameRider}</Text>
                         </View>
                         <View style={{ position: 'absolute',top: -25, right: 5, left: 0, bottom: 0 }}>
                             <View style={{ height: 55, width: 55, borderRadius: 100, backgroundColor: colors.WHITE, elevation: 2, alignItems: 'center', alignSelf: 'center', justifyContent: 'center' }}>

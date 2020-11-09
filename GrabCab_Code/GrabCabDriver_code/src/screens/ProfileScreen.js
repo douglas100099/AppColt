@@ -74,7 +74,7 @@ export default class ProfileScreen extends React.Component {
         //Verifica corridas
         let userUid = firebase.auth().currentUser.uid;
         let ref = firebase.database().ref('users/' + userUid + '/ganhos');
-        ref.on('value', allBookings => {
+        ref.once('value', allBookings => {
             if (allBookings.val()) {
                 let data = allBookings.val();
                 var myBookingarr = [];
@@ -90,7 +90,7 @@ export default class ProfileScreen extends React.Component {
             }
         })
         let refC = firebase.database().ref('users/' + userUid + '/createdAt');
-        refC.on('value', criadoEm => {
+        refC.once('value', criadoEm => {
             let dataCriacao = criadoEm.val()
             if (dataCriacao) {
                 const now = new Date(); // Data de hoje
@@ -227,22 +227,6 @@ export default class ProfileScreen extends React.Component {
             ],
             { cancelable: false },
         );
-    }
-
-    onChangeFunction(data) {
-        if (data == true) {
-            firebase.database().ref(`/users/` + this.state.currentUser.uid + '/').update({
-                driverActiveStatus: false
-            }).then(() => {
-                this.setState({ driverActiveStatus: false });
-            })
-        } else if (data == false) {
-            firebase.database().ref(`/users/` + this.state.currentUser.uid + '/').update({
-                driverActiveStatus: true
-            }).then(() => {
-                this.setState({ driverActiveStatus: true });
-            })
-        }
     }
 
     resetarPilha() {

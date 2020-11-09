@@ -6,7 +6,6 @@ import DiverReg from './driverRegComponent';
 import EditUser from './EditUser';
 import CustomCommentSend from './CustomCommentSend';
 import TripStartModal from './TripStartModal'
-import TrackNow from './TrackNow'
 
 export {
     Background,
@@ -16,6 +15,5 @@ export {
     DiverReg,
     EditUser,
     CustomCommentSend,
-    TripStartModal,
-    TrackNow
+    TripStartModal
 };

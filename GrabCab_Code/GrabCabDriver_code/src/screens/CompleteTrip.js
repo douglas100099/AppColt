@@ -27,6 +27,13 @@ import MarkerDropSVG from '../SVG/MarkerDropSVG';
 import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Animatable from 'react-native-animatable';
 
+const LATITUDE = 0;
+const LONGITUDE = 0;
+const LATITUDE_DELTA = 0.0043;
+const LONGITUDE_DELTA = 0.0034;
+const HEADING = 0; 
+
+
 export default class DriverCompleteTrip extends React.Component {
 
     _isMounted = false;
@@ -37,11 +44,11 @@ export default class DriverCompleteTrip extends React.Component {
             coords: [],
             loadingModal: false,
             region: {
-                latitude: 0,
-                longitude: 0,
-                latitudeDelta: 0.0143,
-                longitudeDelta: 0.0134,
-                angle: 0,
+                latitude: LATITUDE,
+                longitude: LONGITUDE,
+                latitudeDelta: LATITUDE_DELTA,
+                longitudeDelta: LONGITUDE_DELTA,
+                angle: HEADING,
             },
             followMap: true,
             kmRestante: 0,
@@ -102,16 +109,11 @@ export default class DriverCompleteTrip extends React.Component {
                         var rates = carTypeWiseRate.car_type[i];
                         this.setState({
                             rateDetails: rates
-                        }, () => {
-                            console.log('TARIFA DIRETO DO OVO ' + rates.tarifa_base)
                         })
                     }
                 }
             }
         })
-
-        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/queue').set(true);
-
         this._activate();
     }
 

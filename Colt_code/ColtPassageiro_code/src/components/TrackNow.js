@@ -38,6 +38,8 @@ export default class TrackNow extends React.Component {
             showsMyLocationBtn: false
         };
         this._isMounted = false;
+        this.viewWidth = 30,
+        this.viewHeight = 30  
     }
 
     async componentDidMount() {
@@ -195,6 +197,41 @@ export default class TrackNow extends React.Component {
         }, 600)
     }
 
+    _onMapChange = async () => {
+        const {
+            zoom,
+            pitch,
+            center,
+            heading
+        } = await this.map.getCamera();
+
+        console.log(zoom + 'ZOOM ')
+        if (zoom <= 21 && zoom > 19) {
+            this.viewWidth = 60,
+            this.viewHeight= 60
+        } 
+        else if (zoom <= 19 && zoom > 18) {
+            this.viewWidth = 50,
+            this.viewHeight= 50           
+        }
+        else if (zoom <= 18 && zoom > 16) {
+            this.viewWidth = 40,
+            this.viewHeight= 40         
+        }
+        else if (zoom <= 16 && zoom > 15) {
+            this.viewWidth = 30,
+            this.viewHeight= 30          
+        } 
+        else if (zoom <= 15 && zoom > 10) {
+            this.viewWidth = 25,
+            this.viewHeight= 25     
+        }
+        else if (zoom <= 10 && zoom > 0) {
+            this.viewWidth = 20,
+            this.viewHeight = 20    
+        }
+    }
+
     render() {
         return (
             <View style={styles.innerContainer}>
@@ -208,10 +245,9 @@ export default class TrackNow extends React.Component {
                         loadingEnabled
                         customMapStyle={ Platform.OS == 'ios' ?  mapStyleJson : null}
                         showsCompass={false}
-                        onRegionChange={() => { this.setState({ showsMyLocationBtn: true }) }}
+                        onRegionChange={() => { this.setState({ showsMyLocationBtn: true }), this._onMapChange() }}
                         showsScale={false}
                         rotateEnabled={false}
-                        //onRegionChange={ () => { this.setState({ showsMyLocationBtn: true }) } }
                         showsMyLocationButton={false}
                         //region={this.getMapRegion()}
                         initialRegion={{
@@ -248,8 +284,8 @@ export default class TrackNow extends React.Component {
                                 anchor={{ x: 0.5, y: 0.5 }}
                             >
                                 <IconCarMap
-                                    width={45}
-                                    height={45}
+                                    width={this.viewWidth}
+                                    height={this.viewHeight}
                                     style={{ transform: [{ rotate: this.state.angle + "deg" }] }}
                                 />
                             </Marker>

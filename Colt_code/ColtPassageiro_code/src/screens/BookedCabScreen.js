@@ -510,7 +510,6 @@ export default class BookedCabScreen extends React.Component {
         }, 600)
     }
 
-
     render() {
         return (
             <View style={styles.mainContainer}>
@@ -723,8 +722,8 @@ const styles = StyleSheet.create({
     touchView: {
         borderRadius: 50,
         height: 50,
-        backgroundColor: colors.LIGHT_RED,
-        opacity: 0.5,
+        backgroundColor: colors.REDCLEAN,
+        opacity: 0.7,
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'column',
@@ -740,12 +739,12 @@ const styles = StyleSheet.create({
     },
     textCancel: {
         color: '#fff',
-        fontFamily: 'Inter-SemiBold',
+        fontFamily: 'Inter-Bold',
         fontSize: 18,
     },
     textGif: {
         color: colors.GREY2,
-        top: 55,
+        top: 75,
         position: 'absolute',
         fontSize: 20,
         fontFamily: 'Inter-SemiBold',

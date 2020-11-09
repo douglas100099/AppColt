@@ -202,7 +202,7 @@ export default class RideDetails extends React.Component {
                                         longitudeDelta: 1.9421
                                     }}
                                     enablePoweredByContainer={true}
-                                    customMapStyle={ Platform.OS == 'ios' ?  mapStyleJson : null}
+                                    customMapStyle={Platform.OS == 'ios' ? mapStyleJson : null}
                                     showsCompass={false}
                                     showsScale={false}
                                     rotateEnabled={false}
@@ -294,6 +294,16 @@ export default class RideDetails extends React.Component {
                         </View>
 
                         <Text style={{ marginTop: 10, marginBottom: 10, marginLeft: 25, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 15 : 17 }}>Pagamento</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Icon
+                                name='ios-cash'
+                                type='ionicon'
+                                color={colors.GREEN.light}
+                                size={22}
+                                containerStyle={{ opacity: .5 }}
+                            />
+                            <Text> Essa corrida  </Text>
+                        </View>
                         {this.state.paramData ?
                             <View style={styles.cardPagamento}>
                                 <View style={{ marginLeft: 10, flexDirection: 'row', alignItems: 'center' }}>

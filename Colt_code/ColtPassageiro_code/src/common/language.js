@@ -30,7 +30,7 @@ export default {
     login_title:'Entrar com celular',
     mobile_no_placeholder:'Insira seu número',
     mobile_no_blank_error:'Por favor, digite um número de celular válido.',
-    otp_error:'Please enter the correct OTP',
+    otp_error:'Por favor, digite o código de verificação correto!',
     otp_here:'Digite o código',
     sending_otp:"Sending OTP...",
     authorize:'Confirmar',

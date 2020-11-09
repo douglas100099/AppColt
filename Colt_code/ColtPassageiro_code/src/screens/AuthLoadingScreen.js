@@ -138,7 +138,8 @@ export class AuthLoadingScreen extends React.Component {
         } else {
           firebase.database().ref("settings").once("value", settingdata => {
             let settings = settingdata.val();
-            if ((user.providerData[0].providerId === "password" && settings.email_verify && user.emailVerified) || !settings.email_verify) {
+            console.log(user.providerData[0].providerId + "TESTE AQUI oh ")
+            if ((user.providerData[0].providerId === "password" && settings.email_verify && user.emailVerified) || !settings.email_verify || user.providerData[0].providerId !== "password" ) {
               var data = {};
               data.profile = {
                 name: user.name ? user.name : '',
@@ -149,6 +150,8 @@ export class AuthLoadingScreen extends React.Component {
               };
               this.props.navigation.navigate("Reg", { requireData: data })
             }
+
+            
             else {
               alert(languageJSON.email_verify_message);
               user.sendEmailVerification();

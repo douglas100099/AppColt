@@ -91,6 +91,7 @@ export default class MobileLoginScreen extends Component {
             alert(languageJSON.otp_error);
         }
     }
+    
 
     async CancelLogin() {
         this.setState({
@@ -117,7 +118,7 @@ export default class MobileLoginScreen extends Component {
                             value={this.state.verificationCode}
                             ditable={!!this.state.verificationId}
                             keyboardType="phone-pad"
-                            secureTextEntry={true}
+                            secureTextEntry={false}
                         />
                     </View>
 

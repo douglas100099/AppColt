@@ -74,7 +74,6 @@ export default class Registration extends React.Component {
     }
 
     _getLocationAsync = async () => {
-        console.log("ENTROU NO GET LOCATION ASYNC")
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
         if (status !== 'granted') {
             alert("Para acessar sua localização, é necessária permissão!");

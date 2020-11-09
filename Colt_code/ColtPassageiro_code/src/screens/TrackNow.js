@@ -3,6 +3,7 @@ import {
     StyleSheet,
     Text,
     View,
+    Alert,
     TouchableOpacity,
     Platform,
     Dimensions,
@@ -21,6 +22,7 @@ var { width, height } = Dimensions.get('window');
 import { getPixelSize } from '../common/utils';
 import * as firebase from 'firebase';
 import { google_map_key } from '../common/key';
+import mapStyleJson from '../../mapStyle.json';
 import languageJSON from '../common/language';
 
 import LocationUser from '../../assets/svg/LocationUser';
@@ -168,6 +170,42 @@ export default class TrackNow extends React.Component {
         }
     }
 
+    fitCoordinates() {
+        this.map.fitToCoordinates([{ latitude: this.state.allData.pickup.lat, longitude: this.state.allData.pickup.lng }, { latitude: this.state.allData.drop.lat, longitude: this.state.allData.drop.lng }], {
+            edgePadding: { top: getPixelSize(40), right: getPixelSize(40), bottom: getPixelSize(40), left: getPixelSize(40) },
+            animated: true,
+        })
+    }
+
+    alertPanic() {
+        Alert.alert(
+            languageJSON.panic_text,
+            languageJSON.panic_question,
+            [
+                {
+                    text: languageJSON.cancel,
+                    onPress: () => console.log('Cancel Pressed'),
+                    style: 'cancel'
+                },
+                {
+                    text: 'OK', onPress: async () => {
+                        const value = await AsyncStorage.getItem('settings');
+                        if (value !== null) {
+                            let settings = JSON.parse(value);
+                            if (Platform.OS === 'android') {
+                                phoneNumber = `tel:${settings.panic}`;
+                            } else {
+                                phoneNumber = `telprompt:${settings.panic}`;
+                            }
+                            Linking.openURL(phoneNumber);
+                        }
+                    }
+                }
+            ],
+            { cancelable: false }
+        );
+    }
+
     render() {
         return (
 
@@ -184,6 +222,7 @@ export default class TrackNow extends React.Component {
                             region={this.getMapRegion()}
                             showsCompass={false}
                             showsScale={false}
+                            customMapStyle={Platform.OS == 'ios' ? mapStyleJson : null}
                             rotateEnabled={false}
                         >
 
@@ -209,6 +248,7 @@ export default class TrackNow extends React.Component {
                                     latitudeDelta: 0.009,
                                     longitudeDelta: 0.009
                                 })}
+                                anchor={{ x: 0.5, y: 0.5 }}
                             >
                                 <IconCarMap
                                     width={45}
@@ -236,19 +276,34 @@ export default class TrackNow extends React.Component {
                             {this.state.allData ?
                                 <Marker
                                     coordinate={{ latitude: this.state.allData.drop.lat, longitude: this.state.allData.drop.lng }}
+                                    centerOffset={{ x: 0.1, y: 0.1 }}
+                                    anchor={{ x: 0.1, y: 0.1 }}
                                 >
                                     <LocationDrop />
+
+                                    <View style={styles.locationBoxDestino}>
+                                        <Text numberOfLines={1} style={styles.locationText}> {this.state.allData.drop.add.split(",", 2)} </Text>
+                                    </View>
                                 </Marker>
                                 : null}
-
-
                         </MapView>
                         : null}
-                    <TouchableOpacity style={styles.btnPanico}>
+
+                    <TouchableOpacity style={styles.btnPanico} onPress={() => this.alertPanic()} >
                         <Icon
-                            name="ios-shield-checkmark"
+                            name="ios-sad"
                             type="ionicon"
-                            size={23}
+                            size={40}
+                            color={colors.RED}
+                            containerStyle={{ opacity: .7 }}
+                        />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.btnFitCoord} onPress={() => this.fitCoordinates()}>
+                        <Icon
+                            name="ios-navigate"
+                            type="ionicon"
+                            size={30}
                             color={colors.DEEPBLUE}
                         />
                     </TouchableOpacity>
@@ -367,7 +422,7 @@ const styles = StyleSheet.create({
         width: 200,
         alignItems: "stretch"
     },
-    btnPanico: {
+    btnFitCoord: {
         position: 'absolute',
         backgroundColor: colors.WHITE,
         width: 40,
@@ -375,6 +430,34 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         bottom: 20,
         right: 20,
+        elevation: 5,
+        marginTop: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+    },
+    locationBoxDestino: {
+        flexWrap: "wrap",
+        maxWidth: 200,
+        backgroundColor: "#FFF",
+        borderRadius: 4,
+        flexDirection: 'row',
+        marginTop: Platform.OS == 'ios' ? 3 : 2,
+        marginLeft: Platform.OS == 'android' ? 19 : null,
+    },
+    btnPanico: {
+        position: 'absolute',
+        backgroundColor: 'transparent',
+        borderWidth: 1,
+        borderColor: colors.RED,
+        width: 45,
+        height: 45,
+        borderRadius: 50,
+        bottom: 70,
+        right: 17,
         elevation: 5,
         marginTop: 40,
         justifyContent: 'center',

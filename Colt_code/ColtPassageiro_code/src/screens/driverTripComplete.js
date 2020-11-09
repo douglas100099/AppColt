@@ -135,8 +135,6 @@ export default class DriverTripComplete extends React.Component {
     render() {
         return (
             <ScrollView>
-
-
                 <View style={styles.mainViewStyle}>
                     <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 65 }}>
                         <Verified width={100} height={100} />
@@ -223,7 +221,7 @@ export default class DriverTripComplete extends React.Component {
                     }]}>
                         <Button
                             title={"Confirmar"}
-                            titleStyle={{ fontFamily: 'Inter-Bold', }}
+                            titleStyle={{ fontSize: 20, fontFamily: 'Inter-Bold', }}
                             onPress={() => this.submitNow()}
                             buttonStyle={styles.myButtonStyle}
                             disabled={this.state.btnSubmit}
@@ -256,9 +254,9 @@ const styles = StyleSheet.create({
     rateViewStyle: {
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: colors.GREY3,
+        backgroundColor: colors.GREY.background,
         borderColor: colors.GREY1,
-        borderRadius: 15,
+        borderRadius: 10,
         height: 50,
         marginHorizontal: 15,
         marginTop: 10,
@@ -311,7 +309,7 @@ const styles = StyleSheet.create({
     },
     mainViewStyle: {
         flex: 1,
-        //backgroundColor: colors.WHITE,
+        backgroundColor: colors.WHITE,
         flexDirection: 'column',
     },
     pickUpStyle: {

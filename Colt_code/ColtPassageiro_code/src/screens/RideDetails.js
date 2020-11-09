@@ -21,6 +21,7 @@ import * as firebase from 'firebase'; //Database
 import { getPixelSize } from '../common/utils';
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
+import mapStyleJson from '../../mapStyle.json';
 import { NavigationActions, StackActions } from 'react-navigation';
 import LocationUser from '../../assets/svg/LocationUser';
 import LocationDrop from '../../assets/svg/LocationDrop';
@@ -201,6 +202,7 @@ export default class RideDetails extends React.Component {
                                         longitudeDelta: 1.9421
                                     }}
                                     enablePoweredByContainer={true}
+                                    customMapStyle={ Platform.OS == 'ios' ?  mapStyleJson : null}
                                     showsCompass={false}
                                     showsScale={false}
                                     rotateEnabled={false}

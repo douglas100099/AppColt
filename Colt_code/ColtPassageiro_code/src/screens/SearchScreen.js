@@ -93,17 +93,6 @@ export default class SearchScreen extends Component {
 
         this.props.navigation.replace('FareDetails', { data: dataDetails, minTimeEconomico: minTimeEco, minTimeConfort: minTimeCon });
 
-        /*this.props
-            .navigation
-            .dispatch(StackActions.reset({
-                index: 0,
-                actions: [
-                    NavigationActions.navigate({
-                        routeName: 'FareDetails',
-                        params: { data: dataDetails, minTimeEconomico: minTimeEco, minTimeConfort: minTimeCon },
-                    }),
-                ],
-            }))*/
     }
 
 

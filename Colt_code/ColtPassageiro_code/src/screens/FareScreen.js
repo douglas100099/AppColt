@@ -248,9 +248,9 @@ export default class FareScreen extends React.Component {
             cancellValue: this.state.cancellValue ? this.state.cancellValue : 0
         }
 
-        
+
         this.state.cancellValue != 0 ? pagamentoObj.cancelRate = true : null
-        this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value  > 0 ? pagamentoObj.usedDiscount = true : null : null
+        this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value > 0 ? pagamentoObj.usedDiscount = true : null : null
         this.state.usedWalletMoney > 0 ? pagamentoObj.usedWallet = true : null
 
         var data = {
@@ -312,7 +312,7 @@ export default class FareScreen extends React.Component {
                 }
                 setTimeout(() => {
                     this.setState({ buttonDisabled: false }, () => {
-                        this.props.navigation.replace('BookedCab', { passData: bookingItens, riderName: data.customer_name});
+                        this.props.navigation.replace('BookedCab', { passData: bookingItens, riderName: data.customer_name });
                     })
                 }, 500)
             })
@@ -487,7 +487,7 @@ export default class FareScreen extends React.Component {
                 }
             }
         })
-        
+
         return promoDetails
     }
 
@@ -724,6 +724,13 @@ export default class FareScreen extends React.Component {
         })
     }
 
+    fitRoute() {
+        this.map.fitToCoordinates([{ latitude: this.state.region.wherelatitude, longitude: this.state.region.wherelongitude }, { latitude: this.state.region.droplatitude, longitude: this.state.region.droplongitude }], {
+            edgePadding: { top: getPixelSize(60), right: getPixelSize(60), bottom: getPixelSize(60), left: getPixelSize(60) },
+            animated: true,
+        })
+    }
+
     render() {
         return (
             <View style={styles.container}>
@@ -736,7 +743,7 @@ export default class FareScreen extends React.Component {
                             ref={map => { this.map = map }}
                             style={styles.map}
                             provider={PROVIDER_GOOGLE}
-                            customMapStyle={mapStyleJson}
+                            customMapStyle={Platform.OS == 'ios' ? mapStyleJson : null}
                             initialRegion={{
                                 latitude: (this.state.region.wherelatitude),
                                 longitude: (this.state.region.wherelongitude),
@@ -792,22 +799,23 @@ export default class FareScreen extends React.Component {
                         </MapView>
                         : null}
 
-                    {/* Botao Voltar */}
-                    <View style={styles.bordaIconeVoltar}>
-                        <TouchableOpacity onPress={() => { this.props.navigation.replace('Map') }}>
-                            <Icon
-                                name='chevron-left'
-                                type='MaterialIcons'
-                                size={40}
-                            />
-                        </TouchableOpacity>
-                    </View>
+                    {this.state.region && this.state.region.wherelatitude ?
+                        <View style={styles.bordaIconeVoltar}>
+                            <TouchableOpacity onPress={() => { this.props.navigation.replace('Map') }}>
+                                <Icon
+                                    name='chevron-left'
+                                    type='MaterialIcons'
+                                    size={40}
+                                />
+                            </TouchableOpacity>
+                        </View>
+                        : null}
 
-                    {/* Botao Cupom */}
+
                     {this.state.rateDetailsObjects[0] ?
                         <TouchableOpacity style={[styles.btnAddPromo, {
-                            borderColor: this.state.payDetails ? colors.GREEN.light : colors.GREY2,
-                            borderWidth: this.state.payDetails ? 2 : 1
+                            borderColor: this.state.payDetails ? colors.GREEN.light : null,
+                            borderWidth: this.state.payDetails ? 2 : 0
                         }]} onPress={() => this.openPromoModal()} >
 
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -843,6 +851,19 @@ export default class FareScreen extends React.Component {
                             />
                         </TouchableOpacity>
                         : null}
+
+                    {this.state.region && this.state.region.wherelatitude ?
+                        <View style={styles.btnRoute}>
+                            <TouchableOpacity onPress={() => { this.fitRoute() }}>
+                                <Icon
+                                    name='git-pull-request'
+                                    type='feather'
+                                    size={30}
+                                />
+                            </TouchableOpacity>
+                        </View>
+                        : null}
+
                 </View>
 
                 {/* View de alerta da promoçao aplicada */}
@@ -856,8 +877,6 @@ export default class FareScreen extends React.Component {
                 {this.state.rateDetailsObjects[0] ?
                     <View style={styles.containerBottom}>
                         <View style={styles.cards}>
-
-                            {/* Primeiro card */}
                             <View style={[styles.cardInfo,
                             {
                                 borderWidth: this.state.selected == 0 ? 1 : 0,
@@ -865,7 +884,13 @@ export default class FareScreen extends React.Component {
                             }
                             ]} >
                                 <TouchableOpacity style={styles.touchCard1} onPress={() => this.selectCarType(0)}>
-
+                                    {/*<Icon
+                                        name='info'
+                                        type='feather'
+                                        size={19}
+                                        color={colors.DEEPBLUE}
+                                        containerStyle={{ position: 'absolute', left: 5, top: 5, opacity: .5 }}
+                                    />*/}
                                     <ColtEconomicoCar />
                                     <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[0].name}</Text>
 
@@ -899,6 +924,14 @@ export default class FareScreen extends React.Component {
                             }
                             ]} >
                                 <TouchableOpacity style={styles.touchCard2} onPress={() => this.selectCarType(1)}>
+                                    {/*<Icon
+                                        name='info'
+                                        type='feather'
+                                        size={19}
+                                        color={colors.DEEPBLUE}
+                                        containerStyle={{ position: 'absolute', left: 0, top: 5, opacity: .5 }}
+                                    />*/}
+
                                     <ColtConfortCar />
                                     <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[1].name}</Text>
 
@@ -1103,7 +1136,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowOffset: { x: 0, y: 0 },
         shadowRadius: 15,
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        //backgroundColor: 'rgba(0,0,0,0.5)',
     },
     backgroundModalPayment: {
         position: 'absolute',
@@ -1194,6 +1227,25 @@ const styles = StyleSheet.create({
         shadowRadius: 10,
         elevation: 5
     },
+    btnRoute: {
+        position: 'absolute',
+        justifyContent: 'center',
+        alignItems: 'center',
+        right: 10,
+        width: 45,
+        height: 45,
+        borderRadius: 50,
+        backgroundColor: colors.WHITE,
+        bottom: 40,
+        marginBottom: 8,
+        marginRight: 10,
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowOffset: { x: 0, y: 0 },
+        shadowRadius: 10,
+        elevation: 5,
+        opacity: 0.9,
+    },
     txtCupom: {
         fontFamily: 'Inter-Bold',
         fontSize: 15,
@@ -1276,7 +1328,6 @@ const styles = StyleSheet.create({
     metodoPagamento: {
         fontFamily: 'Inter-Medium',
         fontSize: 20,
-        fontWeight: "700",
         color: colors.BLACK,
         marginLeft: 0
     },

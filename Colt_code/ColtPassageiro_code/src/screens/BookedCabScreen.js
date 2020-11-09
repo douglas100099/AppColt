@@ -260,7 +260,7 @@ export default class BookedCabScreen extends React.Component {
 
     getCancelReasons() {
         const reasonListPath = firebase.database().ref('/cancel_reason/');
-        reasonListPath.on('value', reasons => {
+        reasonListPath.once('value', reasons => {
             if (reasons.val()) {
                 this.setState({
                     radio_props: reasons.val()

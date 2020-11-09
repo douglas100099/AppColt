@@ -9,10 +9,12 @@ import {
     Dimensions,
     TouchableOpacity,
     Modal,
+    Platform,
 } from 'react-native';
 var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
 import languageJSON from '../common/language';
+import { ScrollView } from 'react-native-gesture-handler';
 
 export default class AboutPage extends React.Component {
 
@@ -28,7 +30,7 @@ export default class AboutPage extends React.Component {
         about.once('value', aboutData => {
             if (aboutData.val()) {
                 let data = aboutData.val()
-                this.setState(data);
+                this.setState({ data: data });
             }
         })
     }
@@ -42,156 +44,81 @@ export default class AboutPage extends React.Component {
 
     render() {
         return (
-
             <View style={styles.mainView}>
-                <Header
-                    backgroundColor={colors.WHITE}
-                    leftComponent={{ icon: 'chevron-left', type: 'MaterialIcons', color: colors.BLACK, size: 35, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.goBack(); } }}
-                    centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.about_us_menu}</Text>}
-                    containerStyle={styles.headerStyle}
-                    innerContainerStyles={{ marginLeft: 10, marginRight: 10 }}
-                    onPress={this.showActionSheet}
-                />
-
-                {/*<View>
-                    <ScrollView styles={{ marginTop: 10 }}>
-                        <Text style={styles.aboutTitleStyle}>{this.state.heading ? this.state.heading : null}</Text>
-                        <View style={styles.aboutcontentmainStyle}>
-
-                            <Text style={styles.aboutcontentStyle}>
-
-                                {this.state.contents ? this.state.contents : null}
-                            </Text>
-                            <Text style={styles.aboutTitleStyle}>{languageJSON.contact_details}</Text>
-                            <View style={styles.contact}>
-                                <View style={{ justifyContent: 'flex-start', alignItems: 'center', flexDirection: 'row' }}>
-                                    <Text style={styles.contacttype1}>{languageJSON.email_placeholder} :</Text>
-                                    <Text style={styles.contacttype1}> {this.state.email ? this.state.email : null}</Text>
-                                </View>
-                                <View style={{ justifyContent: 'flex-start', alignItems: 'center', flexDirection: 'row' }}>
-                                    <Text style={styles.contacttype2}>{languageJSON.phone} :</Text>
-                                    <Text style={styles.contacttype1}> {this.state.phone ? this.state.phone : null}</Text>
-                                </View>
-                            </View>
+                <View style={styles.viewHeader}>
+                    <View style={styles.viewTop}>
+                        <View style={{ position: 'absolute', left: 10 }}>
+                            <TouchableOpacity style={styles.btnVoltar} onPress={() => { this.props.navigation.goBack() }}>
+                                <Icon
+                                    name='chevron-left'
+                                    type='MaterialIcons'
+                                    color={colors.BLACK}
+                                    size={32}
+                                />
+                            </TouchableOpacity>
                         </View>
-                    </ScrollView>
+                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: width < 375 ? 18 : 20 }}> Sobre </Text>
+                    </View>
                 </View>
-                */}
+                <ScrollView style={{ backgroundColor: colors.WHITE}}>
+                    <View style={{ marginTop: 20 }}>
+                        <Text style={{ paddingEnd: 20, paddingStart: 20, fontFamily: 'Inter-Medium', textAlign: 'center', fontSize: 17 }}>
+                            {this.state.data ? this.state.data.contents : null}
+                        </Text>
+                    </View>
+                    <View style={{ marginTop: 25, marginLeft: 20 }}>
+                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20 }}> Email </Text>
+                        <Text style={{ fontFamily: 'Inter-Medium', fontSize: 17 }}> {this.state.data ? this.state.data.email : null} </Text>
+                    </View>
+                    <View style={{ marginTop: 25, marginLeft: 20 }}>
+                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20 }}> Contato </Text>
+                        <Text style={{ fontFamily: 'Inter-Medium', fontSize: 17 }}> {this.state.data ? this.state.data.phone : null} </Text>
+                    </View>
+                </ScrollView>
+                <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'center', position: 'absolute', bottom: Platform.OS == 'ios' ? 30 : 10 }}>
+                    <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', }}> Colt  </Text>
+                    <Icon
+                        name='car'
+                        type='material-community'
+                        color={colors.BLACK}
+                        size={20}
 
+                    />
+                </View>
             </View>
         );
     }
 
 }
 const styles = StyleSheet.create({
-    textMoney: {
-        fontFamily: 'Inter-Medium',
-        fontWeight: "600",
-        fontSize: 20,
-        marginLeft: 7
-    },
-    iconMoney: {
-        marginLeft: 30,
-
-    },
-    containerModalPayment: {
-        flex: 1,
-        shadowColor: colors.BLACK,
-        shadowOpacity: 0.2,
-        shadowOffset: { x: 0, y: 0 },
-        shadowRadius: 15,
-    },
-    backgroundModalPayment: {
-        position: 'absolute',
-        bottom: 0,
-        height: 250,
-        padding: 0,
-        backgroundColor: colors.GREY3,
-        borderTopLeftRadius: 40,
-        borderTopRightRadius: 40,
-        width: width,
-    },
-    boxMoney: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginHorizontal: 20,
-        backgroundColor: colors.WHITE,
-        height: 55,
-        marginTop: 16,
-        borderRadius: 10,
-        elevation: 5,
-        shadowColor: colors.GREY2,
-        shadowOpacity: 0.2,
-        shadowOffset: { x: 0, y: 0 },
-        shadowRadius: 15,
-    },
-    boxCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginHorizontal: 20,
-        backgroundColor: colors.WHITE,
-        height: 55,
-        marginTop: 16,
-        borderRadius: 10,
-        elevation: 5,
-        shadowColor: colors.GREY2,
-        shadowOpacity: 0.2,
-        shadowOffset: { x: 0, y: 0 },
-        shadowRadius: 15,
-    },
     mainView: {
         flex: 1,
+    },
+    viewHeader: {
         backgroundColor: colors.WHITE,
-        //marginTop: StatusBar.currentHeight,
+        height: 90,
+        justifyContent: 'flex-end'
     },
-    headerStyle: {
+    viewTop: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginLeft: 10,
+        justifyContent: 'center',
+        marginBottom: 15,
+        alignItems: 'center'
+    },
+    btnVoltar: {
         backgroundColor: colors.WHITE,
-        borderBottomWidth: 0
-    },
-    headerTitleStyle: {
-        color: colors.BLACK,
-        fontFamily: 'Inter-Bold',
-        fontSize: 20
-    },
-    aboutTitleStyle: {
-        color: colors.BLACK,
-        fontFamily: 'Inter-Bold',
-        fontSize: 20,
-        marginLeft: 8,
-        marginTop: 8
-    },
-    aboutcontentmainStyle: {
-        marginTop: 12,
-        marginBottom: 60
-    },
-    aboutcontentStyle: {
-        color: colors.BLACK,
-        fontFamily: 'Inter-Regular',
-        fontSize: 15,
-        textAlign: "justify",
-        alignSelf: 'center',
-        width: width - 20,
-        letterSpacing: 1,
-        marginTop: 6,
-    },
-    contact: {
-        marginTop: 6,
-        marginLeft: 8,
-        //flexDirection:'row',
-        width: "100%",
-        marginBottom: 30
-    },
-    contacttype1: {
-        textAlign: 'left',
-        color: colors.BLACK,
-        fontFamily: 'Inter-Bold',
-        fontSize: 15,
-    },
-    contacttype2: {
-        textAlign: 'left',
-        marginTop: 4,
-        color: colors.GREY.secondary,
-        fontFamily: 'Inter-Bold',
-        fontSize: 15,
+        width: 40,
+        height: 40,
+
+        borderRadius: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
     }
 })

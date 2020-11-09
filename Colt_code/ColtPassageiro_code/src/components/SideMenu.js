@@ -1,13 +1,14 @@
 import React from 'react';
 import { Text, View, Dimensions, StyleSheet, FlatList, Image, TouchableOpacity,AsyncStorage } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { NavigationActions } from 'react-navigation';
+import { NavigationActions, StackActions } from 'react-navigation';
 import * as firebase from 'firebase'; //Database
 import SideMenuHeader from './SideMenuHeader';
 import { colors } from '../common/theme';
 var { width, height } = Dimensions.get('window');
 import languageJSON from '../common/language';
 import AvatarUser from '../../assets/svg/AvatarUser';
+
 
 export default class SideMenu extends React.Component {
     constructor(props) {
@@ -68,6 +69,18 @@ export default class SideMenu extends React.Component {
 
     //navigation to screens from side menu
     navigateToScreen = (route) => () => {
+        if( route === 'Map' ){
+            this.props
+            .navigation
+            .dispatch(StackActions.reset({
+                index: 0,
+                actions: [
+                    NavigationActions.navigate({
+                        routeName: 'Map',
+                    }),
+                ],
+            }))
+        }
         const navigateAction = NavigationActions.navigate({
             routeName: route
         });

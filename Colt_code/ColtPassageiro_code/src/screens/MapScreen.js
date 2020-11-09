@@ -68,7 +68,10 @@ export default class MapScreen extends React.Component {
             },
             dontAnimateRegion: false,
             geolocationFetchComplete: false,
+            
         }
+        this.viewWidth = 30,
+        this.viewHeight = 30
     }
 
     async UNSAFE_componentWillMount() {
@@ -530,6 +533,41 @@ export default class MapScreen extends React.Component {
         }, 600)
     }
 
+    _onMapChange = async () => {
+        const {
+            zoom,
+            pitch,
+            center,
+            heading
+        } = await this.mapView.getCamera();
+
+        console.log(zoom + 'ZOOM ')
+        if (zoom <= 21 && zoom > 19) {
+            this.viewWidth = 60,
+            this.viewHeight= 60
+        } 
+        else if (zoom <= 19 && zoom > 18) {
+            this.viewWidth = 50,
+            this.viewHeight= 50           
+        }
+        else if (zoom <= 18 && zoom > 16) {
+            this.viewWidth = 40,
+            this.viewHeight= 40         
+        }
+        else if (zoom <= 16 && zoom > 15) {
+            this.viewWidth = 30,
+            this.viewHeight= 30          
+        } 
+        else if (zoom <= 15 && zoom > 10) {
+            this.viewWidth = 25,
+            this.viewHeight= 25     
+        }
+        else if (zoom <= 10 && zoom > 0) {
+            this.viewWidth = 20,
+            this.viewHeight= 20    
+        }
+    }
+
     render() {
         return (
             <View style={styles.mainViewStyle}>
@@ -543,14 +581,14 @@ export default class MapScreen extends React.Component {
                             showsMyLocationButton={false}
                             style={styles.map}
                             initialRegion={this.state.region}
-                            onRegionChange={() => { this.setState({ showsMyLocationBtn: true }) }}
+                            onRegionChange={() => { this.setState({ showsMyLocationBtn: true }), this._onMapChange() }}
                             //region={}
                             //onMapReady={() => this.setState({ marginBottom: 1 })}
                             enablePoweredByContainer={true}
                             showsCompass={false}
                             showsScale={false}
                             rotateEnabled={false}
-                            customMapStyle={mapStyleJson}
+                            customMapStyle={ Platform.OS == 'ios' ?  mapStyleJson : null}
                         >
                             {this.state.freeCars ? this.state.freeCars.map((item, index) => {
                                 return (
@@ -560,8 +598,8 @@ export default class MapScreen extends React.Component {
                                         key={index}
                                     >
                                         <IconCarMap
-                                            width={35}
-                                            height={35}
+                                            width={this.viewWidth}
+                                            height={this.viewHeight}
                                             style={{
                                                 transform: [{ rotate: item.location.angle + "deg" }],
                                                 shadowColor: colors.BLACK,

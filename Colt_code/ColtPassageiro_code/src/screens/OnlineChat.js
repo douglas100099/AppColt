@@ -196,18 +196,14 @@ export default class OnlineChat extends Component {
   renderItem({ item, index }) {
     return (
       item.source == "rider" ?
-        <View style={{ width: width }}>
-          <View style={styles.drivermsgStyle}>
+        <View style={styles.drivermsgStyle}>
             <Text style={styles.msgTextStyle}>{item ? item.message : languageJSON.chat_not_found}</Text>
             <Text style={styles.msgTimeStyle}>{item ? item.msgTime : null}</Text>
-          </View>
         </View>
         :
-        <View style={{ width: width }} >
-          <View style={styles.riderMsgStyle}>
-            <Text style={styles.riderMsgText}>{item ? item.message : languageJSON.chat_not_found}</Text>
-            <Text style={styles.riderMsgTime}>{item ? item.msgTime : null}</Text>
-          </View>
+        <View style={styles.riderMsgStyle}>
+          <Text style={styles.riderMsgText}>{item ? item.message : languageJSON.chat_not_found}</Text>
+          <Text style={styles.riderMsgTime}>{item ? item.msgTime : null}</Text>
         </View>
     );
   }
@@ -243,12 +239,14 @@ export default class OnlineChat extends Component {
             }
           </View>
         </View>
-        <FlatList
-          data={this.state.allChat.reverse()}
-          renderItem={this.renderItem}
-          keyExtractor={(item, index) => index.toString()}
-          inverted
-        />
+        <View style={{flex: 1 }}>
+          <FlatList
+            data={this.state.allChat.reverse()}
+            renderItem={this.renderItem}
+            //keyExtractor={(item, index) => index.toString()}
+            inverted
+          />
+        </View>
         <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? 'padding' : 'height'}>
           <View style={styles.footer}>
             <TextInput
@@ -259,13 +257,13 @@ export default class OnlineChat extends Component {
               onChangeText={text => this.setState({ inputmessage: text })}
             />
 
-            <TouchableOpacity style={{ right: 25 }} onPress={() => this.sendMessege(this.state.inputmessage)}>
+            <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 40, height: 40, borderRadius: 50 }} onPress={() => this.sendMessege(this.state.inputmessage)}>
               <Icon
                 name='ios-paper-plane'
                 type='ionicon'
-                color={colors.DEEPBLUE}
-                size={30}
-                containerStyle={{ opacity: 0.5 }}
+                color={colors.WHITE}
+                size={25}
+                containerStyle={{ paddingEnd: 3 }}
               />
             </TouchableOpacity>
           </View>
@@ -365,14 +363,16 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     backgroundColor: colors.WHITE,
-    marginBottom: 25,
-    height: 40,
+    marginBottom: 20,
+    height: 50,
     alignItems: 'center',
-    borderTopWidth: 2,
+    borderTopWidth: 4,
     borderColor: colors.GREY.background,
   },
   input: {
-    paddingHorizontal: 20,
+    marginEnd: 20,
+    marginLeft: 10,
+    height: 50,
     fontSize: 18,
     flex: 1
   },
@@ -387,13 +387,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.DEEPBLUE,
     marginBottom: 5,
     marginTop: 10,
-    //marginRight: 10,
-    //marginLeft: 30,
-    borderBottomLeftRadius: 50,
-    borderTopLeftRadius: 50,
+    marginRight: 10,
+    borderBottomLeftRadius: 30,
+    borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    justifyContent: 'flex-end',
+    maxWidth: width - 20,
 
+    alignSelf: 'flex-end',
+    flex: 1,
     elevation: 5,
     shadowOpacity: 0.1,
     shadowRadius: 5,
@@ -401,28 +402,29 @@ const styles = StyleSheet.create({
     shadowOffset: { height: 1, width: 0 },
   },
   msgTextStyle: {
-    marginStart: 15,
-    marginEnd: 35,
-    marginTop: 10,
+    paddingTop: 4,
+    paddingHorizontal: 15,
     textAlign: "right",
     fontFamily: 'Inter-Bold',
     fontSize: 18,
     color: "#fff"
   },
   msgTimeStyle: {
-    marginStart: 15,
-    marginBottom: 10,
-    marginEnd: 40,
+    paddingHorizontal: 15,
+    paddingBottom: 4,
     textAlign: "right",
+    fontFamily: 'Inter-Medium',
+
     fontSize: 12,
     color: "#fff"
   },
   riderMsgStyle: {
-    backgroundColor: "#fff",
+    backgroundColor: colors.WHITE,
     marginBottom: 5,
     marginTop: 5,
-    //marginRight: 30,
-    //marginLeft: 10,
+    marginLeft: 10,
+
+    maxWidth: width - 20,
     borderBottomLeftRadius: 50,
     borderBottomRightRadius: 50,
     borderTopLeftRadius: 50,
@@ -435,15 +437,17 @@ const styles = StyleSheet.create({
   riderMsgText: {
     marginStart: 25,
     textAlign: "left",
+    fontFamily: 'Inter-Bold',
     fontSize: 18,
     color: colors.DEEPBLUE,
     marginTop: 10
   },
   riderMsgTime: {
     marginStart: 30,
+    fontFamily: 'Inter-Medium',
     textAlign: "left",
     fontSize: 12,
-    color: "#000",
+    color: colors.DEEPBLUE,
     marginBottom: 10
   }
 });

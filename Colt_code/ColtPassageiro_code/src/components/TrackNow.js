@@ -16,6 +16,7 @@ import * as firebase from 'firebase';
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import distanceCalc from '../common/distanceCalc';
+import mapStyleJson from '../../mapStyle.json';
 
 import LocationUser from '../../assets/svg/LocationUser';
 import IconCarMap from '../../assets/svg/IconCarMap';
@@ -205,6 +206,7 @@ export default class TrackNow extends React.Component {
                         showUserLocation
                         followUserLocation
                         loadingEnabled
+                        customMapStyle={ Platform.OS == 'ios' ?  mapStyleJson : null}
                         showsCompass={false}
                         onRegionChange={() => { this.setState({ showsMyLocationBtn: true }) }}
                         showsScale={false}
@@ -280,7 +282,7 @@ const styles = StyleSheet.create({
     iconLocation: {
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: Platform.OS == 'ios' ?  50 : 25,
+        marginTop: Platform.OS == 'ios' ?  50 : 30,
         alignSelf: 'flex-end',
         marginRight: 15,
         backgroundColor: colors.WHITE,

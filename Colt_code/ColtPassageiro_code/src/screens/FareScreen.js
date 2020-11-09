@@ -812,7 +812,7 @@ export default class FareScreen extends React.Component {
                         : null}
 
 
-                    {this.state.rateDetailsObjects[0] ?
+                    {/*this.state.rateDetailsObjects[0] ?
                         <TouchableOpacity style={[styles.btnAddPromo, {
                             borderColor: this.state.payDetails ? colors.GREEN.light : null,
                             borderWidth: this.state.payDetails ? 2 : 0
@@ -828,7 +828,7 @@ export default class FareScreen extends React.Component {
                                 <Text style={styles.txtCupom}> {this.state.payDetails ? "-R$" + (this.state.payDetails.promo_details.promo_discount_value).toFixed(2) : "Cupom"} </Text>
                             </View>
                         </TouchableOpacity>
-                        : null}
+                    : null*/}
 
                     <Animated.View
                         style={[
@@ -874,7 +874,7 @@ export default class FareScreen extends React.Component {
                     : null}
 
                 {/* View principal dos detalhes da corrida */}
-                {this.state.rateDetailsObjects[0] ?
+                {this.state.rateDetailsObjects[0] && this.state.openModalPayment == false ?
                     <View style={styles.containerBottom}>
                         <View style={styles.cards}>
                             <View style={[styles.cardInfo,
@@ -1236,7 +1236,7 @@ const styles = StyleSheet.create({
         height: 45,
         borderRadius: 50,
         backgroundColor: colors.WHITE,
-        bottom: 40,
+        bottom: 10,
         marginBottom: 8,
         marginRight: 10,
         shadowColor: '#000',

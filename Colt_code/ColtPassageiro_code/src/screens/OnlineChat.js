@@ -108,7 +108,7 @@ export default class OnlineChat extends Component {
 
   sendMessege(inputmessage) {
     var today = new Date();
-    var time = today.getHours() + ":" + today.getMinutes();
+    var time = today.toLocaleTimeString('pt-BR').split(':')[0] + ':' + today.toLocaleTimeString('pt-BR').split(':')[1];
     var dd = String(today.getDate()).padStart(2, '0');
     var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
     var yyyy = today.getFullYear();

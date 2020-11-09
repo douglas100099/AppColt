@@ -541,7 +541,6 @@ export default class MapScreen extends React.Component {
             heading
         } = await this.mapView.getCamera();
 
-        console.log(zoom + 'ZOOM ')
         if (zoom <= 21 && zoom > 19) {
             this.viewWidth = 60,
             this.viewHeight= 60

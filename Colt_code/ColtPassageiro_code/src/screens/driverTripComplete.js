@@ -134,7 +134,7 @@ export default class DriverTripComplete extends React.Component {
 
     render() {
         return (
-            <ScrollView>
+            <ScrollView style={{ backgroundColor: colors.WHITE }}>
                 <View style={styles.mainViewStyle}>
                     <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 65 }}>
                         <Verified width={100} height={100} />

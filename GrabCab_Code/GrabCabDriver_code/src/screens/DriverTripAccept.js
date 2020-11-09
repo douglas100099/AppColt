@@ -20,7 +20,8 @@ import * as IntentLauncher from 'expo-intent-launcher';
 import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Battery from 'expo-battery';
 import * as Animatable from 'react-native-animatable';
-import MapViewDirections from 'react-native-maps-directions';
+import { AnimatedCircularProgress } from 'react-native-circular-progress';
+import Easing from 'react-native-reanimated';
 
 import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
@@ -64,6 +65,7 @@ export default class DriverTripAccept extends React.Component {
             isBlocked: false,
             loaderBtn: false,
             chegouCorrida: false,
+            isSound: false,
             acceptBtnDisable: false,
             intervalCheckGps: null,
             batteryLevel: null,
@@ -207,14 +209,10 @@ export default class DriverTripAccept extends React.Component {
         this.sound.loadAsync(require('../../assets/sounds/alerta.mp3'), status, false)
     }
 
-    configAudio(){
+    configAudio() {
         console.log('CONFIGURANDO AUDIO')
         Audio.setAudioModeAsync({
-            allowsRecordingIOS: false,
-            interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DUCK_OTHERS,
-            shouldDuckAndroid: true,
             staysActiveInBackground: true,
-            playThroughEarpieceAndroid: true,  
         })
     }
 
@@ -222,10 +220,12 @@ export default class DriverTripAccept extends React.Component {
         console.log('PLAY SOUND')
         this.sound.setIsLoopingAsync(true);
         this.sound.setVolumeAsync(1);
+        this.setState({ isSound: true })
         this.sound.playAsync();
     }
 
     stopSound() {
+        this.setState({ isSound: false })
         this.sound.stopAsync();
         console.log('STOP SOUND')
     }
@@ -269,7 +269,7 @@ export default class DriverTripAccept extends React.Component {
     }
 
     // find your origin and destination point coordinates and pass it to our method.
-    /*async getDirections(startLoc, destinationLoc, pickuplat, pickuplng, droplat, droplng) {
+    async getDirections(startLoc, destinationLoc, pickuplat, pickuplng, droplat, droplng) {
         if (this._isMounted) {
             try {
                 let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=${google_map_key}`)
@@ -297,7 +297,7 @@ export default class DriverTripAccept extends React.Component {
                 return error
             }
         }
-    }*/
+    }
 
     _getInfoEraning = async () => {
         try {
@@ -475,8 +475,8 @@ export default class DriverTripAccept extends React.Component {
                         waiting_riderData[key].bookingId = key;
                         jobs.push(waiting_riderData[key]);
 
-                        //this.getDirections('"' + waiting_riderData[key].pickup.lat + ',' + waiting_riderData[key].pickup.lng + '"', '"' + this.state.region.latitude + ',' + this.state.region.longitude + '"',
-                        //    waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng, this.state.region.latitude, this.state.region.longitude)
+                        this.getDirections('"' + waiting_riderData[key].pickup.lat + ',' + waiting_riderData[key].pickup.lng + '"', '"' + this.state.region.latitude + ',' + this.state.region.longitude + '"',
+                            waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng, this.state.region.latitude, this.state.region.longitude)
 
                         var location1 = [waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng];
                         var location2 = [this.state.region.latitude, this.state.region.longitude];
@@ -484,9 +484,14 @@ export default class DriverTripAccept extends React.Component {
                         this.setState({ distance: distancee, acceptBtnDisable: false })
                     }
                     this.setState({ chegouCorrida: true })
-                    this.playSound()
+                    if(this.state.isSound == false) {
+                        this.playSound()
+                    }
                 } else if (this.state.chegouCorrida == true) {
                     this.setState({ chegouCorrida: false })
+                    if(this.state.isSound){
+                        this.stopSound()
+                    }
                 }
                 if (snapshot.val().in_reject_progress) {
                     if (snapshot.val().in_reject_progress.punido == false) {
@@ -495,12 +500,16 @@ export default class DriverTripAccept extends React.Component {
                 }
                 this.setState({ tasklist: jobs.reverse() });
                 this.jobs = jobs;
+                /*if(this.state.chegouCorrida){
+                    setTimeout(() => {this.circularProgress.animate(100, 14000, Easing.quad)},1000);
+                }*/
             });
         }
     }
 
     // accept button press function
     onPressAccept(item) {
+        this.stopSound()
         this.setState({ loader: true })
         if (this.state.status === 'CANCELLED') {
             Alert.alert('Ops, essa corrida foi cancelada pelo passageiro')
@@ -574,7 +583,6 @@ export default class DriverTripAccept extends React.Component {
             }
 
             if (this._isMounted) {
-                this.stopSound()
                 let dbRef = firebase.database().ref('users/' + this.state.curUid + '/my_bookings/' + item.bookingId + '/');
                 dbRef.update(data).then(() => {
                     firebase.database().ref('bookings/' + item.bookingId + '/').update(data).then(() => {
@@ -790,20 +798,12 @@ export default class DriverTripAccept extends React.Component {
                                                         height={40}
                                                     />
                                                 </Marker>
-
-                                                {this.state.region ?
-                                                    <MapViewDirections
-                                                        origin={{ 
-                                                            latitude: this.state.region.latitude,
-                                                            longitude: this.state.region.longitude
-                                                        }}
-                                                        destination={{ 
-                                                            latitude: item.pickup.latitude,
-                                                            longitude: item.pickup.longitude
-                                                        }}
-                                                        strokeColor={colors.DEEPBLUE}
+                                                
+                                                {this.state.coords ?
+                                                    <MapView.Polyline
+                                                        coordinates={this.state.coords}
                                                         strokeWidth={3}
-                                                        apikey={google_map_key}
+                                                        strokeColor={colors.DEEPBLUE}
                                                     />
                                                     : null}
                                             </MapView>
@@ -839,6 +839,15 @@ export default class DriverTripAccept extends React.Component {
                                                     </View>
                                                     <View style={styles.viewBtnRejeitar}>
                                                         <TouchableOpacity style={styles.btnRejeitar} onPress={() => { this.showActionSheet() }}>
+                                                            <AnimatedCircularProgress
+                                                                style={{position: 'absolute'}}
+                                                                ref={(ref) => this.circularProgress = ref}
+                                                                size={47}
+                                                                width={5}
+                                                                fill={15000}
+                                                                tintColor="#FF2121"
+                                                                backgroundColor="#3d5875">
+                                                            </AnimatedCircularProgress>
                                                             <IconCloseSVG height={25} width={25} />
                                                         </TouchableOpacity>
                                                     </View>

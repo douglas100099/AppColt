@@ -107,12 +107,6 @@ export default class IntroScreen extends Component {
                             ref={ref => (this.recaptchaVerifier = ref)}
                             firebaseConfig={this.firebaseConfig}
                         />
-                        <ImageBackground
-                            source={require("../../assets/images/iconLogin.png")}
-                            resizeMode="center"
-                            style={styles.imagebg}
-                        >
-                        </ImageBackground>
                     </View>
                     <View style={styles.txtWelcome}>
                         <Text style={styles.txtInput}>Seja bem vindo ao Colt</Text>

@@ -4,6 +4,7 @@ import {
     View,
     Text,
     Modal,
+    Image,
     Dimensions,
     AsyncStorage,
     Linking,

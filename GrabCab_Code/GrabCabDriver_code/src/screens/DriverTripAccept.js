@@ -22,6 +22,7 @@ import * as Battery from 'expo-battery';
 import * as Animatable from 'react-native-animatable';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import Easing from 'react-native-reanimated';
+import * as Linking from 'expo-linking';
 
 import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
@@ -486,6 +487,7 @@ export default class DriverTripAccept extends React.Component {
                     this.setState({ chegouCorrida: true })
                     if(this.state.isSound == false) {
                         this.playSound()
+                        Linking.openURL('coltappmotorista://');
                     }
                 } else if (this.state.chegouCorrida == true) {
                     this.setState({ chegouCorrida: false })

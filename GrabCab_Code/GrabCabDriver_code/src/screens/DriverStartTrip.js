@@ -190,7 +190,6 @@ export default class DriverStartTrip extends React.Component {
             })
             .catch((error) => {
                 console.error(error);
-                alert('Ops, tivemos um problema.');
             });
     }
 

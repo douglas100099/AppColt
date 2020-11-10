@@ -3,6 +3,7 @@
     "name": "Colt Motorista",
     "description": "Aplicativo de transporte",
     "slug": "ColtMotorista",
+    "scheme": "coltappmotorista",
     "privacy": "public",
     "platforms": [
       "ios",

@@ -46,7 +46,6 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data: { locations }, error }
     }).catch((error) => {
       console.error(error);
       console.log('DEU ERRO EM SETAR A LOC TASK MANAGER')
-      alert('Ops, tivemos um problema ao gerar localização em segundo plano.')
     });
 });
 

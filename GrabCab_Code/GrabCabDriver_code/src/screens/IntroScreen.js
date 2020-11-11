@@ -4,14 +4,16 @@ import {
     View,
     ImageBackground,
     Dimensions,
+    Modal,
     Platform,
+    Image,
+    ActivityIndicator,
     Text,
     TouchableOpacity,
     TextInput,
 } from "react-native";
 var { width } = Dimensions.get('window');
 import languageJSON from '../common/language';
-import countries from '../common/countries';
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { colors } from '../common/theme';
 import * as firebase from 'firebase'
@@ -32,11 +34,15 @@ export default class IntroScreen extends Component {
             verificationId: null,
             verificationCode: null,
             countryCode: '+55',
-            loaderBtn: false
+            loaderBtn: false,
+            btnLogin: false,
+            btnContinuar: false,
+            entrando: false,
         }
     }
 
     onPressLogin = async () => {
+        this.setState({ btnLogin: true })
         if (this.state.countryCode && this.state.countryCode !== languageJSON.select_country) {
             if (this.state.phoneNumber) {
                 let formattedNum = this.state.phoneNumber.replace(/ /g, '');
@@ -51,9 +57,9 @@ export default class IntroScreen extends Component {
                         this.setState({ verificationId: verificationId, loaderBtn: true });
                     } catch (error) {
                         alert('Ops, tivemos um problema.');
-                    }
+                   }
                 } else {
-                    alert('Insira um número válido.');
+                    alert('Insira um número válido.');  
                 }
             } else {
                 alert('Insira um número de Celular');
@@ -61,10 +67,11 @@ export default class IntroScreen extends Component {
         } else {
             alert('Código do país inválido');
         }
-        this.setState({loaderBtn: false})
+        this.setState({loaderBtn: false, btnLogin: false })
     }
 
     onSignIn = async () => {
+        this.setState({ btnContinuar: true, entrando: true })
         try {
             const credential = firebase.auth.PhoneAuthProvider.credential(
                 this.state.verificationId,
@@ -79,6 +86,27 @@ export default class IntroScreen extends Component {
         } catch (err) {
             alert('Código de verificação inválido');
         }
+        this.setState({ btnContinuar: false, entrando: false })
+    }
+
+    loading() {
+        return (
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={this.state.entrando}
+            >
+                <View style={{ flex: 1, backgroundColor: "rgba(22,22,22,0.8)", justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ width: '85%', backgroundColor: colors.WHITE, borderRadius: 15, flex: 1, maxHeight: 180 }}>
+                        <View style={{ alignItems: 'center', flexDirection: 'column', flex: 1, justifyContent: "center" }}>
+                            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                                <Text style={{ color: colors.BLACK, fontSize: 20, fontFamily: 'Inter-Bold' }}>Carregando...</Text>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+        )
     }
 
     async CancelLogin() {
@@ -152,6 +180,9 @@ export default class IntroScreen extends Component {
                             style={styles.materialButtonDark}
                         >
                             <Text style={styles.txtBtn}>Login ou Cadastrar</Text>
+                            {this.state.btnLogin ?
+                            <ActivityIndicator size="large" color="#FFFF" />
+                            : null}
                         </TouchableOpacity>
                     }
                     {!!this.state.verificationId ?
@@ -161,18 +192,23 @@ export default class IntroScreen extends Component {
                             style={styles.materialButtonDark}
                         >
                             <Text style={styles.txtBtn}>Continuar</Text>
+                            {this.state.btnContinuar ?
+                            <ActivityIndicator size="large" color="#FFFF" />
+                            : null}
                         </TouchableOpacity>
                     : null }
                     {this.state.verificationId ?
                         <TouchableOpacity
                             onPress={() => this.CancelLogin()}
                             style={styles.materialButtonDark}
+                            disabled={this.state.loaderBtn}
                         >
                             <Text style={styles.txtBtn}>Voltar</Text>
                         </TouchableOpacity>
                     : null}
                     <Text style={styles.txtTermos}>Ao se cadastrar você aceita todos os termos de uso</Text>
                 </View>
+                {this.loading()}
             </View>
         );
     }
@@ -273,6 +309,7 @@ const styles = StyleSheet.create({
     materialButtonDark: {
         height: 50,
         width: width / 1.22,
+        flexDirection: 'row',
         alignSelf: 'center',
         justifyContent: 'center',
         alignItems: 'center',

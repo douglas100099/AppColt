@@ -29,7 +29,7 @@ export default class DriverRegistrationPage extends React.Component {
   }
 
   //register button click after all validation
-  async clickRegister(fname, lname, mobile, email, vehicleNum, vehicleName, imageCrlv, imageCnh, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam) {
+  async clickRegister(fname, lname, mobile, email, vehicleNum, vehicleName, imageCrlv, imageCnh, imagePerfil, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam) {
     var regData = {
       firstName: fname,
       lastName: lname,
@@ -39,6 +39,7 @@ export default class DriverRegistrationPage extends React.Component {
       vehicleModel: vehicleName,
       licenseImage: imageCnh,
       imagemCrlv: imageCrlv,
+      driver_image: imagePerfil,
       usertype: 'driver',
       approved: false,
       queue: false,
@@ -77,7 +78,7 @@ export default class DriverRegistrationPage extends React.Component {
   }
 
   //upload of picture
-  async uploadmultimediaCrlv(fname, lname, mobile, email, vehicleNum, vehicleName, urlCrlv, urlCnh, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam ) {
+  async uploadmultimediaCrlv(fname, lname, mobile, email, vehicleNum, vehicleName, urlCrlv, urlCnh, urlPerfil, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam ) {
     this.setState({ loading: true })
     const blob = await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -105,7 +106,7 @@ export default class DriverRegistrationPage extends React.Component {
         blob.close()
         return imageRef.getDownloadURL()
       }).then((dwnldurlCrlv) => {
-        this.uploadmultimediaCnh(fname, lname, mobile, email, vehicleNum, vehicleName, dwnldurlCrlv, urlCnh, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam);
+        this.uploadmultimediaCnh(fname, lname, mobile, email, vehicleNum, vehicleName, dwnldurlCrlv, urlCnh, urlPerfil,CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam);
       }).catch(error=>{
         console.log(error);
         alert('Ops, tivemos um problema.');
@@ -114,7 +115,7 @@ export default class DriverRegistrationPage extends React.Component {
 
   }
 
-  async uploadmultimediaCnh(fname, lname, mobile, email, vehicleNum, vehicleName, urlCrlv, urlCnh, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam ) {
+  async uploadmultimediaCnh(fname, lname, mobile, email, vehicleNum, vehicleName, urlCrlv, urlCnh, urlPerfil, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam ) {
     this.setState({ loading: true })
     const blob = await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -141,7 +142,43 @@ export default class DriverRegistrationPage extends React.Component {
         blob.close()
         return imageRef.getDownloadURL()
       }).then((dwnldurlCnh) => {
-        this.clickRegister(fname, lname, mobile, email, vehicleNum, vehicleName, urlCrlv, dwnldurlCnh, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam);
+        this.clickRegister(fname, lname, mobile, email, vehicleNum, vehicleName, urlCrlv, dwnldurlCnh, urlPerfil, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam);
+      }).catch(error=>{
+        console.log(error);
+        alert('Ops, tivemos um problema.');
+      });
+    }
+
+  }
+
+  async uploadmultimediaPerfil(fname, lname, mobile, email, vehicleNum, vehicleName, urlCrlv, urlCnh, urlPerfil, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam ) {
+    this.setState({ loading: true })
+    const blob = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        resolve(xhr.response); // when BlobModule finishes reading, resolve with the blob
+      };
+      xhr.onerror = function () {
+        reject(new TypeError('Erro na conversão da IMG da CNH'));
+        //this.setState({ loading: false });
+        alert(languageJSON.upload_image_error);
+      };
+      xhr.responseType = 'blob'; // use BlobModule's UriHandler
+      xhr.open('GET', urlPerfil, true); // fetch the blob from uri in async mode
+      xhr.send(null); // no initial data
+    });
+
+    if ((blob.size / 1000000) > 2) {
+      this.setState({ loading: false }, () => { alert(languageJSON.image_size_error) })
+    }
+    else {
+      var timestamp = new Date().getTime()
+      var imageRef = firebase.storage().ref().child(`users/driver_licenses/` + timestamp + `/`);
+      return imageRef.put(blob).then(() => {
+        blob.close()
+        return imageRef.getDownloadURL()
+      }).then((dwnldurlPerfil) => {
+        this.clickRegister(fname, lname, mobile, email, vehicleNum, vehicleName, urlCrlv, urlCnh, dwnldurlPerfil, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam);
       }).catch(error=>{
         console.log(error);
         alert('Ops, tivemos um problema.');
@@ -156,7 +193,7 @@ export default class DriverRegistrationPage extends React.Component {
     const registrationData = this.props.navigation.getParam("requireData");
     return (
       <View style={styles.containerView}>
-        <DiverReg reqData={registrationData ? registrationData : ""} onPressRegister={(fname, lname, mobile, email, vehicleNum, vehicleName, imageCrlv, imageCnh, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam) => this.uploadmultimediaCrlv(fname, lname, mobile, email, vehicleNum, vehicleName, imageCrlv, imageCnh, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam)} onPressBack={() => { this.props.navigation.goBack() }} loading={this.state.loading}></DiverReg>
+        <DiverReg reqData={registrationData ? registrationData : ""} onPressRegister={(fname, lname, mobile, email, vehicleNum, vehicleName, imageCrlv, imageCnh, imagePerfil, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam) => this.uploadmultimediaCrlv(fname, lname, mobile, email, vehicleNum, vehicleName, imageCrlv, imageCnh, imagePerfil, CarType, cpfNum, cnh, dataValidade, orgaoEmissor, renavam)} onPressBack={() => { this.props.navigation.goBack() }} loading={this.state.loading}></DiverReg>
       </View>
     );
   }

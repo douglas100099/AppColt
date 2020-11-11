@@ -137,10 +137,16 @@ export default class BookedCabScreen extends React.Component {
                     this.onCancellSearchBooking()
                 }
                 else if (currUserBooking.status == "EMBARQUE") {
-                    this.setState({ embarque: true })
-                } else if (currUserBooking.status == "START") {
+                    this.setState({
+                        bookingStatus: currUserBooking.status,
+                        acceptedBooking: currUserBooking.acceptedBooking,
+                        embarque: true
+                    })
+                } 
+                else if (currUserBooking.status == "START") {
                     this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
-                } else if (currUserBooking.status == "REJECTED") {
+                } 
+                else if (currUserBooking.status == "REJECTED") {
                     this.searchDriver(this.getParamData.bokkingId);
                 }
             }
@@ -269,25 +275,24 @@ export default class BookedCabScreen extends React.Component {
     }
 
     //Cancell Button Press
-    async onPressCancellBtn() {
-        const value = await AsyncStorage.getItem('startTripTime');
-        firebase.database().ref(`/users/` + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').on('value', curbookingData => {
-            if (curbookingData.val()) {
-                if (curbookingData.val().status == 'ACCEPTED' || curbookingData.val().status == 'EMBARQUE') {
-                    const timeCurrent = new Date().getTime();
+    onPressCancellBtn() {
+        if (this.state.bookingStatus == 'ACCEPTED' || this.state.bookingStatus == 'EMBARQUE') {
+            if (this.state.acceptedBooking) {
+                const timeCurrent = new Date().getTime();
 
-                    if (timeCurrent - value >= 30000) {
-                        this.setState({ modalInfoVisible: true })
-                    } else {
-                        this.setState({ modalVisible: true })
-                    }
-                }
-                else if (curbookingData.val().status == 'NEW') {
-                    this.onCancellSearchBooking(true)
+                if (timeCurrent - this.state.acceptedBooking >= 30000) {
+                    this.setState({ modalInfoVisible: true })
+                } 
+                else {
+                    this.setState({ modalVisible: true })
                 }
             }
-        })
+        }
+        else if (this.state.bookingStatus == 'NEW') {
+            this.onCancellSearchBooking(true)
+        }
     }
+
 
     dissMissCancel() {
         this.setState({ modalVisible: false, modalInfoVisible: false, punisherCancell: false })
@@ -329,7 +334,6 @@ export default class BookedCabScreen extends React.Component {
             firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').on('value', curbookingData => {
                 if (curbookingData.val()) {
                     if (curbookingData.val().status == 'ACCEPTED' || curbookingData.val().status == 'EMBARQUE') {
-                        firebase.database().ref('users/' + curbookingData.val().driver + '/emCorrida').remove()
                         firebase.database().ref('users/' + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
                             status: 'CANCELLED',
                             reason: this.state.radio_props[this.state.value].label

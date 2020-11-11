@@ -13,17 +13,14 @@ import {
 } from 'react-native';
 import Polyline from '@mapbox/polyline';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
-import { Header, Icon, Avatar, Button } from 'react-native-elements';
-import Dash from 'react-native-dash';
+import { Header, Icon, } from 'react-native-elements';
 import { colors } from '../common/theme';
 var { width } = Dimensions.get('window');
 import * as firebase from 'firebase'; //Database
 import { getPixelSize } from '../common/utils';
 import { google_map_key } from '../common/key';
-import languageJSON from '../common/language';
 import mapStyleJson from '../../mapStyle.json';
 import { NavigationActions, StackActions } from 'react-navigation';
-import LocationUser from '../../assets/svg/LocationUser';
 import LocationDrop from '../../assets/svg/LocationDrop';
 import CircleLineTriangle from '../../assets/svg/CircleLineTriangle';
 import AvatarUser from '../../assets/svg/AvatarUser';
@@ -33,7 +30,7 @@ export default class RideDetails extends React.Component {
     getRideDetails;
     constructor(props) {
         super(props);
-
+        this._isMounted = false;
         this.state = {
             coords: [],
             intialregion: {},
@@ -59,6 +56,7 @@ export default class RideDetails extends React.Component {
     };
 
     componentDidMount() {
+        this._isMounted = true
         if (this.getRideDetails) {
             this.setState({
                 intialregion: {
@@ -69,11 +67,17 @@ export default class RideDetails extends React.Component {
                 },
                 paramData: this.getRideDetails,
             }, () => {
-                this.getDirections('"' + this.state.paramData.pickup.lat + ',' + this.state.paramData.pickup.lng + '"', '"' + this.state.paramData.drop.lat + ',' + this.state.paramData.drop.lng + '"');
-                this.forceUpdate();
+                if (this._isMounted) {
+                    this.getDirections('"' + this.state.paramData.pickup.lat + ',' + this.state.paramData.pickup.lng + '"', '"' + this.state.paramData.drop.lat + ',' + this.state.paramData.drop.lng + '"');
+                    this.forceUpdate();
+                }
             })
         }
         this._retrieveSettings();
+    }
+
+    componentWillUnmount() {
+        this._isMounted = false;
     }
 
     // find your origin and destination point coordinates and pass it to our method.
@@ -90,10 +94,12 @@ export default class RideDetails extends React.Component {
             })
             this.setState({ coords: coords }, () => {
                 setTimeout(() => {
-                    this.map.fitToCoordinates([{ latitude: this.state.paramData.pickup.lat, longitude: this.state.paramData.pickup.lng }, { latitude: this.state.paramData.drop.lat, longitude: this.state.paramData.drop.lng }], {
-                        edgePadding: { top: getPixelSize(30), right: getPixelSize(30), bottom: getPixelSize(30), left: getPixelSize(30) },
-                        animated: true,
-                    })
+                    if (this._isMounted) {
+                        this.map.fitToCoordinates([{ latitude: this.state.paramData.pickup.lat, longitude: this.state.paramData.pickup.lng }, { latitude: this.state.paramData.drop.lat, longitude: this.state.paramData.drop.lng }], {
+                            edgePadding: { top: getPixelSize(30), right: getPixelSize(30), bottom: getPixelSize(30), left: getPixelSize(30) },
+                            animated: true,
+                        })
+                    }
                 }, 500);
             })
             return coords

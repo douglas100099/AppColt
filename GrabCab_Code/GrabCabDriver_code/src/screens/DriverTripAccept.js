@@ -555,6 +555,7 @@ export default class DriverTripAccept extends React.Component {
                 trip_start_time: item.trip_start_time,
                 tripdate: item.tripdate,
                 pagamento: pagamentoObj,
+                data_accept: new Date().getTime(),
             }
 
             var riderData = {
@@ -582,6 +583,7 @@ export default class DriverTripAccept extends React.Component {
                 trip_start_time: item.trip_start_time,
                 tripdate: item.tripdate,
                 pagamento: pagamentoObj,
+                data_accept: new Date().getTime(),
             }
 
             if (this._isMounted) {

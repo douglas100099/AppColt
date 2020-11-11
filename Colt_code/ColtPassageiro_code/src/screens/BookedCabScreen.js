@@ -117,6 +117,7 @@ export default class BookedCabScreen extends React.Component {
                 //Checando o status da corrida 
                 if (currUserBooking.status == "ACCEPTED") {
                     this.setState({
+                        data_accept: currUserBooking.data_accept ? currUserBooking.data_accept : null,
                         bookingStatus: currUserBooking.status,
                         driverSerach: false
                     })
@@ -138,15 +139,12 @@ export default class BookedCabScreen extends React.Component {
                 }
                 else if (currUserBooking.status == "EMBARQUE") {
                     this.setState({
-                        bookingStatus: currUserBooking.status,
-                        acceptedBooking: currUserBooking.acceptedBooking,
-                        embarque: true
+                        embarque: true,
+                        bookingStatus: currUserBooking.status
                     })
-                } 
-                else if (currUserBooking.status == "START") {
+                } else if (currUserBooking.status == "START") {
                     this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
-                } 
-                else if (currUserBooking.status == "REJECTED") {
+                } else if (currUserBooking.status == "REJECTED") {
                     this.searchDriver(this.getParamData.bokkingId);
                 }
             }
@@ -275,24 +273,22 @@ export default class BookedCabScreen extends React.Component {
     }
 
     //Cancell Button Press
-    onPressCancellBtn() {
+    async onPressCancellBtn() {
         if (this.state.bookingStatus == 'ACCEPTED' || this.state.bookingStatus == 'EMBARQUE') {
-            if (this.state.acceptedBooking) {
+            if (this.state.data_accept != null) {
                 const timeCurrent = new Date().getTime();
 
-                if (timeCurrent - this.state.acceptedBooking >= 30000) {
+                if (timeCurrent - this.state.data_accept >= 30000) {
                     this.setState({ modalInfoVisible: true })
-                } 
-                else {
-                    this.setState({ modalVisible: true })
                 }
+            } else {
+                this.setState({ modalVisible: true })
             }
         }
         else if (this.state.bookingStatus == 'NEW') {
             this.onCancellSearchBooking(true)
         }
     }
-
 
     dissMissCancel() {
         this.setState({ modalVisible: false, modalInfoVisible: false, punisherCancell: false })
@@ -334,6 +330,7 @@ export default class BookedCabScreen extends React.Component {
             firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').on('value', curbookingData => {
                 if (curbookingData.val()) {
                     if (curbookingData.val().status == 'ACCEPTED' || curbookingData.val().status == 'EMBARQUE') {
+                        firebase.database().ref('users/' + curbookingData.val().driver + '/emCorrida').remove()
                         firebase.database().ref('users/' + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
                             status: 'CANCELLED',
                             reason: this.state.radio_props[this.state.value].label
@@ -354,6 +351,9 @@ export default class BookedCabScreen extends React.Component {
                                 reason: this.state.radio_props[this.state.value].label
                             })
                         })
+                    }
+                    else {
+                        alert("Não foi possível cancelar essa corrida, ela ja iniciou!")
                     }
                 }
             })

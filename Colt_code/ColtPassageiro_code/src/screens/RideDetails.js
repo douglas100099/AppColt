@@ -27,6 +27,7 @@ import AvatarUser from '../../assets/svg/AvatarUser';
 import { color } from 'react-native-reanimated';
 
 export default class RideDetails extends React.Component {
+    _isMounted = false;
     getRideDetails;
     constructor(props) {
         super(props);
@@ -76,8 +77,8 @@ export default class RideDetails extends React.Component {
         this._retrieveSettings();
     }
 
-    componentWillUnmount() {
-        this._isMounted = false;
+    componentWillUnmount(){
+        this._isMounted = false
     }
 
     // find your origin and destination point coordinates and pass it to our method.

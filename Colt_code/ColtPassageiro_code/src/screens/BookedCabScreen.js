@@ -117,6 +117,7 @@ export default class BookedCabScreen extends React.Component {
                 //Checando o status da corrida 
                 if (currUserBooking.status == "ACCEPTED") {
                     this.setState({
+                        data_accept: currUserBooking.data_accept ? currUserBooking.data_accept : null,
                         bookingStatus: currUserBooking.status,
                         driverSerach: false
                     })
@@ -137,7 +138,10 @@ export default class BookedCabScreen extends React.Component {
                     this.onCancellSearchBooking()
                 }
                 else if (currUserBooking.status == "EMBARQUE") {
-                    this.setState({ embarque: true })
+                    this.setState({
+                        embarque: true,
+                        bookingStatus: currUserBooking.status
+                    })
                 } else if (currUserBooking.status == "START") {
                     this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
                 } else if (currUserBooking.status == "REJECTED") {
@@ -270,23 +274,20 @@ export default class BookedCabScreen extends React.Component {
 
     //Cancell Button Press
     async onPressCancellBtn() {
-        const value = await AsyncStorage.getItem('startTripTime');
-        firebase.database().ref(`/users/` + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').on('value', curbookingData => {
-            if (curbookingData.val()) {
-                if (curbookingData.val().status == 'ACCEPTED' || curbookingData.val().status == 'EMBARQUE') {
-                    const timeCurrent = new Date().getTime();
+        if (this.state.bookingStatus == 'ACCEPTED' || this.state.bookingStatus == 'EMBARQUE') {
+            if (this.state.data_accept != null) {
+                const timeCurrent = new Date().getTime();
 
-                    if (timeCurrent - value >= 30000) {
-                        this.setState({ modalInfoVisible: true })
-                    } else {
-                        this.setState({ modalVisible: true })
-                    }
+                if (timeCurrent - this.state.data_accept >= 30000) {
+                    this.setState({ modalInfoVisible: true })
                 }
-                else if (curbookingData.val().status == 'NEW') {
-                    this.onCancellSearchBooking(true)
-                }
+            } else {
+                this.setState({ modalVisible: true })
             }
-        })
+        }
+        else if (this.state.bookingStatus == 'NEW') {
+            this.onCancellSearchBooking(true)
+        }
     }
 
     dissMissCancel() {

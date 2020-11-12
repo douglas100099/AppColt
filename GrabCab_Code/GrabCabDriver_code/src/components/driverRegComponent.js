@@ -34,19 +34,11 @@ export default class DiverReg extends React.Component {
             email: this.props.reqData ? this.props.reqData.profile.email : '',
             mobile: this.props.reqData ? this.props.reqData.profile.mobile : '',
             cpfNum: '',
-            cnh: '',
-            dataValidade: '',
-            orgaoEmissor: '',
-            renavam: '',
             imageCnh: null,
             imageCrlv: null,
             imagePerfil: null,
             carType: '',
             cpfNumValid: true,
-            renavamValid: true,
-            cnhValid: true,
-            OrgaoEmissorValid: true,
-            dataValidadeValid: true,
             fnameValid: true,
             lnameValid: true,
             mobileValid: true,
@@ -57,6 +49,9 @@ export default class DiverReg extends React.Component {
             loaderBtn: false,
             isCamera: false,
             isProgress: false,
+            isPerfil: false,
+            isCnh: false,
+            isCrlv: false,
         }
     }
 
@@ -119,46 +114,6 @@ export default class DiverReg extends React.Component {
         this.setState({ cpfNumValid })
         cpfNumValid || this.cpfNumInput.shake();
         return cpfNumValid
-    }
-
-    // cnh validation
-    validateCnh() {
-        const { cnh } = this.state
-        const cnhValid = (cnh.length >= 11)
-        LayoutAnimation.easeInEaseOut()
-        this.setState({ cnhValid })
-        cnhValid || this.cnhInput.shake();
-        return cnhValid
-    }
-
-    // Orgao Emissor validation
-    validateOrgaoEmissor() {
-        const { orgaoEmissor } = this.state
-        const OrgaoEmissorValid = (orgaoEmissor.length > 2)
-        LayoutAnimation.easeInEaseOut()
-        this.setState({ OrgaoEmissorValid })
-        OrgaoEmissorValid || this.orgaoEmissorInput.shake();
-        return OrgaoEmissorValid
-    }
-
-    // Orgao Emissor validation
-    validateDataValidade() {
-        const { dataValidade } = this.state
-        const dataValidadeValid = (dataValidade.length >= 10)
-        LayoutAnimation.easeInEaseOut()
-        this.setState({ dataValidadeValid })
-        dataValidadeValid || this.dataValidadeInput.shake();
-        return dataValidadeValid
-    }
-
-    // RENAVAM validation
-    validateRenavam() {
-        const { renavam } = this.state
-        const renavamValid = (renavam.length >= 11)
-        LayoutAnimation.easeInEaseOut()
-        this.setState({ renavamValid })
-        renavamValid || this.renavamInput.shake();
-        return renavamValid
     }
 
     // email validation
@@ -247,15 +202,17 @@ export default class DiverReg extends React.Component {
 
     CapturePhotoPerfil = async () => {
         this.setState({ isProgress: true })
-        //permission check
-        console.log('ENTROU AQUI FUNÇÃO CAMERA')
         if (this.camera) {
-            console.log('ENTROU NO IF AQUI FUNÇÃO CAMERA')
             let photo = await this.camera.takePictureAsync({
                 quality: 1.0,
             })
-            this.setState({ imagePerfil: photo.uri, isCamera: false, isProgress: false });
-            console.log(photo.uri)
+            if(this.state.isPerfil) {
+                this.setState({ imagePerfil: photo.uri, isCamera: false, isProgress: false, isPerfil: false });
+            }else if (this.state.isCnh) {
+                this.setState({ imageCnh: photo.uri, isCamera: false, isProgress: false, isCnh: false });
+            } else if (this.state.isCrlv) {
+                this.setState({ imageCrlv: photo.uri, isCamera: false, isProgress: false, isCrlv: false });
+            }
         }
     }
 
@@ -284,15 +241,10 @@ export default class DiverReg extends React.Component {
         const imageCnhValid = this.validateImageCnh();
         const imageCrlvValid = this.validateImageCrlv();
         const imagePerfilValid = this.validateImagePerfil();
-
         const cpfNumValid = this.validateCpf();
-        const cnhValid = this.validateCnh();
-        const OrgaoEmissorValid = this.validateOrgaoEmissor();
-        const dataValidadeValid = this.validateDataValidade();
-        const renavamValid = this.validateRenavam();
 
-        if (fnameValid && lnameValid && mobileValid && emailValid && imageCnhValid && imageCrlvValid && imagePerfilValid && cpfNumValid && renavamValid && dataValidadeValid && OrgaoEmissorValid && cnhValid && this.state.carType) {
-            onPressRegister(this.state.fname, this.state.lname, this.state.mobile, this.state.email, this.state.imageCrlv, this.state.imageCnh, this.state.imagePerfil, this.state.carType, this.state.cpfNum, this.state.cnh, this.state.dataValidade, this.state.orgaoEmissor, this.state.renavam);
+        if (fnameValid && lnameValid && mobileValid && emailValid && imageCnhValid && imageCrlvValid && imagePerfilValid && cpfNumValid && this.state.carType) {
+            onPressRegister(this.state.fname, this.state.lname, this.state.mobile, this.state.email, this.state.imageCrlv, this.state.imageCnh, this.state.imagePerfil, this.state.carType, this.state.cpfNum);
         }
         this.setState({ loaderBtn: false })
     }
@@ -423,105 +375,7 @@ export default class DiverReg extends React.Component {
                                     errorMessage={this.state.mobileValid ? null : 'Celular inválido ou em branco'}
                                     secureTextEntry={false}
                                     blurOnSubmit={true}
-                                    onSubmitEditing={() => { this.validateMobile(); this.cnhInput.focus() }}
-                                    errorStyle={styles.errorMessageStyle}
-                                    inputContainerStyle={styles.inputContainerStyle}
-                                    containerStyle={styles.textInputStyle}
-                                />
-                            </View>
-
-                            {/*  NUMERO DA CNH  */}
-
-                            <Text style={styles.txtContainer2}>Dados da CNH</Text>
-                            <View style={styles.textInputContainerStyle}>
-                                <Text style={styles.txtContainer}>Número de registro CNH</Text>
-                                <Input
-                                    ref={input => (this.cnhInput = input)}
-                                    editable={true}
-                                    returnKeyType={'next'}
-                                    underlineColorAndroid={colors.TRANSPARENT}
-                                    value={this.state.cnh}
-                                    keyboardType={'numeric'}
-                                    inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text) => { this.setState({ cnh: text }) }}
-                                    errorMessage={this.state.cnhValid ? null : 'Número da CNH inválido'}
-                                    secureTextEntry={false}
-                                    maxLength={11}
-                                    blurOnSubmit={true}
-                                    onSubmitEditing={() => { this.validateCnh(); this.orgaoEmissorInput.focus() }}
-                                    errorStyle={styles.errorMessageStyle}
-                                    inputContainerStyle={styles.inputContainerStyle}
-                                    containerStyle={styles.textInputStyle}
-                                />
-                            </View>
-
-                            {/*  ORGÃO EMISSOR  */}
-
-                            <View style={styles.textInputContainerStyle}>
-                                <Text style={styles.txtContainer}>Orgão emissor</Text>
-                                <Input
-                                    ref={input => (this.orgaoEmissorInput = input)}
-                                    editable={true}
-                                    returnKeyType={'next'}
-                                    underlineColorAndroid={colors.TRANSPARENT}
-                                    value={this.state.orgaoEmissor}
-                                    keyboardType={'default'}
-                                    inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text) => { this.setState({ orgaoEmissor: text }) }}
-                                    errorMessage={this.state.OrgaoEmissorValid ? null : 'Insira o nome do orgão emissor'}
-                                    secureTextEntry={false}
-                                    blurOnSubmit={true}
-                                    onSubmitEditing={() => { this.validateOrgaoEmissor(); this.cpfNumInput.focus() }}
-                                    errorStyle={styles.errorMessageStyle}
-                                    inputContainerStyle={styles.inputContainerStyle}
-                                    containerStyle={styles.textInputStyle}
-                                />
-                            </View>
-
-
-                            {/*  DATA DE VALIDADE  */}
-
-                            <View style={styles.textInputContainerStyle}>
-                                <Text style={styles.txtContainer}>Data de validade</Text>
-                                <Input
-                                    ref={input => (this.dataValidadeInput = input)}
-                                    editable={true}
-                                    returnKeyType={'done'}
-                                    underlineColorAndroid={colors.TRANSPARENT}
-                                    value={this.state.dataValidade}
-                                    keyboardType={'numeric'}
-                                    inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text) => { this.setState({ dataValidade: text }) }}
-                                    errorMessage={this.state.dataValidadeValid ? null : 'Informe a data de validade da CNH'}
-                                    secureTextEntry={false}
-                                    blurOnSubmit={true}
-                                    maxLength={10}
-                                    onSubmitEditing={() => { this.validateDataValidade(); this.renavamInput.focus() }}
-                                    errorStyle={styles.errorMessageStyle}
-                                    inputContainerStyle={styles.inputContainerStyle}
-                                    containerStyle={styles.textInputStyle}
-                                />
-                            </View>
-
-
-                            <Text style={styles.txtContainer2}>Dados do CRLV</Text>
-
-                            {/*  RENAVAM  */}
-
-                            <View style={styles.textInputContainerStyle}>
-                                <Text style={styles.txtContainer}>RENAVAM</Text>
-                                <Input
-                                    ref={input => (this.renavamInput = input)}
-                                    editable={true}
-                                    underlineColorAndroid={colors.TRANSPARENT}
-                                    value={this.state.renavam}
-                                    inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text) => { this.setState({ renavam: text }) }}
-                                    errorMessage={this.state.renavamValid ? null : languageJSON.vehicle_number_blank_err}
-                                    blurOnSubmit={true}
-                                    keyboardType={'numeric'}
-                                    maxLength={11}
-                                    onSubmitEditing={() => { this.validateRenavam() }}
+                                    onSubmitEditing={() => { this.validateMobile() }}
                                     errorStyle={styles.errorMessageStyle}
                                     inputContainerStyle={styles.inputContainerStyle}
                                     containerStyle={styles.textInputStyle}
@@ -553,7 +407,7 @@ export default class DiverReg extends React.Component {
 
                                         </View>
                                         <View style={styles.capturePicClick}>
-                                            <TouchableOpacity style={styles.flexView1} onPress={this.CapturePhotoCnh}>
+                                            <TouchableOpacity style={styles.flexView1} onPress={this.setState({ isCamera: true, isCnh: true })}>
                                                 <View>
                                                     <View style={styles.imageFixStyle}>
                                                         <Image source={require('../../assets/images/habilitacao.png')} resizeMode={'contain'} style={styles.imageStyle2} />
@@ -592,7 +446,7 @@ export default class DiverReg extends React.Component {
 
                                         </View>
                                         <View style={styles.capturePicClick}>
-                                            <TouchableOpacity style={styles.flexView1} onPress={() => this.setState({ isCamera: true })}>
+                                            <TouchableOpacity style={styles.flexView1} onPress={() => this.setState({ isCamera: true, isPerfil: true })}>
                                                 <View style={{ justifyContent: 'center', alignItems: 'center' }}>
                                                     <Icon
                                                         name='ios-person'
@@ -638,7 +492,7 @@ export default class DiverReg extends React.Component {
 
                                         </View>
                                         <View style={styles.capturePicClick}>
-                                            <TouchableOpacity style={styles.flexView1} onPress={this.CapturePhotoCrlv}>
+                                            <TouchableOpacity style={styles.flexView1} onPress={this.setState({ isCamera: true, isCrlv: true })}>
                                                 <View>
                                                     <View style={styles.imageFixStyle}>
                                                         <Image source={require('../../assets/images/crlv.png')} resizeMode={'contain'} style={styles.imageStyle3} />
@@ -672,27 +526,14 @@ export default class DiverReg extends React.Component {
                     </ScrollView>
                     :
                     <View style={{ flex: 1 }}>
-                        {this.state.isPerfil ?
-                        <Camera style={{ flex: 1 }} type={Camera.Constants.Type.front ? Camera.Constants.Type.front : Camera.Constants.Type.back} ratio='16:9' ref={ref => { this.camera = ref }} >
+                        <Camera style={{ flex: 1 }} type={this.state.isPerfil ? Camera.Constants.Type.front : Camera.Constants.Type.back} ratio='16:9' ref={ref => { this.camera = ref }} >
                             <View
                                 style={{
                                     flex: 1,
                                     backgroundColor: 'transparent',
                                 }}>
-                                <TouchableOpacity
-                                    style={{
-                                        flex: 0.1,
-                                        alignSelf: 'flex-end',
-                                        alignItems: 'center',
-                                    }}
-                                    onPress={() => {
-                                        this.state.type === Camera.Constants.Type.back ? Camera.Constants.Type.front : Camera.Constants.Type.back;
-                                    }}>
-                                </TouchableOpacity>
                             </View>
                         </Camera>
-                        :
-                        null}
                         <TouchableOpacity style={{ flex: 1, position: 'absolute', bottom: 20, alignSelf: 'center', justifyContent: 'center', alignItems: 'center', backgroundColor: colors.GREY3, height: 65, width: 65, borderRadius: 100, elevation: 3, }}
                             onPress={() => this.CapturePhotoPerfil()}
                             disabled={this.state.isProgress}
@@ -706,7 +547,7 @@ export default class DiverReg extends React.Component {
                         </TouchableOpacity>
 
                         <TouchableOpacity style={{ flex: 1, position: 'absolute', top: 40, right: 20, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.GREY3, height: 40, width: 40, borderRadius: 100, elevation: 3, }}
-                            onPress={() => this.setState({ isCamera: false })}
+                            onPress={() => this.setState({ isCamera: false, isCrlv: false, isCnh: false })}
                             disabled={this.state.isProgress}
                         >
                             <Icon

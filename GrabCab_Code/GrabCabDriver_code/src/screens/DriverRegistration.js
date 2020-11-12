@@ -92,7 +92,7 @@ export default class DriverRegistrationPage extends React.Component {
       xhr.send(null); // no initial data
     });
 
-    if ((blob.size / 1000000) > 2) {
+    if ((blob.size / 1000000) > 3) {
       this.setState({ loading: false }, () => { alert(languageJSON.image_size_error) })
     }
     else {
@@ -128,7 +128,7 @@ export default class DriverRegistrationPage extends React.Component {
       xhr.send(null); // no initial data
     });
 
-    if ((blob.size / 1000000) > 2) {
+    if ((blob.size / 1000000) > 3) {
       this.setState({ loading: false }, () => { alert(languageJSON.image_size_error) })
     }
     else {
@@ -164,7 +164,7 @@ export default class DriverRegistrationPage extends React.Component {
       xhr.send(null); // no initial data
     });
 
-    if ((blob.size / 1000000) > 2) {
+    if ((blob.size / 1000000) > 3) {
       this.setState({ loading: false }, () => { alert(languageJSON.image_size_error) })
     }
     else {

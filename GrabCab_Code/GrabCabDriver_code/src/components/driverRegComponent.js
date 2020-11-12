@@ -68,11 +68,9 @@ export default class DiverReg extends React.Component {
         });
         const { status } = await Camera.requestPermissionsAsync();
         if (status === 'granted') {
-            const type = Camera.Constants.Type.back
-            const autoFocus = Camera.Constants.AutoFocus
-            this.setState({ statusCamera: true, type: type, autoFocus: autoFocus })
+            this.setState({ statusCamera: true })
         } else {
-            this.setState({ statusCamera: false, type: null })
+            this.setState({ statusCamera: false })
         }
     }
 
@@ -200,21 +198,23 @@ export default class DiverReg extends React.Component {
         }
     }
 
-    CapturePhotoPerfil = async () => {
+
+    CapturePhoto = async () => {
         this.setState({ isProgress: true })
         if (this.camera) {
             let photo = await this.camera.takePictureAsync({
-                quality: 1.0,
+                quality: 0.8,
             })
             if(this.state.isPerfil) {
-                this.setState({ imagePerfil: photo.uri, isCamera: false, isProgress: false, isPerfil: false });
-            }else if (this.state.isCnh) {
-                this.setState({ imageCnh: photo.uri, isCamera: false, isProgress: false, isCnh: false });
-            } else if (this.state.isCrlv) {
-                this.setState({ imageCrlv: photo.uri, isCamera: false, isProgress: false, isCrlv: false });
+                this.setState({ imagePerfil: photo.uri, isCamera: false, isPerfil: false, isProgress: false });
+            } else if (this.state.isCnh) {
+                this.setState({ imageCnh: photo.uri, isCamera: false, isCnh: false, isProgress: false });
+            } else if (this.state.isCrlv){
+                this.setState({ imageCrlv: photo.uri, isCamera: false, isCrlv: false, isProgress: false });
             }
         }
     }
+
 
     //upload cancel
     cancelPhotoCnh = () => {
@@ -256,10 +256,10 @@ export default class DiverReg extends React.Component {
         let { imagePerfil } = this.state;
         return (
             <View style={{ flex: 1, backgroundColor: colors.WHITE, }}>
-                {!this.state.isCamera ?
+                {this.state.isCamera === false ?
                     <Text style={styles.headerStyle}>Registro</Text>
                     : null}
-                {!this.state.isCamera ?
+                {this.state.isCamera === false ?
                     <ScrollView style={styles.scrollViewStyle}>
 
 
@@ -407,7 +407,7 @@ export default class DiverReg extends React.Component {
 
                                         </View>
                                         <View style={styles.capturePicClick}>
-                                            <TouchableOpacity style={styles.flexView1} onPress={this.setState({ isCamera: true, isCnh: true })}>
+                                            <TouchableOpacity style={styles.flexView1} onPress={() => this.setState({ isCamera: true, isCnh: true })}>
                                                 <View>
                                                     <View style={styles.imageFixStyle}>
                                                         <Image source={require('../../assets/images/habilitacao.png')} resizeMode={'contain'} style={styles.imageStyle2} />
@@ -492,7 +492,7 @@ export default class DiverReg extends React.Component {
 
                                         </View>
                                         <View style={styles.capturePicClick}>
-                                            <TouchableOpacity style={styles.flexView1} onPress={this.setState({ isCamera: true, isCrlv: true })}>
+                                            <TouchableOpacity style={styles.flexView1} onPress={() => this.setState({ isCamera: true, isCrlv: true })}>
                                                 <View>
                                                     <View style={styles.imageFixStyle}>
                                                         <Image source={require('../../assets/images/crlv.png')} resizeMode={'contain'} style={styles.imageStyle3} />
@@ -535,7 +535,7 @@ export default class DiverReg extends React.Component {
                             </View>
                         </Camera>
                         <TouchableOpacity style={{ flex: 1, position: 'absolute', bottom: 20, alignSelf: 'center', justifyContent: 'center', alignItems: 'center', backgroundColor: colors.GREY3, height: 65, width: 65, borderRadius: 100, elevation: 3, }}
-                            onPress={() => this.CapturePhotoPerfil()}
+                            onPress={() => this.CapturePhoto()}
                             disabled={this.state.isProgress}
                         >
                             <Icon
@@ -547,7 +547,7 @@ export default class DiverReg extends React.Component {
                         </TouchableOpacity>
 
                         <TouchableOpacity style={{ flex: 1, position: 'absolute', top: 40, right: 20, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.GREY3, height: 40, width: 40, borderRadius: 100, elevation: 3, }}
-                            onPress={() => this.setState({ isCamera: false, isCrlv: false, isCnh: false })}
+                            onPress={() => this.setState({ isCamera: false, isCrlv: false, isCnh: false, isPerfil: false, })}
                             disabled={this.state.isProgress}
                         >
                             <Icon
@@ -557,7 +557,8 @@ export default class DiverReg extends React.Component {
                                 size={30}
                             />
                         </TouchableOpacity>
-                    </View>}
+                    </View>
+                }
             </View>
         );
     }

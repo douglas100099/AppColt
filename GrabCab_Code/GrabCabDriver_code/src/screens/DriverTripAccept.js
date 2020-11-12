@@ -489,7 +489,7 @@ export default class DriverTripAccept extends React.Component {
                     this.setState({ chegouCorrida: true })
                     if (this.state.isSound == false) {
                         this.playSound()
-                        Linking.openURL('coltappmotorista://');
+                        //Linking.openURL('coltappmotorista://');
                     }
                 } else if (this.state.chegouCorrida == true) {
                     this.setState({ chegouCorrida: false })
@@ -813,11 +813,12 @@ export default class DriverTripAccept extends React.Component {
 
                                                         this.map2.fitToCoordinates(result.coordinates, {
                                                             edgePadding: {
-                                                                right: getPixelSize(50),
-                                                                left: getPixelSize(50),
-                                                                top: getPixelSize(50),
-                                                                bottom: getPixelSize(350)
-                                                            }
+                                                                right: getPixelSize(10),
+                                                                left: getPixelSize(10),
+                                                                top: getPixelSize(10),
+                                                                bottom: getPixelSize(50)
+                                                            },
+                                                            animated: true,
                                                         });
                                                     }}
                                                 />

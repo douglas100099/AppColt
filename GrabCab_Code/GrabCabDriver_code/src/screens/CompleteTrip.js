@@ -469,116 +469,160 @@ export default class DriverCompleteTrip extends React.Component {
         })
     }
 
-        // accept button press function
-        onPressAccept(item) {
-            this.stopSound()
-            this.setState({ loader: true })
-            if (this.state.status === 'CANCELLED') {
-                Alert.alert('Ops, essa corrida foi cancelada pelo passageiro')
-                this.setState({ loader: false })
-            } else {
-                var pagamentoObj = {
-                    estimate: item.pagamento.estimate,
-                    trip_cost: item.pagamento.trip_cost,
-                    payment_mode: item.pagamento.payment_mode,
-                    cashPaymentAmount: item.pagamento.cashPaymentAmount,
-                    usedWalletMoney: item.pagamento.usedWalletMoney,
-                    discount_amount: item.pagamento.discount_amount,
-                    promoCodeApplied: item.pagamento.promoCodeApplied,
-                    promoKey: item.pagamento.promoKey,
-                    cancellValue: item.pagamento.cancellValue,
-                }
-                var data = {
-                    carType: item.carType,
-                    customer: item.customer,
-                    customer_name: item.customer_name,
-                    otp: item.otp,
-                    distance: item.distance,
-                    driver: this.state.curUid,
-                    driver_image: this.state.driverDetails.profile_image ? this.state.driverDetails.profile_image : "",
-                    driver_name: this.state.driverDetails.firstName + ' ' + this.state.driverDetails.lastName,
-                    driver_firstName: this.state.driverDetails.firstName,
-                    driver_contact: this.state.driverDetails.mobile,
-                    vehicle_number: this.state.driverDetails.vehicleNumber,
-                    vehicleModelName: this.state.driverDetails.vehicleModel,
-                    driverRating: this.state.driverDetails.ratings ? this.state.driverDetails.ratings.userrating : "5.0",
-                    drop: item.drop,
-                    ratingRider: item.ratingRider,
-                    pickup: item.pickup,
-                    imageRider: item.imageRider ? item.imageRider : null,
-                    estimateDistance: item.estimateDistance,
-                    serviceType: item.serviceType,
-                    status: "ACCEPTED",
-                    firstNameRider: item.firstNameRider,
-                    total_trip_time: item.total_trip_time,
-                    trip_end_time: item.trip_end_time,
-                    trip_start_time: item.trip_start_time,
-                    tripdate: item.tripdate,
-                    pagamento: pagamentoObj,
-                    data_accept: new Date().getTime(),
-                }
-    
-                var riderData = {
-                    carType: item.carType,
-                    distance: item.distance,
-                    imageRider: item.imageRider ? item.imageRider : null,
-                    driver: this.state.curUid,
-                    driver_image: this.state.driverDetails.profile_image ? this.state.driverDetails.profile_image : "",
-                    driver_name: this.state.driverDetails.firstName + ' ' + this.state.driverDetails.lastName,
-                    driver_firstName: this.state.driverDetails.firstName,
-                    driver_contact: this.state.driverDetails.mobile,
-                    vehicle_number: this.state.driverDetails.vehicleNumber,
-                    vehicleModelName: this.state.driverDetails.vehicleModel,
-                    driverRating: this.state.driverDetails.ratings ? this.state.driverDetails.ratings.userrating : "5.0",
-                    drop: item.drop,
-                    firstNameRider: item.firstNameRider,
-                    ratingRider: item.ratingRider,
-                    otp: item.otp,
-                    pickup: item.pickup,
-                    estimateDistance: item.estimateDistance,
-                    serviceType: item.serviceType,
-                    status: "ACCEPTED",
-                    total_trip_time: item.total_trip_time,
-                    trip_end_time: item.trip_end_time, 
-                    trip_start_time: item.trip_start_time,
-                    tripdate: item.tripdate,
-                    pagamento: pagamentoObj,
-                    data_accept: new Date().getTime(),
-                }
-    
-                if (this._isMounted) {
-                    let dbRef = firebase.database().ref('users/' + this.state.curUid + '/my_bookings/' + item.bookingId + '/');
-                    dbRef.update(data).then(() => {
-                        firebase.database().ref('bookings/' + item.bookingId + '/').update(data).then(() => {
-                            firebase.database().ref('bookings/' + item.bookingId).once('value', (snap) => {
-                                let requestedDriver = snap.val().requestedDriver;
-                                if (requestedDriver) {
-                                    firebase.database().ref('users/' + requestedDriver + '/waiting_queue_riders/' + item.bookingId + '/').remove().then()
-                                        .then(() => {
-                                            this.setState({ loader: false, chegouCorrida: false })
-                                            this.props.navigation.replace('DriverTripStart', { allDetails: item, regionUser: this.state.region })
-                                        })
-                                }
-                            })
-                        })
-                        this.sendPushNotification(item.customer, this.state.driverDetails.firstName + ' aceitou seu chamado, aguarde.')
-                    }).catch((error) => {
-                        console.log(error)
-                        alert('Ops, tivemos um problema.')
-                    })
-    
-    
-                    let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/'); userDbRef.update(riderData);
-                    let currentUserdbRef = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/');
-                    currentUserdbRef.update({
-                        queueRiders: true,
-                        emCorridaQueue: item.bookingId,
-                    })
-                }
+    // accept button press function
+    onPressAccept(item) {
+        this.stopSound()
+        this.setState({ loader: true })
+        if (this.state.status === 'CANCELLED') {
+            Alert.alert('Ops, essa corrida foi cancelada pelo passageiro')
+            this.setState({ loader: false })
+        } else {
+            var pagamentoObj = {
+                estimate: item.pagamento.estimate,
+                trip_cost: item.pagamento.trip_cost,
+                payment_mode: item.pagamento.payment_mode,
+                cashPaymentAmount: item.pagamento.cashPaymentAmount,
+                usedWalletMoney: item.pagamento.usedWalletMoney,
+                discount_amount: item.pagamento.discount_amount,
+                promoCodeApplied: item.pagamento.promoCodeApplied,
+                promoKey: item.pagamento.promoKey,
+                cancellValue: item.pagamento.cancellValue,
             }
-    
-    
+            var data = {
+                carType: item.carType,
+                customer: item.customer,
+                customer_name: item.customer_name,
+                otp: item.otp,
+                distance: item.distance,
+                driver: this.state.curUid,
+                driver_image: this.state.driverDetails.profile_image ? this.state.driverDetails.profile_image : "",
+                driver_name: this.state.driverDetails.firstName + ' ' + this.state.driverDetails.lastName,
+                driver_firstName: this.state.driverDetails.firstName,
+                driver_contact: this.state.driverDetails.mobile,
+                vehicle_number: this.state.driverDetails.vehicleNumber,
+                vehicleModelName: this.state.driverDetails.vehicleModel,
+                driverRating: this.state.driverDetails.ratings ? this.state.driverDetails.ratings.userrating : "5.0",
+                drop: item.drop,
+                ratingRider: item.ratingRider,
+                pickup: item.pickup,
+                imageRider: item.imageRider ? item.imageRider : null,
+                estimateDistance: item.estimateDistance,
+                serviceType: item.serviceType,
+                status: "ACCEPTED",
+                firstNameRider: item.firstNameRider,
+                total_trip_time: item.total_trip_time,
+                trip_end_time: item.trip_end_time,
+                trip_start_time: item.trip_start_time,
+                tripdate: item.tripdate,
+                pagamento: pagamentoObj,
+                data_accept: new Date().getTime(),
+            }
+
+            var riderData = {
+                carType: item.carType,
+                distance: item.distance,
+                imageRider: item.imageRider ? item.imageRider : null,
+                driver: this.state.curUid,
+                driver_image: this.state.driverDetails.profile_image ? this.state.driverDetails.profile_image : "",
+                driver_name: this.state.driverDetails.firstName + ' ' + this.state.driverDetails.lastName,
+                driver_firstName: this.state.driverDetails.firstName,
+                driver_contact: this.state.driverDetails.mobile,
+                vehicle_number: this.state.driverDetails.vehicleNumber,
+                vehicleModelName: this.state.driverDetails.vehicleModel,
+                driverRating: this.state.driverDetails.ratings ? this.state.driverDetails.ratings.userrating : "5.0",
+                drop: item.drop,
+                firstNameRider: item.firstNameRider,
+                ratingRider: item.ratingRider,
+                otp: item.otp,
+                pickup: item.pickup,
+                estimateDistance: item.estimateDistance,
+                serviceType: item.serviceType,
+                status: "ACCEPTED",
+                total_trip_time: item.total_trip_time,
+                trip_end_time: item.trip_end_time,
+                trip_start_time: item.trip_start_time,
+                tripdate: item.tripdate,
+                pagamento: pagamentoObj,
+                data_accept: new Date().getTime(),
+            }
+
+            if (this._isMounted) {
+                let dbRef = firebase.database().ref('users/' + this.state.curUid + '/my_bookings/' + item.bookingId + '/');
+                dbRef.update(data).then(() => {
+                    firebase.database().ref('bookings/' + item.bookingId + '/').update(data).then(() => {
+                        firebase.database().ref('bookings/' + item.bookingId).once('value', (snap) => {
+                            let requestedDriver = snap.val().requestedDriver;
+                            if (requestedDriver) {
+                                firebase.database().ref('users/' + requestedDriver + '/waiting_queue_riders/' + item.bookingId + '/').remove().then()
+                                    .then(() => {
+                                        this.setState({ loader: false, chegouCorrida: false })
+                                        this.props.navigation.replace('DriverTripStart', { allDetails: item, regionUser: this.state.region })
+                                    })
+                            }
+                        })
+                    })
+                    this.sendPushNotification(item.customer, this.state.driverDetails.firstName + ' aceitou seu chamado, aguarde.')
+                }).catch((error) => {
+                    console.log(error)
+                    alert('Ops, tivemos um problema.')
+                })
+
+
+                let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/'); userDbRef.update(riderData);
+                let currentUserdbRef = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/');
+                currentUserdbRef.update({
+                    queueRiders: true,
+                    emCorridaQueue: item.bookingId,
+                })
+            }
         }
+
+
+    }
+
+    //ignore button press function
+    onPressIgnore(item) {
+        this.setState({ loader: true });
+        var arr = [];
+        this.stopSound()
+        if (this._isMounted) {
+            firebase.database().ref('bookings/' + item.bookingId + '/').once('value', data => {
+                if (data.val()) {
+                    let mainBookingData = data.val();
+                    if (mainBookingData.rejectedDrivers) {
+                        arr = mainBookingData.rejectedDrivers
+                        arr.push(firebase.auth().currentUser.uid)
+                        firebase.database().ref(`bookings/` + item.bookingId + '/').update({
+                            rejectedDrivers: arr,
+                            status: "REJECTED",
+                        }).then(() => {
+                            let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/');
+                            userDbRef.update({
+                                status: "REJECTED",
+                            });
+                            this.setState({ loader: false, chegouCorridaQueue: false });
+                        })
+                        firebase.database().ref('bookings/' + item.bookingId + '/requestedDriver/').remove();
+                    } else {
+                        arr.push(firebase.auth().currentUser.uid)
+                        firebase.database().ref(`bookings/` + item.bookingId + '/').update({
+                            rejectedDrivers: arr,
+                            status: "REJECTED",
+                        }).then(() => {
+                                let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/');
+                                userDbRef.update({
+                                    status: "REJECTED",
+                                });
+                                this.setState({ loader: false, chegouCorridaQueue: false });
+                        })
+                        firebase.database().ref('bookings/' + item.bookingId + '/requestedDriver/').remove();
+                    }
+                }
+            });
+            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/waiting_queue_riders/' + item.bookingId + '/').remove()
+        }
+
+    }
 
     loading() {
         return (
@@ -1142,7 +1186,7 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         color: colors.BLACK,
     },
-    
+
     viewDetalhesTempo: {
         flex: 1,
         marginLeft: 15,

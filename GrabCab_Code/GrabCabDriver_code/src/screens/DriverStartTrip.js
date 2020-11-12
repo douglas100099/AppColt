@@ -490,7 +490,7 @@ export default class DriverStartTrip extends React.Component {
                     let resultEnd = endTimeEmbarque
                     let result = resultEnd - resultStart
                     console.log(result/60000)
-                    if (parseInt(result/60000) < 5) {
+                    if (parseInt(result/60000) < 1) {
                         firebase.database().ref(`/users/` + this.state.curUid + '/in_reject_progress').update({
                             punido: false,
                         }).then(() => {

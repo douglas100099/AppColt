@@ -23,6 +23,8 @@ import * as Animatable from 'react-native-animatable';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import Easing from 'react-native-reanimated';
 import * as Linking from 'expo-linking';
+import { getPixelSize } from '../constants/utils';
+import Directions from "../components/Directions";
 
 import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
@@ -71,6 +73,7 @@ export default class DriverTripAccept extends React.Component {
             intervalCheckGps: null,
             batteryLevel: null,
             animatedGrana: true,
+            duration: null,
         }
         this._getLocationAsync();
     }
@@ -270,7 +273,7 @@ export default class DriverTripAccept extends React.Component {
     }
 
     // find your origin and destination point coordinates and pass it to our method.
-    async getDirections(startLoc, destinationLoc, pickuplat, pickuplng, droplat, droplng) {
+    /*async getDirections(startLoc, destinationLoc, pickuplat, pickuplng, droplat, droplng) {
         if (this._isMounted) {
             try {
                 let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=${google_map_key}`)
@@ -298,7 +301,7 @@ export default class DriverTripAccept extends React.Component {
                 return error
             }
         }
-    }
+    }*/
 
     _getInfoEraning = async () => {
         try {
@@ -476,22 +479,21 @@ export default class DriverTripAccept extends React.Component {
                         waiting_riderData[key].bookingId = key;
                         jobs.push(waiting_riderData[key]);
 
-                        this.getDirections('"' + waiting_riderData[key].pickup.lat + ',' + waiting_riderData[key].pickup.lng + '"', '"' + this.state.region.latitude + ',' + this.state.region.longitude + '"',
-                            waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng, this.state.region.latitude, this.state.region.longitude)
-
+                        /*this.getDirections('"' + waiting_riderData[key].pickup.lat + ',' + waiting_riderData[key].pickup.lng + '"', '"' + this.state.region.latitude + ',' + this.state.region.longitude + '"',
+                            waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng, this.state.region.latitude, this.state.region.longitude)*/
                         var location1 = [waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng];
                         var location2 = [this.state.region.latitude, this.state.region.longitude];
                         var distancee = distanceCalc(location1, location2);
                         this.setState({ distance: distancee, acceptBtnDisable: false })
                     }
                     this.setState({ chegouCorrida: true })
-                    if(this.state.isSound == false) {
+                    if (this.state.isSound == false) {
                         this.playSound()
                         Linking.openURL('coltappmotorista://');
                     }
                 } else if (this.state.chegouCorrida == true) {
                     this.setState({ chegouCorrida: false })
-                    if(this.state.isSound){
+                    if (this.state.isSound) {
                         this.stopSound()
                     }
                 }
@@ -636,15 +638,15 @@ export default class DriverTripAccept extends React.Component {
                     let mainBookingData = data.val();
                     if (mainBookingData.rejectedDrivers) {
                         arr = mainBookingData.rejectedDrivers
-                        arr.push(this.state.curUid)
+                        arr.push(firebase.auth().currentUser.uid)
                         firebase.database().ref(`bookings/` + item.bookingId + '/').update({
                             rejectedDrivers: arr,
                             status: "REJECTED",
                         }).then(() => {
-                            firebase.database().ref('users/' + this.state.curUid + '/driverActiveStatus').set(false)
+                            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/driverActiveStatus').set(false)
 
                         }).then(() => {
-                            firebase.database().ref('users/' + this.state.curUid + '/in_reject_progress').update({
+                            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/in_reject_progress').update({
                                 punido: false,
                             })
                         })
@@ -660,14 +662,14 @@ export default class DriverTripAccept extends React.Component {
 
                         firebase.database().ref('bookings/' + item.bookingId + '/requestedDriver/').remove();
                     } else {
-                        arr.push(this.state.curUid)
+                        arr.push(firebase.auth().currentUser.uid)
                         firebase.database().ref(`bookings/` + item.bookingId + '/').update({
                             rejectedDrivers: arr,
                             status: "REJECTED",
                         }).then(() => {
-                            firebase.database().ref('users/' + this.state.curUid + '/driverActiveStatus').set(false);
+                            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/driverActiveStatus').set(false);
                         }).then(() => {
-                            firebase.database().ref('users/' + this.state.curUid + '/in_reject_progress').update({
+                            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/in_reject_progress').update({
                                 punido: false,
                             })
                         })
@@ -684,7 +686,7 @@ export default class DriverTripAccept extends React.Component {
                     }
                 }
             });
-            firebase.database().ref('users/' + this.state.curUid + '/waiting_riders_list/' + item.bookingId + '/').remove()
+            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/waiting_riders_list/' + item.bookingId + '/').remove()
         }
 
     }
@@ -802,14 +804,24 @@ export default class DriverTripAccept extends React.Component {
                                                         height={40}
                                                     />
                                                 </Marker>
-                                                
-                                                {this.state.coords ?
-                                                    <MapView.Polyline
-                                                        coordinates={this.state.coords}
-                                                        strokeWidth={3}
-                                                        strokeColor={colors.DEEPBLUE}
-                                                    />
-                                                    : null}
+                                                {region ?
+                                                <Directions
+                                                    origin={{latitude: this.state.region.latitude, longitude: this.state.region.longitude}}
+                                                    destination={{ latitude: item.pickup.lat, longitude: item.pickup.lng }}
+                                                    onReady={result => {
+                                                        this.setState({ duration: Math.floor(result.duration) });
+
+                                                        this.map2.fitToCoordinates(result.coordinates, {
+                                                            edgePadding: {
+                                                                right: getPixelSize(50),
+                                                                left: getPixelSize(50),
+                                                                top: getPixelSize(50),
+                                                                bottom: getPixelSize(350)
+                                                            }
+                                                        });
+                                                    }}
+                                                />
+                                                : null}
                                             </MapView>
                                         </View>
 
@@ -844,7 +856,7 @@ export default class DriverTripAccept extends React.Component {
                                                     <View style={styles.viewBtnRejeitar}>
                                                         <TouchableOpacity style={styles.btnRejeitar} onPress={() => { this.showActionSheet() }}>
                                                             <AnimatedCircularProgress
-                                                                style={{position: 'absolute'}}
+                                                                style={{ position: 'absolute' }}
                                                                 ref={(ref) => this.circularProgress = ref}
                                                                 size={47}
                                                                 width={5}
@@ -1224,7 +1236,6 @@ const styles = StyleSheet.create({
         borderBottomColor: colors.GREY1,
         paddingBottom: 16,
         marginBottom: 5,
-
     },
 
     enderecoPartida: {

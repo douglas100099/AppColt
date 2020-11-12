@@ -5,7 +5,8 @@ import MapComponent from './MapComponent';
 import DiverReg from './driverRegComponent';
 import EditUser from './EditUser';
 import CustomCommentSend from './CustomCommentSend';
-import TripStartModal from './TripStartModal'
+import TripStartModal from './TripStartModal';
+import Directions from './Directions';
 
 export {
     Background,
@@ -14,6 +15,7 @@ export {
     MapComponent,
     DiverReg,
     EditUser,
+    Directions,
     CustomCommentSend,
     TripStartModal
 };

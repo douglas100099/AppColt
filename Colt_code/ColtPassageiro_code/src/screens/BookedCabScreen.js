@@ -59,6 +59,9 @@ export default class BookedCabScreen extends React.Component {
             modalInfoVisible: false,
             searchDisabled: false,
         }
+        this.searchDriverQueue = false,
+            this.currentRejected = false,
+            this.driverUidSelected = 0
     }
 
     UNSAFE_componentWillMount() {
@@ -72,7 +75,7 @@ export default class BookedCabScreen extends React.Component {
         this._isMounted = true;
         this.state.bookingDataState == null ? this.getParamData = this.props.navigation.getParam('passData') : this.getParamData = this.state.bookingDataState
 
-        this.searchDriver(this.getParamData.bokkingId)
+        this.searchDriver()
 
         var curuser = firebase.auth().currentUser;
         let bookingResponse = firebase.database().ref(`users/` + curuser.uid + '/my-booking/' + this.getParamData.bokkingId);
@@ -138,6 +141,7 @@ export default class BookedCabScreen extends React.Component {
                     this.onCancellSearchBooking()
                 }
                 else if (currUserBooking.status == "EMBARQUE") {
+                    this.searchDriverQueue = false
                     this.setState({
                         embarque: true,
                         bookingStatus: currUserBooking.status
@@ -145,7 +149,7 @@ export default class BookedCabScreen extends React.Component {
                 } else if (currUserBooking.status == "START") {
                     this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
                 } else if (currUserBooking.status == "REJECTED") {
-                    this.searchDriver(this.getParamData.bokkingId);
+                    this.searchDriver();
                 }
             }
         })
@@ -167,83 +171,126 @@ export default class BookedCabScreen extends React.Component {
         }
     };
 
-    verificarRejected(driverUid, currentBooking) {
-        let checkRejected = true;
-        const rejectedDrivers = firebase.database().ref('bookings/' + currentBooking + '/rejectedDrivers');
-        rejectedDrivers.once('value', drivers => {
-            if (drivers.val()) {
-                let rejectedDrivers = drivers.val();
-                for (let reject in rejectedDrivers) {
-                    if (rejectedDrivers[reject] == driverUid) {
-                        checkRejected = false;
-                    }
-                }
-            }
-        })
-        return checkRejected;
-    }
+    async searchDriver() {
+        this.searchDriverQueue = false
+        this.driverUidSelected = 0
+        if (this._isMounted) {
+            const userData = firebase.database().ref('users/');
+            var distanciaValue = 10;
 
-    async searchDriver(param) {
-        const userData = firebase.database().ref('users/');
-        var driverUidnovo = 0;
-        var distanciaValue = 10;
-
-        userData.once('value', driverData => {
-            if (driverData.val()) {
+            userData.once('value', driverData => {
                 var allUsers = driverData.val();
+                for (let key in allUsers) {
+                    if (allUsers[key].usertype == 'driver' && allUsers[key].driverActiveStatus == true) {
+                        //Verifica se o motorista rejeitou a corrida
+                        firebase.database().ref('bookings/' + this.state.currentBookingId + '/rejectedDrivers').once('value', drivers => {
+                            if (drivers.val()) {
+                                let rejectedDrivers = []
+                                rejectedDrivers = drivers.val();
+                                for (let i = 0; i < rejectedDrivers.length; i++) {
+                                    if (rejectedDrivers[i] == key) {
+                                        this.currentRejected = true
+                                    }
+                                }
+                            } else {
+                                this.currentRejected = false
+                            }
+                        }).then(() => {
+                            if (this.currentRejected == false) {
+                                if (this.searchDriverQueue ? allUsers[key].queue == true : allUsers[key].queue == false) {
+                                    if (this.searchDriverQueue ? allUsers[key].queueAvailable == true : true) {
+                                        var location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];    //Rider Lat and Lang
+                                        var location2 = null
 
-                for (key in allUsers) {
-                    //Verifica se o motorista rejeitou a corrida
-                    if (this.verificarRejected(key, param) == true) {
-                        if (allUsers[key].usertype == 'driver' && allUsers[key].approved == true && allUsers[key].queue == false && allUsers[key].driverActiveStatus == true) {
-                            if (allUsers[key].location) {
-                                var location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];    //Rider Lat and Lang
-                                var location2 = [allUsers[key].location.lat, allUsers[key].location.lng];   //Driver lat and lang
-
-                                //Calcula a distancia entre dois pontos
-                                var distance = distanceCalc(location1, location2);
-                                var originalDistance = distance;
-                                if (originalDistance <= 5) { //5KM
-
-                                    if (allUsers[key].carType == this.state.carType) {
-                                        //Salva sempre o mais proximo
-                                        if (distance < distanciaValue) {
-                                            if (!allUsers[key].waiting_riders_list) {
-                                                distanciaValue = distance;
-                                                driverUidnovo = key;
+                                        if (this.searchDriverQueue) {
+                                            firebase.database().ref('bookings/' + allUsers[key].emCorrida + '/').once('value', snapshot => {
+                                                let dataBooking = snapshot.val()
+                                                location2 = [dataBooking.drop.lat, dataBooking.drop.lng]
+                                            }).then(() => {
+                                                var distance = distanceCalc(location1, location2)
+                                                if (distance <= 5) { //5KM
+                                                    if (allUsers[key].carType == this.state.carType) {
+                                                        //Salva sempre o mais proximo
+                                                        if (distance < distanciaValue) {
+                                                            if (!allUsers[key].waiting_queue_riders && !allUsers[key].waiting_riders_list) {
+                                                                distanciaValue = distance
+                                                                this.driverUidSelected = key
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            })
+                                        }
+                                        else {
+                                            console.log("ENTROU NO ELSE")
+                                            location2 = [allUsers[key].location.lat, allUsers[key].location.lng];   //Driver lat and lang
+                                            //Calcula a distancia entre dois pontos
+                                            var distance = distanceCalc(location1, location2);
+                                            var originalDistance = distance
+                                            if (originalDistance <= 5) { //5KM
+                                                if (allUsers[key].carType == this.state.carType) {
+                                                    //Salva sempre o mais proximo
+                                                    if (distance < distanciaValue) {
+                                                        if (!allUsers[key].waiting_queue_riders && !allUsers[key].waiting_riders_list) {
+                                                            distanciaValue = distance
+                                                            this.driverUidSelected = key
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
+                        })
                     }
                 }
-                this.getBookingData(param)
+            }).then(() => {
+                this.getBookingData(this.state.currentBookingId)
                 let bookingData = {
-                    bokkingId: param,
-                    coords: this.state.coords,
+                    bokkingId: this.state.currentBookingId,
+                    coords: this.state.coords
                 }
-                if (driverUidnovo != 0) {
-                    setTimeout(() => {
-                        firebase.database().ref('users/' + driverUidnovo + '/waiting_riders_list/' + param + '/').set(this.state.bookingdataDetails);
-                        this.sendPushNotification(driverUidnovo, param, languageJSON.new_booking_request_push_notification)
-
-                        //Atualiza o Bookings do firebase com os dados do motorista selecionado
-                        firebase.database().ref('bookings/' + param + '/').update({
-                            status: "NEW",
-                            requestedDriver: driverUidnovo
-                        }).then((res) => {
-                            this.setState({ bookingDataState: bookingData })
-                        })
-                    }, 500)
-                } else {
+                console.log("DRIVER UID  -- > " + this.driverUidSelected)
+                if (this.driverUidSelected != 0) {
+                    this.searchDriverQueue ? this.setBookingDriver("waiting_queue_riders", this.state.currentBookingId, bookingData, this.driverUidSelected)
+                        : this.setBookingDriver("waiting_riders_list", this.state.currentBookingId, bookingData, this.driverUidSelected)
+                }
+                else {
+                    this.searchDriverQueue = !this.searchDriverQueue
                     setTimeout(() => {
                         if (this.state.driverSerach)
-                            this.searchDriver(param)
+                            this.searchDriver()
                     }, 1000)
                 }
-            }
+            })
+        }
+    }
+
+    setBookingDriver(name, bookingId, bookingData, driverUID) {
+        setTimeout(() => {
+            firebase.database().ref('users/' + driverUID + '/' + name + '/' + bookingId + '/').set(this.state.bookingdataDetails)
+                .then(() => {
+                    firebase.database().ref(`users/` + this.state.currentUser + '/my-booking/' + this.getParamData.bokkingId).update({ status: "NEW" })
+                        .then(() => {
+                            firebase.database().ref('bookings/' + bookingId + '/').update({
+                                status: "NEW",
+                                requestedDriver: driverUID
+                            }).then((res) => {
+                                this.setState({ bookingDataState: bookingData })
+                            })
+                            this.sendPushNotification(driverUID, languageJSON.new_booking_request_push_notification)
+                        })
+                })
+        }, 500)
+    }
+
+    async getLocDrop(param) {
+        const ref = firebase.database().ref('bookings/' + param + '/');
+        ref.once('value', snapshot => {
+            let dataBooking = snapshot.val();
+            let coordsDrop = [dataBooking.drop.lat, dataBooking.drop.lng]
+            return coordsDrop;
         })
     }
 
@@ -274,24 +321,62 @@ export default class BookedCabScreen extends React.Component {
 
     //Cancell Button Press
     async onPressCancellBtn() {
-        if (this.state.bookingStatus == 'ACCEPTED' || this.state.bookingStatus == 'EMBARQUE') {
-            if (this.state.data_accept != null) {
-                const timeCurrent = new Date().getTime();
+        if (this.searchDriverQueue && this.state.driverSerach == false) {
+            this.onCancellBookingQueue()
+        } else {
+            if (this.state.bookingStatus == 'ACCEPTED' || this.state.bookingStatus == 'EMBARQUE') {
+                if (this.state.data_accept != null) {
+                    const timeCurrent = new Date().getTime();
 
-                if (timeCurrent - this.state.data_accept >= 30000) {
-                    this.setState({ modalInfoVisible: true })
+                    if (timeCurrent - this.state.data_accept >= 30000) {
+                        this.setState({ modalInfoVisible: true })
+                    }
+                } else {
+                    this.setState({ modalVisible: true })
                 }
-            } else {
-                this.setState({ modalVisible: true })
             }
-        }
-        else if (this.state.bookingStatus == 'NEW') {
-            this.onCancellSearchBooking(true)
+            else if (this.state.bookingStatus == 'NEW' || this.state.bookingStatus == 'REJECTED') {
+                this.onCancellSearchBooking(true)
+            }
         }
     }
 
     dissMissCancel() {
         this.setState({ modalVisible: false, modalInfoVisible: false, punisherCancell: false })
+    }
+
+    onCancellBookingQueue() {
+        //Atualiza o status da corrida em "bookings" no firebase
+        firebase.database().ref('bookings/' + this.state.currentBookingId + '/').update({
+            status: 'CANCELLED',
+        }).then(() => {
+            //Essa parte serve pra caso o motorista ter aceito a corrida e o passageiro cancelar em seguida
+            firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').on('value', curbookingData => {
+                if (curbookingData.val()) {
+                    if (curbookingData.val().status == 'ACCEPTED' || curbookingData.val().status == 'EMBARQUE') {
+                        firebase.database().ref('users/' + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
+                            status: 'CANCELLED',
+                        }).then(() => {
+                            firebase.database().ref('users/' + curbookingData.val().driver + '/').update({
+
+                            })
+                        }).then(() => {
+                            firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').update({
+                                status: 'CANCELLED',
+                                reason: this.state.radio_props[this.state.value].label
+                            }).then(() => {
+                                firebase.database().ref('users/' + curbookingData.val().driver + '/rider_waiting_object/' + this.state.currentBookingId + '/').remove()
+                                this.sendPushNotification(curbookingData.val().driver, this.state.currentBookingId, this.state.firstNameRider + ' cancelou a corrida atual!')
+                            })
+                        })
+                    }
+                    else {
+                        alert("Não foi possível cancelar essa corrida, ela ja iniciou!")
+                    }
+                }
+            })
+        })
+        this.setState({ modalVisible: false })
     }
 
     //Cancelar corrida antes do motorista ter aceito
@@ -330,7 +415,6 @@ export default class BookedCabScreen extends React.Component {
             firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').on('value', curbookingData => {
                 if (curbookingData.val()) {
                     if (curbookingData.val().status == 'ACCEPTED' || curbookingData.val().status == 'EMBARQUE') {
-                        firebase.database().ref('users/' + curbookingData.val().driver + '/emCorrida').remove()
                         firebase.database().ref('users/' + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
                             status: 'CANCELLED',
                             reason: this.state.radio_props[this.state.value].label
@@ -372,7 +456,7 @@ export default class BookedCabScreen extends React.Component {
         }).catch(err => console.error('An error occurred', err));
     }
 
-    sendPushNotification(customerUID, bookingId, msg) {
+    sendPushNotification(customerUID, msg) {
         const customerRoot = firebase.database().ref('users/' + customerUID);
         customerRoot.once('value', customerData => {
             if (customerData.val()) {
@@ -536,19 +620,21 @@ export default class BookedCabScreen extends React.Component {
                         : null}
                 </View>
 
+                {this.searchDriverQueue ?
+                    <View style={styles.viewQueueBooking}>
+                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: 16, }}> Aguarde, o motorista está terminando uma corrida próxima a você! </Text>
+                    </View>
+                    : null}
+
                 {this.state.driverSerach == false ?
-                    <View style={{ backgroundColor: colors.GREY1, height: 25, justifyContent: 'center', alignItems: 'center' }}>
-                        <View style={styles.viewInfo}>
-                            <Text style={{ color: colors.WHITE, fontFamily: 'Inter-Bold', fontSize: 14, alignSelf: 'center' }}> Confira as informações e a placa do carro!</Text>
-                        </View>
+                    <View style={styles.viewInfo}>
+                        <Text style={{ color: colors.WHITE, fontFamily: 'Inter-Bold', fontSize: 14, alignSelf: 'center' }}> Confira as informações e a placa do carro!</Text>
                     </View>
                     : null}
 
                 {this.state.embarque ?
-                    <View style={{ borderBottomWidth: 2, borderColor: colors.GREY.background, backgroundColor: colors.GREY3, opacity: 0.6, height: 60, justifyContent: 'center', alignItems: 'center' }}>
-                        <View style={styles.viewInfo}>
-                            <Text style={{ color: colors.BLACK, fontFamily: 'Inter-Medium', fontSize: width < 375 ? 15 : 17, textAlign: 'center' }}> Encontre o motorista em {this.state.region.whereText.split("-")[0]} </Text>
-                        </View>
+                    <View style={styles.viewEmbarque}>
+                        <Text style={{ color: colors.BLACK, fontFamily: 'Inter-Medium', fontSize: width < 375 ? 15 : 17, textAlign: 'center' }}> Encontre o motorista em {this.state.region.whereText.split("-")[0]} </Text>
                     </View>
                     : null}
 
@@ -887,8 +973,37 @@ const styles = StyleSheet.create({
         backgroundColor: colors.BLACK,
         borderRadius: 30
     },
+    viewQueueBooking: {
+        marginBottom: 25,
+        backgroundColor: colors.RED,
+        height: 45,
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+        elevation: 3,
+    },
     viewInfo: {
-
+        backgroundColor: colors.GREY1,
+        height: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+        elevation: 3,
+    },
+    viewEmbarque: {
+        borderBottomWidth: 2,
+        borderColor: colors.GREY.background,
+        backgroundColor: colors.GREY3,
+        opacity: 0.6, height: 60,
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     containerBottom: {
         width: width,

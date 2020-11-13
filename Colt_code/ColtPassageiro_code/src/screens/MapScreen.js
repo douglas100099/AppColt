@@ -30,6 +30,11 @@ import { NavigationActions, StackActions } from 'react-navigation';
 
 import IconCarMap from '../../assets/svg/IconCarMap';
 
+const LATITUDE = 0;
+const LONGITUDE = 0;
+const LATITUDE_DELTA = 0.0143;
+const LONGITUDE_DELTA = 0.0134;
+
 export default class MapScreen extends React.Component {
     _isMounted = false;
     bonusAmmount = 0;
@@ -41,10 +46,10 @@ export default class MapScreen extends React.Component {
             errorMessage: null,
             openModal: false,
             region: {
-                latitude: 0,
-                longitude: 0,
-                latitudeDelta: 0.0143,
-                longitudeDelta: 0.0134,
+                latitude: LATITUDE,
+                longitude: LONGITUDE,
+                latitudeDelta: LATITUDE_DELTA,
+                longitudeDelta: LONGITUDE_DELTA,
             },
             backgroundColor: colors.WHITE,
             allRiders: [],
@@ -79,11 +84,8 @@ export default class MapScreen extends React.Component {
             this.setState({
                 errorMessage: 'Ops, isso não funciona com Sketch no emulador Android. Tente usar em seu dispositivo!'
             });
-        } else {
-            if (!this.props.navigation.state.params) {
-                //this._getLocationAsync();
-            }
-        }
+        } 
+
         this.getLocationUser();
         this.getNameUser();
         this.getSavedLocations()
@@ -527,10 +529,10 @@ export default class MapScreen extends React.Component {
 
 
     animateToRegion() {
-        this.mapView.animateToRegion(this.state.region, 500)
+        this.mapView.animateToRegion(this.state.region, 200)
         setTimeout(() => {
             this.setState({ showsMyLocationBtn: false })
-        }, 600)
+        }, 400)
     }
 
     _onMapChange = async () => {
@@ -567,6 +569,8 @@ export default class MapScreen extends React.Component {
         }
     }
 
+
+
     render() {
         return (
             <View style={styles.mainViewStyle}>
@@ -581,13 +585,12 @@ export default class MapScreen extends React.Component {
                             style={styles.map}
                             initialRegion={this.state.region}
                             onRegionChange={() => { this.setState({ showsMyLocationBtn: true }), this._onMapChange() }}
-                            //region={}
-                            //onMapReady={() => this.setState({ marginBottom: 1 })}
                             enablePoweredByContainer={true}
                             showsCompass={false}
                             showsScale={false}
                             rotateEnabled={false}
                             customMapStyle={Platform.OS == 'ios' ? mapStyleJson : null}
+                            //region={() => this.getRegionMap()}
                         >
                             {this.state.freeCars ? this.state.freeCars.map((item, index) => {
                                 return (

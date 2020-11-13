@@ -31,7 +31,6 @@ export default class RideDetails extends React.Component {
     getRideDetails;
     constructor(props) {
         super(props);
-        this._isMounted = false;
         this.state = {
             coords: [],
             intialregion: {},

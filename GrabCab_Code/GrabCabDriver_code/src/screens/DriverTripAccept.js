@@ -221,11 +221,11 @@ export default class DriverTripAccept extends React.Component {
     }
 
     playSound() {
-        console.log('PLAY SOUND')
+        this.setState({ isSound: true })
         this.sound.setIsLoopingAsync(true);
         this.sound.setVolumeAsync(1);
-        this.setState({ isSound: true })
         this.sound.playAsync();
+        console.log('PLAY SOUND')
     }
 
     stopSound() {
@@ -630,7 +630,6 @@ export default class DriverTripAccept extends React.Component {
     onPressIgnore(item) {
         this.setState({ loader: true });
         var arr = [];
-        console.log(item.bookingId)
         this.stopSound()
         if (this._isMounted) {
             firebase.database().ref('bookings/' + item.bookingId + '/').once('value', data => {
@@ -639,51 +638,29 @@ export default class DriverTripAccept extends React.Component {
                     if (mainBookingData.rejectedDrivers) {
                         arr = mainBookingData.rejectedDrivers
                         arr.push(firebase.auth().currentUser.uid)
-                        firebase.database().ref(`bookings/` + item.bookingId + '/').update({
-                            rejectedDrivers: arr,
-                            status: "REJECTED",
-                        }).then(() => {
-                            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/driverActiveStatus').set(false)
-
-                        }).then(() => {
-                            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/in_reject_progress').update({
-                                punido: false,
-                            })
-                        })
-
-                            .then(() => {
-                                let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/');
-                                userDbRef.update({
-                                    status: "REJECTED",
-                                });
-                                this.props.navigation.navigate('BookingCancel')
-                                this.setState({ loader: false, chegouCorrida: false });
-                            })
-
-                        firebase.database().ref('bookings/' + item.bookingId + '/requestedDriver/').remove();
                     } else {
                         arr.push(firebase.auth().currentUser.uid)
-                        firebase.database().ref(`bookings/` + item.bookingId + '/').update({
-                            rejectedDrivers: arr,
-                            status: "REJECTED",
-                        }).then(() => {
-                            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/driverActiveStatus').set(false);
-                        }).then(() => {
-                            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/in_reject_progress').update({
-                                punido: false,
-                            })
-                        })
-                            .then(() => {
-                                let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/');
-                                userDbRef.update({
-                                    status: "REJECTED",
-                                });
-                                this.props.navigation.navigate('BookingCancel')
-                                this.setState({ loader: false, chegouCorrida: false });
-                            })
-
-                        firebase.database().ref('bookings/' + item.bookingId + '/requestedDriver/').remove();
                     }
+                    firebase.database().ref(`bookings/` + item.bookingId + '/').update({
+                        rejectedDrivers: arr,
+                        status: "REJECTED",
+                    }).then(() => {
+                        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/driverActiveStatus').set(false)
+
+                    }).then(() => {
+                        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/in_reject_progress').update({
+                            punido: false,
+                        })
+                    }).then(() => {
+                        let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/');
+                        userDbRef.update({
+                            status: "REJECTED",
+                        });
+                        this.props.navigation.navigate('BookingCancel')
+                        this.setState({ loader: false, chegouCorrida: false });
+                    })
+
+                    firebase.database().ref('bookings/' + item.bookingId + '/requestedDriver/').remove();
                 }
             });
             firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/waiting_riders_list/' + item.bookingId + '/').remove()
@@ -805,24 +782,24 @@ export default class DriverTripAccept extends React.Component {
                                                     />
                                                 </Marker>
                                                 {region ?
-                                                <Directions
-                                                    origin={{latitude: this.state.region.latitude, longitude: this.state.region.longitude}}
-                                                    destination={{ latitude: item.pickup.lat, longitude: item.pickup.lng }}
-                                                    onReady={result => {
-                                                        this.setState({ duration: Math.floor(result.duration) });
+                                                    <Directions
+                                                        origin={{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }}
+                                                        destination={{ latitude: item.pickup.lat, longitude: item.pickup.lng }}
+                                                        onReady={result => {
+                                                            this.setState({ duration: Math.floor(result.duration) });
 
-                                                        this.map2.fitToCoordinates(result.coordinates, {
-                                                            edgePadding: {
-                                                                right: getPixelSize(10),
-                                                                left: getPixelSize(10),
-                                                                top: getPixelSize(10),
-                                                                bottom: getPixelSize(50)
-                                                            },
-                                                            animated: true,
-                                                        });
-                                                    }}
-                                                />
-                                                : null}
+                                                            this.map2.fitToCoordinates(result.coordinates, {
+                                                                edgePadding: {
+                                                                    right: getPixelSize(10),
+                                                                    left: getPixelSize(10),
+                                                                    top: getPixelSize(10),
+                                                                    bottom: getPixelSize(50)
+                                                                },
+                                                                animated: true,
+                                                            });
+                                                        }}
+                                                    />
+                                                    : null}
                                             </MapView>
                                         </View>
 

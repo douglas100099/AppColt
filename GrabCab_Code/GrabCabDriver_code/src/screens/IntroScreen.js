@@ -159,7 +159,7 @@ export default class IntroScreen extends Component {
                         </View>
                     </View>
                     }
-                    {!!this.state.verificationId ?
+                    {!!this.state.verificationId  ?
                         <View style={styles.viewInput}>
                             <Text style={styles.txtInput3}>Insira o código SMS</Text>
                             <View style={styles.inputMobile}>

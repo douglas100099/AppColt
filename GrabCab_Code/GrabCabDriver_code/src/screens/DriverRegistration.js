@@ -41,6 +41,7 @@ export default class DriverRegistrationPage extends React.Component {
       usertype: 'driver',
       approved: false,
       queue: false,
+      queueAvailable: true,
       carType: CarType,
       createdAt: new Date().toISOString(),
       cpfNum: cpfNum,
@@ -138,7 +139,7 @@ export default class DriverRegistrationPage extends React.Component {
         blob.close()
         return imageRef.getDownloadURL()
       }).then((dwnldurlCnh) => {
-        this.clickRegister(fname, lname, mobile, email, urlCrlv, dwnldurlCnh, urlPerfil, CarType, cpfNum);
+        this.uploadmultimediaPerfil(fname, lname, mobile, email, urlCrlv, dwnldurlCnh, urlPerfil, CarType, cpfNum);
       }).catch(error=>{
         console.log(error);
         alert('Ops, tivemos um problema.');
@@ -155,7 +156,7 @@ export default class DriverRegistrationPage extends React.Component {
         resolve(xhr.response); // when BlobModule finishes reading, resolve with the blob
       };
       xhr.onerror = function () {
-        reject(new TypeError('Erro na conversão da IMG da CNH'));
+        reject(new TypeError('Erro na conversão da IMG do Perfil'));
         //this.setState({ loading: false });
         alert(languageJSON.upload_image_error);
       };

@@ -28,7 +28,8 @@ import MarkerPicSVG from '../SVG/MarkerPicSVG';
 import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Animatable from 'react-native-animatable';
 import { Audio } from 'expo-av';
-import * as Linking from 'expo-linking';
+//import * as Linking from 'expo-linking';
+import Directions from "../components/Directions";
 
 const LATITUDE = 0;
 const LONGITUDE = 0;
@@ -60,6 +61,7 @@ export default class DriverCompleteTrip extends React.Component {
             tasklist: [],
             chegouCorridaQueue: false,
             loader: false,
+            duration: 0,
         }
     }
 
@@ -97,16 +99,15 @@ export default class DriverCompleteTrip extends React.Component {
         var curuid = firebase.auth().currentUser.uid;
         let ref = firebase.database().ref('users/' + curuid + '/');
         ref.on('value', (snapshot) => {
-            this.setState({ rideQueueDetails: snapshot.val() })
+            this.setState({ driverDetails: snapshot.val() })
             var ridersAvailable = [];
             if (snapshot.val() && snapshot.val().waiting_queue_riders) {
-                this.setState({ driverDetails: snapshot.val() })
                 let waiting_queueData = snapshot.val().waiting_queue_riders
                 for (let key in waiting_queueData) {
                     waiting_queueData[key].bookingId = key;
                     ridersAvailable.push(waiting_queueData[key]);
 
-                    var location1 = [waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng];
+                    var location1 = [waiting_queueData[key].pickup.lat, waiting_queueData[key].pickup.lng];
                     var location2 = [this.state.region.latitude, this.state.region.longitude];
                     var distancee = distanceCalc(location1, location2);
                     this.setState({ distance: distancee, acceptBtnDisable: false })
@@ -114,7 +115,7 @@ export default class DriverCompleteTrip extends React.Component {
                 this.setState({ chegouCorridaQueue: true })
                 if (this.state.isSound == false) {
                     this.playSound()
-                    Linking.openURL('coltappmotorista://');
+                    //Linking.openURL('coltappmotorista://');
                 }
             } else if (this.state.chegouCorrida == true) {
                 this.setState({ chegouCorridaQueue: false })
@@ -128,11 +129,11 @@ export default class DriverCompleteTrip extends React.Component {
     }
 
     playSound() {
-        console.log('PLAY SOUND')
+        this.setState({ isSound: true })
         this.sound.setIsLoopingAsync(true);
         this.sound.setVolumeAsync(1);
-        this.setState({ isSound: true })
         this.sound.playAsync();
+        console.log('PLAY SOUND')
     }
 
     stopSound() {
@@ -145,6 +146,7 @@ export default class DriverCompleteTrip extends React.Component {
         console.log('CONFIGURANDO AUDIO')
         Audio.setAudioModeAsync({
             staysActiveInBackground: true,
+            shouldDuckAndroid: true,
         })
     }
 
@@ -165,11 +167,6 @@ export default class DriverCompleteTrip extends React.Component {
             AsyncStorage.setItem('startTime', time)
             this.setState({ startTime: startTime })
         }
-        if (this.state.rideDetails && this._isMounted) {
-            setTimeout(() => {
-                this.getDirectionss('"' + this.state.region.latitude + ',' + this.state.region.longitude + '"', '"' + this.state.rideDetails.drop.lat + ',' + this.state.rideDetails.drop.lng + '"')
-            }, 500)
-        }
         const Data = firebase.database().ref('rates/');
         Data.once('value', rates => {
             if (rates.val()) {
@@ -184,6 +181,8 @@ export default class DriverCompleteTrip extends React.Component {
                 }
             }
         })
+        this.setQueueAvailable(true)
+
     }
 
     componentWillUnmount() {
@@ -208,6 +207,10 @@ export default class DriverCompleteTrip extends React.Component {
                 }
             })
         }
+    }
+
+    setQueueAvailable(param) {
+        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/queueAvailable/').set(param)
     }
 
     _getLocationAsync = async () => {
@@ -273,26 +276,6 @@ export default class DriverCompleteTrip extends React.Component {
         );
     }
 
-    async getDirectionss(Sl, Dl) {
-        try {
-            let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${Sl}&destination=${Dl}&key=${google_map_key}`)
-            let respJson = await resp.json();
-            let points = Polyline.decode(respJson.routes[0].overview_polyline.points);
-            let coords = points.map((point, index) => {
-                return {
-                    latitude: point[0],
-                    longitude: point[1]
-                }
-            })
-            await this.setState({ coords: coords })
-            return coords
-        }
-        catch (error) {
-            alert('Ops, tivemos um problema ao marcar a direção no mapa.')
-            return error
-        }
-    }
-
     checkDistKM() {
         var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
         var location2 = [this.state.rideDetails.drop.lat, this.state.rideDetails.drop.lng];   //Driver lat and lang
@@ -324,6 +307,7 @@ export default class DriverCompleteTrip extends React.Component {
 
     //End trip and fare calculation function
     async onPressEndTrip(item) {
+        this.setQueueAvailable(false)
         this.setState({ loadingModal: true })
         let location = await Location.getCurrentPositionAsync({});
         if (location) {
@@ -473,7 +457,7 @@ export default class DriverCompleteTrip extends React.Component {
     onPressAccept(item) {
         this.stopSound()
         this.setState({ loader: true })
-        if (this.state.status === 'CANCELLED') {
+        if (false) {
             Alert.alert('Ops, essa corrida foi cancelada pelo passageiro')
             this.setState({ loader: false })
         } else {
@@ -553,27 +537,23 @@ export default class DriverCompleteTrip extends React.Component {
                         firebase.database().ref('bookings/' + item.bookingId).once('value', (snap) => {
                             let requestedDriver = snap.val().requestedDriver;
                             if (requestedDriver) {
-                                firebase.database().ref('users/' + requestedDriver + '/waiting_queue_riders/' + item.bookingId + '/').remove().then()
+                                firebase.database().ref('users/' + requestedDriver + '/waiting_queue_riders/' + item.bookingId + '/').remove()
                                     .then(() => {
                                         this.setState({ loader: false, chegouCorrida: false })
-                                        this.props.navigation.replace('DriverTripStart', { allDetails: item, regionUser: this.state.region })
+                                    }).then(() => {
+                                        let dbRefW = firebase.database().ref('users/' + requestedDriver + '/rider_waiting_object/' + item.bookingId + '/')
+                                        dbRefW.update(data)
                                     })
                             }
                         })
                     })
-                    this.sendPushNotification(item.customer, this.state.driverDetails.firstName + ' aceitou seu chamado, aguarde.')
+                    this.sendPushNotification(item.customer, this.state.driverDetails.firstName + ' está terminando uma corrida por perto, aguarde.')
                 }).catch((error) => {
                     console.log(error)
                     alert('Ops, tivemos um problema.')
                 })
-
-
-                let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/'); userDbRef.update(riderData);
-                let currentUserdbRef = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/');
-                currentUserdbRef.update({
-                    queueRiders: true,
-                    emCorridaQueue: item.bookingId,
-                })
+                firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/').update(riderData);
+                this.setQueueAvailable(false)
             }
         }
 
@@ -592,36 +572,24 @@ export default class DriverCompleteTrip extends React.Component {
                     if (mainBookingData.rejectedDrivers) {
                         arr = mainBookingData.rejectedDrivers
                         arr.push(firebase.auth().currentUser.uid)
-                        firebase.database().ref(`bookings/` + item.bookingId + '/').update({
-                            rejectedDrivers: arr,
-                            status: "REJECTED",
-                        }).then(() => {
-                            let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/');
-                            userDbRef.update({
-                                status: "REJECTED",
-                            });
-                            this.setState({ loader: false, chegouCorridaQueue: false });
-                        })
-                        firebase.database().ref('bookings/' + item.bookingId + '/requestedDriver/').remove();
                     } else {
                         arr.push(firebase.auth().currentUser.uid)
-                        firebase.database().ref(`bookings/` + item.bookingId + '/').update({
-                            rejectedDrivers: arr,
-                            status: "REJECTED",
-                        }).then(() => {
-                                let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/');
-                                userDbRef.update({
-                                    status: "REJECTED",
-                                });
-                                this.setState({ loader: false, chegouCorridaQueue: false });
-                        })
-                        firebase.database().ref('bookings/' + item.bookingId + '/requestedDriver/').remove();
                     }
+                    firebase.database().ref(`bookings/` + item.bookingId + '/').update({
+                        rejectedDrivers: arr,
+                        status: "REJECTED",
+                    }).then(() => {
+                        let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/');
+                        userDbRef.update({
+                            status: "REJECTED",
+                        });
+                        this.setState({ loader: false, chegouCorridaQueue: false });
+                    })
+                    firebase.database().ref('bookings/' + item.bookingId + '/requestedDriver/').remove();
                 }
             });
             firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/waiting_queue_riders/' + item.bookingId + '/').remove()
         }
-
     }
 
     loading() {
@@ -755,12 +723,10 @@ export default class DriverCompleteTrip extends React.Component {
                                     height={40}
                                 />
                             </Marker.Animated>
-                            <MapView.Polyline
-                                coordinates={this.state.coords}
-                                strokeWidth={3}
-                                strokeColor={colors.DEEPBLUE}
+                            <Directions
+                                origin={{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }}
+                                destination={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng }}
                             />
-
                         </MapView>
                         <TouchableOpacity style={styles.iconeMap} onPress={() => { this.centerFollowMap() }}>
                             <Icon
@@ -804,10 +770,9 @@ export default class DriverCompleteTrip extends React.Component {
                         />
                     </View>
                 }
-                {this.loading()}
                 {/* JSX AGUARDANDO CORRIDA EM ESPERA CASO HOUVER */}
 
-                {!this.state.chegouCorridaQueue ? null :
+                {this.state.chegouCorridaQueue == false ? null :
                     <FlatList
                         data={this.state.tasklist}
                         keyExtractor={(item, index) => index.toString()}
@@ -852,42 +817,46 @@ export default class DriverCompleteTrip extends React.Component {
                                             showsCompass={false}
                                             showsScale={false}
                                             showsMyLocationButton={false}
-                                            Region={{
-                                                latitude: this.state.region.latitude,
-                                                longitude: this.state.region.longitude,
-                                                longitudeDelta: 0.0134,
-                                                latitudeDelta: 0.0143,
-                                            }}
+                                            region={this.checkMap()}
 
                                         >
                                             <Marker.Animated
                                                 ref={marker => { this.marker = marker }}
-                                                coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
+                                                coordinate={{ latitude: item.pickup.lat, longitude: item.pickup.lng }}
                                                 anchor={{ x: 0.5, y: 0.5 }}
-                                                style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
                                             >
-                                                <CellphoneSVG
+                                                <MarkerPicSVG
                                                     width={35}
                                                     height={35}
                                                 />
                                             </Marker.Animated>
                                             <Marker
-                                                coordinate={{ latitude: item.pickup.lat, longitude: item.pickup.lng }}
+                                                coordinate={{ latitude: item.drop.lat, longitude: item.drop.lng }}
                                                 anchor={{ x: 0.5, y: 1 }}
                                             >
-                                                <MarkerPicSVG
+                                                <MarkerDropSVG
                                                     width={40}
                                                     height={40}
                                                 />
                                             </Marker>
 
-                                            {this.state.coords ?
-                                                <MapView.Polyline
-                                                    coordinates={this.state.coords}
-                                                    strokeWidth={3}
-                                                    strokeColor={colors.DEEPBLUE}
-                                                />
-                                                : null}
+                                            <Directions
+                                                origin={{ latitude: item.pickup.lat, longitude: item.pickup.lng }}
+                                                destination={{ latitude: item.drop.lat, longitude: item.drop.lng }}
+                                                onReady={result => {
+                                                    this.setState({ duration: Math.floor(result.duration) });
+
+                                                    this.map2.fitToCoordinates(result.coordinates, {
+                                                        edgePadding: {
+                                                            right: getPixelSize(10),
+                                                            left: getPixelSize(10),
+                                                            top: getPixelSize(10),
+                                                            bottom: getPixelSize(50)
+                                                        },
+                                                        animated: true,
+                                                    });
+                                                }}
+                                            />
                                         </MapView>
                                     </View>
 
@@ -996,6 +965,7 @@ export default class DriverCompleteTrip extends React.Component {
                         }
                     />
                 }
+                {this.loading()}
             </View>
         );
     }

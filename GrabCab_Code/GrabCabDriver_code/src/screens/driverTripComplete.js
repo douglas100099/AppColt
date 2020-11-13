@@ -73,10 +73,9 @@ export default class DriverTripComplete extends React.Component {
             trip_cost: trip_cost,
             trip_end_time: trip_end_time
         })
-        this._activate();
-
+        this._activate(); 
     }
-
+    
     //done button press function
     onPressDone(item) {
         if (item.booking_type_web) {
@@ -145,19 +144,24 @@ export default class DriverTripComplete extends React.Component {
                                 firebase.database().ref('users/' + this.state.curUid + '/').update({
                                     queue: false
                                 }).then(() => {
-
-                                    //Navega para o inicio
-
-                                    this.props
-                                        .navigation
-                                        .dispatch(StackActions.reset({
-                                            index: 0,
-                                            actions: [
-                                                NavigationActions.navigate({
-                                                    routeName: 'DriverTripAccept',
-                                                }),
-                                            ],
-                                        }))
+                                    firebase.database().ref('users/' + this.state.curUid + '/').once('value', data => {
+                                        if(data.val().rider_waiting_object){
+                                            let infosQueue = data.val().rider_waiting_object
+                                            this.props.navigation.replace('DriverTripStart', { allDetails: infosQueue })
+                                        } else {
+                                            //Navega para o inicio
+                                            this.props
+                                            .navigation
+                                            .dispatch(StackActions.reset({
+                                                index: 0,
+                                                actions: [
+                                                    NavigationActions.navigate({
+                                                        routeName: 'DriverTripAccept',
+                                                    }),
+                                                ],
+                                            })) 
+                                        }
+                                    })
                                     //this.sendPushNotification(item.customer, item.bookingId);
                                 })
                             })

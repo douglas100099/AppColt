@@ -16,7 +16,6 @@ import { Icon, Button } from 'react-native-elements';
 import ActionSheet from 'react-native-actionsheet';
 import { colors } from '../common/theme';
 import getDirections from 'react-native-google-maps-directions'
-import Polyline from '@mapbox/polyline';
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import * as Permissions from 'expo-permissions';
@@ -35,12 +34,13 @@ import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 import RadioForm from 'react-native-simple-radio-button';
 const LOCATION_TASK_NAME = 'background-location-task';
 import * as Animatable from 'react-native-animatable';
+import Directions from "../components/Directions";
 
 const LATITUDE = 0;
 const LONGITUDE = 0;
 const LATITUDE_DELTA = 0.0043;
 const LONGITUDE_DELTA = 0.0034;
-const HEADING = 0; 
+const HEADING = 0;
 
 export default class DriverStartTrip extends React.Component {
 
@@ -70,6 +70,7 @@ export default class DriverStartTrip extends React.Component {
             viewInfos: false,
             loaderCancel: false,
             kmRestante: 0,
+            isAtrasado: false,
         }
     }
 
@@ -104,9 +105,6 @@ export default class DriverStartTrip extends React.Component {
     componentDidMount() {
         this._isMounted = true;
         this.getCancelReasons();
-        setTimeout(() => {
-            this.getDirectionss('"' + this.state.region.latitude + ',' + this.state.region.longitude + '"', '"' + this.state.rideDetails.pickup.lat + ',' + this.state.rideDetails.pickup.lng + '"')
-        }, 500)
     }
 
     componentWillUnmount() {
@@ -159,7 +157,7 @@ export default class DriverStartTrip extends React.Component {
         return this.location
     };
 
-    checkDistKM(){
+    checkDistKM() {
         var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
         var location2 = [this.state.rideDetails.pickup.lat, this.state.rideDetails.pickup.lng];   //Driver lat and lang
         var distance = distanceCalc(location1, location2);
@@ -201,8 +199,8 @@ export default class DriverStartTrip extends React.Component {
                 this.setState({ status: tripData.status })
                 if (tripData.status == "CANCELLED") {
                     AsyncStorage.getItem('horaEmbarque', (err, result) => {
-                        if(result) {
-                            AsyncStorage.removeItem('horaEmbarque') 
+                        if (result) {
+                            AsyncStorage.removeItem('horaEmbarque')
                         } else {
                             firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/emCorrida').remove().then(() => {
                                 this.props
@@ -223,14 +221,25 @@ export default class DriverStartTrip extends React.Component {
                 if (tripData.status == "EMBARQUE") {
                     AsyncStorage.getItem('horaEmbarque', (err, result) => {
                         if (result) {
-                            console.log(result)
-                            let horaEmbarque = result
-                            this.setState({ horaEmbarque: horaEmbarque })
-                            console.log(this.state.horaEmbarque)
+                            var horaEmbarqueAsync = result
+                            var horaAsycnInt = parseInt(horaEmbarqueAsync)
+                            var horaEmbarque = new Date(horaAsycnInt)
+                            if (horaEmbarque) {
+                                var somarMin = horaEmbarque.setMinutes(horaEmbarque.getMinutes() + 5)
+                                var horaFim = new Date(somarMin)
+                                var h = horaFim.getHours()
+                                var m = horaFim.getMinutes()
+                            }
+                            this.setState({ horaEmbarque: parseInt(horaEmbarqueAsync), horaFim: h + ':' + m })
                         } else {
-                            let horaEmbarque = new Date().getTime().toString()
+                            var horaEmbarque = new Date().getTime().toString()
                             AsyncStorage.setItem('horaEmbarque', horaEmbarque)
-                            this.setState({ horaEmbarque: horaEmbarque })
+                            var horaAtual = new Date()
+                            var somarMin = horaAtual.setMinutes(horaAtual.getMinutes() + 5)
+                            var horaFim = new Date(somarMin)
+                            var h = horaFim.getHours()
+                            var m = horaFim.getMinutes()
+                            this.setState({ horaEmbarque: parseInt(horaEmbarque), horaFim: h + ':' + m })
                         }
                     })
                 }
@@ -238,28 +247,8 @@ export default class DriverStartTrip extends React.Component {
         })
     }
 
-    async getDirectionss(startLoc, destinationLoc) {
-        try {
-            let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=${google_map_key}`)
-            let respJson = await resp.json();
-            let points = Polyline.decode(respJson.routes[0].overview_polyline.points);
-            let coords = points.map((point, index) => {
-                return {
-                    latitude: point[0],
-                    longitude: point[1]
-                }
-            })
-            this.setState({ coords: coords })
-            return coords
-        }
-        catch (error) {
-            alert('Ops, tivemos um problema ao marcar a direção no mapa.')
-            return error
-        }
-    }
-
     checkDist(item) {
-        this.setState({ allData: item, loader: true},
+        this.setState({ allData: item, loader: true },
             () => {
                 var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
                 var location2 = [this.state.rideDetails.pickup.lat, this.state.rideDetails.pickup.lng];   //Driver lat and lang
@@ -489,8 +478,8 @@ export default class DriverStartTrip extends React.Component {
                     let resultStart = parseInt(resultt)
                     let resultEnd = endTimeEmbarque
                     let result = resultEnd - resultStart
-                    console.log(result/60000)
-                    if (parseInt(result/60000) < 1) {
+                    console.log(result / 60000)
+                    if (parseInt(result / 60000) < 1) {
                         firebase.database().ref(`/users/` + this.state.curUid + '/in_reject_progress').update({
                             punido: false,
                         }).then(() => {
@@ -542,6 +531,87 @@ export default class DriverStartTrip extends React.Component {
         this.setState({ modalCancel: false })
     }
 
+    viewInfos() {
+        return (
+            <Modal
+                animationType='slide'
+                transparent={true}
+                visible={this.state.viewInfos}
+                onRequestClose={() => {
+                    this.setState({ viewInfos: false })
+                }}>
+                <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: colors.GREY.background }}>
+                    <View style={{ height: 250, borderRadius: 25, marginBottom: 10, }}>
+                        <View style={styles.viewEndereco}>
+                            <TouchableOpacity
+                                style={{ height: 55, width: 55, borderRadius: 100, top: 25, position: 'absolute', alignItems: 'center' }}
+                                onPress={() => this.setState({ viewInfos: false })}
+                            >
+                                <Icon
+                                    name='arrow-down'
+                                    type='feather'
+                                    size={32}
+                                    color={colors.BLACK}
+                                />
+                            </TouchableOpacity>
+                            <View style={styles.viewPartidaEndereco}>
+                                <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.DEEPBLUE, marginRight: 5, marginLeft: 5 }}></View>
+                                <Text style={styles.TxtEnderecoPartida}>{this.state.rideDetails.pickup.add}</Text>
+                            </View>
+                            <View style={styles.viewDestinoEndereco}>
+                                <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.RED, marginRight: 5, marginLeft: 5 }}></View>
+                                <Text style={styles.TxtEnderecoDestino}>{this.state.rideDetails.drop.add}</Text>
+                            </View>
+                        </View>
+                        <View style={styles.viewIcones}>
+                            <View style={{ flex: 1 }}>
+                                <TouchableOpacity
+                                    style={styles.btnLigar}
+                                    onPress={() => this.callToCustomer(this.state.rideDetails)}
+                                >
+                                    <Icon
+                                        name="phone-call"
+                                        type="feather"
+                                        size={30}
+                                        color={colors.BLACK}
+                                    />
+                                </TouchableOpacity>
+                            </View>
+
+                            <View style={{ flex: 1 }}>
+                                <TouchableOpacity
+                                    style={styles.btnLigar}
+                                    onPress={() => this.chat()}
+                                >
+                                    <Icon
+                                        name="message-circle"
+                                        type="feather"
+                                        size={30}
+                                        color={colors.BLACK}
+                                    />
+                                </TouchableOpacity>
+                            </View>
+
+                            <View style={{ flex: 1 }}>
+                                <TouchableOpacity
+                                    style={styles.btnLigar}
+                                    onPress={() => this.setState({ modalCancel: true })}
+                                >
+                                    <Icon
+                                        name="x"
+                                        type="feather"
+                                        size={30}
+                                        color={colors.RED}
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+        )
+    }
+
     cancelModal() {
         return (
             <Modal
@@ -558,10 +628,10 @@ export default class DriverStartTrip extends React.Component {
                             <View style={styles.cancelReasonContainer}>
                                 <Text style={styles.cancelReasonText}>Qual o motivo do cancelamento?</Text>
                                 <View style={{ marginTop: 15, alignItems: 'center', marginHorizontal: 15, }}>
-                                    {((new Date().getTime() - parseInt(this.state.horaEmbarque))/60000) < 5 ?
-                                    <Text style={{ fontSize: 14, color: colors.RED, fontFamily: 'Inter-Bold', textAlign: 'center' }}>Você será punido caso queira cancelar, aguarde os 5 min</Text>
-                                    :
-                                    <Text style={{ fontSize: 14, color: colors.BLACK, fontFamily: 'Inter-Bold', textAlign: 'center' }}>Você não será punido caso queira cancelar</Text>
+                                    {this.state.isAtrasado ?
+                                        <Text style={{ fontSize: 14, color: colors.RED, fontFamily: 'Inter-Bold', textAlign: 'center' }}>Você será punido caso queira cancelar, aguarde os 5 min</Text>
+                                        :
+                                        <Text style={{ fontSize: 14, color: colors.BLACK, fontFamily: 'Inter-Bold', textAlign: 'center' }}>Você não será punido caso queira cancelar</Text>
                                     }
                                 </View>
                             </View>
@@ -639,7 +709,7 @@ export default class DriverStartTrip extends React.Component {
 
                 {/* MAPA VIEW AQUI */}
 
-                <Animatable.View animation={this.state.viewInfos ? 'slideInUp' : 'slideInDown'} style={styles.viewMap}>
+                <View style={styles.viewMap}>
                     <MapView
                         ref={map => { this.map = map }}
                         style={styles.map}
@@ -653,7 +723,6 @@ export default class DriverStartTrip extends React.Component {
                         region={this.checkMap()}
                     >
                         {/* O RABO DE SETA ESTAVA AQUI, PROBLEMA ENCONTRADO DO MODO PRODUÇÃO, MARKER NO AIRMAP */}
-
                         <Marker.Animated
                             coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
                             style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
@@ -673,13 +742,10 @@ export default class DriverStartTrip extends React.Component {
                                 height={40}
                             />
                         </Marker.Animated>
-                        {this.state.coords ?
-                            <MapView.Polyline
-                                coordinates={this.state.coords}
-                                strokeWidth={4}
-                                strokeColor={colors.DEEPBLUE}
-                            />
-                            : null}
+                        <Directions
+                            origin={{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }}
+                            destination={{ latitude: this.state.rideDetails.pickup.lat, longitude: this.state.rideDetails.pickup.lng }}
+                        />
                     </MapView>
                     <TouchableOpacity style={styles.iconeMap} onPress={() => { this.centerFollowMap() }}>
                         <Icon
@@ -706,52 +772,40 @@ export default class DriverStartTrip extends React.Component {
                         />
                     </TouchableOpacity>
                     {!this.state.viewInfos ?
-                    <TouchableOpacity style={styles.iconeChat} onPress={() => this.chat()}>
-                        <Icon
-                            name="message-circle"
-                            type="feather"
-                            size={30}
-                            color={colors.BLACK}
-                        />
-                    </TouchableOpacity>
-                    : null}
+                        <TouchableOpacity style={styles.iconeChat} onPress={() => this.chat()}>
+                            <Icon
+                                name="message-circle"
+                                type="feather"
+                                size={30}
+                                color={colors.BLACK}
+                            />
+                        </TouchableOpacity>
+                        : null}
                     {this.state.status != 'ACCEPTED' ?
                         <Animatable.View animation='fadeInLeft' useNativeDriver={true} style={styles.alertView}>
-                            {((new Date().getTime() - parseInt(this.state.horaEmbarque))/60000) < 5 ?
-                                <Text style={styles.txtAlert}>Informamos ao passageiro de sua chegada, aguarde 5 min.</Text>
+                            {this.state.isAtrasado == false ?
+                                <Text style={styles.txtAlert}>Informamos de sua chegada, aguarde até {this.state.horaFim}.</Text>
                                 :
                                 <Text style={styles.txtAlert2}>Passageiro atrasado, cancelamento sem punição.</Text>
                             }
                         </Animatable.View>
                         : null}
-                </Animatable.View>
+                </View>
 
                 {/* MODAL DOS DETALHES AQUI */}
 
-                <Animatable.View animation={this.state.viewInfos ? 'slideInUp' : 'slideInDown'} style={[styles.viewDetails, { flex: this.state.viewInfos ? 1.5 : 0.4 }]}>
+                <View style={styles.viewDetails}>
 
                     <View style={styles.viewPhotoName}>
                         <View style={styles.viewPhoto}>
                             <Image source={this.state.rideDetails.imageRider ? { uri: this.state.rideDetails.imageRider } : require('../../assets/images/profilePic.png')} style={styles.fotoPassageiro} />
                             <Text style={styles.nomePassageiro}>{this.state.rideDetails.firstNameRider}</Text>
                         </View>
-                        <View style={{ position: 'absolute',top: -25, right: 5, left: 0, bottom: 0 }}>
+                        <View style={{ position: 'absolute', top: -25, right: 5, left: 0, bottom: 0 }}>
                             <View style={{ height: 55, width: 55, borderRadius: 100, backgroundColor: colors.WHITE, elevation: 2, alignItems: 'center', alignSelf: 'center', justifyContent: 'center' }}>
-                                {this.state.viewInfos ?
+                                {this.state.viewInfos ? null :
                                     <TouchableOpacity
-                                        style={{height: 55, width: 55, borderRadius: 100, justifyContent: 'center', alignItems: 'center'}}
-                                        onPress={() => this.setState({ viewInfos: false })}
-                                    >
-                                        <Icon
-                                            name='arrow-down'
-                                            type='feather'
-                                            size={32}
-                                            color={colors.BLACK}
-                                        />     
-                                    </TouchableOpacity>
-                                    :
-                                    <TouchableOpacity
-                                        style={{height: 55, width: 55, borderRadius: 100, justifyContent: 'center', alignItems: 'center'}}
+                                        style={{ height: 55, width: 55, borderRadius: 100, justifyContent: 'center', alignItems: 'center' }}
                                         onPress={() => this.setState({ viewInfos: true })}
                                     >
                                         <Icon
@@ -764,13 +818,13 @@ export default class DriverStartTrip extends React.Component {
                                 }
                             </View>
                         </View>
-                        <View style={{ marginRight: 10,justifyContent: 'center', backgroundColor: colors.GREY1, height: 25, paddingHorizontal: 15, borderRadius: 15 }}>
+                        <View style={{ marginRight: 10, justifyContent: 'center', backgroundColor: colors.GREY1, height: 25, paddingHorizontal: 15, borderRadius: 15 }}>
                             <Animatable.Text animation='fadeIn' useNativeDriver={true} style={{ fontFamily: 'Inter-Bold', fontSize: 14, color: colors.BLACK }}>{parseFloat(this.state.kmRestante).toFixed(2)} KM</Animatable.Text>
-                        </View>    
+                        </View>
                     </View>
 
-                    {this.state.viewInfos ?
-                        <View style={styles.viewEndereco}>
+
+                    {/*<View style={styles.viewEndereco}>
                             <View style={styles.viewPartidaEndereco}>
                                 <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.DEEPBLUE, marginRight: 5, marginLeft: 5 }}></View>
                                 <Text style={styles.TxtEnderecoPartida}>{this.state.rideDetails.pickup.add}</Text>
@@ -779,11 +833,9 @@ export default class DriverStartTrip extends React.Component {
                                 <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.RED, marginRight: 5, marginLeft: 5 }}></View>
                                 <Text style={styles.TxtEnderecoDestino}>{this.state.rideDetails.drop.add}</Text>
                             </View>
-                        </View>
-                        : null}
+                        </View>*/}
 
-                    {this.state.viewInfos ?
-                        <View style={styles.viewIcones}>
+                    {/*<View style={styles.viewIcones}>
                             <View style={{ flex: 1 }}>
                                 <TouchableOpacity
                                     style={styles.btnLigar}
@@ -825,8 +877,7 @@ export default class DriverStartTrip extends React.Component {
                                     />
                                 </TouchableOpacity>
                             </View>
-                        </View>
-                        : null}
+                        </View>*/}
                     <View style={{ flex: 1 }}>
                         {this.state.status == 'ACCEPTED' ?
                             <TouchableOpacity style={{ backgroundColor: colors.DEEPBLUE, position: 'absolute', right: 0, left: 0, bottom: 0, top: 0, alignItems: 'center', justifyContent: "center" }}
@@ -851,7 +902,8 @@ export default class DriverStartTrip extends React.Component {
                             </TouchableOpacity>
                             : null}
                     </View>
-                </Animatable.View>
+                </View>
+                {this.viewInfos()}
                 {
                     this.cancelModal()
                 }
@@ -874,6 +926,7 @@ const styles = StyleSheet.create({
 
     viewDetails: {
         backgroundColor: colors.WHITE,
+        flex: 0.4,
     },
 
     viewPhotoName: {
@@ -911,6 +964,8 @@ const styles = StyleSheet.create({
         borderWidth: 0.6,
         borderColor: colors.GREY1,
         backgroundColor: colors.WHITE,
+        borderRadius: 15,
+        marginHorizontal: 10,
     },
 
     viewPartidaEndereco: {
@@ -940,11 +995,13 @@ const styles = StyleSheet.create({
     },
 
     viewIcones: {
-        flex: 1.5,
+        flex: 1,
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: colors.WHITE,
+        borderRadius: 15,
+        marginHorizontal: 10,
     },
 
     btnLigar: {
@@ -1019,7 +1076,7 @@ const styles = StyleSheet.create({
         right: 22,
     },
 
-    iconeChat:{
+    iconeChat: {
         height: 45,
         width: 45,
         borderRadius: 50,

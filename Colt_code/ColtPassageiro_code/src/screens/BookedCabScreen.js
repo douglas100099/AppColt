@@ -196,28 +196,24 @@ export default class BookedCabScreen extends React.Component {
                             }
                         }).then(() => {
                             if (this.currentRejected == false) {
-                                console.log("ENTROU PRIMEIRO IF")
                                 if (this.searchDriverQueue ? allUsers[key].queue == true : allUsers[key].queue == false) {
-                                    console.log("ENTROU SEGUNDO IF")
                                     if (this.searchDriverQueue ? allUsers[key].queueAvailable == true : true) {
-                                        console.log("ENTROU TERCEIRO IF")
                                         var location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];    //Rider Lat and Lang
                                         var location2 = null
 
                                         if (this.searchDriverQueue) {
-                                            console.log("ENTROU QUEUE E TRUE")
                                             firebase.database().ref('bookings/' + allUsers[key].emCorrida + '/').once('value', snapshot => {
                                                 let dataBooking = snapshot.val()
                                                 location2 = [dataBooking.drop.lat, dataBooking.drop.lng]
                                             }).then(() => {
                                                 var distance = distanceCalc(location1, location2)
-                                                console.log("DISTANCIA - " + distance)
+                                                
                                                 if (distance <= 5) { //5KM
                                                     if (allUsers[key].carType == this.state.carType) {
                                                         //Salva sempre o mais proximo
                                                         if (distance < distanciaValue) {
                                                             if (!allUsers[key].waiting_queue_riders && !allUsers[key].waiting_riders_list) {
-                                                                console.log("FINALIZOU SELECAO")
+                                                               
                                                                 distanciaValue = distance
                                                                 this.driverUidSelected = key
                                                             }
@@ -250,13 +246,11 @@ export default class BookedCabScreen extends React.Component {
                     }
                 }
             }).then(() => {
-                console.log("ENTROU NO THEN")
                 this.getBookingData(this.state.currentBookingId)
                 let bookingData = {
                     bokkingId: this.state.currentBookingId,
                     coords: this.state.coords
                 }
-                console.log("DRIVER UID - " + this.driverUidSelected)
                 if (this.driverUidSelected != 0) {
                     this.searchDriverQueue ? this.setBookingDriver("waiting_queue_riders", this.state.currentBookingId, bookingData, this.driverUidSelected)
                         : this.setBookingDriver("waiting_riders_list", this.state.currentBookingId, bookingData, this.driverUidSelected)
@@ -352,37 +346,30 @@ export default class BookedCabScreen extends React.Component {
     }
 
     onCancellBookingQueue() {
-        //Atualiza o status da corrida em "bookings" no firebase
-        firebase.database().ref('bookings/' + this.state.currentBookingId + '/').update({
-            status: 'CANCELLED',
-        }).then(() => {
-            //Essa parte serve pra caso o motorista ter aceito a corrida e o passageiro cancelar em seguida
-            firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').on('value', curbookingData => {
-                if (curbookingData.val()) {
-                    if (curbookingData.val().status == 'ACCEPTED' || curbookingData.val().status == 'EMBARQUE') {
+        //Essa parte serve pra caso o motorista ter aceito a corrida e o passageiro cancelar em seguida
+        firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').on('value', curbookingData => {
+            if (curbookingData.val()) {
+                if (this.state.bookingStatus == 'ACCEPTED' || this.state.bookingStatus == 'EMBARQUE') {
+                    firebase.database().ref('bookings/' + this.state.currentBookingId + '/').update({
+                        status: 'CANCELLED',
+                    }).then(() => {
                         firebase.database().ref('users/' + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
                             status: 'CANCELLED',
                         }).then(() => {
-                            firebase.database().ref('users/' + curbookingData.val().driver + '/').update({
-
-                            })
-                        }).then(() => {
                             firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').update({
                                 status: 'CANCELLED',
-                                reason: this.state.radio_props[this.state.value].label
                             }).then(() => {
                                 firebase.database().ref('users/' + curbookingData.val().driver + '/rider_waiting_object/' + this.state.currentBookingId + '/').remove()
-                                this.sendPushNotification(curbookingData.val().driver, this.state.currentBookingId, this.state.firstNameRider + ' cancelou a corrida atual!')
+                                this.sendPushNotification(curbookingData.val().driver, this.state.firstNameRider + ' cancelou a corrida atual!')
                             })
                         })
-                    }
-                    else {
-                        alert("Não foi possível cancelar essa corrida, ela ja iniciou!")
-                    }
+                    })
                 }
-            })
+                else if( this.state.bookingStatus == 'NEW'  || this.state.bookingStatus == "START" ) {
+                    alert("Não foi possível cancelar a corrida pois ela ja iniciou!")
+                }
+            }
         })
-        this.setState({ modalVisible: false })
     }
 
     //Cancelar corrida antes do motorista ter aceito
@@ -416,14 +403,13 @@ export default class BookedCabScreen extends React.Component {
     }
 
     onCancelConfirm() {
-        //Atualiza o status da corrida em "bookings" no firebase
-        firebase.database().ref('bookings/' + this.state.currentBookingId + '/').update({
-            status: 'CANCELLED',
-        }).then(() => {
-            //Essa parte serve pra caso o motorista ter aceito a corrida e o passageiro cancelar em seguida
-            firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').on('value', curbookingData => {
-                if (curbookingData.val()) {
-                    if (curbookingData.val().status == 'ACCEPTED' || curbookingData.val().status == 'EMBARQUE') {
+        //Essa parte serve pra caso o motorista ter aceito a corrida e o passageiro cancelar em seguida
+        firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').on('value', curbookingData => {
+            if (curbookingData.val()) {
+                if (curbookingData.val().status == 'ACCEPTED' || curbookingData.val().status == 'EMBARQUE') {
+                    firebase.database().ref('bookings/' + this.state.currentBookingId + '/').update({
+                        status: 'CANCELLED',
+                    }).then(() => {
                         firebase.database().ref('users/' + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
                             status: 'CANCELLED',
                             reason: this.state.radio_props[this.state.value].label
@@ -437,20 +423,21 @@ export default class BookedCabScreen extends React.Component {
                             }
                         }).then(() => {
                             firebase.database().ref('users/' + curbookingData.val().driver + '/').update({ queue: false })
-                            this.sendPushNotification(curbookingData.val().driver, this.state.currentBookingId, this.state.firstNameRider + ' cancelou a corrida atual!')
+                            this.sendPushNotification(curbookingData.val().driver, this.state.firstNameRider + ' cancelou a corrida atual!')
                         }).then(() => {
                             firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').update({
                                 status: 'CANCELLED',
                                 reason: this.state.radio_props[this.state.value].label
                             })
                         })
-                    }
-                    else {
-                        alert("Não foi possível cancelar essa corrida, ela ja iniciou!")
-                    }
+                    })
                 }
-            })
+                else {
+                    alert("Não foi possível cancelar essa corrida, ela ja iniciou!")
+                }
+            }
         })
+
         this.setState({ modalVisible: false })
     }
 
@@ -609,7 +596,11 @@ export default class BookedCabScreen extends React.Component {
                 <View style={styles.mapcontainer}>
                     {this.state.driverUID && this.state.region && this.state.bookingStatus && this.state.driverSerach == false ?
                         <TrackNow duid={this.state.driverUID} alldata={this.state.region} bookingStatus={this.state.bookingStatus} />
-                        : null}
+                        : 
+                        <View>
+                            <Text style={{ textAlign: 'center', fontFamily: 'Inter-Medium' }}> Buscando localização do motorista... </Text>
+                        </View>
+                        }
 
                     {this.state.driverSerach == false ?
                         <View>

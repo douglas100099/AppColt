@@ -149,6 +149,7 @@ export default class BookedCabScreen extends React.Component {
                 } else if (currUserBooking.status == "START") {
                     this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
                 } else if (currUserBooking.status == "REJECTED") {
+                    this.driverUidSelected = 0
                     this.searchDriver();
                 }
             }
@@ -172,8 +173,6 @@ export default class BookedCabScreen extends React.Component {
     };
 
     async searchDriver() {
-        this.searchDriverQueue = false
-        this.driverUidSelected = 0
         if (this._isMounted) {
             const userData = firebase.database().ref('users/');
             var distanciaValue = 10;
@@ -197,22 +196,28 @@ export default class BookedCabScreen extends React.Component {
                             }
                         }).then(() => {
                             if (this.currentRejected == false) {
+                                console.log("ENTROU PRIMEIRO IF")
                                 if (this.searchDriverQueue ? allUsers[key].queue == true : allUsers[key].queue == false) {
+                                    console.log("ENTROU SEGUNDO IF")
                                     if (this.searchDriverQueue ? allUsers[key].queueAvailable == true : true) {
+                                        console.log("ENTROU TERCEIRO IF")
                                         var location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];    //Rider Lat and Lang
                                         var location2 = null
 
                                         if (this.searchDriverQueue) {
+                                            console.log("ENTROU QUEUE E TRUE")
                                             firebase.database().ref('bookings/' + allUsers[key].emCorrida + '/').once('value', snapshot => {
                                                 let dataBooking = snapshot.val()
                                                 location2 = [dataBooking.drop.lat, dataBooking.drop.lng]
                                             }).then(() => {
                                                 var distance = distanceCalc(location1, location2)
+                                                console.log("DISTANCIA - " + distance)
                                                 if (distance <= 5) { //5KM
                                                     if (allUsers[key].carType == this.state.carType) {
                                                         //Salva sempre o mais proximo
                                                         if (distance < distanciaValue) {
                                                             if (!allUsers[key].waiting_queue_riders && !allUsers[key].waiting_riders_list) {
+                                                                console.log("FINALIZOU SELECAO")
                                                                 distanciaValue = distance
                                                                 this.driverUidSelected = key
                                                             }
@@ -222,7 +227,6 @@ export default class BookedCabScreen extends React.Component {
                                             })
                                         }
                                         else {
-                                            console.log("ENTROU NO ELSE")
                                             location2 = [allUsers[key].location.lat, allUsers[key].location.lng];   //Driver lat and lang
                                             //Calcula a distancia entre dois pontos
                                             var distance = distanceCalc(location1, location2);
@@ -246,18 +250,20 @@ export default class BookedCabScreen extends React.Component {
                     }
                 }
             }).then(() => {
+                console.log("ENTROU NO THEN")
                 this.getBookingData(this.state.currentBookingId)
                 let bookingData = {
                     bokkingId: this.state.currentBookingId,
                     coords: this.state.coords
                 }
-                console.log("DRIVER UID  -- > " + this.driverUidSelected)
+                console.log("DRIVER UID - " + this.driverUidSelected)
                 if (this.driverUidSelected != 0) {
                     this.searchDriverQueue ? this.setBookingDriver("waiting_queue_riders", this.state.currentBookingId, bookingData, this.driverUidSelected)
                         : this.setBookingDriver("waiting_riders_list", this.state.currentBookingId, bookingData, this.driverUidSelected)
                 }
                 else {
                     this.searchDriverQueue = !this.searchDriverQueue
+                    this.driverUidSelected = 0
                     setTimeout(() => {
                         if (this.state.driverSerach)
                             this.searchDriver()
@@ -381,7 +387,6 @@ export default class BookedCabScreen extends React.Component {
 
     //Cancelar corrida antes do motorista ter aceito
     onCancellSearchBooking(params) {
-
         //Remove a corrida do perfil do passageiro
         firebase.database().ref(`/users/` + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').remove()
             .then(() => {
@@ -390,9 +395,13 @@ export default class BookedCabScreen extends React.Component {
                 requestedDriver.once('value', drivers => {
                     if (drivers.val()) {
                         let requestedDriver = drivers.val();
-                        firebase.database().ref(`/users/` + requestedDriver + '/waiting_riders_list/' + this.state.currentBookingId + '/').remove()
-                        firebase.database().ref('bookings/' + this.state.currentBookingId + '/requestedDriver/').remove();
+                        this.searchDriverQueue ?
+                            firebase.database().ref('users/' + requestedDriver + '/waiting_queue_riders/' + this.state.currentBookingId + '/').remove()
+                            :
+                            firebase.database().ref('users/' + requestedDriver + '/waiting_riders_list/' + this.state.currentBookingId + '/').remove()
                     }
+                }).then(() => {
+                    firebase.database().ref('bookings/' + this.state.currentBookingId + '/requestedDriver/').remove();
                 })
             })
         if (params) {
@@ -618,13 +627,13 @@ export default class BookedCabScreen extends React.Component {
                             </TouchableOpacity>
                         </View>
                         : null}
-                </View>
 
-                {this.searchDriverQueue ?
-                    <View style={styles.viewQueueBooking}>
-                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: 16, }}> Aguarde, o motorista está terminando uma corrida próxima a você! </Text>
-                    </View>
-                    : null}
+                    {this.searchDriverQueue ?
+                        <View style={styles.viewQueueBooking}>
+                            <Text style={{ textAlign: 'center', paddingHorizontal: 5, fontFamily: 'Inter-Medium', fontSize: 15, color: colors.WHITE }}> O motorista está terminando uma corrida próxima a você, aguarde. </Text>
+                        </View>
+                        : null}
+                </View>
 
                 {this.state.driverSerach == false ?
                     <View style={styles.viewInfo}>
@@ -974,10 +983,13 @@ const styles = StyleSheet.create({
         borderRadius: 30
     },
     viewQueueBooking: {
-        marginBottom: 25,
-        backgroundColor: colors.RED,
+        marginBottom: 50,
+        backgroundColor: colors.DEEPBLUE,
+        position: 'absolute',
+        bottom: 0,
         height: 45,
         borderRadius: 10,
+        marginHorizontal: 20,
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',

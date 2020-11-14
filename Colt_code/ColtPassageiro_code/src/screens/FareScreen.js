@@ -24,6 +24,7 @@ import { getPixelSize } from '../common/utils';
 import { PromoComp } from "../components";
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import { google_map_key } from '../common/key';
+import { RegisterCPF } from '../components/RegisterCPF';
 import languageJSON from '../common/language';
 
 import LocationUser from '../../assets/svg/LocationUser';
@@ -728,6 +729,25 @@ export default class FareScreen extends React.Component {
         })
     }
 
+    checkCPF() {
+        if (!this.state.userDetails.cpf) {
+            Alert.alert(
+                'Alerta!',
+                'Você ainda não possui cpf cadastrado, deseja adicionar?',
+                [
+                    { text: 'Adicionar', onPress: () => this.setState({ registerCpf: true }) },
+                    {
+                        style: 'destructive',
+                        text: 'Voltar'
+                    },
+                ],
+                { cancelable: true },
+            );
+        } else {
+            this.confirmarCorrida()
+        }
+    }
+
     fitRoute() {
         this.map.fitToCoordinates([{ latitude: this.state.region.wherelatitude, longitude: this.state.region.wherelongitude }, { latitude: this.state.region.droplatitude, longitude: this.state.region.droplongitude }], {
             edgePadding: { top: getPixelSize(60), right: getPixelSize(60), bottom: getPixelSize(60), left: getPixelSize(60) },
@@ -741,7 +761,9 @@ export default class FareScreen extends React.Component {
                 <View style={[styles.mapcontainer, {
                     flex: this.state.payDetails ? 1.8 : 2
                 }]}>
-
+                    {this.state.registerCpf ?
+                        <RegisterCPF />
+                        : null}
                     {this.state.region && this.state.region.wherelatitude ?
                         <MapView
                             ref={map => { this.map = map }}
@@ -1022,7 +1044,7 @@ export default class FareScreen extends React.Component {
                         <View style={[styles.viewBotao, {
                             shadowOpacity: this.state.buttonDisabled ? 0 : 0.4
                         }]}>
-                            <TouchableOpacity style={styles.confirmButtonStyle} disabled={this.state.buttonDisabled} onPress={() => { this.confirmarCorrida() }}>
+                            <TouchableOpacity style={styles.confirmButtonStyle} disabled={this.state.buttonDisabled} onPress={() => { this.checkCPF() }}>
                                 <Text style={styles.buttonText}> Confirmar corrida </Text>
                             </TouchableOpacity>
                         </View>

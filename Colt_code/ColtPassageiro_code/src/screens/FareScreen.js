@@ -315,7 +315,11 @@ export default class FareScreen extends React.Component {
                         this.props.navigation.replace('BookedCab', { passData: bookingItens, riderName: data.customer_name });
                     })
                 }, 500)
+            }).catch((res) => {
+                return res
             })
+        }).catch((res) => {
+            return res
         })
     }
 

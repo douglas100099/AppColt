@@ -76,7 +76,7 @@ export default class RideDetails extends React.Component {
         this._retrieveSettings();
     }
 
-    componentWillUnmount(){
+    componentWillUnmount() {
         this._isMounted = false
     }
 
@@ -266,9 +266,22 @@ export default class RideDetails extends React.Component {
                                 </View>
                             </View>
                         </View>
-
+                        {this.state.paramData ?
+                            this.state.paramData.pagamento.cancellValue > 0 ?
+                                <View style={{ marginHorizontal: 25, marginVertical: 15, flexDirection: 'row', alignItems: 'center' }}>
+                                    <Icon
+                                        name="ios-alert"
+                                        type="ionicon"
+                                        color={colors.RED}
+                                        size={22}
+                                        containerStyle={{ opacity: .5 }}
+                                    />
+                                    <Text style={{ fontFamily: "Inter-Medium", color: colors.RED }}> Você pagou uma taxa de cancelamente nessa corrida. </Text>
+                                </View>
+                                : null
+                            : null}
                         <View>
-                            <Text style={{ marginTop: 25, marginBottom: 10, marginLeft: 20, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 17 : 19 }}> Motorista </Text>
+                            <Text style={{ marginTop: 15, marginBottom: 10, marginLeft: 20, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 17 : 19 }}> Motorista </Text>
                             <View style={styles.cardDriver}>
                                 <View style={{ marginLeft: 15 }}>
                                     {this.state.paramData ?
@@ -299,17 +312,8 @@ export default class RideDetails extends React.Component {
                             </View>
                         </View>
 
+
                         <Text style={{ marginTop: 10, marginBottom: 10, marginLeft: 25, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 15 : 17 }}>Pagamento</Text>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Icon
-                                name='ios-cash'
-                                type='ionicon'
-                                color={colors.GREEN.light}
-                                size={22}
-                                containerStyle={{ opacity: .5 }}
-                            />
-                            <Text> Essa corrida  </Text>
-                        </View>
                         {this.state.paramData ?
                             <View style={styles.cardPagamento}>
                                 <View style={{ marginLeft: 10, flexDirection: 'row', alignItems: 'center' }}>
@@ -330,6 +334,7 @@ export default class RideDetails extends React.Component {
                                     : null}
                             </View>
                             : null}
+
                         <TouchableOpacity >
                             <View style={styles.btnProblem}>
                                 <Text style={{ fontFamily: "Inter-Bold", color: colors.RED, fontSize: width < 375 ? 17 : 19 }}> Relatar problema </Text>

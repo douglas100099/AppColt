@@ -360,7 +360,7 @@ export default class BookedCabScreen extends React.Component {
                                 status: 'CANCELLED',
                             }).then(() => {
                                 firebase.database().ref('users/' + curbookingData.val().driver + '/rider_waiting_object/' + this.state.currentBookingId + '/').remove()
-                                this.sendPushNotification(curbookingData.val().driver, this.state.firstNameRider + ' cancelou a corrida atual!')
+                                this.sendPushNotification(curbookingData.val().driver, this.state.firstNameRider + ' cancelou a corrida em espera!')
                             })
                         })
                     })

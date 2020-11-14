@@ -94,22 +94,22 @@ export default class DriverTripComplete extends React.Component {
                     let ratings = snapVal.val().details;
                     var total = 0;
                     var count = 0;
+                    let fRating = 0;
                     for (let key in ratings) {
                         count = count + 1;
                         total = total + ratings[key].rate;
                     }
-                    let fRating = total / count;
+                    if( count < 10 ){
+                        fRating = 5.00
+                    } else{
+                        fRating = total / count;
+                    }
                     if (fRating) {
                         //avarage Rating submission
                         firebase.database().ref('users/' + this.state.getDetails.driver + '/ratings/').update({ userrating: parseFloat(fRating).toFixed(2) }).then(() => {
                             //Rating for perticular booking 
                             firebase.database().ref('users/' + this.state.getDetails.driver + '/my_bookings/' + this.state.getDetails.bookingKey + '/').update({
                                 rating: this.state.starCount > 0 ? this.state.starCount : 5,
-                            }).then(() => {
-                                firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my-booking/' + this.state.getDetails.bookingKey + '/').update({
-                                    skip: true,
-                                    rating_queue: false
-                                })
                             }).then(() => {
                                 this.setState({ alertModalVisible: false, currentBookingId: null },
                                     () => {

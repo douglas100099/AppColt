@@ -15,6 +15,8 @@ import OnlineChat from './OnlineChat';
 import EmailLoginScreen from './EmailLoginScreen';
 import MobileLoginScreen from './MobileLoginScreen';
 import IntroScreen from './IntroScreen';
+import ScreenWelcome from './ScreenWelcome';
+
 
 export {
     TaskListIgnorePopup,
@@ -33,5 +35,6 @@ export {
     OnlineChat,
     EmailLoginScreen,
     MobileLoginScreen,
+    ScreenWelcome,
     IntroScreen
 };

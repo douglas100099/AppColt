@@ -17,10 +17,11 @@ import {
     DriverIncomePage,
     EmailLoginScreen,
     MobileLoginScreen,
+    ScreenWelcome,
     IntroScreen
 } from '../screens';
 import SideMenu from '../components/SideMenu';
-import  { Dimensions } from 'react-native';
+import  { ColorPropType, Dimensions } from 'react-native';
 var { width, height } = Dimensions.get('window');
 
 //app stack for user end
@@ -29,6 +30,8 @@ var { width, height } = Dimensions.get('window');
             screen: DriverTripCompleteSreen,
             navigationOptions:{
                 headerShown: false,
+                headerLeft: null, 
+                gestureEnabled: false,
             }
         },
         TaskListIgnorePopUp: {
@@ -57,6 +60,7 @@ var { width, height } = Dimensions.get('window');
             screen: DriverTripAccept,
             navigationOptions:{
                 headerShown: false,
+                gestureEnabled: false,
             }
         },
         RideDetails: {
@@ -70,7 +74,6 @@ var { width, height } = Dimensions.get('window');
             navigationOptions:{
                 headerShown: false,
                 headerLeft: null,
-                gestureEnabled: false,
             }
         },
         Chat:{
@@ -131,7 +134,13 @@ var { width, height } = Dimensions.get('window');
             navigationOptions:{
                 headerShown: false,
             }
-        }   
+        },
+        Welcome:{
+            screen: ScreenWelcome,
+            navigationOptions:{
+                headerShown: false,
+            }
+        },
     },{
         initialRouteName: 'Intro',
     });
@@ -139,7 +148,8 @@ var { width, height } = Dimensions.get('window');
     const DrawerRoutes = {
         'RideList': {
             name: 'RideList',
-            screen: createStackNavigator(AppStack, { initialRouteName: 'RideList',headerMode: 'none' })
+            screen: createStackNavigator(AppStack, { initialRouteName: 'RideList',headerMode: 'none' }),
+
         },
         'Profile': {
             name: 'Profile',
@@ -147,11 +157,11 @@ var { width, height } = Dimensions.get('window');
         },
         'DriverTripAccept': {
             name: 'DriverTripAccept',
-            screen: createStackNavigator(AppStack, { initialRouteName: 'DriverTripAccept',headerMode: 'none' })
+            screen: createStackNavigator(AppStack, { initialRouteName: 'DriverTripAccept',headerMode: 'none'}),
         },
         'About': {
             name: 'About',
-            screen: createStackNavigator(AppStack, { initialRouteName: 'About',headerMode: 'none' })
+            screen: createStackNavigator(AppStack, { initialRouteName: 'About',headerMode: 'none',})
         },
         'MyEarning': {
             name: 'MyEarning',
@@ -166,5 +176,5 @@ var { width, height } = Dimensions.get('window');
         drawerWidth: width/1.53,
         initialRouteName:'DriverTripAccept',
         contentComponent: SideMenu,
+        drawerType: 'slide',
     });
-

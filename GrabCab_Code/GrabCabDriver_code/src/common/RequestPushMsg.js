@@ -1,5 +1,5 @@
 import  languageJSON  from './language';
-export function RequestPushMsg(token,msg,bookingId){
+export function RequestPushMsg(token,msg){
     fetch('https://exp.host/--/api/v2/push/send', {       
         method: 'POST', 
         headers: {

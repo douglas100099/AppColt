@@ -12,6 +12,8 @@ import {
 var { width } = Dimensions.get('window');
 import * as firebase from 'firebase';
 import languageJSON from '../common/language';
+import { AnimatedCircularProgress } from 'react-native-circular-progress';
+import Easing from 'react-native-reanimated';
 
 
 export default class AboutPage extends React.Component {
@@ -19,7 +21,7 @@ export default class AboutPage extends React.Component {
         super(props);
         this.state = {};
     }
-    
+
     componentDidMount() {
         const about = firebase.database().ref('About_Us/');
         about.once('value', aboutData => {
@@ -35,9 +37,9 @@ export default class AboutPage extends React.Component {
 
             <View style={styles.mainView}>
                 <View style={styles.header}>
-                    <Text style={{fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK, textAlign: 'center'}}>Suporte</Text>
-                    <View style={{position: 'absolute', zIndex: 999, left: 20}}>
-                        <TouchableOpacity style={{height: 35, width: 35, borderRadius: 100, backgroundColor: colors.WHITE, elevation: 4,}} onPress={() => { this.props.navigation.goBack();}}>
+                    <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK, textAlign: 'center' }}>Suporte</Text>
+                    <View style={{ position: 'absolute', zIndex: 999, left: 20 }}>
+                        <TouchableOpacity style={{ height: 35, width: 35, borderRadius: 100, backgroundColor: colors.WHITE, elevation: 4, }} onPress={() => { this.props.navigation.goBack(); }}>
                             <Icon
                                 name='ios-arrow-dropleft-circle'
                                 size={35}

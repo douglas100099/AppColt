@@ -74,7 +74,7 @@ export default class ProfileScreen extends React.Component {
         //Verifica corridas
         let userUid = firebase.auth().currentUser.uid;
         let ref = firebase.database().ref('users/' + userUid + '/ganhos');
-        ref.on('value', allBookings => {
+        ref.once('value', allBookings => {
             if (allBookings.val()) {
                 let data = allBookings.val();
                 var myBookingarr = [];
@@ -90,12 +90,12 @@ export default class ProfileScreen extends React.Component {
             }
         })
         let refC = firebase.database().ref('users/' + userUid + '/createdAt');
-        refC.on('value', criadoEm => {
+        refC.once('value', criadoEm => {
             let dataCriacao = criadoEm.val()
             if (dataCriacao) {
                 const now = new Date(); // Data de hoje
                 const past = new Date(dataCriacao); // Outra data no passado
-                const meses = past.getMonth() - now.getMonth() + (12 * (past.getFullYear() - now.getFullYear()))
+                const meses = now.getMonth() - past.getMonth() + (12 * (now.getFullYear() - past.getFullYear()))
                 if (meses) {
                     this.setState({
                         dataCriado: meses
@@ -229,26 +229,12 @@ export default class ProfileScreen extends React.Component {
         );
     }
 
-    onChangeFunction(data) {
-        if (data == true) {
-            firebase.database().ref(`/users/` + this.state.currentUser.uid + '/').update({
-                driverActiveStatus: false
-            }).then(() => {
-                this.setState({ driverActiveStatus: false });
-            })
-        } else if (data == false) {
-            firebase.database().ref(`/users/` + this.state.currentUser.uid + '/').update({
-                driverActiveStatus: true
-            }).then(() => {
-                this.setState({ driverActiveStatus: true });
-            })
-        }
-    }
-
     resetarPilha() {
         this.setState({ loaderBtn: true })
 
         this.props.navigation.goBack()
+
+        this.setState({ loaderBtn: false })
 
     }
 
@@ -268,7 +254,8 @@ export default class ProfileScreen extends React.Component {
                         </TouchableOpacity>
                     </View>
                     <View style={{ position: 'absolute', marginTop: Platform.select({ ios: 55, android: 45 }), zIndex: 999, right: 20, }}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
+                            //onPress={() => this.props.navigation.replace('Welcome')}
                             disabled={this.state.loaderBtn}
                         >
                             <Icon
@@ -306,7 +293,7 @@ export default class ProfileScreen extends React.Component {
                                 </View>
                                 <View style={{ width: 1, height: '50%', backgroundColor: colors.GREY1 }}></View>
                                 <View style={styles.viewAnos}>
-                                    <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK }}>{this.state.dataCriado == 0 ? '1' : this.state.dataCriado}</Text>
+                                    <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK }}>{this.state.dataCriado + 1}</Text>
                                     <Text style={{ fontSize: 14, fontFamily: 'Inter-Regular', color: colors.BLACK }}>{this.state.dataCriado == 0 ? 'Mês' : 'Meses'}</Text>
                                 </View>
                             </View>
@@ -374,7 +361,7 @@ const styles = StyleSheet.create({
     },
 
     header: {
-        flex: 1,
+        height: 400,
         backgroundColor: colors.DEEPBLUE,
     },
 

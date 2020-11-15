@@ -1,10 +1,8 @@
 import React from 'react';
 import { Text, View, Image, TouchableOpacity, Platform, StatusBar } from 'react-native';
-import { Icon } from 'react-native-elements'
 import { colors } from '../common/theme';
-import languageJSON from '../common/language';
 //make a compontent
-const SideMenuHeader = ({ headerStyle, userPhoto, userName, userCorridas, userRating, onPress }) => {
+const SideMenuHeader = ({ headerStyle, userPhoto, userName, onPress }) => {
 
     return (
         <TouchableOpacity activeOpacity={0.9} onPress={onPress} style={[styles.viewStyle, headerStyle]}>
@@ -16,26 +14,6 @@ const SideMenuHeader = ({ headerStyle, userPhoto, userName, userCorridas, userRa
             </View>
             <View style={styles.headerTextStyle}>
                 <Text style={styles.ProfileNameStyle}>{userName ? userName.toUpperCase() : ""}</Text>
-            </View>
-            <View style={styles.iconViewStyle}>
-                <View style={styles.viewRating}>
-                    <Icon
-                        name='ios-star'
-                        type='ionicon'
-                        color={colors.BLACK}
-                        size={18}
-                    />
-                    <Text style={styles.emailStyle}>{userRating ? userRating : "0"}</Text>
-                </View>
-                <View style={styles.viewCorridas}>
-                    <Icon
-                        name='ios-speedometer'
-                        type='ionicon'
-                        color={colors.BLACK}
-                        size={18}
-                    />
-                    <Text style={styles.emailStyle}>{userCorridas ? userCorridas : "0"}</Text>
-                </View>
             </View>
         </TouchableOpacity>
     );

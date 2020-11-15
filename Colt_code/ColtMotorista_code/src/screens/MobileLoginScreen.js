@@ -52,7 +52,7 @@ export default class MobileLoginScreen extends Component {
                         );
                         this.setState({ verificationId: verificationId });
                     } catch (error) {
-                        alert(error.message);
+                        alert('Ops, tivemos um problema.')
                     }
                 } else {
                     alert(languageJSON.mobile_no_blank_error);

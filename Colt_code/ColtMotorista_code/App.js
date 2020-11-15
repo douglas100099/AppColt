@@ -76,6 +76,8 @@ export default class App extends React.Component {
   };
 
   async componentDidMount() {
+    // MENTIRA DIEGÃO PRESENTE, PRA DEV VOTE DIEGO LESSA PSDB
+
     if (__DEV__) {
       this.setState({ updateMsg: languageJSON.loading_assets });
       this._loadResourcesAsync().then(() => {
@@ -106,7 +108,15 @@ export default class App extends React.Component {
       this.state.assetsLoaded ?
         <AppContainer />
         :
-        null
+        <View style={styles.container}>
+          <ImageBackground
+            source={require("./assets/images/splash.png")}
+            resizeMode={'contain'}
+            style={styles.imagebg}
+          >
+            <ActivityIndicator />
+          </ImageBackground>
+        </View>
     );
   }
 }
@@ -115,7 +125,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    alignItems: 'center'
+    alignItems: 'center',
+    backgroundColor: "#1152FD"
   },
   imagebg: {
     position: 'absolute',

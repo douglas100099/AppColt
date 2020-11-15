@@ -7,17 +7,22 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Dimensions,
+  Image,
   Keyboard,
-  TouchableWithoutFeedback,
-  StatusBar,
-  TextInput
+  TextInput,
+  Platform
 } from "react-native";
 import { colors } from "../common/theme";
+import * as Permissions from 'expo-permissions';
 import { Icon, Header } from "react-native-elements";
 import * as firebase from 'firebase'
-import { RequestPushMsg } from '../common/RequestPushMsg';
-var { height } = Dimensions.get('window');
+import { Audio } from 'expo-av';
 import languageJSON from '../common/language';
+var { height, width } = Dimensions.get('window');
+import { RequestPushMsg } from '../common/RequestPushMsg';
+import ProfileSVG from "../SVG/ProfileSVG";
+
+const recording = new Audio.Recording();
 
 export default class OnlineChat extends Component {
   getParamData;
@@ -38,41 +43,44 @@ export default class OnlineChat extends Component {
       position: 'absolute',
       paddingHeight: 0,
       messageCntHeight: height - 150,
-      tripData: "",
-      idFound: false,
-      id: "",
       carbookedInfo: "",
-      allChat: []
+      id: "",
+      chat: false,
+      allChat: [],
+      messegesData: []
 
     };
-    this.getChat()
   }
 
-  chatData(allChat) {
-    console.log("My all chats are here", this.state.allChat);
-  }
 
-  getChat() {
+  componentDidMount() {
+
+    /*const { status } = await Permissions.askAsync(Permissions.AUDIO_RECORDING)
+    this.setState({
+      haveRecordingPermissions: status === 'granted',
+    });*/
+
     this.getParamData = this.props.navigation.getParam('passData');
+    let bookingData = firebase.database().ref('bookings/' + this.getParamData.bookingId)
+    bookingData.on('value', response => {
+      if (response.val()) {
+        this.setState({ carbookedInfo: response.val()})
+      }
+    })
     let msgData = firebase.database().ref(`chat/` + this.getParamData.bookingId + '/message')
     msgData.on('value', msgData => {
-      //console.log("msgData",msgData.val());
       let rootEntry = msgData.val();
-      let allMessages = []
+      let allMesseges = []
       for (let key in rootEntry) {
-        //console.log("root entry",rootEntry[key]);
         let entryKey = rootEntry[key]
         for (let msgKey in entryKey) {
           entryKey[msgKey].smsId = msgKey
-          allMessages.push(entryKey[msgKey])
+          allMesseges.push(entryKey[msgKey])
         }
 
       }
-      this.setState({ allChat: allMessages }, () => {
-      this.chatData(this.state.allChat)
-      })
+      this.setState({ allChat: allMesseges })
     })
-
     this.keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
       this._keyboardDidShow,
@@ -82,20 +90,30 @@ export default class OnlineChat extends Component {
       this._keyboardDidHide,
     );
   }
-
-
   componentWillUnmount() {
     this.keyboardDidShowListener.remove();
     this.keyboardDidHideListener.remove();
   }
 
+  /*gravarAudio = async () => {
+    try {
+      if(this.state.startou) {
+        await recording.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY);
+        await recording.startAsync();
+        this.setState({ startou: true })
+      }
+
+    } catch (error) {
+      console.log('IRMÃO MICROFONE TA COM DEFEITO AI')
+    }
+  }*/
+
   _keyboardDidShow = (e) => {
-    //console.log(e.endCoordinates.height);
     if (this.state.position !== 'relative') {
       this.setState({
         position: 'relative', paddingHeight: e.endCoordinates.height
       }, () => {
-        console.log(this.state.paddingHeight)
+
       })
     }
   }
@@ -109,114 +127,85 @@ export default class OnlineChat extends Component {
     }
   }
 
-
   sendMessege(inputmessage) {
+    var today = new Date();
+    var time = today.toLocaleTimeString('pt-BR').split(':')[0] + ':' + today.toLocaleTimeString('pt-BR').split(':')[1]
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var yyyy = today.getFullYear();
+    today = mm + ':' + dd + ':' + yyyy;
+
+    let customer = this.state.carbookedInfo.customer;
+    let driver = this.state.carbookedInfo.driver
+    let totalId = this.state.carbookedInfo.customer + ',' + this.state.carbookedInfo.driver
+    this.setState({ id: totalId })
+
     if (inputmessage == '' || inputmessage == undefined || inputmessage == null) {
-      alert(languageJSON.chat_blank);
+      alert("Por favor, digite algo...");
     } else {
-      let bookingData = firebase.database().ref('bookings/' + this.getParamData.bookingId)
-      bookingData.once('value', response => {
-        if (response.val()) {
-          this.setState({ carbookedInfo: response.val() }, () => {
-            let currentUserUid = firebase.auth().currentUser.uid
-            var today = new Date();
-            var time = today.getHours() + ":" + today.getMinutes();
-            //console.log(time);
-            var dd = String(today.getDate()).padStart(2, '0');
-            var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
-            var yyyy = today.getFullYear();
-            today = mm + ':' + dd + ':' + yyyy;
-            //console.log(today)
-            let customer = this.state.carbookedInfo.customer;
-            let driver = this.state.carbookedInfo.driver
-            let totalId = this.state.carbookedInfo.customer + ',' + this.state.carbookedInfo.driver
-            //console.log(totalId);
-            this.setState({ id: totalId })
-            let chat = firebase.database().ref('chat')
-            chat.once('value', chat => {
-              if (chat.val()) {
-                let allChat = chat.val();
-                for (let key in allChat) {
-                  if (this.getParamData.bookingId == key) {
-                    this.setState({ idFound: true })
-                  }
-                }
-                if (this.state.idFound == true) {
-                  //console.log("allChat",allChat);
-                  firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/' + 'message' + '/' + this.state.id).push({
-                    message: inputmessage,
-                    from: currentUserUid,
-                    type: "msg",
-                    msgDate: today,
-                    msgTime: time,
-                    source: "driver"
-                  })
-                }
-                else {
-                  firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/').update({
-                    distance: this.state.carbookedInfo.distance,
-                    car: this.state.carbookedInfo.carType,
-                    bookingId: this.getParamData.bookingId
-                  }).then(() => {
-                    firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/' + 'message' + '/' + this.state.id).push({
-                      message: inputmessage,
-                      from: currentUserUid,
-                      type: "msg",
-                      msgDate: today,
-                      msgTime: time,
-                      source: "driver"
-                    })
-                    this.sendPushNotification(this.state.carbookedInfo.customer, this.getParamData.bookingId, languageJSON.driver + this.state.carbookedInfo.driver_name + languageJSON.send_msg + inputmessage);
-                  })
-                }
-              } else {
-                firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/').update({
-                  distance: this.state.carbookedInfo.distance,
-                  car: this.state.carbookedInfo.carType,
-                  bookingId: this.getParamData.bookingId
-                }).then(() => {
-                  if (this.state.id) {
-                    firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/' + 'message' + '/' + this.state.id).push({
-                      message: inputmessage,
-                      from: currentUserUid,
-                      type: "msg",
-                      msgDate: today,
-                      msgTime: time,
-                      source: "driver"
-                    })
-                    this.sendPushNotification(this.state.carbookedInfo.customer, this.getParamData.bookingId, languageJSON.driver + this.state.carbookedInfo.driver_name + languageJSON.send_msg + inputmessage);
-                  } else {
-                    //alert("ID not found");
-                  }
-                })
-              }
+      let chat = firebase.database().ref('chat')
+      // if(chat){
+      chat.once('value', chat => {
+        if (chat.val()) {
+          let allChat = chat.val();
+          for (let key in allChat) {
+            if (this.getParamData.bookingId == key) {
+              this.setState({ chat: true })
+            }
+          }
+          if (this.state.chat == true) {
+            firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/' + 'message' + '/' + this.state.id).push({
+              message: inputmessage,
+              from: this.state.carbookedInfo.driver,
+              type: "msg",
+              msgDate: today,
+              msgTime: time,
+              source: "driver"
+            })
+            this.sendPushNotification(this.state.carbookedInfo.customer, this.state.carbookedInfo.driver_firstName + ': ' + inputmessage)
+          }
+          else {
+            firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/').update({
+              distance: this.state.carbookedInfo.distance,
+              car: this.state.carbookedInfo.carType,
+              bookingId: this.getParamData.bookingId
+            }).then(() => {
+              firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/' + 'message' + '/' + this.state.id).push({
+                message: inputmessage,
+                from: this.state.carbookedInfo.driver,
+                type: "msg",
+                msgDate: today,
+                msgTime: time,
+                source: "driver"
+              })
+              this.sendPushNotification(this.state.carbookedInfo.customer, this.state.carbookedInfo.driver_firstName + ': ' + inputmessage)
             })
           }
-          )
+        } else {
+          firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/').update({
+            distance: this.state.carbookedInfo.distance,
+            car: this.state.carbookedInfo.carType,
+            bookingId: this.getParamData.bookingId
+          }).then(() => {
+            if (this.state.id) {
+              firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/' + 'message' + '/' + this.state.id).push({
+                message: inputmessage,
+                from: this.state.carbookedInfo.driver,
+                type: "msg",
+                msgDate: today,
+                msgTime: time,
+                source: "driver"
+              })
+              this.sendPushNotification(this.state.carbookedInfo.customer, this.state.carbookedInfo.driver_firstName + ': ' + inputmessage)
+            }
+          })
         }
       })
-      this.setState({ inputmessage: "" })
+      this.setState({ inputmessage: "" });
     }
   }
 
-  renderItem({ item }) {
-    return (
-
-      item.source == "driver" ?
-        <View style={styles.drivermsgStyle}>
-          <Text style={styles.msgTextStyle}>{item ? item.message : languageJSON.chat_history_not_found}</Text>
-          <Text style={styles.msgTimeStyle}>{item ? item.msgTime : null}</Text>
-        </View>
-        :
-        <View style={styles.riderMsgStyle}>
-          <Text style={styles.riderMsgText}>{item ? item.message : languageJSON.chat_history_not_found}</Text>
-          <Text style={styles.riderMsgTime}>{item ? item.msgTime : null}</Text>
-        </View>
-
-    );
-  }
-
-  sendPushNotification(customerUID, bookingId, msg) {
+  sendPushNotification(customerUID, msg) {
     const customerRoot = firebase.database().ref('users/' + customerUID);
     customerRoot.once('value', customerData => {
       if (customerData.val()) {
@@ -225,28 +214,77 @@ export default class OnlineChat extends Component {
       }
     })
   }
+  renderItem({ item, index }) {
+    return (
+      item.source == "driver" ?
+        <View style={styles.drivermsgStyle}>
+            <Text style={styles.msgTextStyle}>{item ? item.message : languageJSON.chat_history_not_found}</Text>
+            <Text style={styles.msgTimeStyle}>{item ? item.msgTime : null}</Text>
+        </View>
+        :
+        <View style={styles.riderMsgStyle}>
+          <Text style={styles.riderMsgText}>{item ? item.message : languageJSON.chat_history_not_found}</Text>
+          <Text style={styles.riderMsgTime}>{item ? item.msgTime : null}</Text>
+        </View>
+    );
+  }
 
   render() {
     return (
       <View style={styles.container}>
-        
-        <FlatList
-          data={this.state.allChat.reverse()}
-          renderItem={this.renderItem}
-          inverted
-        />
-        <KeyboardAvoidingView behavior="padding">
+        <View style={styles.viewHeader}>
+          <View style={styles.bordaIconeVoltar}>
+            <TouchableOpacity onPress={() => { this.props.navigation.goBack() }}>
+              <Icon
+                name='chevron-left'
+                type='MaterialIcons'
+                size={width < 375 ? 35 : 40}
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={{ flexDirection: 'column', alignItems: 'center' }}>
+            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20, }}> {this.state.carbookedInfo.firstNameRider}</Text>
+          </View>
+          <View style={{ backgroundColor: colors.BLACK, width: 53, justifyContent: 'center', alignItems: 'center', height: 53, position: 'absolute', bottom: 5, right: 10, borderRadius: 100 }}>
+            {this.state.carbookedInfo.imageRider ?
+              <Image
+                source={{ uri: this.state.carbookedInfo.firstNameRider }}
+                style={{ width: 50, height: 50, borderRadius: 50, }}
+              />
+              :
+              <ProfileSVG
+                width={50}
+                height={50}
+              />
+            }
+          </View>
+        </View>
+        <View style={{flex: 1 }}>
+          <FlatList
+            data={this.state.allChat.reverse()}
+            renderItem={this.renderItem}
+            //keyExtractor={(item, index) => index.toString()}
+            inverted
+          />
+        </View>
+        <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? 'padding' : 'height'}>
           <View style={styles.footer}>
             <TextInput
               value={this.state.inputmessage}
               style={styles.input}
               underlineColorAndroid="transparent"
-              placeholder={languageJSON.type_messege}
+              placeholder="Converse com o passageiro"
               onChangeText={text => this.setState({ inputmessage: text })}
             />
 
-            <TouchableOpacity onPress={() => this.sendMessege(this.state.inputmessage)}>
-              <Text style={styles.send}>{languageJSON.send}</Text>
+            <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 40, height: 40, borderRadius: 50 }} onPress={() => this.sendMessege(this.state.inputmessage)}>
+              <Icon
+                name='ios-paper-plane'
+                type='ionicon'
+                color={colors.WHITE}
+                size={25}
+                containerStyle={{ paddingEnd: 3 }}
+              />
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -259,8 +297,36 @@ export default class OnlineChat extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.GREY.btnSecondary,
+    backgroundColor: colors.WHITE,
     //marginTop: StatusBar.currentHeight,
+  },
+  viewHeader: {
+    backgroundColor: colors.WHITE,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-around',
+    height: Platform.OS == 'ios' ? 100 : 85,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { x: 0, y: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+  },
+  bordaIconeVoltar: {
+    position: 'absolute',
+    backgroundColor: colors.WHITE,
+    width: width < 375 ? 35 : 40,
+    height: width < 375 ? 35 : 40,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    bottom: 10,
+    left: 15,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { x: 0, y: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
   },
   container1: {
     height: height - 150
@@ -280,7 +346,7 @@ const styles = StyleSheet.create({
   },
   headerTitleStyle: {
     color: colors.WHITE,
-    fontSize: 18,
+    fontSize: 17,
     textAlign: 'center',
   },
   headerStyle: {
@@ -316,10 +382,17 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: 'row',
-    backgroundColor: '#eee'
+    backgroundColor: colors.WHITE,
+    marginBottom: 20,
+    height: 50,
+    alignItems: 'center',
+    borderTopWidth: 4,
+    borderColor: colors.GREY.background,
   },
   input: {
-    paddingHorizontal: 20,
+    marginEnd: 20,
+    marginLeft: 10,
+    height: 50,
     fontSize: 18,
     flex: 1
   },
@@ -331,58 +404,73 @@ const styles = StyleSheet.create({
     padding: 20
   },
   drivermsgStyle: {
-    backgroundColor: colors.GREY.default,
+    backgroundColor: colors.DEEPBLUE,
     marginBottom: 5,
-    marginTop: 5,
+    marginTop: 10,
     marginRight: 10,
-    marginLeft: 30,
-    borderRadius: 20,
-    elevation: 5,
-    shadowOpacity: 0.75,
+    borderBottomLeftRadius: 30,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 15,
+    maxWidth: width - 20,
+
+    alignSelf: 'flex-end',
+    flex: 1,
+    elevation: 3,
+    shadowOpacity: 0.1,
     shadowRadius: 5,
-    shadowColor: colors.GREY.Deep_Nobel,
+    shadowColor: "#fff",
     shadowOffset: { height: 1, width: 0 },
   },
   msgTextStyle: {
-    marginStart: 15,
-    marginEnd: 15,
-    marginTop: 10,
+    paddingTop: 4,
+    paddingHorizontal: 15,
     textAlign: "right",
+    fontFamily: 'Inter-Bold',
     fontSize: 18,
     color: "#fff"
   },
   msgTimeStyle: {
-    marginStart: 15,
-    marginBottom: 10,
-    marginEnd: 15,
+    paddingHorizontal: 15,
+    paddingBottom: 4,
     textAlign: "right",
+    fontFamily: 'Inter-Medium',
+
     fontSize: 12,
     color: "#fff"
   },
   riderMsgStyle: {
-    backgroundColor: "#fff",
+    backgroundColor: colors.WHITE,
     marginBottom: 5,
     marginTop: 5,
-    marginRight: 30,
     marginLeft: 10,
-    borderRadius: 20,
-    shadowOpacity: 0.75,
+    flex: 1,
+    alignSelf: 'flex-start',
+
+    maxWidth: width - 20,
+    borderBottomLeftRadius: 50,
+    borderBottomRightRadius: 50,
+    borderTopLeftRadius: 50,
+    borderTopRightRadius: 50,
+    elevation: 3,
+    shadowOpacity: 0.3,
     shadowRadius: 5,
     shadowColor: colors.GREY.Deep_Nobel,
     shadowOffset: { height: 1, width: 0 },
   },
   riderMsgText: {
-    marginStart: 15,
+    paddingTop: 4,
+    paddingHorizontal: 15,
     textAlign: "left",
+    fontFamily: 'Inter-Bold',
     fontSize: 18,
-    color: "#000",
-    marginTop: 10
+    color: colors.DEEPBLUE,
   },
   riderMsgTime: {
-    marginStart: 15,
+    paddingHorizontal: 15,
+    paddingBottom: 4,
+    fontFamily: 'Inter-Medium',
     textAlign: "left",
     fontSize: 12,
-    color: "#000",
-    marginBottom: 10
+    color: colors.DEEPBLUE,
   }
 });

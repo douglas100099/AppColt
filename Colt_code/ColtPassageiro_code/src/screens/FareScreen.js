@@ -761,9 +761,6 @@ export default class FareScreen extends React.Component {
                 <View style={[styles.mapcontainer, {
                     flex: this.state.payDetails ? 1.8 : 2
                 }]}>
-                    {this.state.registerCpf ?
-                        <RegisterCPF />
-                        : null}
                     {this.state.region && this.state.region.wherelatitude ?
                         <MapView
                             ref={map => { this.map = map }}
@@ -823,6 +820,10 @@ export default class FareScreen extends React.Component {
                                 />
                                 : null}
                         </MapView>
+                        : null}
+
+                    {this.state.registerCpf ?
+                        <RegisterCPF />
                         : null}
 
                     {this.state.region && this.state.region.wherelatitude ?

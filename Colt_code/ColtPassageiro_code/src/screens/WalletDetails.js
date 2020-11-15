@@ -80,11 +80,13 @@ export default class WalletDetails extends React.Component {
   }
 
   doReacharge() {
+    alert("Disponível em breve...")
+    /*
     if (this.state.providers) {
       this.props.navigation.push('addMoney', { allData: this.state.allData, providers: this.state.providers });
     } else {
       alert('No Payment Providers Found.')
-    }
+    }*/
   }
 
   render() {

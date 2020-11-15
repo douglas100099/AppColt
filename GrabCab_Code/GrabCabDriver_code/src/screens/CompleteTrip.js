@@ -3,6 +3,8 @@ import {
     StyleSheet,
     View,
     Text,
+    ActivityIndicator,
+    FlatList,
     TouchableOpacity,
     AsyncStorage,
     Image,
@@ -25,11 +27,14 @@ import dateStyle from '../common/dateStyle';
 import CellphoneSVG from '../SVG/CellphoneSVG';
 import MarkerDropSVG from '../SVG/MarkerDropSVG';
 import MarkerPicSVG from '../SVG/MarkerPicSVG';
+import IconCloseSVG from '../SVG/IconCloseSVG';
 import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Animatable from 'react-native-animatable';
 import { Audio } from 'expo-av';
 //import * as Linking from 'expo-linking';
 import Directions from "../components/Directions";
+import { AnimatedCircularProgress } from 'react-native-circular-progress';
+import { getPixelSize } from '../constants/utils';
 
 const LATITUDE = 0;
 const LONGITUDE = 0;
@@ -62,6 +67,7 @@ export default class DriverCompleteTrip extends React.Component {
             chegouCorridaQueue: false,
             loader: false,
             duration: 0,
+            isSound: false,
         }
     }
 
@@ -304,6 +310,10 @@ export default class DriverCompleteTrip extends React.Component {
         this.ActionSheet.show()
     }
 
+    showActionSheett = () => {
+        this.RefActionSheet.show()
+    }
+
 
     //End trip and fare calculation function
     async onPressEndTrip(item) {
@@ -336,6 +346,7 @@ export default class DriverCompleteTrip extends React.Component {
                 this.finalCostStore(item, this.state.rideDetails.pagamento.estimate, pos, respJson.routes[0].legs[0].distance.value, convenienceFee,
                     this.state.rideDetails.pagamento.discount_amount ? this.state.rideDetails.pagamento.discount_amount : 0,
                     this.state.rideDetails.pagamento.usedWalletMoney ? this.state.rideDetails.pagamento.usedWalletMoney : 0)
+                this.setState({ recalculou: false })
             } else {
                 var fareCalculation = farehelper(respJson.routes[0].legs[0].distance.value, totalTimeTaken, this.state.rateDetails ? this.state.rateDetails : 1, this.state.rideDetails.pagamento.cancellValue);
                 if (fareCalculation) {
@@ -343,6 +354,7 @@ export default class DriverCompleteTrip extends React.Component {
                         this.state.rideDetails.pagamento.discount_amount ? this.state.rideDetails.pagamento.discount_amount : 0,
                         this.state.rideDetails.pagamento.usedWalletMoney ? this.state.rideDetails.pagamento.usedWalletMoney : 0)
                 }
+                this.setState({ recalculou: true })
             }
         } else {
             this.openAlert();
@@ -376,6 +388,7 @@ export default class DriverCompleteTrip extends React.Component {
             promoCodeApplied: item.pagamento.promoCodeApplied,
             promoKey: item.pagamento.promoKey,
             cancellValue: item.pagamento.cancellValue,
+            recalculou: this.state.recalculou,
         }
         var data = {
             status: "END",
@@ -539,7 +552,7 @@ export default class DriverCompleteTrip extends React.Component {
                             if (requestedDriver) {
                                 firebase.database().ref('users/' + requestedDriver + '/waiting_queue_riders/' + item.bookingId + '/').remove()
                                     .then(() => {
-                                        this.setState({ loader: false, chegouCorrida: false })
+                                        this.setState({ loader: false, chegouCorridaQueue: false })
                                     }).then(() => {
                                         let dbRefW = firebase.database().ref('users/' + requestedDriver + '/rider_waiting_object/' + item.bookingId + '/')
                                         dbRefW.update(data)
@@ -667,303 +680,303 @@ export default class DriverCompleteTrip extends React.Component {
     render() {
         return (
             <View style={styles.containerView}>
-                {this.state.chegouCorridaQueue ? null :
-                    <View>
-                        <ActionSheetCustom
-                            ref={o => this.ActionSheet = o}
-                            style={styles}
-                            title={<Text style={{ color: colors.BLACK, fontSize: 20, fontFamily: 'Inter-Bold' }}>Longe do destino</Text>}
-                            message={<Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Regular', textAlign: 'center' }}>Você está distante do ponto de destino, tem certeza que deseja finalizar a corrida?</Text>}
-                            options={['Continuar', 'Voltar']}
-                            cancelButtonIndex={1}
-                            destructiveButtonIndex={0}
-                            onPress={(index) => {
-                                if (index == 0) {
-                                    this.onPressEndTrip(this.state.rideDetails)
-                                } else {
-                                    //console.log('actionsheet close')
-                                }
-                            }}
-                        />
-                    </View>
-                }
 
-                {this.state.chegouCorridaQueue ? null :
+                {this.state.chegouCorridaQueue == false ?
+
                     <View style={{ flex: 1 }}>
-                        <MapView
-                            ref={map => { this.map = map }}
-                            style={styles.map}
-                            rotateEnabled={false}
-                            provider={PROVIDER_GOOGLE}
-                            showsUserLocation={false}
-                            showsCompass={false}
-                            showsScale={false}
-                            loadingEnabled
-                            showsMyLocationButton={false}
-                            region={this.checkMap()}
-                        >
-                            {this.state.region ?
+                        <View style={{ flex: 1 }}>
+                            <MapView
+                                ref={map => { this.map = map }}
+                                style={styles.map}
+                                rotateEnabled={false}
+                                provider={PROVIDER_GOOGLE}
+                                showsUserLocation={false}
+                                showsCompass={false}
+                                showsScale={false}
+                                loadingEnabled
+                                showsMyLocationButton={false}
+                                region={this.checkMap()}
+                            >
+                                {this.state.region ?
+                                    <Marker.Animated
+                                        coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
+                                        style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
+                                        anchor={{ x: 0.5, y: 0.5 }}
+                                    >
+                                        <CellphoneSVG
+                                            width={40}
+                                            height={40}
+                                        />
+                                    </Marker.Animated>
+                                    : null}
                                 <Marker.Animated
-                                    coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
-                                    style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
-                                    anchor={{ x: 0.5, y: 0.5 }}
+                                    coordinate={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng, }}
+                                    anchor={{ x: 0.5, y: 1 }}
                                 >
-                                    <CellphoneSVG
+                                    <MarkerDropSVG
                                         width={40}
                                         height={40}
                                     />
                                 </Marker.Animated>
-                                : null}
-                            <Marker.Animated
-                                coordinate={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng, }}
-                                anchor={{ x: 0.5, y: 1 }}
-                            >
-                                <MarkerDropSVG
-                                    width={40}
-                                    height={40}
+                                <Directions
+                                    origin={{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }}
+                                    destination={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng }}
                                 />
-                            </Marker.Animated>
-                            <Directions
-                                origin={{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }}
-                                destination={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng }}
+                            </MapView>
+                            <View>
+                                <ActionSheetCustom
+                                    ref={o => this.ActionSheet = o}
+                                    style={styles}
+                                    title={<Text style={{ color: colors.BLACK, fontSize: 20, fontFamily: 'Inter-Bold' }}>Longe do destino</Text>}
+                                    message={<Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Regular', textAlign: 'center' }}>Você está distante do ponto de destino, tem certeza que deseja finalizar a corrida?</Text>}
+                                    options={['Continuar', 'Voltar']}
+                                    cancelButtonIndex={1}
+                                    destructiveButtonIndex={0}
+                                    onPress={(index) => {
+                                        if (index == 0) {
+                                            this.onPressEndTrip(this.state.rideDetails)
+                                        } else {
+                                            //console.log('actionsheet close')
+                                        }
+                                    }}
+                                />
+                            </View>
+                            <TouchableOpacity style={styles.iconeMap} onPress={() => { this.centerFollowMap() }}>
+                                <Icon
+                                    name="crosshair"
+                                    type="feather"
+                                    size={30}
+                                    color={colors.BLACK}
+                                />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconeFit} onPress={() => { this.animateToDestination() }}>
+                                <Icon
+                                    name="map-pin"
+                                    type="feather"
+                                    size={30}
+                                    color={colors.BLACK}
+                                />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconeNav} onPress={() => { this.handleGetDirections(this.state.rideDetails) }}>
+                                <Icon
+                                    name="navigation"
+                                    type="feather"
+                                    size={30}
+                                    color={colors.BLACK}
+                                />
+                            </TouchableOpacity>
+                            <View style={styles.iconeKm}>
+                                <Animatable.Text animation='fadeIn' useNativeDriver={true} style={{ textAlign: 'center', fontSize: 14, fontFamily: 'Inter-Bold', color: colors.WHITE }}>{parseFloat(this.state.kmRestante).toFixed(2)}</Animatable.Text>
+                                <Text style={{ textAlign: 'center', fontSize: 12, fontFamily: 'Inter-Bold', color: colors.WHITE, marginLeft: 5 }}>KM</Text>
+                            </View>
+                        </View>
+                        <View style={styles.buttonViewStyle}>
+                            <Button
+                                title='Finalizar corrida'
+                                onPress={() => {
+                                    this.checkDist(this.state.rideDetails)
+                                }}
+                                titleStyle={styles.titleViewStyle}
+                                buttonStyle={styles.buttonStyleView}
                             />
-                        </MapView>
-                        <TouchableOpacity style={styles.iconeMap} onPress={() => { this.centerFollowMap() }}>
-                            <Icon
-                                name="crosshair"
-                                type="feather"
-                                size={30}
-                                color={colors.BLACK}
-                            />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.iconeFit} onPress={() => { this.animateToDestination() }}>
-                            <Icon
-                                name="map-pin"
-                                type="feather"
-                                size={30}
-                                color={colors.BLACK}
-                            />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.iconeNav} onPress={() => { this.handleGetDirections(this.state.rideDetails) }}>
-                            <Icon
-                                name="navigation"
-                                type="feather"
-                                size={30}
-                                color={colors.BLACK}
-                            />
-                        </TouchableOpacity>
-                        <View style={styles.iconeKm}>
-                            <Animatable.Text animation='fadeIn' useNativeDriver={true} style={{ textAlign: 'center', fontSize: 14, fontFamily: 'Inter-Bold', color: colors.WHITE }}>{parseFloat(this.state.kmRestante).toFixed(2)}</Animatable.Text>
-                            <Text style={{ textAlign: 'center', fontSize: 12, fontFamily: 'Inter-Bold', color: colors.WHITE, marginLeft: 5 }}>KM</Text>
                         </View>
                     </View>
-                }
-                {this.state.chegouCorridaQueue ? null :
-                    <View style={styles.buttonViewStyle}>
-                        <Button
-                            title='Finalizar corrida'
-                            onPress={() => {
-                                this.checkDist(this.state.rideDetails)
-                            }}
-                            titleStyle={styles.titleViewStyle}
-                            buttonStyle={styles.buttonStyleView}
-                        />
-                    </View>
-                }
-                {/* JSX AGUARDANDO CORRIDA EM ESPERA CASO HOUVER */}
 
-                {this.state.chegouCorridaQueue == false ? null :
-                    <FlatList
-                        data={this.state.tasklist}
-                        keyExtractor={(item, index) => index.toString()}
-                        renderItem={({ item, index }) => {
-                            return (
+                    :
 
-                                <Modal
-                                    animationType="slide"
-                                    transparent={true}
-                                    visible={true}
-                                    onRequestClose={() => {
-                                        alert("Modal has been closed.");
-                                    }}
-                                >
-                                    <View>
-                                        <ActionSheetCustom
-                                            ref={o => this.RefActionSheet = o}
-                                            style={styles}
-                                            title={<Text style={{ color: colors.RED, fontSize: 20, fontFamily: 'Inter-Bold' }}>Rejeitar corrida?</Text>}
-                                            message={<Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Regular', textAlign: 'center' }}>Você pode reijetar sem afetar sua taxa</Text>}
-                                            options={['Cancelar', 'Voltar']}
-                                            cancelButtonIndex={1}
-                                            destructiveButtonIndex={0}
-                                            onPress={(index) => {
-                                                if (index == 0) {
-                                                    this.onPressIgnore(item)
-                                                } else {
-                                                    //console.log('actionsheet close')
-                                                }
-                                            }}
-                                        />
-                                    </View>
-                                    <View style={{ flex: 1.3 }}>
-                                        <MapView
-                                            ref={map2 => { this.map2 = map2 }}
-                                            style={styles.map}
-                                            rotateEnabled={false}
-                                            provider={PROVIDER_GOOGLE}
-                                            zoomControlEnabled={false}
-                                            zoomEnabled={false}
-                                            scrollEnabled={false}
-                                            showsCompass={false}
-                                            showsScale={false}
-                                            showsMyLocationButton={false}
-                                            region={this.checkMap()}
+                    <View style={{ flex: 1 }}>
+                        <FlatList
+                            data={this.state.tasklist}
+                            keyExtractor={(item, index) => index.toString()}
+                            renderItem={({ item, index }) => {
+                                return (
 
-                                        >
-                                            <Marker.Animated
-                                                ref={marker => { this.marker = marker }}
-                                                coordinate={{ latitude: item.pickup.lat, longitude: item.pickup.lng }}
-                                                anchor={{ x: 0.5, y: 0.5 }}
-                                            >
-                                                <MarkerPicSVG
-                                                    width={35}
-                                                    height={35}
-                                                />
-                                            </Marker.Animated>
-                                            <Marker
-                                                coordinate={{ latitude: item.drop.lat, longitude: item.drop.lng }}
-                                                anchor={{ x: 0.5, y: 1 }}
-                                            >
-                                                <MarkerDropSVG
-                                                    width={40}
-                                                    height={40}
-                                                />
-                                            </Marker>
-
-                                            <Directions
-                                                origin={{ latitude: item.pickup.lat, longitude: item.pickup.lng }}
-                                                destination={{ latitude: item.drop.lat, longitude: item.drop.lng }}
-                                                onReady={result => {
-                                                    this.setState({ duration: Math.floor(result.duration) });
-
-                                                    this.map2.fitToCoordinates(result.coordinates, {
-                                                        edgePadding: {
-                                                            right: getPixelSize(10),
-                                                            left: getPixelSize(10),
-                                                            top: getPixelSize(10),
-                                                            bottom: getPixelSize(50)
-                                                        },
-                                                        animated: true,
-                                                    });
+                                    <Modal
+                                        animationType="slide"
+                                        transparent={true}
+                                        visible={true}
+                                        onRequestClose={() => {
+                                            alert("Modal has been closed.");
+                                        }}
+                                    >
+                                        <View>
+                                            <ActionSheetCustom
+                                                ref={o => this.RefActionSheet = o}
+                                                style={styles}
+                                                title={<Text style={{ color: colors.RED, fontSize: 20, fontFamily: 'Inter-Bold' }}>Rejeitar corrida?</Text>}
+                                                message={<Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Regular', textAlign: 'center' }}>Você pode reijetar sem afetar sua taxa</Text>}
+                                                options={['Cancelar', 'Voltar']}
+                                                cancelButtonIndex={1}
+                                                destructiveButtonIndex={0}
+                                                onPress={(index) => {
+                                                    if (index == 0) {
+                                                        this.onPressIgnore(item)
+                                                    } else {
+                                                        //console.log('actionsheet close')
+                                                    }
                                                 }}
                                             />
-                                        </MapView>
-                                    </View>
+                                        </View>
+                                        <View style={{ flex: 1.3 }}>
+                                            <MapView
+                                                ref={map2 => { this.map2 = map2 }}
+                                                style={styles.map}
+                                                rotateEnabled={false}
+                                                provider={PROVIDER_GOOGLE}
+                                                zoomControlEnabled={false}
+                                                zoomEnabled={false}
+                                                scrollEnabled={false}
+                                                showsCompass={false}
+                                                showsScale={false}
+                                                showsMyLocationButton={false}
+                                                region={this.checkMap()}
 
-                                    <View style={styles.modalMain}>
-                                        <View style={styles.modalContainer}>
-                                            <View style={styles.tituloModalView}>
-                                                <Text style={styles.txtTitulo}>Nova corrida</Text>
-                                                <View style={styles.viewDetalhesTempo}>
-                                                    <View style={styles.tempoCorrida}>
-                                                        <View style={styles.iconBack}>
-                                                            <Icon
-                                                                size={15}
-                                                                name='schedule'
-                                                                type='material'
-                                                                color={colors.DEEPBLUE}
-                                                            />
+                                            >
+                                                <Marker.Animated
+                                                    ref={marker => { this.marker = marker }}
+                                                    coordinate={{ latitude: item.pickup.lat, longitude: item.pickup.lng }}
+                                                    anchor={{ x: 0.5, y: 0.5 }}
+                                                >
+                                                    <MarkerPicSVG
+                                                        width={35}
+                                                        height={35}
+                                                    />
+                                                </Marker.Animated>
+                                                <Marker
+                                                    coordinate={{ latitude: item.drop.lat, longitude: item.drop.lng }}
+                                                    anchor={{ x: 0.5, y: 1 }}
+                                                >
+                                                    <MarkerDropSVG
+                                                        width={40}
+                                                        height={40}
+                                                    />
+                                                </Marker>
+
+                                                <Directions
+                                                    origin={{ latitude: item.pickup.lat, longitude: item.pickup.lng }}
+                                                    destination={{ latitude: item.drop.lat, longitude: item.drop.lng }}
+                                                    onReady={result => {
+                                                        this.setState({ duration: Math.floor(result.duration) });
+
+                                                        this.map2.fitToCoordinates(result.coordinates, {
+                                                            edgePadding: {
+                                                                right: getPixelSize(10),
+                                                                left: getPixelSize(10),
+                                                                top: getPixelSize(10),
+                                                                bottom: getPixelSize(50)
+                                                            },
+                                                            animated: true,
+                                                        });
+                                                    }}
+                                                />
+                                            </MapView>
+                                        </View>
+
+                                        <View style={styles.modalMain}>
+                                            <View style={styles.modalContainer}>
+                                                <View style={styles.tituloModalView}>
+                                                    <Text style={styles.txtTitulo}>Nova corrida</Text>
+                                                    <View style={styles.viewDetalhesTempo}>
+                                                        <View style={styles.tempoCorrida}>
+                                                            <View style={styles.iconBack}>
+                                                                <Icon
+                                                                    size={15}
+                                                                    name='schedule'
+                                                                    type='material'
+                                                                    color={colors.DEEPBLUE}
+                                                                />
+                                                            </View>
+                                                            <Text style={styles.txtTempo}>{item.estimateDistance}</Text>
                                                         </View>
-                                                        <Text style={styles.txtTempo}>{item.estimateDistance}</Text>
+                                                        <View style={styles.tempoKM}>
+                                                            <View style={styles.iconBack}>
+                                                                <Icon
+                                                                    size={15}
+                                                                    name='map-pin'
+                                                                    type='feather'
+                                                                    color={colors.DEEPBLUE}
+                                                                />
+                                                            </View>
+                                                            <Text style={styles.txtTempo}>{parseFloat(this.state.distance).toFixed(2)} KM</Text>
+                                                        </View>
                                                     </View>
-                                                    <View style={styles.tempoKM}>
-                                                        <View style={styles.iconBack}>
+                                                    <View style={styles.viewBtnRejeitar}>
+                                                        <TouchableOpacity style={styles.btnRejeitar} onPress={() => { this.showActionSheett() }}>
+                                                            <AnimatedCircularProgress
+                                                                style={{ position: 'absolute' }}
+                                                                ref={(ref) => this.circularProgress = ref}
+                                                                size={47}
+                                                                width={5}
+                                                                fill={15000}
+                                                                tintColor="#FF2121"
+                                                                backgroundColor="#3d5875">
+                                                            </AnimatedCircularProgress>
+                                                            <IconCloseSVG height={25} width={25} />
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </View>
+                                                <View style={styles.viewEndereco}>
+                                                    <View style={styles.enderecoPartida}>
+                                                        <Icon
+                                                            size={15}
+                                                            name='arrow-right-circle'
+                                                            type='feather'
+                                                            color={colors.DEEPBLUE}
+                                                        />
+                                                        <Text style={styles.txtPartida}>{item.pickup.add}</Text>
+                                                    </View>
+                                                    <View style={styles.enderecoDestino}>
+                                                        <Icon
+                                                            size={15}
+                                                            name='arrow-down-circle'
+                                                            type='feather'
+                                                            color={colors.RED}
+                                                        />
+                                                        <Text style={styles.txtDestino}>{item.drop.add}</Text>
+                                                    </View>
+                                                </View>
+                                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
+                                                    <View style={styles.imgModalView}>
+                                                        <Image source={item.imageRider ? { uri: item.imageRider } : require('../../assets/images/profilePic.png')} style={styles.imagemModal} />
+                                                        <Text style={styles.nomePessoa}>{item.firstNameRider}</Text>
+                                                        <View style={{ marginLeft: 5, height: 25, paddingHorizontal: 10, backgroundColor: colors.GREY1, borderRadius: 15, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
                                                             <Icon
-                                                                size={15}
-                                                                name='map-pin'
+                                                                size={18}
+                                                                name='ios-star'
+                                                                type='ionicon'
+                                                                color={colors.YELLOW.primary}
+                                                            />
+                                                            <Text style={{ fontSize: 14, fontFamily: 'Inter-Bold', color: colors.BLACK, marginLeft: 5, }}>{item.ratingRider}</Text>
+                                                        </View>
+                                                    </View>
+                                                    <View style={styles.iconPgt}>
+                                                        <View style={styles.formaPgt}>
+                                                            <Icon
+                                                                size={14}
+                                                                name='credit-card'
                                                                 type='feather'
                                                                 color={colors.DEEPBLUE}
                                                             />
                                                         </View>
-                                                        <Text style={styles.txtTempo}>{parseFloat(this.state.distance).toFixed(2)} KM</Text>
+                                                        <Text style={styles.txtTempo}>{item.pagamento.payment_mode}</Text>
                                                     </View>
                                                 </View>
-                                                <View style={styles.viewBtnRejeitar}>
-                                                    <TouchableOpacity style={styles.btnRejeitar} onPress={() => { this.showActionSheet() }}>
-                                                        <AnimatedCircularProgress
-                                                            style={{ position: 'absolute' }}
-                                                            ref={(ref) => this.circularProgress = ref}
-                                                            size={47}
-                                                            width={5}
-                                                            fill={15000}
-                                                            tintColor="#FF2121"
-                                                            backgroundColor="#3d5875">
-                                                        </AnimatedCircularProgress>
-                                                        <IconCloseSVG height={25} width={25} />
-                                                    </TouchableOpacity>
-                                                </View>
-                                            </View>
-                                            <View style={styles.viewEndereco}>
-                                                <View style={styles.enderecoPartida}>
-                                                    <Icon
-                                                        size={15}
-                                                        name='arrow-right-circle'
-                                                        type='feather'
-                                                        color={colors.DEEPBLUE}
-                                                    />
-                                                    <Text style={styles.txtPartida}>{item.pickup.add}</Text>
-                                                </View>
-                                                <View style={styles.enderecoDestino}>
-                                                    <Icon
-                                                        size={15}
-                                                        name='arrow-down-circle'
-                                                        type='feather'
-                                                        color={colors.RED}
-                                                    />
-                                                    <Text style={styles.txtDestino}>{item.drop.add}</Text>
-                                                </View>
-                                            </View>
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
-                                                <View style={styles.imgModalView}>
-                                                    <Image source={item.imageRider ? { uri: item.imageRider } : require('../../assets/images/profilePic.png')} style={styles.imagemModal} />
-                                                    <Text style={styles.nomePessoa}>{item.firstNameRider}</Text>
-                                                    <View style={{ marginLeft: 5, height: 25, paddingHorizontal: 10, backgroundColor: colors.GREY1, borderRadius: 15, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-                                                        <Icon
-                                                            size={18}
-                                                            name='ios-star'
-                                                            type='ionicon'
-                                                            color={colors.YELLOW.primary}
-                                                        />
-                                                        <Text style={{ fontSize: 14, fontFamily: 'Inter-Bold', color: colors.BLACK, marginLeft: 5, }}>{item.ratingRider}</Text>
+                                                <View style={styles.viewmainBtn}>
+                                                    <View style={styles.viewBtn}>
+                                                        <TouchableOpacity style={styles.btnAceitar} onPress={() => { this.onPressAccept(item) }} disabled={this.state.loader || this.state.acceptBtnDisable}>
+                                                            <Text style={styles.txtBtnAceitar}>Aceitar</Text>
+                                                            <ActivityIndicator animating={this.state.loader} size="large" color={colors.WHITE} style={{ position: 'absolute', right: 35 }} />
+                                                        </TouchableOpacity>
                                                     </View>
-                                                </View>
-                                                <View style={styles.iconPgt}>
-                                                    <View style={styles.formaPgt}>
-                                                        <Icon
-                                                            size={14}
-                                                            name='credit-card'
-                                                            type='feather'
-                                                            color={colors.DEEPBLUE}
-                                                        />
-                                                    </View>
-                                                    <Text style={styles.txtTempo}>{item.pagamento.payment_mode}</Text>
-                                                </View>
-                                            </View>
-                                            <View style={styles.viewmainBtn}>
-                                                <View style={styles.viewBtn}>
-                                                    <TouchableOpacity style={styles.btnAceitar} onPress={() => { this.onPressAccept(item) }} disabled={this.state.loader || this.state.acceptBtnDisable}>
-                                                        <Text style={styles.txtBtnAceitar}>Aceitar</Text>
-                                                        <ActivityIndicator animating={this.state.loader} size="large" color={colors.WHITE} style={{ position: 'absolute', right: 35 }} />
-                                                    </TouchableOpacity>
                                                 </View>
                                             </View>
                                         </View>
-                                    </View>
-                                </Modal>
-                            )
-                        }
-                        }
-                    />
+                                    </Modal>
+                                )
+                            }
+                            }
+                        />
+                    </View>
                 }
                 {this.loading()}
             </View>

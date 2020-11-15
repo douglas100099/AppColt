@@ -83,7 +83,9 @@ export default class DriverStartTrip extends React.Component {
     };
 
     async UNSAFE_componentWillMount() {
+        console.log('ENTROU NA TELA START TRIP')
         const allDetails = this.props.navigation.getParam('allDetails')
+        console.log(allDetails)
         const regionUser = this.props.navigation.getParam('regionUser') ? this.props.navigation.getParam('regionUser') : null
         this.setState({
             rideDetails: allDetails,
@@ -227,19 +229,19 @@ export default class DriverStartTrip extends React.Component {
                             if (horaEmbarque) {
                                 var somarMin = horaEmbarque.setMinutes(horaEmbarque.getMinutes() + 5)
                                 var horaFim = new Date(somarMin)
-                                var h = horaFim.getHours()
-                                var m = horaFim.getMinutes()
+                                var horaFormatada = horaFim.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit' });
+                                console.log(horaFormatada)
                             }
-                            this.setState({ horaEmbarque: parseInt(horaEmbarqueAsync), horaFim: h + ':' + m })
+                            this.setState({ horaEmbarque: parseInt(horaEmbarqueAsync), horaFim: horaFormatada })
                         } else {
                             var horaEmbarque = new Date().getTime().toString()
                             AsyncStorage.setItem('horaEmbarque', horaEmbarque)
                             var horaAtual = new Date()
                             var somarMin = horaAtual.setMinutes(horaAtual.getMinutes() + 5)
                             var horaFim = new Date(somarMin)
-                            var h = horaFim.getHours()
-                            var m = horaFim.getMinutes()
-                            this.setState({ horaEmbarque: parseInt(horaEmbarque), horaFim: h + ':' + m })
+                            var horaFormatada = horaFim.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit' });
+                            this.setState({ horaEmbarque: parseInt(horaEmbarque), horaFim: horaFormatada })
+                            console.log(horaFormatada)
                         }
                     })
                 }
@@ -288,11 +290,13 @@ export default class DriverStartTrip extends React.Component {
     }
 
     chat() {
+        this.setState({ viewInfos: false })
         this.props.navigation.navigate("Chat", { passData: this.state.rideDetails });
     }
 
     callToCustomer(data) {
         if (data.customer) {
+            this.setState({ viewInfos: false })
             const cusData = firebase.database().ref('users/' + data.customer);
             cusData.once('value', customerData => {
                 if (customerData.val() && customerData.val().mobile) {
@@ -541,10 +545,10 @@ export default class DriverStartTrip extends React.Component {
                     this.setState({ viewInfos: false })
                 }}>
                 <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: colors.GREY.background }}>
-                    <View style={{ height: 250, borderRadius: 25, marginBottom: 10, }}>
+                    <View style={{ flex: 0.4, borderRadius: 25, marginBottom: 10, }}>
                         <View style={styles.viewEndereco}>
                             <TouchableOpacity
-                                style={{ height: 55, width: 55, borderRadius: 100, top: 25, position: 'absolute', alignItems: 'center' }}
+                                style={{ height: 50, width: 50, borderRadius: 100, top: -25,position: 'absolute', justifyContent: 'center', alignSelf: 'center',alignItems: 'center', backgroundColor: colors.WHITE, elevation: 3 }}
                                 onPress={() => this.setState({ viewInfos: false })}
                             >
                                 <Icon
@@ -595,7 +599,7 @@ export default class DriverStartTrip extends React.Component {
                             <View style={{ flex: 1 }}>
                                 <TouchableOpacity
                                     style={styles.btnLigar}
-                                    onPress={() => this.setState({ modalCancel: true })}
+                                    onPress={() => this.setState({ modalCancel: true, viewInfos: false, })}
                                 >
                                     <Icon
                                         name="x"
@@ -972,12 +976,13 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
+        marginTop: 15,
         marginHorizontal: 10,
     },
 
     TxtEnderecoPartida: {
         fontFamily: 'Inter-SemiBold',
-        fontSize: 12,
+        fontSize: 14,
         color: colors.BLACK
     },
 
@@ -990,7 +995,7 @@ const styles = StyleSheet.create({
 
     TxtEnderecoDestino: {
         fontFamily: 'Inter-SemiBold',
-        fontSize: 12,
+        fontSize: 14,
         color: colors.BLACK
     },
 

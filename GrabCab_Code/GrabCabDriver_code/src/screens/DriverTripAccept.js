@@ -25,6 +25,7 @@ import Easing from 'react-native-reanimated';
 import * as Linking from 'expo-linking';
 import { getPixelSize } from '../constants/utils';
 import Directions from "../components/Directions";
+import { customMapStyle } from "../../mapstyle.json";
 
 import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
@@ -233,6 +234,7 @@ export default class DriverTripAccept extends React.Component {
         this.sound.stopAsync();
         console.log('STOP SOUND')
     }
+
 
     async componentWillUnmount() {
         this._isMounted = false
@@ -659,8 +661,7 @@ export default class DriverTripAccept extends React.Component {
                         this.props.navigation.navigate('BookingCancel')
                         this.setState({ loader: false, chegouCorrida: false });
                     })
-
-                    firebase.database().ref('bookings/' + item.bookingId + '/requestedDriver/').remove();
+                    //firebase.database().ref('bookings/' + item.bookingId + '/requestedDriver/').remove();
                 }
             });
             firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/waiting_riders_list/' + item.bookingId + '/').remove()
@@ -922,6 +923,7 @@ export default class DriverTripAccept extends React.Component {
                                 showsUserLocation={false}
                                 showsCompass={false}
                                 showsScale={false}
+                                customMapStyle={customMapStyle}
                                 showsMyLocationButton={false}
                                 region={this.state.region ? this.state.region : null}
                             >

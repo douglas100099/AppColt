@@ -1,0 +1,96 @@
+{
+  "expo": {
+    "name": "Colt",
+    "description": "Aplicativo de transporte",
+    "slug": "Colt",
+    "privacy": "public",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "notification": {
+      "icon": "./assets/images/push_notification.png"
+    },
+    "version": "1.0",
+    "orientation": "portrait",
+
+    "icon": "./assets/images/appIcon.png",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1152FD"
+    },
+    "backgroundColor": "#1152FD",
+    "androidNavigationBar": {
+      "visible": "sticky-immersive"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "usesAppleSignIn": true,
+      "bundleIdentifier": "com.myth.appcolt",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app uses the location to find the Cabs near you.",
+        "NSCameraUsageDescription": "This app uses the camera to take your profile picture.",
+        "NSPhotoLibraryUsageDescription": "This app uses Photo Library for uploading your profile picture.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ]
+      },
+      "config": {
+        "googleMapsApiKey": "AIzaSyDALefKQ3xFjRRvw56_mRdPClMap41XAbM",
+        "googleSignIn": {
+          "reservedClientId": "com.googleusercontent.apps.414404391933-kvp9cfasn2kuklmgrdtiuqqqdnekprga"
+        }
+      },
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "buildNumber": "1.0"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptativeIcon.png",
+        "backgroundColor": "#1152FD"
+      },
+      "package": "com.myth.appcolt",
+      "versionCode": 10,
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA_ROLL"
+      ],
+      "googleServicesFile": "./google-services.json",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDALefKQ3xFjRRvw56_mRdPClMap41XAbM"
+        }
+      },
+      "useNextNotificationsApi": true
+    },
+    "extra": {
+      "firebaseConfig": {
+        "apiKey": "AIzaSyA_ulfyKW-NDZzvix7jaCSgL-uqElZkq0k",
+        "authDomain": "app-colt.firebaseapp.com",
+        "databaseURL": "https://app-colt.firebaseio.com",
+        "projectId": "app-colt",
+        "storageBucket": "app-colt.appspot.com",
+        "messagingSenderId": "414404391933",
+        "appId": "1:414404391933:web:4fe2919a63807454fddf94"
+      },
+      "googlemapkey": "AIzaSyDALefKQ3xFjRRvw56_mRdPClMap41XAbM",
+      "cloud_function_server_url": "https://us-central1-app-colt.cloudfunctions.net",
+      "iosStandaloneAppClientId": "414404391933-kvp9cfasn2kuklmgrdtiuqqqdnekprga.apps.googleusercontent.com",
+      "androidStandaloneAppClientId": "414404391933-lp0qlvv14kdqrbt8e2vp6multat4155o.apps.googleusercontent.com"
+    }
+  }
+}

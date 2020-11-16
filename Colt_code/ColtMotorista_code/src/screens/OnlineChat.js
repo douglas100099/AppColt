@@ -64,7 +64,7 @@ export default class OnlineChat extends Component {
     let bookingData = firebase.database().ref('bookings/' + this.getParamData.bookingId)
     bookingData.on('value', response => {
       if (response.val()) {
-        this.setState({ carbookedInfo: response.val()})
+        this.setState({ carbookedInfo: response.val() })
       }
     })
     let msgData = firebase.database().ref(`chat/` + this.getParamData.bookingId + '/message')
@@ -218,8 +218,8 @@ export default class OnlineChat extends Component {
     return (
       item.source == "driver" ?
         <View style={styles.drivermsgStyle}>
-            <Text style={styles.msgTextStyle}>{item ? item.message : languageJSON.chat_history_not_found}</Text>
-            <Text style={styles.msgTimeStyle}>{item ? item.msgTime : null}</Text>
+          <Text style={styles.msgTextStyle}>{item ? item.message : languageJSON.chat_history_not_found}</Text>
+          <Text style={styles.msgTimeStyle}>{item ? item.msgTime : null}</Text>
         </View>
         :
         <View style={styles.riderMsgStyle}>
@@ -242,24 +242,24 @@ export default class OnlineChat extends Component {
               />
             </TouchableOpacity>
           </View>
-          <View style={{ flexDirection: 'column', alignItems: 'center' }}>
+          <View style={{ alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20, }}> {this.state.carbookedInfo.firstNameRider}</Text>
           </View>
-          <View style={{ backgroundColor: colors.BLACK, width: 53, justifyContent: 'center', alignItems: 'center', height: 53, position: 'absolute', bottom: 5, right: 10, borderRadius: 100 }}>
+          <View style={{ backgroundColor: colors.BLACK, width: 42, justifyContent: 'center', alignItems: 'center', height: 42, bottom: 5, position: 'absolute', right: 20, borderRadius: 100 }}>
             {this.state.carbookedInfo.imageRider ?
               <Image
                 source={{ uri: this.state.carbookedInfo.firstNameRider }}
-                style={{ width: 50, height: 50, borderRadius: 50, }}
+                style={{ width: 40, height: 40, borderRadius: 50, }}
               />
               :
               <ProfileSVG
-                width={50}
-                height={50}
+                width={40}
+                height={40}
               />
             }
           </View>
         </View>
-        <View style={{flex: 1 }}>
+        <View style={{ flex: 1 }}>
           <FlatList
             data={this.state.allChat.reverse()}
             renderItem={this.renderItem}
@@ -276,6 +276,8 @@ export default class OnlineChat extends Component {
               placeholder="Converse com o passageiro"
               onChangeText={text => this.setState({ inputmessage: text })}
             />
+
+
 
             <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 40, height: 40, borderRadius: 50 }} onPress={() => this.sendMessege(this.state.inputmessage)}>
               <Icon

@@ -35,6 +35,7 @@ import { Audio } from 'expo-av';
 import Directions from "../components/Directions";
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import { getPixelSize } from '../constants/utils';
+import customMapStyle from "../../mapstyle.json";
 
 const LATITUDE = 0;
 const LONGITUDE = 0;
@@ -66,7 +67,7 @@ export default class DriverCompleteTrip extends React.Component {
             tasklist: [],
             chegouCorridaQueue: false,
             loader: false,
-            duration: 0,
+            duration: null,
             isSound: false,
         }
     }
@@ -693,6 +694,7 @@ export default class DriverCompleteTrip extends React.Component {
                                 showsUserLocation={false}
                                 showsCompass={false}
                                 showsScale={false}
+                                customMapStyle={customMapStyle}
                                 loadingEnabled
                                 showsMyLocationButton={false}
                                 region={this.checkMap()}
@@ -827,6 +829,7 @@ export default class DriverCompleteTrip extends React.Component {
                                                 zoomEnabled={false}
                                                 scrollEnabled={false}
                                                 showsCompass={false}
+                                                customMapStyle={customMapStyle}
                                                 showsScale={false}
                                                 showsMyLocationButton={false}
                                                 region={this.checkMap()}

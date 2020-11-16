@@ -662,29 +662,9 @@ export default class DriverIncomePage extends React.Component {
                         <View style={styles.viewGanhos}>
                             <View style={{ flex: 1, alignItems: 'center' }}>
                                 <View style={{ flex: 1, alignItems: 'center', flexDirection: 'row' }}>
-                                    <View style={{ flex: 1, alignItems: 'flex-end', justifyContent: 'center' }}>
-                                        <TouchableOpacity>
-                                            <Icon
-                                                name="md-arrow-round-back"
-                                                type="ionicon"
-                                                size={22}
-                                                color={colors.WHITE}
-                                            />
-                                        </TouchableOpacity>
-                                    </View>
                                     <View style={{ flex: 2, alignItems: 'center', justifyContent: 'center' }}>
                                         <Text style={styles.tituloMensal2}>Ganhos esse mês</Text>
                                         <Text style={styles.txtMensal2}>R$ {this.state.thisMothh ? parseFloat(this.state.thisMothh).toFixed(2) : '0'}</Text>
-                                    </View>
-                                    <View style={{ flex: 1, alignItems: 'flex-start', justifyContent: 'center' }}>
-                                        <TouchableOpacity>
-                                            <Icon
-                                                name="md-arrow-round-forward"
-                                                type="ionicon"
-                                                size={22}
-                                                color={colors.WHITE}
-                                            />
-                                        </TouchableOpacity>
                                     </View>
                                 </View>
                             </View>
@@ -695,8 +675,8 @@ export default class DriverIncomePage extends React.Component {
                                 </View>
                                 <View style={{ width: 1, height: 60, backgroundColor: colors.GREY1, justifyContent: 'center' }}></View>
                                 <View style={{ flex: 1, alignItems: 'center' }}>
-                                    <Text style={styles.tituloMensal}>Ganhos semana</Text>
-                                    <Text style={styles.txtMensal}>R$ {this.state.thisMothh ? parseFloat(this.state.thisMothh).toFixed(2) : '0'}</Text>
+                                    <Text style={styles.tituloMensal}>Saldo</Text>
+                                    <Text style={[styles.txtMensal3, {color: this.state.saldo >= 0 ? '#32db64' : colors.RED}]}>R$ {this.state.saldo ? parseFloat(this.state.saldo).toFixed(2) : '0'}</Text>
                                 </View>
                             </View>
                         </View>
@@ -742,17 +722,6 @@ export default class DriverIncomePage extends React.Component {
 
                 <ScrollView style={{ flex: 0.5 }}>
                     <View style={{ justifyContent: 'center' }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: 5, marginBottom: 25, marginTop: 15, height: 55, backgroundColor: colors.GREY3 }}>
-                            <View style={{ marginLeft: 15 }}>
-                                <Icon
-                                    name='ios-wallet'
-                                    type='ionicon'
-                                    color='#32db64'
-                                />
-                            </View>
-                            <Text style={{ marginLeft: 10, fontSize: 18, fontFamily: 'Inter-Regular', color: colors.BLACK }}>Saldo:</Text>
-                            <Text style={{ marginLeft: 5, fontSize: 18, fontFamily: 'Inter-Bold', color: this.state.saldo >= 0 ? '#32db64' : colors.RED }}>{this.state.saldo ? parseFloat(this.state.saldo).toFixed(2) : '0'}</Text>
-                        </View>
                         <View style={{ alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 20 }}>
                             <TouchableOpacity style={{ flexDirection: 'row', width: width / 2.5, height: 40, backgroundColor: colors.DEEPBLUE, borderRadius: 15, justifyContent: 'center', alignItems: 'center' }}
                                 onPress={() => this.pagarSaldo()}
@@ -834,7 +803,12 @@ const styles = StyleSheet.create({
     txtMensal: {
         fontFamily: 'Inter-Bold',
         fontSize: 28,
-        color: colors.WHITE,
+        color: colors.WHITE
+    },
+
+    txtMensal3: {
+        fontFamily: 'Inter-Bold',
+        fontSize: 28,
     },
 
     tituloMensal: {

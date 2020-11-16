@@ -25,7 +25,7 @@ import Easing from 'react-native-reanimated';
 import * as Linking from 'expo-linking';
 import { getPixelSize } from '../constants/utils';
 import Directions from "../components/Directions";
-import { customMapStyle } from "../../mapstyle.json";
+import customMapStyle from "../../mapstyle.json";
 
 import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
@@ -753,6 +753,7 @@ export default class DriverTripAccept extends React.Component {
                                                 scrollEnabled={false}
                                                 showsCompass={false}
                                                 showsScale={false}
+                                                customMapStyle={customMapStyle}
                                                 showsMyLocationButton={false}
                                                 Region={{
                                                     latitude: this.state.region.latitude,

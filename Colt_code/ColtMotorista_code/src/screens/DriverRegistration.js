@@ -73,6 +73,7 @@ export default class DriverRegistrationPage extends React.Component {
     });
 
   }
+  
 
   //upload of picture
   async uploadmultimediaCrlv(fname, lname, mobile, email, urlCrlv, urlCnh, urlPerfil, CarType, cpfNum ) {

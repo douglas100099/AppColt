@@ -35,6 +35,7 @@ import RadioForm from 'react-native-simple-radio-button';
 const LOCATION_TASK_NAME = 'background-location-task';
 import * as Animatable from 'react-native-animatable';
 import Directions from "../components/Directions";
+import customMapStyle from "../../mapstyle.json";
 
 const LATITUDE = 0;
 const LONGITUDE = 0;
@@ -721,6 +722,7 @@ export default class DriverStartTrip extends React.Component {
                         provider={PROVIDER_GOOGLE}
                         showsUserLocation={false}
                         showsCompass={false}
+                        customMapStyle={customMapStyle}
                         showsScale={false}
                         loadingEnabled
                         showsMyLocationButton={false}

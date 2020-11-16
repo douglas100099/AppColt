@@ -151,6 +151,165 @@ const RequestPushMsg = (token, msg) => {
     return true;
 }
 
+const checkUserAsaas = async (cpf) => {
+    var myHeaders = new Headers();
+    myHeaders.append("access_token", "f2ceed19a84c26a38b9ad21bd7078a35ff17372e83db8c67569b98d8b3b6da08");
+    myHeaders.append("Cookie", "AWSALB=DD59xUIYEBepYXNoNytiXuFxbzTP7ffO0wNtGIp9XHLjWQL+dY0zcJd4YboggaWME0K0+E4bVjycoUr53xlP+RCS1eG9Mjqv39RWRPKYauJV5jtCru6VN8JDUkE9; AWSALBCORS=DD59xUIYEBepYXNoNytiXuFxbzTP7ffO0wNtGIp9XHLjWQL+dY0zcJd4YboggaWME0K0+E4bVjycoUr53xlP+RCS1eG9Mjqv39RWRPKYauJV5jtCru6VN8JDUkE9");
+
+    var requestOptions = {
+        method: 'GET',
+        headers: myHeaders,
+        redirect: 'follow'
+    };
+
+    return fetch("https://sandbox.asaas.com//api/v3/customers?cpfCnpj=" + cpf, requestOptions)
+        .then(response => response.text())
+        .then(result => {
+            let data = {}
+            data = JSON.parse(result)
+            return data
+        })
+        .catch(error => console.log('error', error));
+}
+
+const sendRequestPayment = (body) => {
+    var myHeaders = new Headers();
+    myHeaders.append("Content-Type", " application/json");
+    myHeaders.append("access_token", "f2ceed19a84c26a38b9ad21bd7078a35ff17372e83db8c67569b98d8b3b6da08");
+    myHeaders.append("Cookie", "AWSALB=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH; AWSALBCORS=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH");
+
+
+    var requestOptions = {
+        method: 'POST',
+        headers: myHeaders,
+        body: body,
+        redirect: 'follow'
+    };
+
+    fetch("https://sandbox.asaas.com/api/v3/payments", requestOptions)
+        .then(response => response.text())
+        .then(result => console.log(result))
+        .catch(error => console.log('error', error));
+}
+
+const createUserAsaas = async (raw) => {
+    var myHeaders = new Headers();
+    myHeaders.append("Content-Type", " application/json");
+    myHeaders.append("access_token", "f2ceed19a84c26a38b9ad21bd7078a35ff17372e83db8c67569b98d8b3b6da08");
+    myHeaders.append("Cookie", "AWSALB=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH; AWSALBCORS=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH");
+
+    var requestOptions = {
+        method: 'POST',
+        headers: myHeaders,
+        body: raw,
+        redirect: 'follow'
+    };
+
+    return fetch("https://sandbox.asaas.com//api/v3/customers", requestOptions)
+        .then(response => response.text())
+        .then(result => {
+            let data = {}
+            data = JSON.parse(result)
+            return data
+        })
+        .catch(error => console.log('error', error));
+}
+
+exports.requestPaymentDrivers = functions.region('southamerica-east1').pubsub.schedule('30 19 15 * *').timeZone('America/Sao_Paulo').onRun((context) => {
+    //'30 19 15 * *'
+    admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
+        let dataUsers = data.val()
+        if (dataUsers) {
+            for (let key in dataUsers) {
+                if (dataUsers[key].saldo) {
+                    if (dataUsers[key].saldo <= -5) {
+                        let checkUser = await checkUserAsaas(dataUsers[key].cpfNum)
+
+                        //Pega a data atual e adiciona +5 pro vencimento do boleto
+                        var date = new Date()
+                        var dataG = new Date(date)
+                        var resulta = dataG.setDate(dataG.getDate() + 5)
+                        var resultt = new Date(resulta).toLocaleDateString('pt-BR')
+
+                        if (checkUser.totalCount >= 1) {
+                            //user Asaas existe
+
+                            var body = {
+                                'customer': checkUser.data[0].id,
+                                'billingType': 'BOLETO',
+                                'dueDate': resultt,
+                                'value': dataUsers[key].saldo,
+                                'description': 'Taxa quinzenal do aplicativo de transporte Colt.',
+                                'externalReference': key,
+                                'discount': {
+                                    'value': 5,
+                                    'dueDateLimitDays': 0,
+                                    type: {
+                                        'PERCENTAGE': '5'
+                                    }
+                                },
+                                'fine': {
+                                    'value': 1
+                                },
+                                'interest': {
+                                    'value': 2
+                                },
+                                'postalService': false
+                            };
+
+                            sendRequestPayment(body)
+                        } 
+                        //user n existe no Asaas
+                        else {
+                            var body = {
+                                'name': dataUsers[key].firstName,
+                                'email': dataUsers[key].email,
+                                'mobilePhone': dataUsers[key].mobile,
+                                'cpfCnpj': dataUsers[key].cpfNum,
+                                'externalReference': key,
+                                'notificationDisabled': false,
+                            };
+
+                            //Cria um novo usuario no Asaas
+                            let createUser = await createUserAsaas(body)
+
+                            var raw = {
+                                'customer': createUser.data[0].id,
+                                'billingType': 'BOLETO',
+                                'dueDate': resultt,
+                                'value': dataUsers[key].saldo,
+                                'description': 'Taxa quinzenal do aplicativo de transporte Colt.',
+                                'externalReference': key,
+                                'discount': {
+                                    'value': 5,
+                                    'dueDateLimitDays': 0,
+                                    type: {
+                                        'PERCENTAGE': '5'
+                                    }
+                                },
+                                'fine': {
+                                    'value': 1
+                                },
+                                'interest': {
+                                    'value': 2
+                                },
+                                'postalService': false
+                            };
+
+                            sendRequestPayment(raw)
+                        }
+
+                        admin.database().ref('users/' + key + '/').update({
+                            saldo: 0
+                        })
+                    }
+                }
+            }
+        }
+    })
+})
+
+
 exports.manageMoney = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/manageMoney').onCreate((snap, context) => {
     const bookingId = context.params.bookingsId;
     admin.database().ref('bookings/' + bookingId).on("value", (data) => {
@@ -233,7 +392,7 @@ exports.manageMoney = functions.region('southamerica-east1').database.ref('booki
                         if (dataBooking.pagamento.usedWalletMoney >= dataBooking.pagamento.convenience_fees) {
                             console.log("O WALLET USADO È MAIOR QUE O CONVENIENCE ")
                             if (saldoDriver) {
-                                let newSaldo = saldoDriver + ( dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees)
+                                let newSaldo = saldoDriver + (dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees)
                                 admin.database().ref('users/' + dataBooking.driver + '/').update({
                                     saldo: newSaldo
                                 })
@@ -245,7 +404,7 @@ exports.manageMoney = functions.region('southamerica-east1').database.ref('booki
                             }
                         } else {
                             if (saldoDriver) {
-                                let newSaldo = saldoDriver + ( dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees)
+                                let newSaldo = saldoDriver + (dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees)
 
                                 admin.database().ref('users/' + dataBooking.driver + '/').update({
                                     saldo: newSaldo
@@ -378,7 +537,7 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                 .catch(error => {
                                     throw new Error("Erro atualizar STATUS PAID USANDO DINHEIRO - my_bookings")
                                 })
-                        return true
+                            return true
                         })
                         .catch(error => {
                             throw new Error("Erro atualizar STATUS PAID USANDO DINHEIRO - my-booking")
@@ -388,36 +547,6 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
         }
     })
 })
-
-
-/*exports.manageWalletMoney = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/usedWallet').onCreate((snap, context) => {
-    const bookingId = context.params.bookingsId;
-    admin.database().ref('bookings/' + context.params.bookingsId).on("value", (data) => {
-        let dataBooking = data.val();
-        if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'PAID') {
-            let value = dataBooking.pagamento.usedWalletMoney
-
-            admin.database().ref("users/" + dataBooking.customer + "/walletBalance").once("value", (userData) => {
-                if (userData.val()) {
-                    let walletMoney = userData.val()
-                    let newValue = parseFloat(walletMoney) - parseFloat(value)
-
-                    admin.database().ref("users/" + dataBooking.customer + '/').update({
-                        walletBalance: newValue
-                    })
-                }
-
-                let tDate = new Date();
-                admin.database().ref('users/' + dataBooking.customer + '/walletHistory').push({
-                    type: 'Debit',
-                    amount: dataBooking.pagamento.usedWalletMoney,
-                    date: tDate.toString(),
-                    txRef: bookingId,
-                })
-            })
-        }
-    })
-})*/
 
 exports.cancelSearchDriver = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}').onCreate((snap, context) => {
     setTimeout(() => {

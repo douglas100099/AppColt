@@ -1045,7 +1045,7 @@ export default class FareScreen extends React.Component {
                         <View style={[styles.viewBotao, {
                             shadowOpacity: this.state.buttonDisabled ? 0 : 0.4
                         }]}>
-                            <TouchableOpacity style={styles.confirmButtonStyle} disabled={this.state.buttonDisabled} onPress={() => { this.checkCPF() }}>
+                            <TouchableOpacity style={styles.confirmButtonStyle} disabled={this.state.buttonDisabled} onPress={() => { this.confirmarCorrida() }}>
                                 <Text style={styles.buttonText}> Confirmar corrida </Text>
                             </TouchableOpacity>
                         </View>

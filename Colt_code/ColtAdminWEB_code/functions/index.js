@@ -215,9 +215,31 @@ const createUserAsaas = async (raw) => {
         .catch(error => console.log('error', error));
 }
 
-exports.requestPaymentDrivers = functions.region('southamerica-east1').pubsub.schedule('30 19 15 * *').timeZone('America/Sao_Paulo').onRun((context) => {
+const checkPaymentAsaas = async (custumer) => {
+    var myHeaders = new Headers();
+    myHeaders.append("access_token", " f2ceed19a84c26a38b9ad21bd7078a35ff17372e83db8c67569b98d8b3b6da08");
+    myHeaders.append("Cookie", "AWSALB=8ot6kpPxY2hftKe48q10n7WrdptQn7kvONpHNj3+Lh+BpeccnlOE/SE9lsl0XOKMKAVDqhq7QTXvbp7ogV7O9FARNb6ScQqymhS6VlFWkn81PzeYqp7bTVmUZW96; AWSALBCORS=8ot6kpPxY2hftKe48q10n7WrdptQn7kvONpHNj3+Lh+BpeccnlOE/SE9lsl0XOKMKAVDqhq7QTXvbp7ogV7O9FARNb6ScQqymhS6VlFWkn81PzeYqp7bTVmUZW96");
+
+    var requestOptions = {
+        method: 'GET',
+        headers: myHeaders,
+        redirect: 'follow'
+    };
+
+    fetch("https://sandbox.asaas.com/api/v3/payments?customer=" + custumer, requestOptions)
+        .then(response => response.text())
+        .then(result => {
+            let data = {}
+            data = JSON.parse(result)
+            return data
+        })
+        .catch(error => console.log('error', error));
+}
+
+exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.schedule('30 19 1 * *').timeZone('America/Sao_Paulo').onRun((context) => {
     //'30 19 15 * *'
     admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
+        let custumerAsaas = null
         let dataUsers = data.val()
         if (dataUsers) {
             for (let key in dataUsers) {
@@ -234,6 +256,7 @@ exports.requestPaymentDrivers = functions.region('southamerica-east1').pubsub.sc
                         if (checkUser.totalCount >= 1) {
                             //user Asaas existe
 
+                            custumerAsaas = checkUser.data[0].id
                             var body = {
                                 'customer': checkUser.data[0].id,
                                 'billingType': 'BOLETO',
@@ -258,7 +281,7 @@ exports.requestPaymentDrivers = functions.region('southamerica-east1').pubsub.sc
                             };
 
                             sendRequestPayment(body)
-                        } 
+                        }
                         //user n existe no Asaas
                         else {
                             var body = {
@@ -272,6 +295,7 @@ exports.requestPaymentDrivers = functions.region('southamerica-east1').pubsub.sc
 
                             //Cria um novo usuario no Asaas
                             let createUser = await createUserAsaas(body)
+                            custumerAsaas = createUser.data[0].id
 
                             var raw = {
                                 'customer': createUser.data[0].id,
@@ -301,6 +325,16 @@ exports.requestPaymentDrivers = functions.region('southamerica-east1').pubsub.sc
 
                         admin.database().ref('users/' + key + '/').update({
                             saldo: 0
+                        }).then(() => {
+                            admin.database().ref('users/' + key + '/').update({
+                                payment_waiting: {
+                                    create_date: new Date().toLocaleDateString('pt-BR'),
+                                    asaas_id: custumerAsaas
+                                }
+                            })
+                            return true
+                        }).catch((error) => {
+                            return error
                         })
                     }
                 }
@@ -309,6 +343,133 @@ exports.requestPaymentDrivers = functions.region('southamerica-east1').pubsub.sc
     })
 })
 
+exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub.schedule('30 19 16 * *').timeZone('America/Sao_Paulo').onRun((context) => {
+    //'30 19 15 * *'
+    admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
+        let custumerAsaas = null
+        let dataUsers = data.val()
+        if (dataUsers) {
+            for (let key in dataUsers) {
+                if (dataUsers[key].saldo) {
+                    if (dataUsers[key].saldo <= -5) {
+                        let checkUser = await checkUserAsaas(dataUsers[key].cpfNum)
+
+                        //Pega a data atual e adiciona +5 pro vencimento do boleto
+                        var date = new Date()
+                        var dataG = new Date(date)
+                        var resulta = dataG.setDate(dataG.getDate() + 5)
+                        var resultt = new Date(resulta).toLocaleDateString('pt-BR')
+
+                        if (checkUser.totalCount >= 1) {
+                            //user Asaas existe
+                            custumerAsaas = checkUser.data[0].id
+                            var body = {
+                                'customer': checkUser.data[0].id,
+                                'billingType': 'BOLETO',
+                                'dueDate': resultt,
+                                'value': dataUsers[key].saldo,
+                                'description': 'Taxa quinzenal do aplicativo de transporte Colt.',
+                                'externalReference': key,
+                                'discount': {
+                                    'value': 5,
+                                    'dueDateLimitDays': 0,
+                                    type: {
+                                        'PERCENTAGE': '5'
+                                    }
+                                },
+                                'fine': {
+                                    'value': 1
+                                },
+                                'interest': {
+                                    'value': 2
+                                },
+                                'postalService': false
+                            };
+
+                            sendRequestPayment(body)
+                        }
+                        //user n existe no Asaas
+                        else {
+                            var body = {
+                                'name': dataUsers[key].firstName,
+                                'email': dataUsers[key].email,
+                                'mobilePhone': dataUsers[key].mobile,
+                                'cpfCnpj': dataUsers[key].cpfNum,
+                                'externalReference': key,
+                                'notificationDisabled': false,
+                            };
+
+                            //Cria um novo usuario no Asaas
+                            let createUser = await createUserAsaas(body)
+                            custumerAsaas = createUser.data[0].id
+
+                            var raw = {
+                                'customer': createUser.data[0].id,
+                                'billingType': 'BOLETO',
+                                'dueDate': resultt,
+                                'value': dataUsers[key].saldo,
+                                'description': 'Taxa quinzenal do aplicativo de transporte Colt.',
+                                'externalReference': key,
+                                'discount': {
+                                    'value': 5,
+                                    'dueDateLimitDays': 0,
+                                    type: {
+                                        'PERCENTAGE': '5'
+                                    }
+                                },
+                                'fine': {
+                                    'value': 1
+                                },
+                                'interest': {
+                                    'value': 2
+                                },
+                                'postalService': false
+                            };
+
+                            sendRequestPayment(raw)
+                        }
+
+                        admin.database().ref('users/' + key + '/').update({
+                            saldo: 0
+                        }).then(() => {
+                            admin.database().ref('users/' + key + '/').update({
+                                payment_waiting: {
+                                    create_date: new Date().toLocaleDateString('pt-BR'),
+                                    asaas_id: custumerAsaas
+                                }
+                            })
+                            return true
+                        }).catch((error) => {
+                            return error
+                        })
+                    }
+                }
+            }
+        }
+    })
+})
+
+exports.verifyDriversPayment_6 = functions.region('southamerica-east1').pubsub.schedule('00 21 6 * *').timeZone('America/Sao_Paulo').onRun((context) => {
+
+    admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
+        let dataUsers = data.val()
+        if (dataUsers) {
+            for (let key in dataUsers) {
+                if (dataUsers[key].payment_waiting) {
+                    let checkPayment = await checkPaymentAsaas(dataUsers[key].payment_waiting.asaas_id)
+
+                    if( checkPayment.totalCount >= 1 ){
+                        if( checkPayment.data[0].status !== 'RECEIVED' || checkPayment.data[0].status !== 'CONFIRMED' ){
+
+                            //Bloqueia o motorista 
+
+                        }
+                    }
+                }
+            }
+        }
+    })
+})
 
 exports.manageMoney = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/manageMoney').onCreate((snap, context) => {
     const bookingId = context.params.bookingsId;

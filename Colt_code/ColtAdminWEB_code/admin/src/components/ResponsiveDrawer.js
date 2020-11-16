@@ -61,7 +61,7 @@ function ResponsiveDrawer(props) {
     <div className={classes.root}>
       <CssBaseline />
       <AppBar position="fixed" className={classes.appBar}>
-        <Toolbar style={{backgroundColor: '#444444'}}>
+        <Toolbar style={{backgroundColor: '#1152FD'}}>
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -72,7 +72,7 @@ function ResponsiveDrawer(props) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap>
-            GrabCab Admin
+            Colt Administrativo
           </Typography>
         </Toolbar>
       </AppBar>

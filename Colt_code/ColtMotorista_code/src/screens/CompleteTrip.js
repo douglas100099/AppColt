@@ -69,6 +69,7 @@ export default class DriverCompleteTrip extends React.Component {
             loader: false,
             duration: null,
             isSound: false,
+            recalculou: false,
         }
     }
 
@@ -347,7 +348,6 @@ export default class DriverCompleteTrip extends React.Component {
                 this.finalCostStore(item, this.state.rideDetails.pagamento.estimate, pos, respJson.routes[0].legs[0].distance.value, convenienceFee,
                     this.state.rideDetails.pagamento.discount_amount ? this.state.rideDetails.pagamento.discount_amount : 0,
                     this.state.rideDetails.pagamento.usedWalletMoney ? this.state.rideDetails.pagamento.usedWalletMoney : 0)
-                this.setState({ recalculou: false })
             } else {
                 var fareCalculation = farehelper(respJson.routes[0].legs[0].distance.value, totalTimeTaken, this.state.rateDetails ? this.state.rateDetails : 1, this.state.rideDetails.pagamento.cancellValue);
                 if (fareCalculation) {
@@ -355,7 +355,6 @@ export default class DriverCompleteTrip extends React.Component {
                         this.state.rideDetails.pagamento.discount_amount ? this.state.rideDetails.pagamento.discount_amount : 0,
                         this.state.rideDetails.pagamento.usedWalletMoney ? this.state.rideDetails.pagamento.usedWalletMoney : 0)
                 }
-                this.setState({ recalculou: true })
             }
         } else {
             this.openAlert();
@@ -389,7 +388,6 @@ export default class DriverCompleteTrip extends React.Component {
             promoCodeApplied: item.pagamento.promoCodeApplied,
             promoKey: item.pagamento.promoKey,
             cancellValue: item.pagamento.cancellValue,
-            recalculou: this.state.recalculou,
         }
         var data = {
             status: "END",

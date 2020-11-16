@@ -203,7 +203,18 @@ export default class DriverStartTrip extends React.Component {
                 if (tripData.status == "CANCELLED") {
                     AsyncStorage.getItem('horaEmbarque', (err, result) => {
                         if (result) {
-                            AsyncStorage.removeItem('horaEmbarque')
+                            AsyncStorage.removeItem('horaEmbarque').then(() => {
+                                this.props
+                                    .navigation
+                                    .dispatch(StackActions.reset({
+                                    index: 0,
+                                    actions: [
+                                        NavigationActions.navigate({
+                                            routeName: 'DriverTripAccept',
+                                        }),
+                                    ],
+                                }))
+                            })
                         } else {
                             firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/emCorrida').remove().then(() => {
                                 this.props
@@ -230,7 +241,7 @@ export default class DriverStartTrip extends React.Component {
                             if (horaEmbarque) {
                                 var somarMin = horaEmbarque.setMinutes(horaEmbarque.getMinutes() + 5)
                                 var horaFim = new Date(somarMin)
-                                var horaFormatada = horaFim.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit' });
+                                var horaFormatada = horaFim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                                 console.log(horaFormatada)
                             }
                             this.setState({ horaEmbarque: parseInt(horaEmbarqueAsync), horaFim: horaFormatada })
@@ -240,7 +251,7 @@ export default class DriverStartTrip extends React.Component {
                             var horaAtual = new Date()
                             var somarMin = horaAtual.setMinutes(horaAtual.getMinutes() + 5)
                             var horaFim = new Date(somarMin)
-                            var horaFormatada = horaFim.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit' });
+                            var horaFormatada = horaFim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                             this.setState({ horaEmbarque: parseInt(horaEmbarque), horaFim: horaFormatada })
                             console.log(horaFormatada)
                         }
@@ -489,7 +500,7 @@ export default class DriverStartTrip extends React.Component {
                             punido: false,
                         }).then(() => {
                             firebase.database().ref(`/users/` + this.state.curUid + '/').update({ driverActiveStatus: false })
-                        }).then(this.onCancelConfirm())
+                        }).then(() => this.onCancelConfirm())
                     } else {
                         this.onCancelConfirm()
                     }
@@ -498,7 +509,7 @@ export default class DriverStartTrip extends React.Component {
                         punido: false,
                     }).then(() => {
                         firebase.database().ref(`/users/` + this.state.curUid + '/').update({ driverActiveStatus: false })
-                    }).then(this.onCancelConfirm())
+                    }).then(() => this.onCancelConfirm())
                 }
             })
         } catch (error) {
@@ -549,7 +560,7 @@ export default class DriverStartTrip extends React.Component {
                     <View style={{ flex: 0.4, borderRadius: 25, marginBottom: 10, }}>
                         <View style={styles.viewEndereco}>
                             <TouchableOpacity
-                                style={{ height: 50, width: 50, borderRadius: 100, top: -25,position: 'absolute', justifyContent: 'center', alignSelf: 'center',alignItems: 'center', backgroundColor: colors.WHITE, elevation: 3 }}
+                                style={{ height: 50, width: 50, borderRadius: 100, top: -25, position: 'absolute', justifyContent: 'center', alignSelf: 'center', alignItems: 'center', backgroundColor: colors.WHITE, elevation: 3 }}
                                 onPress={() => this.setState({ viewInfos: false })}
                             >
                                 <Icon

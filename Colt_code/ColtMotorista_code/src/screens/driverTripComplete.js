@@ -59,10 +59,16 @@ export default class DriverTripComplete extends React.Component {
 
     UNSAFE_componentWillMount() {
         const allDetails = this.props.navigation.getParam('allDetails');
+        const userData = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my_bookings/' + allDetails.bookingId + '/');
+        userData.on('value', statusDetails => {
+            let statusDetail = statusDetails.val()
+            if (statusDetail) {
+                this.setState({ rideDetails: statusDetail, bookingId: allDetails.bookingId })
+            }
+        })
         const trip_cost = this.props.navigation.getParam('trip_cost');
         const trip_end_time = this.props.navigation.getParam('trip_end_time');
         this.setState({
-            rideDetails: allDetails,
             region: {
                 latitude: allDetails.pickup.lat,
                 longitude: allDetails.pickup.lng,
@@ -115,60 +121,40 @@ export default class DriverTripComplete extends React.Component {
             })
 
         } else {
-            var data = {
-                payment_status: "PAID",
-            };
-
-            var riderData = {
-                payment_status: "PAID",
-            };
-            //var bookingId = item.bookingId?item.bookingId:item.bookingUid;
-            let dbRef = firebase.database().ref('users/' + this.state.curUid + '/my_bookings/' + item.bookingId + '/pagamento/');
-            dbRef.update(data).then(() => {
-                firebase.database().ref('bookings/' + item.bookingId + '/pagamento/').update(data).then(() => {
-                    let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/pagamento/')
-                    userDbRef.update(riderData).then(() => {
-
-                        // Remove a corrida recente (AS VEZES, TEM VEZ QUE TEM QUE SER NA MÃO)
-
-                        firebase.database().ref('users/' + this.state.curUid + '/emCorrida/').remove().then(() => {
-
-                            // Reseta a sequencia de corrida cancela
-
-                            firebase.database().ref('users/' + this.state.curUid + '/canceladasRecentes/').update({
-                                countRecentes: 0
-                            }).then(() => {
-                                let queueDetails = null
-                                firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/').once('value', data => {
-                                    if (data.val().rider_waiting_object) {
-                                        for (let key in data.val().rider_waiting_object) {
-                                            queueDetails = data.val().rider_waiting_object[key]
-                                            queueDetails.bookingId = key
-                                        }
-                                    }
-                                }).then(() => {
-                                    firebase.database().ref('users/' + this.state.curUid + '/').update({
-                                        queue: queueDetails == null ? false : true
-                                    }).then(() => {
-                                        if (queueDetails != null) {
-                                            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/rider_waiting_object/').remove().then(() => {
-                                                this.props.navigation.replace('DriverTripStart', { allDetails: queueDetails, regionUser: this.state.region })
-                                            })
-                                        } else {
-                                            this.props
-                                                .navigation
-                                                .dispatch(StackActions.reset({
-                                                    index: 0,
-                                                    actions: [
-                                                        NavigationActions.navigate({
-                                                            routeName: 'DriverTripAccept',
-                                                        }),
-                                                    ],
-                                                }))
-                                        }
-                                    })
+            // Remove a corrida recente (AS VEZES, TEM VEZ QUE TEM QUE SER NA MÃO)
+            firebase.database().ref('users/' + this.state.curUid + '/emCorrida/').remove().then(() => {
+                // Reseta a sequencia de corrida cancela
+                firebase.database().ref('users/' + this.state.curUid + '/canceladasRecentes/').update({
+                    countRecentes: 0
+                }).then(() => {
+                    let queueDetails = null
+                    firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/').once('value', data => {
+                        if (data.val().rider_waiting_object) {
+                            for (let key in data.val().rider_waiting_object) {
+                                queueDetails = data.val().rider_waiting_object[key]
+                                queueDetails.bookingId = key
+                            }
+                        }
+                    }).then(() => {
+                        firebase.database().ref('users/' + this.state.curUid + '/').update({
+                            queue: queueDetails == null ? false : true
+                        }).then(() => {
+                            if (queueDetails != null) {
+                                firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/rider_waiting_object/').remove().then(() => {
+                                    this.props.navigation.replace('DriverTripStart', { allDetails: queueDetails, regionUser: this.state.region })
                                 })
-                            })
+                            } else {
+                                this.props
+                                    .navigation
+                                    .dispatch(StackActions.reset({
+                                        index: 0,
+                                        actions: [
+                                            NavigationActions.navigate({
+                                                routeName: 'DriverTripAccept',
+                                            }),
+                                        ],
+                                    }))
+                            }
                         })
                     })
                 })
@@ -215,7 +201,7 @@ export default class DriverTripComplete extends React.Component {
                         //avarage Rating submission
                         firebase.database().ref('users/' + this.state.rideDetails.customer + '/ratings/').update({ userrating: parseFloat(fRating).toFixed(1) }).then(() => {
                             //Rating for perticular booking 
-                            firebase.database().ref('users/' + this.state.rideDetails.customer + '/my-booking/' + this.state.rideDetails.bookingId + '/').update({
+                            firebase.database().ref('users/' + this.state.rideDetails.customer + '/my-booking/' + this.state.bookingId + '/').update({
                                 rating: this.state.starCount > 0 ? this.state.starCount : 5,
                             })
                         })
@@ -241,13 +227,6 @@ export default class DriverTripComplete extends React.Component {
                                 color={colors.GREEN.light}
                             />
                         </View>
-                        <Animatable.View animation='fadeInLeftBig' delay={1100} useNativeDriver={true} style={styles.viewTxtIcon}>
-                            <Text style={styles.txtIcon}>Corrida finalizada!</Text>
-                            {this.state.rideDetails.pagamento.recalculou ?
-                            <Text style={styles.txtIcon2}>A rota da corrida foi alterada, o preço foi recalculado</Text>
-                            :
-                            null}
-                        </Animatable.View>
                     </Animatable.View>
                     <View style={styles.viewEndereco}>
                         <View style={styles.viewPartida}>
@@ -272,86 +251,86 @@ export default class DriverTripComplete extends React.Component {
 
                     <View style={styles.viewFormapgt}>
                         {this.state.rideDetails.pagamento.discount_amount ?
-                        <Animatable.View animation='fadeIn' useNativeDriver={true} style={styles.viewTxtIcon2}>
-                            <Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Bold', textAlign: 'center' }}>Desconto aplicado: R$ {parseInt(this.state.rideDetails.pagamento.discount_amount).toFixed(2)}. Enviaremos o valor do desconto para sua carteira motorista.</Text>
-                        </Animatable.View>
-                        :null}
+                            <Animatable.View animation='fadeIn' useNativeDriver={true} style={styles.viewTxtIcon2}>
+                                <Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Bold', textAlign: 'center' }}>Desconto aplicado: R$ {parseInt(this.state.rideDetails.pagamento.discount_amount).toFixed(2)}. Enviaremos o valor do desconto para sua carteira motorista.</Text>
+                            </Animatable.View>
+                            : null}
                         {this.state.rideDetails.pagamento.payment_mode === 'Dinheiro' ?
-                        <View style={styles.pgt}>
-                            <View style={styles.headerPgt}>
-                                <Image source={this.state.rideDetails.imageRider ? { uri: this.state.rideDetails.imageRider } : require('../../assets/images/profilePic.png')} style={styles.imagemModal} />
-                                <Text style={styles.nomePassageiro}>{this.state.rideDetails.firstNameRider}</Text>
-                            </View>
-                            <View style={styles.footerPgt}>
-                                <Text style={styles.txtFormapgt}>{this.state.rideDetails.pagamento ? this.state.rideDetails.pagamento.payment_mode : 'Dinheiro'}</Text>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', }}>
-                                    <Icon
-                                        name='dollar-sign'
-                                        type='feather'
-                                        size={15}
-                                        color={colors.GREEN.default}
-                                    />
-                                    <Text style={styles.txtValor}>{this.state.trip_cost ? this.state.currency.symbol + parseFloat(this.state.rideDetails.pagamento.customer_paid).toFixed(2) : this.state.currency.symbol + 0}</Text>
+                            <View style={styles.pgt}>
+                                <View style={styles.headerPgt}>
+                                    <Image source={this.state.rideDetails.imageRider ? { uri: this.state.rideDetails.imageRider } : require('../../assets/images/profilePic.png')} style={styles.imagemModal} />
+                                    <Text style={styles.nomePassageiro}>{this.state.rideDetails.firstNameRider}</Text>
+                                </View>
+                                <View style={styles.footerPgt}>
+                                    <Text style={styles.txtFormapgt}>{this.state.rideDetails.pagamento ? this.state.rideDetails.pagamento.payment_mode : 'Dinheiro'}</Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', }}>
+                                        <Icon
+                                            name='dollar-sign'
+                                            type='feather'
+                                            size={15}
+                                            color={colors.GREEN.default}
+                                        />
+                                        <Text style={styles.txtValor}>{this.state.trip_cost ? this.state.currency.symbol + parseFloat(this.state.rideDetails.pagamento.cashPaymentAmount).toFixed(2) : this.state.currency.symbol + 0}</Text>
+                                    </View>
                                 </View>
                             </View>
-                        </View>
-                        :null}
+                            : null}
 
                         {this.state.rideDetails.pagamento.payment_mode === 'Carteira' ?
-                        <View style={styles.pgt2}>
-                            <View style={styles.headerPgt2}>
-                                <Image source={this.state.rideDetails.imageRider ? { uri: this.state.rideDetails.imageRider } : require('../../assets/images/profilePic.png')} style={styles.imagemModal} />
-                                <Text style={styles.nomePassageiro}>{this.state.rideDetails.firstNameRider}</Text>
-                            </View>
-                            <View style={styles.footerPgt2}>
-                                <Text style={styles.txtFormapgt2}>Cartão</Text>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', }}>
-                                    <Icon
-                                        name='credit-card'
-                                        type='feather'
-                                        size={15}
-                                        color={colors.GREEN.default}
-                                    />
-                                    <Text style={styles.txtValor2}>{this.state.trip_cost ? this.state.currency.symbol + parseFloat(this.state.rideDetails.pagamento.usedWalletMoney).toFixed(2) : this.state.currency.symbol + 0}</Text>
+                            <View style={styles.pgt2}>
+                                <View style={styles.headerPgt2}>
+                                    <Image source={this.state.rideDetails.imageRider ? { uri: this.state.rideDetails.imageRider } : require('../../assets/images/profilePic.png')} style={styles.imagemModal} />
+                                    <Text style={styles.nomePassageiro}>{this.state.rideDetails.firstNameRider}</Text>
+                                </View>
+                                <View style={styles.footerPgt2}>
+                                    <Text style={styles.txtFormapgt2}>Cartão</Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', }}>
+                                        <Icon
+                                            name='credit-card'
+                                            type='feather'
+                                            size={15}
+                                            color={colors.GREEN.default}
+                                        />
+                                        <Text style={styles.txtValor2}>{this.state.trip_cost ? this.state.currency.symbol + parseFloat(this.state.rideDetails.pagamento.usedWalletMoney).toFixed(2) : this.state.currency.symbol + 0}</Text>
+                                    </View>
                                 </View>
                             </View>
-                        </View>
-                        :null}
+                            : null}
 
                         {this.state.rideDetails.pagamento.payment_mode === 'Dinheiro/Carteira' ?
-                        <View style={styles.pgt3}>
-                            <View style={styles.headerPgt3}>
-                                <Image source={this.state.rideDetails.imageRider ? { uri: this.state.rideDetails.imageRider } : require('../../assets/images/profilePic.png')} style={styles.imagemModal} />
-                                <Text style={styles.nomePassageiro}>{this.state.rideDetails.firstNameRider}</Text>
-                            </View>
-                            <View style={styles.footerPgt3}>
-                                <Text style={styles.txtFormapgt3}>{this.state.rideDetails.pagamento ? this.state.rideDetails.pagamento.payment_mode : 'Dinheiro'}</Text>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', }}>
-                                    <Icon
-                                        name='dollar-sign'
-                                        type='feather'
-                                        size={15}
-                                        color={colors.GREEN.default}
-                                    />
-                                    <Text style={styles.txtValor3}>{this.state.trip_cost ? this.state.currency.symbol + parseFloat(this.state.rideDetails.pagamento.customer_paid).toFixed(2) : this.state.currency.symbol + 0}</Text>
+                            <View style={styles.pgt3}>
+                                <View style={styles.headerPgt3}>
+                                    <Image source={this.state.rideDetails.imageRider ? { uri: this.state.rideDetails.imageRider } : require('../../assets/images/profilePic.png')} style={styles.imagemModal} />
+                                    <Text style={styles.nomePassageiro}>{this.state.rideDetails.firstNameRider}</Text>
                                 </View>
-                            </View>
-                            
-                            <View style={styles.footerPgt4}>
-                                <Text style={styles.txtFormapgt4}>Cartão</Text>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', }}>
-                                    <Icon
-                                        name='credit-card'
-                                        type='feather'
-                                        size={12}
-                                        color={colors.GREEN.default}
-                                    />
-                                    <Text style={styles.txtValor4}>{this.state.trip_cost ? this.state.currency.symbol + parseFloat(this.state.rideDetails.pagamento.usedWalletMoney).toFixed(2) : this.state.currency.symbol + 0}</Text>
+                                <View style={styles.footerPgt3}>
+                                    <Text style={styles.txtFormapgt3}>{this.state.rideDetails.pagamento ? this.state.rideDetails.pagamento.payment_mode : 'Dinheiro'}</Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', }}>
+                                        <Icon
+                                            name='dollar-sign'
+                                            type='feather'
+                                            size={15}
+                                            color={colors.GREEN.default}
+                                        />
+                                        <Text style={styles.txtValor3}>{this.state.trip_cost ? this.state.currency.symbol + parseFloat(this.state.rideDetails.pagamento.cashPaymentAmount).toFixed(2) : this.state.currency.symbol + 0}</Text>
+                                    </View>
                                 </View>
-                            </View>
 
-                        </View>
-                        :null}
+                                <View style={styles.footerPgt4}>
+                                    <Text style={styles.txtFormapgt4}>Cartão</Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', }}>
+                                        <Icon
+                                            name='credit-card'
+                                            type='feather'
+                                            size={12}
+                                            color={colors.GREEN.default}
+                                        />
+                                        <Text style={styles.txtValor4}>{this.state.trip_cost ? this.state.currency.symbol + parseFloat(this.state.rideDetails.pagamento.usedWalletMoney).toFixed(2) : this.state.currency.symbol + 0}</Text>
+                                    </View>
+                                </View>
+
+                            </View>
+                            : null}
 
                         <View style={{ justifyContent: 'center', alignItems: 'center', flex: 0.5 }}>
                             <View style={{ justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>

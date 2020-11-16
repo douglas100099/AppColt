@@ -563,7 +563,7 @@ export default class DriverIncomePage extends React.Component {
 
 
     teste() {
-        let curr = new Date
+        let curr = new Date()
         let week = []
 
         for (let i = 0; i <= 6; i++) {
@@ -574,29 +574,32 @@ export default class DriverIncomePage extends React.Component {
 
         let tamanho = this.state.myBooking.length;
         let arrayCorridas = this.state.myBooking.reverse();
-        let tempDate = curr.getDate();
-        let tempIndex = curr.getDay()
+        let tempDate = new Date().getDate();
+        let tempIndex = new Date().getDay()
         let dias = 0;
 
         for (let i = tamanho - 1; i >= 0; i--) {
             let corridaRecente = new Date(arrayCorridas[i].data)
 
             //Verifica se o dia corrida é mesmo do dia atual
-            if (corridaRecente.getDate() == tempDate) {
-                for (let j = week.length - 1; j >= 0; j--) {
-                    if (corridaRecente.getDate() == week[j].getDate() && corridaRecente.getMonth() == week[j].getMonth() && corridaRecente.getFullYear() == week[j].getFullYear()) {
-
-                        this.insertValues(tempIndex, arrayCorridas[i].ganho)
-                        break
+            if(tempIndex < 0) {
+                break
+            } else {
+                if (corridaRecente.getDate() == tempDate) {
+                    for (let j = week.length - 1; j >= 0; j--) {
+                        if (corridaRecente.getDate() == week[j].getDate() && corridaRecente.getMonth() == week[j].getMonth() && corridaRecente.getFullYear() == week[j].getFullYear()) {
+                            this.insertValues(tempIndex, arrayCorridas[i].ganho)
+                            break
+                        }
                     }
                 }
-            }
-            //incrementa os variaveis pra percorrer os arrays da frente pra tras
-            else {
-                i++
-                dias++
-                tempDate = corridaRecente.getDate()
-                tempIndex = curr.getDay() - dias;
+                //incrementa os variaveis pra percorrer os arrays da frente pra tras
+                else {
+                    i++
+                    dias++
+                    tempDate = corridaRecente.getDate()
+                    tempIndex = new Date().getDay() - dias;
+                }
             }
         }
     }
@@ -604,30 +607,37 @@ export default class DriverIncomePage extends React.Component {
     insertValues(param, value) {
         switch (param) {
             case 0:
+                console.log(value + ' VALOR DOMINGO')
                 this.objetoPrincipal.Dom += value
                 break
 
             case 1:
+                console.log(value + ' VALOR SEGUNDA')
                 this.objetoPrincipal.Seg += value
                 break
 
             case 2:
+                console.log(value + ' VALOR TERÇA')
                 this.objetoPrincipal.Ter += value
                 break
 
             case 3:
+                console.log(value + ' VALOR QUARTA')
                 this.objetoPrincipal.Qua += value
                 break
 
             case 4:
+                console.log(value + ' VALOR QUINTA')
                 this.objetoPrincipal.Qui += value
                 break
 
             case 5:
+                console.log(value + ' VALOR SEXTA')
                 this.objetoPrincipal.Sex += value
                 break
 
             case 6:
+                console.log(value + ' VALOR SÁBADO')
                 this.objetoPrincipal.Sab += value
                 break
         }

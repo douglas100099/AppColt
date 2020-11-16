@@ -33,8 +33,8 @@ function AppMenu() {
 
     return (
     <div>
-      <div style={{display: 'flex', justifyContent: 'center',backgroundColor:'#444444'}}>
-        <img style={{marginTop:'20px',marginBottom:'20px',width:'120px',height:'120px'}} src={logo} alt="Logo" />
+      <div style={{display: 'flex', justifyContent: 'center',backgroundColor:'#1152FD'}}>
+        <img style={{marginTop:'20px',marginBottom:'20px',width:'132px',height:'50px'}} src={logo} alt="Logo" />
       </div>
       <Divider/>
       <MenuList>

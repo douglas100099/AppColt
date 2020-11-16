@@ -70,7 +70,9 @@ const Dashboard = () => {
             let totconvenienceTrans = 0;
             let todayConvenience = 0;
             for(let i=0;i<bookinglistdata.bookings.length;i++){
-                const {trip_cost,discount_amount,tripdate,convenience_fees} = bookinglistdata.bookings[i];
+                const { tripdate } = bookinglistdata.bookings[i]
+                const {trip_cost,discount_amount,convenience_fees} = bookinglistdata.bookings[i].pagamento;
+                console.log('teste')
                 let tDate = new Date(tripdate);
                 if(trip_cost>=0 && discount_amount >=0){
                     if(tDate.getDate() === today.getDate() && tDate.getMonth() === today.getMonth()){
@@ -113,6 +115,7 @@ const Dashboard = () => {
                     <DashboardCard title={languageJson.total} image={require("../assets/money3.jpg")}>{ settings.symbol +' ' +  totalgross}</DashboardCard>
                 </Grid>
             </Grid>
+            {/*
             { mylocation?
             <Paper style={{marginTop:'25px'}}>
                 <Typography variant="h4" style={{margin:"20px 0 0 15px"}}>{languageJson.real_time_driver_section_text}</Typography>
@@ -126,6 +129,7 @@ const Dashboard = () => {
             :
             <Typography variant="h6" style={{margin:"20px 0 0 15px",color:'#FF0000'}}>{languageJson.allow_location}</Typography>
             }
+            */}
         </div>
         
     )

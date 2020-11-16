@@ -226,7 +226,7 @@ const checkPaymentAsaas = async (custumer) => {
         redirect: 'follow'
     };
 
-    fetch("https://sandbox.asaas.com/api/v3/payments?customer=" + custumer, requestOptions)
+    return fetch("https://sandbox.asaas.com/api/v3/payments?customer=" + custumer, requestOptions)
         .then(response => response.text())
         .then(result => {
             let data = {}
@@ -324,15 +324,11 @@ exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.
                         }
 
                         admin.database().ref('users/' + key + '/').update({
-                            saldo: 0
-                        }).then(() => {
-                            admin.database().ref('users/' + key + '/').update({
-                                payment_waiting: {
-                                    create_date: new Date().toLocaleDateString('pt-BR'),
-                                    asaas_id: custumerAsaas
-                                }
-                            })
-                            return true
+                            saldo: 0,
+                            payment_waiting: {
+                                create_date: new Date().toLocaleDateString('pt-BR'),
+                                asaas_id: custumerAsaas
+                            }
                         }).catch((error) => {
                             return error
                         })
@@ -430,15 +426,11 @@ exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub
                         }
 
                         admin.database().ref('users/' + key + '/').update({
-                            saldo: 0
-                        }).then(() => {
-                            admin.database().ref('users/' + key + '/').update({
-                                payment_waiting: {
-                                    create_date: new Date().toLocaleDateString('pt-BR'),
-                                    asaas_id: custumerAsaas
-                                }
-                            })
-                            return true
+                            saldo: 0,
+                            payment_waiting: {
+                                create_date: new Date().toLocaleDateString('pt-BR'),
+                                asaas_id: custumerAsaas
+                            }
                         }).catch((error) => {
                             return error
                         })
@@ -462,7 +454,45 @@ exports.verifyDriversPayment_6 = functions.region('southamerica-east1').pubsub.s
                         if( checkPayment.data[0].status !== 'RECEIVED' || checkPayment.data[0].status !== 'CONFIRMED' ){
 
                             //Bloqueia o motorista 
+                            admin.database().ref('users/' + key + '/').update({
+                                blocked_by_payment: {
+                                    date_blocked: new Date().toLocaleDateString('pt-BR'),
+                                    reason: 'Pagamento não confirmado 5 dias depois após a emissão do boleto.',
+                                    id_asaas: checkPayment.data[0].customer
+                                }
+                            }).catch((error) => {
+                                return error
+                            })
+                        }
+                    }
+                }
+            }
+        }
+    })
+})
 
+exports.verifyDriversPayment_21 = functions.region('southamerica-east1').pubsub.schedule('00 21 21 * *').timeZone('America/Sao_Paulo').onRun((context) => {
+
+    admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
+        let dataUsers = data.val()
+        if (dataUsers) {
+            for (let key in dataUsers) {
+                if (dataUsers[key].payment_waiting) {
+                    let checkPayment = await checkPaymentAsaas(dataUsers[key].payment_waiting.asaas_id)
+
+                    if( checkPayment.totalCount >= 1 ){
+                        if( checkPayment.data[0].status !== 'RECEIVED' || checkPayment.data[0].status !== 'CONFIRMED' ){
+
+                            //Bloqueia o motorista 
+                            admin.database().ref('users/' + key + '/').update({
+                                blocked_by_payment: {
+                                    date_blocked: new Date().toLocaleDateString('pt-BR'),
+                                    reason: 'Pagamento não confirmado 5 dias depois após a emissão do boleto.',
+                                    id_asaas: checkPayment.data[0].customer
+                                }
+                            }).catch((error) => {
+                                return error
+                            })
                         }
                     }
                 }

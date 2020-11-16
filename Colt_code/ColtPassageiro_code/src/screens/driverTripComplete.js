@@ -99,9 +99,9 @@ export default class DriverTripComplete extends React.Component {
                         count = count + 1;
                         total = total + ratings[key].rate;
                     }
-                    if( count < 10 ){
+                    if (count < 10) {
                         fRating = 5.00
-                    } else{
+                    } else {
                         fRating = total / count;
                     }
                     if (fRating) {
@@ -111,18 +111,22 @@ export default class DriverTripComplete extends React.Component {
                             firebase.database().ref('users/' + this.state.getDetails.driver + '/my_bookings/' + this.state.getDetails.bookingKey + '/').update({
                                 rating: this.state.starCount > 0 ? this.state.starCount : 5,
                             }).then(() => {
-                                this.setState({ alertModalVisible: false, currentBookingId: null },
-                                    () => {
-                                        this.props
-                                            .navigation
-                                            .dispatch(StackActions.reset({
-                                                index: 0,
-                                                actions: [
-                                                    NavigationActions.navigate({
-                                                        routeName: 'Map',
-                                                    }),
-                                                ],
-                                            }))
+                                firebase.database().ref('users/' + firebase.auth().currentUser.uid  + '/my-booking/' + this.state.getDetails.bookingKey + '/').update({
+                                    rated_by_rider: true,
+                                }).then(() => {
+                                        this.setState({ alertModalVisible: false, currentBookingId: null },
+                                            () => {
+                                                this.props
+                                                    .navigation
+                                                    .dispatch(StackActions.reset({
+                                                        index: 0,
+                                                        actions: [
+                                                            NavigationActions.navigate({
+                                                                routeName: 'Map',
+                                                            }),
+                                                        ],
+                                                    }))
+                                            })
                                     })
                             })
                         })

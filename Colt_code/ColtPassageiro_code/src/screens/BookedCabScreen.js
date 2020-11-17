@@ -598,7 +598,11 @@ export default class BookedCabScreen extends React.Component {
                     {this.state.driverUID && this.state.region && this.state.bookingStatus && this.state.driverSerach == false ?
                         <TrackNow duid={this.state.driverUID} alldata={this.state.region} bookingStatus={this.state.bookingStatus} />
                         : 
-                        <View>
+                        <View style={{ alignSelf: 'center', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <ActivityIndicator
+                                size='large' 
+                                color={colors.DEEPBLUE}
+                            />
                             <Text style={{ textAlign: 'center', fontFamily: 'Inter-Medium' }}> Buscando localização do motorista... </Text>
                         </View>
                         }

@@ -32,14 +32,14 @@ import {
             data[i].id = i;
             data[i].pickupAddress = data[i].pickup.add;
             data[i].dropAddress = data[i].drop.add;
-            data[i].discount = data[i].discount_amount
-              ? data[i].discount_amount
+            data[i].discount = data[i].pagamento.discount_amount
+              ? data[i].pagamento.discount_amount
               : 0;
-            data[i].cashPaymentAmount = data[i].cashPaymentAmount
-              ? data[i].cashPaymentAmount
+            data[i].cashPaymentAmount = data[i].pagamento.cashPaymentAmount
+              ? data[i].pagamento.cashPaymentAmount
               : 0;
-            data[i].cardPaymentAmount = data[i].cardPaymentAmount
-              ? data[i].cardPaymentAmount
+            data[i].cardPaymentAmount = data[i].pagamento.cardPaymentAmount
+              ? data[i].pagamento.cardPaymentAmount
               : 0;
             return data[i];
           });

@@ -13,20 +13,19 @@ export const fetchEarningreports =  () => dispatch => {
     bookingRef.on("value", snapshot => {
       if (snapshot.val()) {
           const mainArr = snapshot.val();
-          
-          var monthsName = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+          var monthsName = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
           var renderobj = {};
            Object.keys(mainArr).map(j => {
-            if(mainArr[j].status === 'END' && mainArr[j].discount_amount !== undefined &&  mainArr[j].driver_share !== undefined &&  mainArr[j].customer_paid !== undefined && mainArr[j].convenience_fees !== undefined && mainArr[j].trip_cost !== undefined){
+            if(mainArr[j].status === 'END' && mainArr[j].pagamento.discount_amount !== undefined &&  mainArr[j].pagamento.driver_share !== undefined &&  mainArr[j].pagamento.customer_paid !== undefined && mainArr[j].pagamento.convenience_fees !== undefined && mainArr[j].pagamento.trip_cost !== undefined){
              
               let bdt = new Date(mainArr[j].tripdate);
               let uniqueKey = bdt.getFullYear()+'_'+bdt.getMonth();
               if(renderobj[uniqueKey]){
-                  renderobj[uniqueKey].discountAmount = parseFloat(renderobj[uniqueKey].discountAmount) + parseFloat(mainArr[j].discount_amount);
-                  renderobj[uniqueKey].driverShare = parseFloat(renderobj[uniqueKey].driverShare) + parseFloat(mainArr[j].driver_share);
-                  renderobj[uniqueKey].customerPaid = parseFloat(renderobj[uniqueKey].customerPaid) + parseFloat(mainArr[j].customer_paid);
-                  renderobj[uniqueKey].convenienceFee = parseFloat(renderobj[uniqueKey].convenienceFee) + parseFloat(mainArr[j].convenience_fees);
-                  renderobj[uniqueKey].tripCost = parseFloat(renderobj[uniqueKey].tripCost) + parseFloat(mainArr[j].trip_cost);
+                  renderobj[uniqueKey].discountAmount = parseFloat(renderobj[uniqueKey].discountAmount) + parseFloat(mainArr[j].pagamento.discount_amount);
+                  renderobj[uniqueKey].driverShare = parseFloat(renderobj[uniqueKey].driverShare) + parseFloat(mainArr[j].pagamento.driver_share);
+                  renderobj[uniqueKey].customerPaid = parseFloat(renderobj[uniqueKey].customerPaid) + parseFloat(mainArr[j].pagamento.customer_paid);
+                  renderobj[uniqueKey].convenienceFee = parseFloat(renderobj[uniqueKey].convenienceFee) + parseFloat(mainArr[j].pagamento.convenience_fees);
+                  renderobj[uniqueKey].tripCost = parseFloat(renderobj[uniqueKey].tripCost) + parseFloat(mainArr[j].pagamento.trip_cost);
                   
               }else{
                   renderobj[uniqueKey]={};
@@ -34,12 +33,13 @@ export const fetchEarningreports =  () => dispatch => {
                   renderobj[uniqueKey]['year'] = bdt.getFullYear();
                   renderobj[uniqueKey]['month'] = bdt.getMonth();
                   renderobj[uniqueKey]['monthsName'] = monthsName[bdt.getMonth()];
-                  renderobj[uniqueKey]['discountAmount'] = parseFloat(mainArr[j].discount_amount);
-                  renderobj[uniqueKey]['driverShare'] = parseFloat(mainArr[j].driver_share);
-                  renderobj[uniqueKey]['customerPaid'] = parseFloat(mainArr[j].customer_paid);
-                  renderobj[uniqueKey]['convenienceFee'] = parseFloat(mainArr[j].convenience_fees); 
+                  renderobj[uniqueKey]['discountAmount'] = parseFloat(mainArr[j].pagamento.discount_amount);
+                  renderobj[uniqueKey]['driverShare'] = parseFloat(mainArr[j].pagamento.driver_share);
+                  renderobj[uniqueKey]['customerPaid'] = parseFloat(mainArr[j].pagamento.customer_paid);
+                  renderobj[uniqueKey]['convenienceFee'] = parseFloat(mainArr[j].pagamento.convenience_fees); 
                   renderobj[uniqueKey]['uniqueKey'] = uniqueKey; 
-                  renderobj[uniqueKey]['tripCost'] = parseFloat(mainArr[j].trip_cost); 
+                  renderobj[uniqueKey]['tripCost'] = parseFloat(mainArr[j].pagamento.trip_cost);
+                  renderobj[uniqueKey]['driverName'] = mainArr[j].driver_name;
                   
               }
             }

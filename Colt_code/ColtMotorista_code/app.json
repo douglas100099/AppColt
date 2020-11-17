@@ -59,6 +59,7 @@
         "WRITE_EXTERNAL_STORAGE",
         "LOCATION",
         "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "CAMERA_ROLL"
       ],

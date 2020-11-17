@@ -20,14 +20,14 @@ const BookingHistory = () => {
       { title: languageJson.drop_address, field: 'dropAddress' },
       { title: languageJson.assign_driver, field: 'driver_name' },
       { title: languageJson.booking_status, field: 'status' },
-      { title: languageJson.otp, field: 'otp', render: rowData => rowData.status ==='NEW' || rowData.status === 'ACCEPTED' ?<span>{rowData.otp}</span>:null },
+      /*{ title: languageJson.otp, field: 'otp', render: rowData => rowData.status ==='NEW' || rowData.status === 'ACCEPTED' ?<span>{rowData.otp}</span>:null },*/
+      { title: languageJson.trip_start_time, field: 'trip_start_time' },
+      { title: languageJson.trip_end_time, field: 'trip_end_time' },
       { title: languageJson.trip_cost, field: 'trip_cost' },
       { title: languageJson.payment_status, field: 'payment_status'},   
 
       /* More Fields if you need
 
-      { title: languageJson.trip_start_time, field: 'trip_start_time' },
-      { title: languageJson.trip_end_time, field: 'trip_end_time' },
       { title: languageJson.vehicle_no, field: 'vehicle_number' },  
       { title: languageJson.trip_cost_driver_share, field: 'driver_share'},
       { title: languageJson.convenience_fee, field: 'convenience_fees'},

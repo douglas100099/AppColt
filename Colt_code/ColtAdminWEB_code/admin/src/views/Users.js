@@ -19,8 +19,10 @@ export default function Users() {
 
   useEffect(()=>{
     if(usersdata.users){
-        console.log(usersdata.users);
-        setData(usersdata.users);
+      const drivers = usersdata.users.filter(({ usertype }) => usertype === 'driver' )
+      for(let i=0;i<drivers.length;i++){
+        setData(drivers);
+      }
     }
   },[usersdata.users]);
 
@@ -33,29 +35,32 @@ export default function Users() {
   },[cartypes.cars]);
 
   const columns = [
-      { title: languageJson.createdAt, field: 'createdAt', editable:'never', defaultSort:'desc',render: rowData => rowData.createdAt?new Date(rowData.createdAt).toLocaleString(dateStyle):null},
-      { title: languageJson.first_name, field: 'firstName', editable:'never'},
-      { title: languageJson.last_name, field: 'lastName', editable:'never'},
-      { title: languageJson.user_type, field: 'usertype', editable:'never'},
-      { title: languageJson.email, field: 'email', editable:'never'},
-      { title: languageJson.mobile, field: 'mobile', editable:'never'},
-      { title: languageJson.profile_image,  field: 'profile_image',render: rowData => rowData.profile_image?<img alt='Profile' src={rowData.profile_image} style={{width: 50,borderRadius:'50%'}}/>:null, editable:'never'},
-      { title: languageJson.vehicle_model, field: 'vehicleModel', editable:'never'},
-      { title: languageJson.vehicle_no, field: 'vehicleNumber', editable:'never'},
-      { title: languageJson.car_type, field: 'carType',lookup: cars},
-      { title: languageJson.account_approve,  field: 'approved', type:'boolean'},
-      { title: languageJson.driver_active,  field: 'driverActiveStatus', type:'boolean'},
-      { title: languageJson.lisence_image,  field: 'licenseImage',render: rowData => rowData.licenseImage?<img alt='License' src={rowData.licenseImage} style={{width: 100}}/>:null, editable:'never'},
-      { title: languageJson.wallet_balance,  field: 'walletBalance', type:'numeric', editable:'never'},
-      { title: languageJson.signup_via_refferal, field: 'signupViaReferral', type:'boolean', editable:'never'},
-      { title: languageJson.refferal_id,  field: 'refferalId', editable:'never'},
-      { title: languageJson.queue,  field: 'queue', type:'boolean'},
+      { title: 'Criado', field: 'createdAt', editable:'never', defaultSort:'desc',render: rowData => rowData.createdAt?new Date(rowData.createdAt).toLocaleString(dateStyle):null},
+      { title: 'Nome', field: 'firstName', editable:'never'},
+      { title: 'Sobrenome', field: 'lastName', editable:'never'},
+      { title: languageJson.email, field: 'email'},
+      { title: languageJson.mobile, field: 'mobile'},
+      { title: 'Perfil',  field: 'profile_image',render: rowData => rowData.profile_image?<img alt='Profile' src={rowData.profile_image} style={{width: 50,borderRadius:'50%'}}/>:null},
+      { title: 'Modelo', field: 'vehicleModel', editable:'never'},
+      { title: 'Placa', field: 'vehicleNumber', editable:'never'},
+      { title: 'Categoria', field: 'carType',lookup: cars},
+      { title: 'Aprovado',  field: 'approved', type:'boolean'},
+      { title: 'Aprovar CRLV',  field: 'crlvAproved', type:'boolean'},
+      { title: 'Aprovar CNH',  field: 'cnhAproved', type:'boolean'},
+      { title: 'Aprovar perfil',  field: 'perfilAproved', type:'boolean'},
+      { title: 'Online',  field: 'driverActiveStatus', type:'boolean'},
+      { title: 'CNH',  field: 'licenseImage',render: rowData => rowData.licenseImage?<img alt='License' src={rowData.licenseImage} style={{width: 100, borderRadius: 100, height: 100}}/>:null},
+      { title: 'CRLV',  field: 'imagemCrlv',render: rowData => rowData.imagemCrlv?<img alt='License' src={rowData.imagemCrlv} style={{width: 100, borderRadius: 100, height: 100}}/>:null},
+      { title: 'Saldo',  field: 'saldo', type:'numeric', editable:'never'},
+      { title: 'Ref', field: 'signupViaReferral', type:'boolean', editable:'never'},
+      { title: 'Ref ID',  field: 'refferalId', editable:'never'},
+      { title: 'Ocupado',  field: 'queue', type:'boolean'},
   ];
 
   return (
     usersdata.loading? <CircularLoading/>:
     <MaterialTable
-      title={languageJson.all_user}
+      title='Todos motoristas'
       columns={columns}
       data={data}
       options={{

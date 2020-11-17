@@ -245,7 +245,7 @@ exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.
             for (let key in dataUsers) {
                 if (dataUsers[key].saldo) {
                     if (dataUsers[key].saldo <= -5) {
-                        let checkUser = await checkUserAsaas(dataUsers[key].cpfNum)
+                        let checkUser = checkUserAsaas(dataUsers[key].cpfNum)
 
                         //Pega a data atual e adiciona +5 pro vencimento do boleto
                         var date = new Date()
@@ -284,7 +284,7 @@ exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.
                         }
                         //user n existe no Asaas
                         else {
-                            var body = {
+                            let body = {
                                 'name': dataUsers[key].firstName,
                                 'email': dataUsers[key].email,
                                 'mobilePhone': dataUsers[key].mobile,
@@ -294,7 +294,7 @@ exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.
                             };
 
                             //Cria um novo usuario no Asaas
-                            let createUser = await createUserAsaas(body)
+                            let createUser = createUserAsaas(body)
                             custumerAsaas = createUser.data[0].id
 
                             var raw = {
@@ -348,7 +348,7 @@ exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub
             for (let key in dataUsers) {
                 if (dataUsers[key].saldo) {
                     if (dataUsers[key].saldo <= -5) {
-                        let checkUser = await checkUserAsaas(dataUsers[key].cpfNum)
+                        let checkUser = checkUserAsaas(dataUsers[key].cpfNum)
 
                         //Pega a data atual e adiciona +5 pro vencimento do boleto
                         var date = new Date()
@@ -359,7 +359,7 @@ exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub
                         if (checkUser.totalCount >= 1) {
                             //user Asaas existe
                             custumerAsaas = checkUser.data[0].id
-                            var body = {
+                            let body = {
                                 'customer': checkUser.data[0].id,
                                 'billingType': 'BOLETO',
                                 'dueDate': resultt,
@@ -396,7 +396,7 @@ exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub
                             };
 
                             //Cria um novo usuario no Asaas
-                            let createUser = await createUserAsaas(body)
+                            let createUser = createUserAsaas(body)
                             custumerAsaas = createUser.data[0].id
 
                             var raw = {
@@ -448,7 +448,7 @@ exports.verifyDriversPayment_6 = functions.region('southamerica-east1').pubsub.s
         if (dataUsers) {
             for (let key in dataUsers) {
                 if (dataUsers[key].payment_waiting) {
-                    let checkPayment = await checkPaymentAsaas(dataUsers[key].payment_waiting.asaas_id)
+                    let checkPayment = checkPaymentAsaas(dataUsers[key].payment_waiting.asaas_id)
 
                     if( checkPayment.totalCount >= 1 ){
                         if( checkPayment.data[0].status !== 'RECEIVED' || checkPayment.data[0].status !== 'CONFIRMED' ){
@@ -478,7 +478,7 @@ exports.verifyDriversPayment_21 = functions.region('southamerica-east1').pubsub.
         if (dataUsers) {
             for (let key in dataUsers) {
                 if (dataUsers[key].payment_waiting) {
-                    let checkPayment = await checkPaymentAsaas(dataUsers[key].payment_waiting.asaas_id)
+                    let checkPayment = checkPaymentAsaas(dataUsers[key].payment_waiting.asaas_id)
 
                     if( checkPayment.totalCount >= 1 ){
                         if( checkPayment.data[0].status !== 'RECEIVED' || checkPayment.data[0].status !== 'CONFIRMED' ){

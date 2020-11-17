@@ -329,8 +329,8 @@ exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.
                                 create_date: new Date().toLocaleDateString('pt-BR'),
                                 asaas_id: custumerAsaas
                             }
-                        }).catch((error) => {
-                            return error
+                        }).catch(error => {
+                            throw new Error("Erro atualizar boleto motorista")
                         })
                     }
                 }
@@ -431,8 +431,8 @@ exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub
                                 create_date: new Date().toLocaleDateString('pt-BR'),
                                 asaas_id: custumerAsaas
                             }
-                        }).catch((error) => {
-                            return error
+                        }).catch(error => {
+                            throw new Error("Erro atualizar boleto motorista")
                         })
                     }
                 }
@@ -460,8 +460,8 @@ exports.verifyDriversPayment_6 = functions.region('southamerica-east1').pubsub.s
                                     reason: 'Pagamento não confirmado 5 dias depois após a emissão do boleto.',
                                     id_asaas: checkPayment.data[0].customer
                                 }
-                            }).catch((error) => {
-                                return error
+                            }).catch(error => {
+                                throw new Error("Erro ao verificar pagamento motorista")
                             })
                         }
                     }
@@ -490,8 +490,8 @@ exports.verifyDriversPayment_21 = functions.region('southamerica-east1').pubsub.
                                     reason: 'Pagamento não confirmado 5 dias depois após a emissão do boleto.',
                                     id_asaas: checkPayment.data[0].customer
                                 }
-                            }).catch((error) => {
-                                return error
+                            }).catch(error => {
+                                throw new Error("Erro ao verificar pagamento motorista")
                             })
                         }
                     }

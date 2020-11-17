@@ -19,12 +19,12 @@ import { colors } from '../common/theme';
 var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
 import { farehelper } from '../common/FareCalculator';
+import { checkCPF } from '../common/checkCPF';
 import distanceCalc from '../common/distanceCalc';
 import { getPixelSize } from '../common/utils';
 import { PromoComp } from "../components";
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import { google_map_key } from '../common/key';
-import { RegisterCPF } from '../components/RegisterCPF';
 import languageJSON from '../common/language';
 
 import LocationUser from '../../assets/svg/LocationUser';
@@ -66,6 +66,9 @@ export default class FareScreen extends React.Component {
             usedWalletMoney: 0,
             infoModal: false,
             showViewInfo: true,
+            cpfModalVisible: false,
+            nascDate: '',
+            txtCPF: '',
             cancellValue: 0,
         },
             this.fadeAnim = new Animated.Value(0)
@@ -564,6 +567,68 @@ export default class FareScreen extends React.Component {
         )
     }
 
+    addCpf() {
+        return (
+            <Modal
+                animationType="slide"
+                visible={this.state.cpfModalVisible}
+                onRequestClose={() => {
+                    this.setState({ cpfModalVisible: false })
+                }}>
+                <View style={styles.promoModalContainer}>
+                    <View style={styles.viewTopPromoModal}>
+                        <View style={styles.HeaderPromoModal}>
+                            <View style={{ marginLeft: 10 }}>
+                                <Text style={{ fontFamily: "Inter-Medium", fontSize: 23, opacity: 0.4 }}> Cadastrar CPF </Text>
+                            </View>
+                            <View style={{ position: 'absolute', right: 0 }}>
+                                <TouchableOpacity style={{ marginRight: 15 }} onPress={() => this.setState({ cpfModalVisible: false })}>
+                                    <Icon
+                                        name='x'
+                                        type='feather'
+                                        color={colors.GREY1}
+                                        size={34}
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                    <View style={{ marginHorizontal: 50 }}>
+                        <Input
+                            placeholder='Digite seu CPF...'
+                            containerStyle={{ marginTop: 20, }}
+                            editable={this.props.checkCPF ? false : true}
+                            inputStyle={{ marginLeft: 12 }}
+                            maxLength={11}
+                            keyboardType={'number-pad'}
+                            onChangeText={(text) => { this.setState({ txtCPF: text }) }}
+                            value={this.state.txtCPF}
+                            autoFocus={true}
+                            errorMessage={this.state.promoCodeValid ? null : languageJSON.first_name_blank_error}
+                        />
+                    </View>
+                    <View style={{ marginHorizontal: 65 }}>
+                        <Input
+                            placeholder='Data de nascimento'
+                            editable={this.props.checkCPF ? false : true}
+                            containerStyle={{ marginTop: 20 }}
+                            maxLength={8}
+                            keyboardType={'number-pad'}
+                            inputStyle={{ marginLeft: 12 }}
+                            onChangeText={(text) => { this.setState({ nascDate: text }) }}
+                            value={this.state.nascDate}
+                            errorMessage={this.state.promoCodeValid ? null : languageJSON.first_name_blank_error}
+                        />
+                    </View>
+                    <TouchableOpacity style={styles.btnConfirmarPromoModal} disabled={this.state.checkCPF} onPress={() => { this.isValidCpf() }}>
+                        <Text style={styles.textConfirmarPromoModal}> Confirmar </Text>
+                    </TouchableOpacity>
+
+                </View>
+            </Modal>
+        )
+    }
+
     //Abre o modal de escolha de pagamento
     openModal = () => {
         this.state.openModalPayment ? setTimeout(() => { this.setState({ openModalPayment: false }) }, 100) :
@@ -729,17 +794,44 @@ export default class FareScreen extends React.Component {
         })
     }
 
-    checkCPF() {
-        if (!this.state.userDetails.cpf) {
+    isValidCpf() {
+        this.setState({ checkCPF: true })
+        if (this.state.nascDate != '' && this.state.nascDate.length == 8) {
+            let cpf = checkCPF(this.state.txtCPF)
+            if (cpf) {
+                this.setState({ checkCPF: false })
+                firebase.database().ref('users/' + this.state.curUID.uid + '/').update({
+                    cpfNum: this.state.txtCPF,
+                    data_nascimento: this.state.nascDate
+                }).then(() => {
+                    const userData = firebase.database().ref('users/' + this.state.curUID.uid);
+                    userData.once('value', userData => {
+                    this.setState({ userDetails: userData.val() });
+                    }).then(() => {
+                        this.setState({ cpfModalVisible: false })
+                    })
+                })
+            } else {
+                this.setState({ checkCPF: false })
+                alert("CPF inválido!")
+            }
+        } else {
+            this.setState({ checkCPF: false })
+            alert("Data de nascimento inválida!")
+        }
+    }
+
+    verifyCPF() {
+        if (!this.state.userDetails.cpfNum) {
             Alert.alert(
                 'Alerta!',
                 'Você ainda não possui cpf cadastrado, deseja adicionar?',
                 [
-                    { text: 'Adicionar', onPress: () => this.setState({ registerCpf: true }) },
                     {
                         style: 'destructive',
                         text: 'Voltar'
                     },
+                    { text: 'Adicionar', onPress: () => this.setState({ cpfModalVisible: true }) },
                 ],
                 { cancelable: true },
             );
@@ -1045,7 +1137,7 @@ export default class FareScreen extends React.Component {
                         <View style={[styles.viewBotao, {
                             shadowOpacity: this.state.buttonDisabled ? 0 : 0.4
                         }]}>
-                            <TouchableOpacity style={styles.confirmButtonStyle} disabled={this.state.buttonDisabled} onPress={() => { this.confirmarCorrida() }}>
+                            <TouchableOpacity style={styles.confirmButtonStyle} disabled={this.state.buttonDisabled} onPress={() => { this.verifyCPF() }}>
                                 <Text style={styles.buttonText}> Confirmar corrida </Text>
                             </TouchableOpacity>
                         </View>
@@ -1057,6 +1149,9 @@ export default class FareScreen extends React.Component {
                 }
                 {
                     this.ModalPayment()
+                }
+                {
+                    this.addCpf()
                 }
                 {
                     this.promoModal()
@@ -1135,8 +1230,8 @@ const styles = StyleSheet.create({
     btnConfirmarPromoModal: {
         backgroundColor: colors.DEEPBLUE,
         height: 40,
-        marginHorizontal: 60,
-        borderRadius: 10,
+        marginHorizontal: 75,
+        borderRadius: 50,
         marginTop: 40,
         marginBottom: 5,
         justifyContent: 'center',

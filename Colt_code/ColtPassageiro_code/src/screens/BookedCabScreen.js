@@ -570,6 +570,7 @@ export default class BookedCabScreen extends React.Component {
                 <View style={{ flex: 1, backgroundColor: colors.WHITE, width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
                     <Image source={require('../../assets/images/searchDrivers.gif')} style={styles.styleGif} />
                     <Text style={styles.textGif}> Procurando motoristas próximos </Text>
+                    <Text style={styles.textGif2}> Por favor, não minimize o aplicativo enquanto buscamos um motorista. </Text>
                     {/*<ActivityIndicator size='large' color={colors.DEEPBLUE} />*/}
                     <TouchableOpacity disabled={this.state.searchDisabled} style={styles.touchView} onPress={() => { this.setState({ searchDisabled: true }), this.onPressCancellBtn() }}>
                         <Text style={styles.textCancel}> Cancelar </Text>
@@ -832,9 +833,18 @@ const styles = StyleSheet.create({
         color: colors.DARK,
         top: 75,
         position: 'absolute',
-        fontSize: 20,
+        fontSize: 22,
         fontFamily: 'Inter-SemiBold',
-        opacity: 0.6,
+        opacity: 0.8,
+    },
+    textGif2: {
+        color: colors.DARK,
+        top: 100,
+        textAlign: 'center',
+        position: 'absolute',
+        fontSize: 17,
+        fontFamily: 'Inter-Medium',
+        opacity: 0.5,
     },
     styleGif: {
         width: '100%',

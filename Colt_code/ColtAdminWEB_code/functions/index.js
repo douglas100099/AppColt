@@ -182,7 +182,7 @@ const sendRequestPayment = async (customer, dueDate, value, externalReference) =
     myHeaders.append("access_token", "f2ceed19a84c26a38b9ad21bd7078a35ff17372e83db8c67569b98d8b3b6da08");
     myHeaders.append("Cookie", "AWSALB=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH; AWSALBCORS=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH");
 
-    let body = {
+    let newBody = {
         'customer': customer,
         'billingType': 'BOLETO',
         'dueDate': dueDate,
@@ -203,13 +203,12 @@ const sendRequestPayment = async (customer, dueDate, value, externalReference) =
             'type': 'PERCENTAGE'
         },
         'postalService': false
-    };
-
+    }
 
     var requestOptions = {
         method: 'POST',
         headers: myHeaders,
-        body: body,
+        body: newBody,
         redirect: 'follow'
     };
 
@@ -293,18 +292,20 @@ exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.
                             if (response.totalCount >= 1) {
                                 //user Asaas existe
 
-                                return sendRequestPayment(response.data[0].id, resultToAsaas, newValue, key).then(() => {
+                                return sendRequestPayment(response.data[0].id, resultToAsaas, newValue, key).then((res) => {
                                     return admin.database().ref('users/' + key + '/').update({
                                         saldo: 0,
                                         payment_waiting: {
                                             create_date: new Date().toLocaleDateString('pt-BR'),
                                             asaas_id: response.data[0].id,
                                             value: newValue,
-                                            vencimento_boleto: resultToAsaas
+                                            vencimento_boleto: resultToAsaas,
+                                            resO: res.object,
+                                            res: res
                                         }
-                                    }).catch(error => {
-                                        throw new Error("Erro atualizar boleto motorista")
                                     })
+                                }).catch(error => {
+                                    throw new Error("Erro atualizar boleto motorista")
                                 })
                             }
                             //user n existe no Asaas
@@ -447,6 +448,8 @@ exports.verifyDriversPayment_6 = functions.region('southamerica-east1').pubsub.s
                                 }).catch(error => {
                                     throw new Error("Erro ao verificar pagamento motorista")
                                 })
+                            } else {
+                                return admin.database().ref('users/' + key + '/' + payment_waiting + '/').remove()
                             }
                         }
                         return true
@@ -481,6 +484,8 @@ exports.verifyDriversPayment_21 = functions.region('southamerica-east1').pubsub.
                                 }).catch(error => {
                                     throw new Error("Erro ao verificar pagamento motorista")
                                 })
+                            } else {
+                                return admin.database().ref('users/' + key + '/' + payment_waiting + '/').remove()
                             }
                         }
                         return true

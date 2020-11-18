@@ -208,7 +208,7 @@ const sendRequestPayment = async (customer, dueDate, value, externalReference) =
     var requestOptions = {
         method: 'POST',
         headers: myHeaders,
-        body: newBody,
+        body: JSON.stringify(newBody),
         redirect: 'follow'
     };
 

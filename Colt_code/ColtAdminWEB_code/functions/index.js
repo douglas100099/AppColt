@@ -7,6 +7,8 @@ const stripecheckout = require('./providers/stripe/checkout');
 const braintreecheckout = require('./providers/braintree/checkout');
 const { user } = require('firebase-functions/lib/providers/auth');
 
+global.Headers = fetch.Headers;
+
 admin.initializeApp();
 
 exports.get_providers = functions.https.onRequest((request, response) => {
@@ -169,14 +171,39 @@ const checkUserAsaas = async (cpf) => {
             data = JSON.parse(result)
             return data
         })
-        .catch(error => console.log('error', error));
+        .catch(error => {
+            throw new Error("Erro ao verificar se o user asaas existe")
+        })
 }
 
-const sendRequestPayment = (body) => {
+const sendRequestPayment = async (customer, dueDate, value, externalReference) => {
     var myHeaders = new Headers();
     myHeaders.append("Content-Type", " application/json");
     myHeaders.append("access_token", "f2ceed19a84c26a38b9ad21bd7078a35ff17372e83db8c67569b98d8b3b6da08");
     myHeaders.append("Cookie", "AWSALB=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH; AWSALBCORS=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH");
+
+    let body = {
+        'customer': customer,
+        'billingType': 'BOLETO',
+        'dueDate': dueDate,
+        'value': value,
+        'description': 'Taxa quinzenal do aplicativo de transporte Colt.',
+        'externalReference': externalReference,
+        'discount': {
+            'value': 5,
+            'dueDateLimitDays': 0,
+            "type": "PERCENTAGE"
+        },
+        'fine': {
+            'value': 1,
+            'type': 'PERCENTAGE'
+        },
+        'interest': {
+            'value': 2,
+            'type': 'PERCENTAGE'
+        },
+        'postalService': false
+    };
 
 
     var requestOptions = {
@@ -186,10 +213,14 @@ const sendRequestPayment = (body) => {
         redirect: 'follow'
     };
 
-    fetch("https://sandbox.asaas.com/api/v3/payments", requestOptions)
+    return fetch("https://sandbox.asaas.com/api/v3/payments", requestOptions)
         .then(response => response.text())
-        .then(result => console.log(result))
-        .catch(error => console.log('error', error));
+        .then(result => {
+            return console.log("COBRANÇA CRIADA >>>> " + result)
+        })
+        .catch(error => {
+            throw new Error("Erro ao enviar boleto")
+        })
 }
 
 const createUserAsaas = async (raw) => {
@@ -212,7 +243,9 @@ const createUserAsaas = async (raw) => {
             data = JSON.parse(result)
             return data
         })
-        .catch(error => console.log('error', error));
+        .catch(error => {
+            throw new Error("Erro ao criar usuario Asaas")
+        })
 }
 
 const checkPaymentAsaas = async (custumer) => {
@@ -233,104 +266,80 @@ const checkPaymentAsaas = async (custumer) => {
             data = JSON.parse(result)
             return data
         })
-        .catch(error => console.log('error', error));
+        .catch(error => {
+            throw new Error("Erro ao verificar status do pagamento")
+        })
 }
 
 exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.schedule('30 19 1 * *').timeZone('America/Sao_Paulo').onRun((context) => {
     //'30 19 15 * *'
-    admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
+    return admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
         let custumerAsaas = null
         let dataUsers = data.val()
         if (dataUsers) {
             for (let key in dataUsers) {
                 if (dataUsers[key].saldo) {
                     if (dataUsers[key].saldo <= -5) {
-                        let checkUser = checkUserAsaas(dataUsers[key].cpfNum)
+                        return checkUserAsaas(dataUsers[key].cpfNum).then((response) => {
+                            let newValue = dataUsers[key].saldo * (-1)
 
-                        //Pega a data atual e adiciona +5 pro vencimento do boleto
-                        var date = new Date()
-                        var dataG = new Date(date)
-                        var resulta = dataG.setDate(dataG.getDate() + 5)
-                        var resultt = new Date(resulta).toLocaleDateString('pt-BR')
+                            //Pega a data atual e adiciona +5 pro vencimento do boleto
+                            var date = new Date()
+                            var dataG = new Date(date)
+                            var resulta = dataG.setDate(dataG.getDate() + 5)
+                            var resultt = new Date(resulta)
+                            let resultToAsaas = resultt.getFullYear() + '-' + (resultt.getMonth() + 1) + '-' + resultt.getDate()
 
-                        if (checkUser.totalCount >= 1) {
-                            //user Asaas existe
+                            if (response.totalCount >= 1) {
+                                //user Asaas existe
 
-                            custumerAsaas = checkUser.data[0].id
-                            var body = {
-                                'customer': checkUser.data[0].id,
-                                'billingType': 'BOLETO',
-                                'dueDate': resultt,
-                                'value': dataUsers[key].saldo,
-                                'description': 'Taxa quinzenal do aplicativo de transporte Colt.',
-                                'externalReference': key,
-                                'discount': {
-                                    'value': 5,
-                                    'dueDateLimitDays': 0,
-                                    type: {
-                                        'PERCENTAGE': '5'
-                                    }
-                                },
-                                'fine': {
-                                    'value': 1
-                                },
-                                'interest': {
-                                    'value': 2
-                                },
-                                'postalService': false
-                            };
+                                return sendRequestPayment(response.data[0].id, resultToAsaas, newValue, key).then(() => {
+                                    return admin.database().ref('users/' + key + '/').update({
+                                        saldo: 0,
+                                        payment_waiting: {
+                                            create_date: new Date().toLocaleDateString('pt-BR'),
+                                            asaas_id: response.data[0].id,
+                                            value: newValue,
+                                            vencimento_boleto: resultToAsaas
+                                        }
+                                    }).catch(error => {
+                                        throw new Error("Erro atualizar boleto motorista")
+                                    })
+                                })
+                            }
+                            //user n existe no Asaas
+                            else {
+                                let body = {
+                                    'name': dataUsers[key].firstName,
+                                    'email': dataUsers[key].email,
+                                    'mobilePhone': dataUsers[key].mobile,
+                                    'cpfCnpj': dataUsers[key].cpfNum,
+                                    'externalReference': key,
+                                    'notificationDisabled': false,
+                                }
 
-                            sendRequestPayment(body)
-                        }
-                        //user n existe no Asaas
-                        else {
-                            let body = {
-                                'name': dataUsers[key].firstName,
-                                'email': dataUsers[key].email,
-                                'mobilePhone': dataUsers[key].mobile,
-                                'cpfCnpj': dataUsers[key].cpfNum,
-                                'externalReference': key,
-                                'notificationDisabled': false,
-                            };
+                                //Cria um novo usuario no Asaas
+                                return createUserAsaas(body).then((response) => {
 
-                            //Cria um novo usuario no Asaas
-                            let createUser = createUserAsaas(body)
-                            custumerAsaas = createUser.data[0].id
-
-                            var raw = {
-                                'customer': createUser.data[0].id,
-                                'billingType': 'BOLETO',
-                                'dueDate': resultt,
-                                'value': dataUsers[key].saldo,
-                                'description': 'Taxa quinzenal do aplicativo de transporte Colt.',
-                                'externalReference': key,
-                                'discount': {
-                                    'value': 5,
-                                    'dueDateLimitDays': 0,
-                                    type: {
-                                        'PERCENTAGE': '5'
-                                    }
-                                },
-                                'fine': {
-                                    'value': 1
-                                },
-                                'interest': {
-                                    'value': 2
-                                },
-                                'postalService': false
-                            };
-
-                            sendRequestPayment(raw)
-                        }
-
-                        admin.database().ref('users/' + key + '/').update({
-                            saldo: 0,
-                            payment_waiting: {
-                                create_date: new Date().toLocaleDateString('pt-BR'),
-                                asaas_id: custumerAsaas
+                                    return sendRequestPayment(response.data[0].id, resultToAsaas, newValue, key).then(() => {
+                                        return admin.database().ref('users/' + key + '/').update({
+                                            saldo: 0,
+                                            payment_waiting: {
+                                                create_date: new Date().toLocaleDateString('pt-BR'),
+                                                asaas_id: response.data[0].id,
+                                                value: newValue,
+                                                vencimento_boleto: resultToAsaas
+                                            }
+                                        }).catch(error => {
+                                            throw new Error("Erro atualizar boleto motorista")
+                                        })
+                                    })
+                                }).catch(error => {
+                                    throw new Error("Erro ao criar usuario Asaas - Função principal")
+                                })
                             }
                         }).catch(error => {
-                            throw new Error("Erro atualizar boleto motorista")
+                            throw new Error("Erro ao checar usuario Asaas - Função principal")
                         })
                     }
                 }
@@ -341,98 +350,73 @@ exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.
 
 exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub.schedule('30 19 16 * *').timeZone('America/Sao_Paulo').onRun((context) => {
     //'30 19 15 * *'
-    admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
+    return admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
         let custumerAsaas = null
         let dataUsers = data.val()
         if (dataUsers) {
             for (let key in dataUsers) {
                 if (dataUsers[key].saldo) {
                     if (dataUsers[key].saldo <= -5) {
-                        let checkUser = checkUserAsaas(dataUsers[key].cpfNum)
+                        return checkUserAsaas(dataUsers[key].cpfNum).then((response) => {
+                            let newValue = dataUsers[key].saldo * (-1)
 
-                        //Pega a data atual e adiciona +5 pro vencimento do boleto
-                        var date = new Date()
-                        var dataG = new Date(date)
-                        var resulta = dataG.setDate(dataG.getDate() + 5)
-                        var resultt = new Date(resulta).toLocaleDateString('pt-BR')
+                            //Pega a data atual e adiciona +5 pro vencimento do boleto
+                            var date = new Date()
+                            var dataG = new Date(date)
+                            var resulta = dataG.setDate(dataG.getDate() + 5)
+                            var resultt = new Date(resulta)
+                            let resultToAsaas = resultt.getFullYear() + '-' + (resultt.getMonth() + 1) + '-' + resultt.getDate()
 
-                        if (checkUser.totalCount >= 1) {
-                            //user Asaas existe
-                            custumerAsaas = checkUser.data[0].id
-                            let body = {
-                                'customer': checkUser.data[0].id,
-                                'billingType': 'BOLETO',
-                                'dueDate': resultt,
-                                'value': dataUsers[key].saldo,
-                                'description': 'Taxa quinzenal do aplicativo de transporte Colt.',
-                                'externalReference': key,
-                                'discount': {
-                                    'value': 5,
-                                    'dueDateLimitDays': 0,
-                                    type: {
-                                        'PERCENTAGE': '5'
-                                    }
-                                },
-                                'fine': {
-                                    'value': 1
-                                },
-                                'interest': {
-                                    'value': 2
-                                },
-                                'postalService': false
-                            };
+                            if (response.totalCount >= 1) {
+                                //user Asaas existe
 
-                            sendRequestPayment(body)
-                        }
-                        //user n existe no Asaas
-                        else {
-                            var body = {
-                                'name': dataUsers[key].firstName,
-                                'email': dataUsers[key].email,
-                                'mobilePhone': dataUsers[key].mobile,
-                                'cpfCnpj': dataUsers[key].cpfNum,
-                                'externalReference': key,
-                                'notificationDisabled': false,
-                            };
+                                return sendRequestPayment(response.data[0].id, resultToAsaas, newValue, key).then(() => {
+                                    return admin.database().ref('users/' + key + '/').update({
+                                        saldo: 0,
+                                        payment_waiting: {
+                                            create_date: new Date().toLocaleDateString('pt-BR'),
+                                            asaas_id: response.data[0].id,
+                                            value: newValue,
+                                            vencimento_boleto: resultToAsaas
+                                        }
+                                    }).catch(error => {
+                                        throw new Error("Erro atualizar boleto motorista")
+                                    })
+                                })
+                            }
+                            //user n existe no Asaas
+                            else {
+                                let body = {
+                                    'name': dataUsers[key].firstName,
+                                    'email': dataUsers[key].email,
+                                    'mobilePhone': dataUsers[key].mobile,
+                                    'cpfCnpj': dataUsers[key].cpfNum,
+                                    'externalReference': key,
+                                    'notificationDisabled': false,
+                                }
 
-                            //Cria um novo usuario no Asaas
-                            let createUser = createUserAsaas(body)
-                            custumerAsaas = createUser.data[0].id
+                                //Cria um novo usuario no Asaas
+                                return createUserAsaas(body).then((response) => {
 
-                            var raw = {
-                                'customer': createUser.data[0].id,
-                                'billingType': 'BOLETO',
-                                'dueDate': resultt,
-                                'value': dataUsers[key].saldo,
-                                'description': 'Taxa quinzenal do aplicativo de transporte Colt.',
-                                'externalReference': key,
-                                'discount': {
-                                    'value': 5,
-                                    'dueDateLimitDays': 0,
-                                    type: {
-                                        'PERCENTAGE': '5'
-                                    }
-                                },
-                                'fine': {
-                                    'value': 1
-                                },
-                                'interest': {
-                                    'value': 2
-                                },
-                                'postalService': false
-                            };
-
-                            sendRequestPayment(raw)
-                        }
-
-                        admin.database().ref('users/' + key + '/').update({
-                            saldo: 0,
-                            payment_waiting: {
-                                create_date: new Date().toLocaleDateString('pt-BR'),
-                                asaas_id: custumerAsaas
+                                    return sendRequestPayment(response.data[0].id, resultToAsaas, newValue, key).then(() => {
+                                        return admin.database().ref('users/' + key + '/').update({
+                                            saldo: 0,
+                                            payment_waiting: {
+                                                create_date: new Date().toLocaleDateString('pt-BR'),
+                                                asaas_id: response.data[0].id,
+                                                value: newValue,
+                                                vencimento_boleto: resultToAsaas
+                                            }
+                                        }).catch(error => {
+                                            throw new Error("Erro atualizar boleto motorista")
+                                        })
+                                    })
+                                }).catch(error => {
+                                    throw new Error("Erro ao criar usuario Asaas - Função principal")
+                                })
                             }
                         }).catch(error => {
-                            throw new Error("Erro atualizar boleto motorista")
+                            throw new Error("Erro ao checar usuario Asaas - Função principal")
                         })
                     }
                 }
@@ -448,23 +432,27 @@ exports.verifyDriversPayment_6 = functions.region('southamerica-east1').pubsub.s
         if (dataUsers) {
             for (let key in dataUsers) {
                 if (dataUsers[key].payment_waiting) {
-                    let checkPayment = checkPaymentAsaas(dataUsers[key].payment_waiting.asaas_id)
+                    checkPaymentAsaas(dataUsers[key].payment_waiting.asaas_id).then((response) => {
 
-                    if( checkPayment.totalCount >= 1 ){
-                        if( checkPayment.data[0].status !== 'RECEIVED' || checkPayment.data[0].status !== 'CONFIRMED' ){
+                        if (response.totalCount >= 1) {
+                            if (response.data[0].status !== 'RECEIVED' || response.data[0].status !== 'CONFIRMED') {
 
-                            //Bloqueia o motorista 
-                            admin.database().ref('users/' + key + '/').update({
-                                blocked_by_payment: {
-                                    date_blocked: new Date().toLocaleDateString('pt-BR'),
-                                    reason: 'Pagamento não confirmado 5 dias depois após a emissão do boleto.',
-                                    id_asaas: checkPayment.data[0].customer
-                                }
-                            }).catch(error => {
-                                throw new Error("Erro ao verificar pagamento motorista")
-                            })
+                                //Bloqueia o motorista 
+                                admin.database().ref('users/' + key + '/').update({
+                                    blocked_by_payment: {
+                                        date_blocked: new Date().toLocaleDateString('pt-BR'),
+                                        reason: 'Pagamento não confirmado 5 dias após a emissão do boleto.',
+                                        id_asaas: response.data[0].customer
+                                    }
+                                }).catch(error => {
+                                    throw new Error("Erro ao verificar pagamento motorista")
+                                })
+                            }
                         }
-                    }
+                        return true
+                    }).catch(error => {
+                        throw new Error("Erro ao verificar pagamento motorista - Principal")
+                    })
                 }
             }
         }
@@ -478,23 +466,27 @@ exports.verifyDriversPayment_21 = functions.region('southamerica-east1').pubsub.
         if (dataUsers) {
             for (let key in dataUsers) {
                 if (dataUsers[key].payment_waiting) {
-                    let checkPayment = checkPaymentAsaas(dataUsers[key].payment_waiting.asaas_id)
+                    checkPaymentAsaas(dataUsers[key].payment_waiting.asaas_id).then((response) => {
 
-                    if( checkPayment.totalCount >= 1 ){
-                        if( checkPayment.data[0].status !== 'RECEIVED' || checkPayment.data[0].status !== 'CONFIRMED' ){
+                        if (response.totalCount >= 1) {
+                            if (response.data[0].status !== 'RECEIVED' || response.data[0].status !== 'CONFIRMED') {
 
-                            //Bloqueia o motorista 
-                            admin.database().ref('users/' + key + '/').update({
-                                blocked_by_payment: {
-                                    date_blocked: new Date().toLocaleDateString('pt-BR'),
-                                    reason: 'Pagamento não confirmado 5 dias depois após a emissão do boleto.',
-                                    id_asaas: checkPayment.data[0].customer
-                                }
-                            }).catch(error => {
-                                throw new Error("Erro ao verificar pagamento motorista")
-                            })
+                                //Bloqueia o motorista 
+                                admin.database().ref('users/' + key + '/').update({
+                                    blocked_by_payment: {
+                                        date_blocked: new Date().toLocaleDateString('pt-BR'),
+                                        reason: 'Pagamento não confirmado 5 dias após a emissão do boleto.',
+                                        id_asaas: response.data[0].customer
+                                    }
+                                }).catch(error => {
+                                    throw new Error("Erro ao verificar pagamento motorista")
+                                })
+                            }
                         }
-                    }
+                        return true
+                    }).catch(error => {
+                        throw new Error("Erro ao verificar pagamento motorista - Principal")
+                    })
                 }
             }
         }
@@ -765,16 +757,16 @@ exports.removeCancelValue = functions.region('southamerica-east1').database.ref(
 })
 
 exports.addDetailsToPromo = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/usedDiscount').onCreate((snap, context) => {
-    admin.database().ref('bookings/' + context.params.bookingsId).on("value", (data) => {
+    return admin.database().ref('bookings/' + context.params.bookingsId).on("value", (data) => {
         let dataBooking = data.val();
 
         if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'PAID') {
-            admin.database().ref('offers/' + dataBooking.pagamento.promoKey).on("value", (dataOffer) => {
+            return admin.database().ref('offers/' + dataBooking.pagamento.promoKey).on("value", (dataOffer) => {
                 let offerData = dataOffer.val()
 
                 let user_avail = offerData.user_avail;
                 if (user_avail) {
-                    admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
+                    return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
                         userId: dataBooking.customer
                     }).then(() => {
                         return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: user_avail.count + 1 })
@@ -782,7 +774,7 @@ exports.addDetailsToPromo = functions.region('southamerica-east1').database.ref(
                         return error
                     })
                 } else {
-                    admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
+                    return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
                         userId: dataBooking.customer
                     }).then(() => {
                         return (admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: 1 }))

@@ -16,6 +16,7 @@ import EmailLoginScreen from './EmailLoginScreen';
 import MobileLoginScreen from './MobileLoginScreen';
 import IntroScreen from './IntroScreen';
 import ScreenWelcome from './ScreenWelcome';
+import WaitingDocs from './WaitingDocs';
 
 
 export {
@@ -36,5 +37,6 @@ export {
     EmailLoginScreen,
     MobileLoginScreen,
     ScreenWelcome,
+    WaitingDocs,
     IntroScreen
 };

@@ -274,37 +274,6 @@ export default class DriverTripAccept extends React.Component {
         this._subscription = null;
     }
 
-    // find your origin and destination point coordinates and pass it to our method.
-    /*async getDirections(startLoc, destinationLoc, pickuplat, pickuplng, droplat, droplng) {
-        if (this._isMounted) {
-            try {
-                let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=${google_map_key}`)
-                let respJson = await resp.json();
-                let points = Polyline.decode(respJson.routes[0].overview_polyline.points);
-                let coords = points.map((point, index) => {
-                    return {
-                        latitude: point[0],
-                        longitude: point[1]
-                    }
-                })
-                this.setState({ coords: coords }, () => {
-                    if (this.state.chegouCorrida) {
-                        this.map2.fitToCoordinates([{ latitude: pickuplat, longitude: pickuplng }, { latitude: droplat, longitude: droplng }], {
-                            edgePadding: { top: 80, right: 65, bottom: 50, left: 50 },
-                            animated: true,
-                        })
-                        this.setState({ acceptBtnDisable: false })
-                    }
-                })
-                return coords
-            }
-            catch (error) {
-                alert('Ops, tivemos um problema ao marcar a direção no mapa.')
-                return error
-            }
-        }
-    }*/
-
     _getInfoEraning = async () => {
         try {
             let userUid = firebase.auth().currentUser.uid;
@@ -427,7 +396,6 @@ export default class DriverTripAccept extends React.Component {
                 }
             }).catch((error) => {
                 console.error(error);
-                alert('Ops, tivemos um problema.')
             });
     }
 

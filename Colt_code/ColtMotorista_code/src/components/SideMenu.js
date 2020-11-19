@@ -41,7 +41,7 @@ export default class SideMenu extends React.Component{
                 this.setState(currentUserData.val(),(res)=>{
                     if(currentUserData.val().driverActiveStatus == undefined){
                         userData.update({
-                            driverActiveStatus:true
+                            driverActiveStatus:false
                         })
                     }
                 });    
@@ -67,15 +67,18 @@ export default class SideMenu extends React.Component{
 
     //navigation to screens from side menu
     navigateToScreen = (route) => () => {
-        const checkRide=firebase.database().ref('users/'+ firebase.auth().currentUser.uid  + '/emCorrida');
+        const checkRide=firebase.database().ref('users/'+ firebase.auth().currentUser.uid + '/');
         checkRide.once('value',checkRider=>{
-            if(!checkRider.val()){
+            if(checkRider.val().approved == false || checkRider.val().perfilAproved == false || checkRider.val().cnhAproved == false || checkRider.val().crlvAproved == false ) {
+                alert('Sua conta ainda não foi aprovada.')
+            }
+            else if(!checkRider.val().emCorrida){
                 const navigateAction = NavigationActions.navigate({
                   routeName: route
                 });
                 this.props.navigation.dispatch(navigateAction);
             } else {
-                alert('Você possuí uma corrida em andamento.')
+                alert('Você possui uma corrida em andamento.')
             }
         })
     }

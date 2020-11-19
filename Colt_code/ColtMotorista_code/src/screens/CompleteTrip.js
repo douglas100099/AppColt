@@ -123,7 +123,7 @@ export default class DriverCompleteTrip extends React.Component {
                 this.setState({ chegouCorridaQueue: true })
                 if (this.state.isSound == false) {
                     this.playSound()
-                    //Linking.openURL('coltappmotorista://');
+                    Linking.openURL('coltappmotorista://');
                 }
             } else if (this.state.chegouCorrida == true) {
                 this.setState({ chegouCorridaQueue: false })

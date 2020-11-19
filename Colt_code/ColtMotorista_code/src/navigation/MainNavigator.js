@@ -112,6 +112,9 @@ var { width, height } = Dimensions.get('window');
             screen: WaitingDocs,
             navigationOptions:{
                 headerShown: false,
+            },
+            defaultNavigationOptions: {
+                gestureEnabled: false,
             }
         },
     }

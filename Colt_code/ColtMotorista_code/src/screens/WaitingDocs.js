@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Platform, Text, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { View, StyleSheet, Platform, Text, TouchableOpacity, ScrollView, Image, BackHandler, ToastAndroid } from 'react-native';
 import { colors } from '../common/theme';
 import * as firebase from 'firebase';
 import { Icon } from 'react-native-elements';
@@ -30,8 +30,19 @@ export default class WaitingDocs extends React.Component {
     } else {
       this.setState({ statusCamera: false })
     }
-    this.acessDBdocs()
+    this.acessDBdocs();
+    BackHandler.addEventListener('hardwareBackPress', this.handleBackButton);
   }
+
+  componentWillUnmount() {
+    BackHandler.removeEventListener('hardwareBackPress', this.handleBackButton);
+  }
+
+  handleBackButton() {
+    ToastAndroid.show('Você ainda não foi aprovado', ToastAndroid.SHORT);
+    return true;
+  }
+
 
   acessDBdocs() {
     if (this.state.curID) {

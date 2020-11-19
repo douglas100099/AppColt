@@ -145,7 +145,7 @@ export class AuthLoadingScreen extends React.Component {
                 const settings = firebase.database().ref('settings');
                 settings.once('value', settingsData => {
                   if (settingsData.val() && settingsData.val().driver_approval) {
-                    this.props.navigation.replace("Waiting");
+                    this.props.navigation.navigate("Waiting");
                   }
                 });
               } else {

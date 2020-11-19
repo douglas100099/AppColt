@@ -448,9 +448,7 @@ export default class DriverTripAccept extends React.Component {
                     for (let key in waiting_riderData) {
                         waiting_riderData[key].bookingId = key;
                         jobs.push(waiting_riderData[key]);
-
-                        /*this.getDirections('"' + waiting_riderData[key].pickup.lat + ',' + waiting_riderData[key].pickup.lng + '"', '"' + this.state.region.latitude + ',' + this.state.region.longitude + '"',
-                            waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng, this.state.region.latitude, this.state.region.longitude)*/
+                        
                         var location1 = [waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng];
                         var location2 = [this.state.region.latitude, this.state.region.longitude];
                         var distancee = distanceCalc(location1, location2);

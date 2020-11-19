@@ -82,9 +82,9 @@ export default class WaitingDocs extends React.Component {
         blob.close()
         return imageRef.getDownloadURL()
       }).then((dwnldurlCrlv) => {
-        this.setState({ imageCrlv:dwnldurlCrlv });
+        this.setState({ imageCrlv: dwnldurlCrlv });
         return dwnldurlCrlv
-      }).catch(error=>{
+      }).catch(error => {
         console.log(error);
         alert('Ops, tivemos um problema.');
       });
@@ -121,9 +121,9 @@ export default class WaitingDocs extends React.Component {
         blob.close()
         return imageRef.getDownloadURL()
       }).then((dwnldurlCrlv) => {
-        this.setState({ imageCrlv:dwnldurlCrlv });
+        this.setState({ imageCrlv: dwnldurlCrlv });
         return dwnldurlCrlv
-      }).catch(error=>{
+      }).catch(error => {
         console.log(error);
         alert('Ops, tivemos um problema.');
       });
@@ -160,9 +160,9 @@ export default class WaitingDocs extends React.Component {
         blob.close()
         return imageRef.getDownloadURL()
       }).then((dwnldurlCrlv) => {
-        this.setState({ imageCrlv:dwnldurlCrlv });
+        this.setState({ imageCrlv: dwnldurlCrlv });
         return dwnldurlCrlv
-      }).catch(error=>{
+      }).catch(error => {
         console.log(error);
         alert('Ops, tivemos um problema.');
       });
@@ -186,13 +186,13 @@ export default class WaitingDocs extends React.Component {
     }
   }
 
-  checkDocs(){
+  checkDocs() {
     const validCnh = this.validateImageCnh()
     const validCrlv = this.validateImageCrlv()
     const validPerfil = this.validateImagePerfil()
 
-    if(this.state.crlvStatus === 'REENVIE'){
-      if(validCrlv){
+    if (this.state.crlvStatus === 'REENVIE') {
+      if (validCrlv) {
         this.uploadmultimediaCrlv(this.state.imageCrlv).then((response) => {
           firebase.database().ref('users/' + this.state.curID + '/').update({
             imagemCrlv: response,
@@ -204,8 +204,8 @@ export default class WaitingDocs extends React.Component {
         alert('Reenvie a foto do CRLV.')
       }
     }
-    if(this.state.cnhStatus === 'REENVIE'){
-      if(validCnh){
+    if (this.state.cnhStatus === 'REENVIE') {
+      if (validCnh) {
         this.uploadmultimediaCnh(this.state.imageCnh).then((response) => {
           firebase.database().ref('users/' + this.state.curID + '/').update({
             licenseImage: response,
@@ -217,8 +217,8 @@ export default class WaitingDocs extends React.Component {
         alert('Reenvie a foto da CNH.')
       }
     }
-    if(this.state.perfilStatus === 'REENVIE'){
-      if(validPerfil){
+    if (this.state.perfilStatus === 'REENVIE') {
+      if (validPerfil) {
         this.uploadmultimediaPerfil(this.state.imagePerfil).then((response) => {
           firebase.database().ref('users/' + this.state.curID + '/').update({
             driver_image: response,
@@ -229,7 +229,7 @@ export default class WaitingDocs extends React.Component {
       } else {
         alert('Reenvie a foto de PERFIL.')
       }
-    } 
+    }
   }
 
   //upload cancel
@@ -272,6 +272,9 @@ export default class WaitingDocs extends React.Component {
   }
 
   render() {
+    let { imageCrlv } = this.state
+    let { imagePerfil } = this.state
+    let { imageCnh } = this.state
     return (
       <View style={styles.mainView}>
         {this.state.isCamera == false ?
@@ -285,25 +288,31 @@ export default class WaitingDocs extends React.Component {
               <Text style={{ color: colors.BLACK, fontSize: 16, fontFamily: 'Inter-Medium', textAlign: 'center', marginBottom: 15, }}>CNH</Text>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignSelf: 'center', height: 100, width: '85%', backgroundColor: colors.GREY3, elevation: 1, borderRadius: 15 }}>
                 <View style={{ flex: 1, borderRightWidth: 0.6, borderRightColor: colors.GREY1, justifyContent: 'center', alignItems: 'center' }}>
-                  {this.state.cnhStatus === 'REENVIE' ?
-                    <Icon
-                      name='camera'
-                      type='feather'
-                      color={colors.BLACK}
-                      size={30}
-                      onPress={() => this.setState({ isCamera: true, isCnh: true })}
-                    />
+                  {this.state.cnhStatus === 'REENVIE' &&  imageCnh === null ?
+                    <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                      <Icon
+                        name='camera'
+                        type='feather'
+                        color={colors.BLACK}
+                        size={30}
+                        onPress={() => this.setState({ isCamera: true, isCnh: true })}
+                      />
+                      <Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Bold' }}>Não enviado</Text>
+                    </View>
                     :
-                    <Icon
-                      name='camera'
-                      type='feather'
-                      color={colors.GREY1}
-                      size={30}
-                    />
+                    <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                      <Icon
+                        name='check-circle'
+                        type='ionicons'
+                        color={colors.GREEN.light}
+                        size={30}
+                      />
+                      <Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Bold' }}>Enviado!</Text>
+                    </View>
                   }
                 </View>
                 <View style={{ flex: 1, justifyContent: "center" }}>
-                  {this.state.cnhStatus === 'AGUARDANDO' ?
+                  {this.state.cnhStatus === 'AGUARDANDO'?
                     <View style={{ flexDirection: 'column', justifyContent: "center", alignItems: 'center' }}>
                       <Icon
                         name='clock'
@@ -345,21 +354,27 @@ export default class WaitingDocs extends React.Component {
               <Text style={{ color: colors.BLACK, fontSize: 16, fontFamily: 'Inter-Medium', textAlign: 'center', marginBottom: 15, marginTop: 20 }}>CRLV</Text>
               <View style={{ flexDirection: 'row', alignSelf: 'center', height: 100, justifyContent: 'space-between', width: '85%', backgroundColor: colors.GREY3, elevation: 1, borderRadius: 15 }}>
                 <View style={{ flex: 1, borderRightWidth: 0.6, borderRightColor: colors.GREY1, alignItems: 'center', justifyContent: 'center' }}>
-                  {this.state.crlvStatus === 'REENVIE' ?
-                    <Icon
-                      name='camera'
-                      type='feather'
-                      color={colors.BLACK}
-                      size={30}
-                      onPress={() => this.setState({ isCamera: true, isCrlv: true })}
-                    />
+                  {this.state.crlvStatus === 'REENVIE' &&  imageCrlv === null ?
+                    <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                      <Icon
+                        name='camera'
+                        type='feather'
+                        color={colors.BLACK}
+                        size={30}
+                        onPress={() => this.setState({ isCamera: true, isCnh: true })}
+                      />
+                      <Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Bold' }}>Não enviado</Text>
+                    </View>
                     :
-                    <Icon
-                      name='camera'
-                      type='feather'
-                      color={colors.GREY1}
-                      size={30}
-                    />
+                    <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                      <Icon
+                        name='check-circle'
+                        type='ionicons'
+                        color={colors.GREEN.light}
+                        size={30}
+                      />
+                      <Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Bold' }}>Enviado!</Text>
+                    </View>
                   }
                 </View>
                 <View style={{ flex: 1, justifyContent: "center" }}>
@@ -405,21 +420,27 @@ export default class WaitingDocs extends React.Component {
               <Text style={{ color: colors.BLACK, fontSize: 16, fontFamily: 'Inter-Medium', textAlign: 'center', marginBottom: 15, marginTop: 20 }}>PERFIL</Text>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignSelf: 'center', marginBottom: 20, height: 100, width: '85%', backgroundColor: colors.GREY3, elevation: 1, borderRadius: 15 }}>
                 <View style={{ flex: 1, borderRightWidth: 0.6, borderRightColor: colors.GREY1, justifyContent: 'center', alignItems: 'center' }}>
-                  {this.state.perfilStatus === 'REENVIE' ?
-                    <Icon
-                      name='camera'
-                      type='feather'
-                      color={colors.BLACK}
-                      size={30}
-                      onPress={() => this.setState({ isCamera: true, isPerfil: true })}
-                    />
+                  {this.state.perfilStatus === 'REENVIE' &&  imagePerfil === null ?
+                    <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                      <Icon
+                        name='camera'
+                        type='feather'
+                        color={colors.BLACK}
+                        size={30}
+                        onPress={() => this.setState({ isCamera: true, isCnh: true })}
+                      />
+                      <Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Bold' }}>Não enviado</Text>
+                    </View>
                     :
-                    <Icon
-                      name='camera'
-                      type='feather'
-                      color={colors.GREY1}
-                      size={30}
-                    />
+                    <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                      <Icon
+                        name='check-circle'
+                        type='ionicons'
+                        color={colors.GREEN.light}
+                        size={30}
+                      />
+                      <Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Bold' }}>Enviado!</Text>
+                    </View>
                   }
                 </View>
                 <View style={{ flex: 1, justifyContent: "center" }}>
@@ -462,18 +483,19 @@ export default class WaitingDocs extends React.Component {
                 </View>
               </View>
               {this.state.crlvStatus === 'REENVIE' || this.state.perfilStatus === 'REENVIE' || this.state.cnhStatus === 'REENVIE' ?
-              <View style={{ height: 100, marginTop: 15, justifyContent: 'center'}}>
-                <TouchableOpacity
-                  onPress={() => this.checkDocs()}
-                  style={{ justifyContent: 'center', alignItems: 'center',height: 60, marginHorizontal: 50, backgroundColor: colors.DEEPBLUE, borderRadius: 15, }}
-                >
-                  <Text style={{ color: colors.WHITE, fontFamily: 'Inter-Bold', fontSize: 14 }}>Enviar</Text>
-                </TouchableOpacity>
-              </View>
-              :
-              <View style={{ alignItems: 'center', marginTop: 10 }}>
-                <Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Bold' }}>Documentos sendo analisados, aguarde.</Text>
-              </View>
+                <View style={{ height: 150, marginTop: 15, justifyContent: 'center' }}>
+                  <Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Bold', textAlign: 'center', marginHorizontal: 15 }}>Alguns documentos não foram validados, favor reenvie novamente para a análise</Text>
+                  <TouchableOpacity
+                    onPress={() => this.checkDocs()}
+                    style={{ justifyContent: 'center', alignItems: 'center', height: 60, marginHorizontal: 50, backgroundColor: colors.DEEPBLUE, borderRadius: 15, marginTop: 15 }}
+                  >
+                    <Text style={{ color: colors.WHITE, fontFamily: 'Inter-Bold', fontSize: 14 }}>Enviar</Text>
+                  </TouchableOpacity>
+                </View>
+                :
+                <View style={{ alignItems: 'center', marginTop: 10 }}>
+                  <Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Bold' }}>Documentos sendo analisados, aguarde.</Text>
+                </View>
               }
 
             </ScrollView>

@@ -76,7 +76,6 @@ export default class BookedCabScreen extends React.Component {
         this.state.bookingDataState == null ? this.getParamData = this.props.navigation.getParam('passData') : this.getParamData = this.state.bookingDataState
 
         this.searchDriver()
-
         var curuser = firebase.auth().currentUser;
         let bookingResponse = firebase.database().ref(`users/` + curuser.uid + '/my-booking/' + this.getParamData.bokkingId);
         bookingResponse.on('value', currUserBookings => {
@@ -90,18 +89,13 @@ export default class BookedCabScreen extends React.Component {
                     whereText: currUserBooking.pickup.add,
                     droptext: currUserBooking.drop.add
                 }
+                console.log("SETANDO REGION >> " + region)
                 this.setState({
-                    cashPaymentAmount: currUserBooking.pagamento.cashPaymentAmount,
                     firstNameRider: currUserBooking.firstNameRider,
-                    usedWalletMoney: currUserBooking.pagamento.usedWalletMoney,
                     coords: this.getParamData.coords,
                     region: region,
-                    distance: currUserBooking.estimateDistance,
-                    estimateFare: this.getParamData.estimate,
-                    estimateTime: 0,
                     currentBookingId: this.getParamData.bokkingId,
                     currentUser: curuser.uid,
-                    customer_name: currUserBooking.customer_name,
                     bookingStatus: currUserBooking.status,
                     carType: currUserBooking.carType,
                     driverUID: currUserBooking.driver,
@@ -111,7 +105,6 @@ export default class BookedCabScreen extends React.Component {
                     carModel: currUserBooking.vehicleModelName,
                     carNo: currUserBooking.vehicle_number,
                     starCount: currUserBooking.driverRating,
-                    otp: currUserBooking.otp,
 
                 }, () => {
                     this.getCancelReasons();

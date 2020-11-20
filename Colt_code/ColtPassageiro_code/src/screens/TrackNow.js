@@ -45,36 +45,39 @@ export default class TrackNow extends React.Component {
             routeCoordinates: [],
             distanceTravelled: 0,
             prevLatLng: {},
-            coordinate: null
+            coordinate: null,
+            fitCoord: true,
+            dontGetRegion: false
         };
     }
 
     async componentDidMount() {
         this._isMounted = true
         let keys = this.props.navigation.getParam('bId');
-        const dat = firebase.database().ref('bookings/' + keys);
+        const dat = firebase.database().ref('bookings/' + keys + '/current');
         dat.on('value', snapshot => {
             var data = snapshot.val()
-            if (data.current) {
+            if (data) {
                 let data = snapshot.val();
                 this.setState({
-                    angle: data.current.angle,
-                    latitude: data.current.lat,
-                    longitude: data.current.lng,
+                    angle: data.angle,
+                    latitude: data.lat,
+                    longitude: data.lng,
+                    startLoc: data.lat + ',' + data.lng,
                 });
             }
         })
 
-        let paramData = this.props.navigation.getParam('data');
+        let paramData = await this.props.navigation.getParam('data');
 
-        this.setState({
-            allData: paramData,
-            startLoc: paramData.pickup.lat + ',' + paramData.pickup.lng,
-            destinationLoc: paramData.drop.lat + ',' + paramData.drop.lng
-        }, () => {
-            this.getDirections();
-        })
-
+        if (paramData) {
+            this.setState({
+                allData: paramData,
+                destinationLoc: paramData.drop.lat + ',' + paramData.drop.lng
+            }, () => {
+                this.getDirections(this.state.startLoc)
+            })
+        }
 
         const coordinate = new AnimatedRegion({
             latitude: paramData.pickup.lat,
@@ -103,6 +106,8 @@ export default class TrackNow extends React.Component {
                     routeCoordinates: routeCoordinates.concat([newCoordinate]),
                     distanceTravelled: this.state.distanceTravelled + this.calcDistance(newCoordinate),
                     prevLatLng: newCoordinate
+                }, () => {
+                    this.getDirections(this.state.startLoc);
                 });
             },
             error => console.log(error),
@@ -113,17 +118,6 @@ export default class TrackNow extends React.Component {
                 distanceFilter: 10
             }
         );
-
-        if (this.props.navigation.getParam('data')) {
-            let paramData = this.props.navigation.getParam('data');
-            this.setState({
-                allData: paramData,
-                startLoc: paramData.pickup.lat + ',' + paramData.pickup.lng,
-                destinationLoc: paramData.drop.lat + ',' + paramData.drop.lng
-            }, () => {
-                this.getDirections();
-            })
-        }
     }
 
     componentWillUnmount() {
@@ -143,9 +137,9 @@ export default class TrackNow extends React.Component {
         longitudeDelta: 0.0134
     });
 
-    async getDirections() {
+    async getDirections(startLoc) {
         try {
-            let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${this.state.startLoc}&destination=${this.state.destinationLoc}&key=${google_map_key}`)
+            let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${this.state.destinationLoc}&key=${google_map_key}`)
             let respJson = await resp.json();
             let points = Polyline.decode(respJson.routes[0].overview_polyline.points);
             let coords = points.map((point, index) => {
@@ -155,18 +149,20 @@ export default class TrackNow extends React.Component {
                 }
             })
             this.setState({ coords: coords }, () => {
-                setTimeout(() => {
-                    this.map.fitToCoordinates([{ latitude: this.state.allData.pickup.lat, longitude: this.state.allData.pickup.lng }, { latitude: this.state.allData.drop.lat, longitude: this.state.allData.drop.lng }], {
-                        edgePadding: { top: getPixelSize(40), right: getPixelSize(40), bottom: getPixelSize(40), left: getPixelSize(40) },
-                        animated: true,
-                    })
-                }, 500);
-
+                if (this.state.fitCoord) {
+                    this.setState({ fitCoord: false })
+                    setTimeout(() => {
+                        this.map.fitToCoordinates([{ latitude: this.state.allData.pickup.lat, longitude: this.state.allData.pickup.lng }, { latitude: this.state.allData.drop.lat, longitude: this.state.allData.drop.lng }], {
+                            edgePadding: { top: getPixelSize(40), right: getPixelSize(40), bottom: getPixelSize(40), left: getPixelSize(40) },
+                            animated: true,
+                        })
+                    }, 500);
+                }
             })
             return coords
         }
         catch (error) {
-            alert(error)
+            console.log(error)
             return error
         }
     }
@@ -175,6 +171,8 @@ export default class TrackNow extends React.Component {
         this.map.fitToCoordinates([{ latitude: this.state.allData.pickup.lat, longitude: this.state.allData.pickup.lng }, { latitude: this.state.allData.drop.lat, longitude: this.state.allData.drop.lng }], {
             edgePadding: { top: getPixelSize(60), right: getPixelSize(60), bottom: getPixelSize(60), left: getPixelSize(60) },
             animated: true,
+        }, () => {
+            this.setState({ dontGetRegion: false })
         })
     }
 
@@ -200,13 +198,13 @@ export default class TrackNow extends React.Component {
                             }
                             Linking.openURL(phoneNumber);
                         }*/
-                            if (Platform.OS === 'android') {
-                                phoneNumber = `tel:190`;
-                            } else {
-                                phoneNumber = `telprompt:190`;
-                            }
-                            Linking.openURL(phoneNumber);
-                        
+                        if (Platform.OS === 'android') {
+                            phoneNumber = `tel:190`;
+                        } else {
+                            phoneNumber = `telprompt:190`;
+                        }
+                        Linking.openURL(phoneNumber);
+
                     }
                 }
             ],
@@ -227,7 +225,9 @@ export default class TrackNow extends React.Component {
                             showUserLocation
                             followUserLocation
                             loadingEnabled
-                            region={this.getMapRegion()}
+                            //region={this.state.dontGetRegion ? null : this.getMapRegion()}
+                            initialRegion={this.getMapRegion()}
+                            onRegionChange={() => this.setState({ dontGetRegion: true })}
                             showsCompass={false}
                             showsScale={false}
                             customMapStyle={Platform.OS == 'ios' ? mapStyleJson : null}
@@ -242,7 +242,7 @@ export default class TrackNow extends React.Component {
                                 />
                                 : null}
                             {/*this.state.routeCoordinates ?
-                                <MapView.Polyline coordinates={this.state.routeCoordinates} strokeColor={colors.BLACK} strokeWidth={3} />
+                                <MapView.Polyline coordinates={this.state.routeCoordinates} strokeColor={colors.RED} strokeWidth={3} />
                             : null*/}
 
                             <Marker.Animated
@@ -328,7 +328,7 @@ export default class TrackNow extends React.Component {
                             <View style={{ borderWidth: 1.5, width: 80, height: 80, justifyContent: 'center', alignItems: 'center', borderColor: colors.GREY1, borderRadius: 100 }}>
                                 {this.state.allData ?
                                     <Image
-                                        source={this.state.allData ? { uri: this.state.allData.driver_image } : null}
+                                        source={this.state.allData ? { uri: this.state.allData.driver_image ? this.state.allData.driver_image : null } : null}
                                         style={{ width: 72, height: 72, borderRadius: 50 }}
                                     />
                                     :
@@ -376,11 +376,11 @@ export default class TrackNow extends React.Component {
                         <View style={{ flexDirection: 'row', marginTop: 20 }}>
                             <CircleLineTriangle style={{}} />
                             <View style={{ justifyContent: 'space-around' }}>
-                                <Text style={{ fontFamily: 'Inter-Medium' }}> {this.state.allData ?
+                                <Text style={{ fontFamily: 'Inter-Medium', paddingRight: 10 }}> {this.state.allData ?
                                     this.state.allData.pickup.add.split(",")[0] + ',' + this.state.allData.pickup.add.split(",")[1]
                                     : null}
                                 </Text>
-                                <Text style={{ fontFamily: 'Inter-Medium' }}> {this.state.allData ?
+                                <Text style={{ fontFamily: 'Inter-Medium', paddingRight: 10 }}> {this.state.allData ?
                                     this.state.allData.drop.add.split(',')[0] + ',' + this.state.allData.drop.add.split(',')[1]
                                     : null}
                                 </Text>

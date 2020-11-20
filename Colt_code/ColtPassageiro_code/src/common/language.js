@@ -169,7 +169,7 @@ export default {
     android_channel: 'Notificações',
     write_message:'Digite sua mensagem',
     terms:"Termos e Condições",
-    panic_text:"Chamada de pânico",
+    panic_text:"Chamada de Emergência",
     panic_question:"Tem certeza que deseja usar a chamada de emergência?",
     email_login:'Login',
     register_email:'Cadastre-se',

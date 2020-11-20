@@ -264,7 +264,7 @@ export default class TrackNow extends React.Component {
                             />
                             : null}
                         {/*this.state.routeCoordinates ?
-                            <MapView.Polyline strokeColor={colors.DEEPBLUE} coordinates={this.state.routeCoordinates} strokeWidth={3} />
+                            <MapView.Polyline strokeColor={colors.RED} coordinates={this.state.routeCoordinates} strokeWidth={3} />
                         : null*/}
                         {this.state.allData ?
                             <Marker

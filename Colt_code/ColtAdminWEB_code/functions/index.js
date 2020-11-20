@@ -231,7 +231,7 @@ const createUserAsaas = async (raw) => {
     var requestOptions = {
         method: 'POST',
         headers: myHeaders,
-        body: raw,
+        body: JSON.stringify(raw),
         redirect: 'follow'
     };
 
@@ -273,13 +273,12 @@ const checkPaymentAsaas = async (custumer) => {
 exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.schedule('30 19 1 * *').timeZone('America/Sao_Paulo').onRun((context) => {
     //'30 19 15 * *'
     return admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
-        let custumerAsaas = null
         let dataUsers = data.val()
         if (dataUsers) {
             for (let key in dataUsers) {
                 if (dataUsers[key].saldo) {
                     if (dataUsers[key].saldo <= -5) {
-                        return checkUserAsaas(dataUsers[key].cpfNum).then((response) => {
+                        checkUserAsaas(dataUsers[key].cpfNum).then((response) => {
                             let newValue = dataUsers[key].saldo * (-1)
 
                             //Pega a data atual e adiciona +5 pro vencimento do boleto
@@ -291,21 +290,19 @@ exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.
 
                             if (response.totalCount >= 1) {
                                 //user Asaas existe
-
-                                return sendRequestPayment(response.data[0].id, resultToAsaas, newValue, key).then((res) => {
-                                    return admin.database().ref('users/' + key + '/').update({
+                                sendRequestPayment(response.data[0].id, resultToAsaas, newValue, key).then(() => {
+                                    admin.database().ref('users/' + key + '/').update({
                                         saldo: 0,
                                         payment_waiting: {
                                             create_date: new Date().toLocaleDateString('pt-BR'),
                                             asaas_id: response.data[0].id,
                                             value: newValue,
-                                            vencimento_boleto: resultToAsaas,
-                                            resO: res.object,
-                                            res: res
+                                            vencimento_boleto: resultToAsaas
                                         }
                                     })
+                                    return null
                                 }).catch(error => {
-                                    throw new Error("Erro atualizar boleto motorista")
+                                    throw new Error("Erro ao Enviar boleto Asaas - Função principal")
                                 })
                             }
                             //user n existe no Asaas
@@ -320,25 +317,28 @@ exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.
                                 }
 
                                 //Cria um novo usuario no Asaas
-                                return createUserAsaas(body).then((response) => {
+                                createUserAsaas(body).then((response) => {
 
-                                    return sendRequestPayment(response.data[0].id, resultToAsaas, newValue, key).then(() => {
-                                        return admin.database().ref('users/' + key + '/').update({
+                                    sendRequestPayment(response.id, resultToAsaas, newValue, key).then(() => {
+                                        admin.database().ref('users/' + key + '/').update({
                                             saldo: 0,
                                             payment_waiting: {
                                                 create_date: new Date().toLocaleDateString('pt-BR'),
-                                                asaas_id: response.data[0].id,
+                                                asaas_id: response.id,
                                                 value: newValue,
                                                 vencimento_boleto: resultToAsaas
                                             }
-                                        }).catch(error => {
-                                            throw new Error("Erro atualizar boleto motorista")
                                         })
+                                        return null
+                                    }).catch(error => {
+                                        throw new Error("Erro ao criar usuario Asaas - Função principal")
                                     })
+                                    return null
                                 }).catch(error => {
                                     throw new Error("Erro ao criar usuario Asaas - Função principal")
                                 })
                             }
+                            return null
                         }).catch(error => {
                             throw new Error("Erro ao checar usuario Asaas - Função principal")
                         })
@@ -352,13 +352,12 @@ exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.
 exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub.schedule('30 19 16 * *').timeZone('America/Sao_Paulo').onRun((context) => {
     //'30 19 15 * *'
     return admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
-        let custumerAsaas = null
         let dataUsers = data.val()
         if (dataUsers) {
             for (let key in dataUsers) {
                 if (dataUsers[key].saldo) {
                     if (dataUsers[key].saldo <= -5) {
-                        return checkUserAsaas(dataUsers[key].cpfNum).then((response) => {
+                        checkUserAsaas(dataUsers[key].cpfNum).then((response) => {
                             let newValue = dataUsers[key].saldo * (-1)
 
                             //Pega a data atual e adiciona +5 pro vencimento do boleto
@@ -370,9 +369,8 @@ exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub
 
                             if (response.totalCount >= 1) {
                                 //user Asaas existe
-
-                                return sendRequestPayment(response.data[0].id, resultToAsaas, newValue, key).then(() => {
-                                    return admin.database().ref('users/' + key + '/').update({
+                                sendRequestPayment(response.data[0].id, resultToAsaas, newValue, key).then(() => {
+                                    admin.database().ref('users/' + key + '/').update({
                                         saldo: 0,
                                         payment_waiting: {
                                             create_date: new Date().toLocaleDateString('pt-BR'),
@@ -380,9 +378,10 @@ exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub
                                             value: newValue,
                                             vencimento_boleto: resultToAsaas
                                         }
-                                    }).catch(error => {
-                                        throw new Error("Erro atualizar boleto motorista")
                                     })
+                                    return null
+                                }).catch(error => {
+                                    throw new Error("Erro ao Enviar boleto Asaas - Função principal")
                                 })
                             }
                             //user n existe no Asaas
@@ -397,25 +396,28 @@ exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub
                                 }
 
                                 //Cria um novo usuario no Asaas
-                                return createUserAsaas(body).then((response) => {
+                                createUserAsaas(body).then((response) => {
 
-                                    return sendRequestPayment(response.data[0].id, resultToAsaas, newValue, key).then(() => {
-                                        return admin.database().ref('users/' + key + '/').update({
+                                    sendRequestPayment(response.id, resultToAsaas, newValue, key).then(() => {
+                                        admin.database().ref('users/' + key + '/').update({
                                             saldo: 0,
                                             payment_waiting: {
                                                 create_date: new Date().toLocaleDateString('pt-BR'),
-                                                asaas_id: response.data[0].id,
+                                                asaas_id: response.id,
                                                 value: newValue,
                                                 vencimento_boleto: resultToAsaas
                                             }
-                                        }).catch(error => {
-                                            throw new Error("Erro atualizar boleto motorista")
                                         })
+                                        return null
+                                    }).catch(error => {
+                                        throw new Error("Erro ao criar usuario Asaas - Função principal")
                                     })
+                                    return null
                                 }).catch(error => {
                                     throw new Error("Erro ao criar usuario Asaas - Função principal")
                                 })
                             }
+                            return null
                         }).catch(error => {
                             throw new Error("Erro ao checar usuario Asaas - Função principal")
                         })
@@ -428,7 +430,7 @@ exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub
 
 exports.verifyDriversPayment_6 = functions.region('southamerica-east1').pubsub.schedule('00 21 6 * *').timeZone('America/Sao_Paulo').onRun((context) => {
 
-    admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
+    return admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
         let dataUsers = data.val()
         if (dataUsers) {
             for (let key in dataUsers) {
@@ -445,8 +447,6 @@ exports.verifyDriversPayment_6 = functions.region('southamerica-east1').pubsub.s
                                         reason: 'Pagamento não confirmado 5 dias após a emissão do boleto.',
                                         id_asaas: response.data[0].customer
                                     }
-                                }).catch(error => {
-                                    throw new Error("Erro ao verificar pagamento motorista")
                                 })
                             } else {
                                 return admin.database().ref('users/' + key + '/' + payment_waiting + '/').remove()
@@ -464,7 +464,7 @@ exports.verifyDriversPayment_6 = functions.region('southamerica-east1').pubsub.s
 
 exports.verifyDriversPayment_21 = functions.region('southamerica-east1').pubsub.schedule('00 21 21 * *').timeZone('America/Sao_Paulo').onRun((context) => {
 
-    admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
+    return admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
         let dataUsers = data.val()
         if (dataUsers) {
             for (let key in dataUsers) {
@@ -481,8 +481,6 @@ exports.verifyDriversPayment_21 = functions.region('southamerica-east1').pubsub.
                                         reason: 'Pagamento não confirmado 5 dias após a emissão do boleto.',
                                         id_asaas: response.data[0].customer
                                     }
-                                }).catch(error => {
-                                    throw new Error("Erro ao verificar pagamento motorista")
                                 })
                             } else {
                                 return admin.database().ref('users/' + key + '/' + payment_waiting + '/').remove()

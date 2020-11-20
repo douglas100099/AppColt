@@ -64,14 +64,14 @@ export default class RideList extends React.Component {
                                 <Text style={[styles.textStyle, styles.dateRide]}>
                                     {item.bookingDate ?
                                         Platform.OS == 'ios' ?
-                                            item.bookingDate
+                                            item.bookingDate.split(' ')[0] + ' - ' + item.bookingDate.split(' ')[1].split(':')[0] + ':' + item.bookingDate.split(' ')[1].split(':')[1]
                                             : this.dataAtualFormatada(item) + ' - ' + item.trip_end_time
                                         : ''
                                     }
                                 </Text>
                                 {
                                     item.status == 'CANCELLED' ?
-                                        <Text style={[styles.textStyle2, styles.dateStyle2]}>CANCELADO</Text>
+                                        <Text style={styles.dateStyle2}>CANCELADO</Text>
                                         :
                                         null
                                 }
@@ -123,9 +123,6 @@ const styles = StyleSheet.create({
     textStyle: {
         fontSize: 13,
     },
-    textStyle2: {
-        fontSize: 13,
-    },
     picupStyle: {
         flexDirection: 'row',
         marginTop: 20,
@@ -135,6 +132,7 @@ const styles = StyleSheet.create({
     picPlaceStyle: {
         color: colors.BLACK,
         fontFamily: 'Inter-Regular',
+        paddingEnd: 20,
         fontSize: 15,
         alignSelf: 'center',
     },
@@ -143,7 +141,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
         marginBottom: 20,
         paddingLeft: 10,
-        paddingRight: 30
+        paddingEnd: 20,
     },
     drpIconStyle: {
         color: colors.RED,
@@ -181,7 +179,7 @@ const styles = StyleSheet.create({
         color: colors.BLACK,
         marginLeft: 20,
         marginTop: 5,
-        fontSize: 18,
+        fontSize: 20,
     },
     dateRide: {
         fontFamily: 'Inter-Bold',
@@ -193,9 +191,9 @@ const styles = StyleSheet.create({
     dateStyle2: {
         fontFamily: 'Inter-Bold',
         color: colors.RED,
-        marginLeft: 20,
+        marginLeft: 30,
+        fontSize: 15,
         marginTop: 10,
-
     },
     carNoStyle: {
         fontFamily: 'Inter-Light',

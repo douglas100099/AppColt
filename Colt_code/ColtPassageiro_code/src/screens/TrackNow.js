@@ -6,6 +6,7 @@ import {
     Alert,
     TouchableOpacity,
     Platform,
+    Linking,
     Dimensions,
     Image
 } from 'react-native';
@@ -189,7 +190,7 @@ export default class TrackNow extends React.Component {
                 },
                 {
                     text: 'OK', onPress: async () => {
-                        const value = await AsyncStorage.getItem('settings');
+                        /*const value = await AsyncStorage.getItem('settings');
                         if (value !== null) {
                             let settings = JSON.parse(value);
                             if (Platform.OS === 'android') {
@@ -198,7 +199,14 @@ export default class TrackNow extends React.Component {
                                 phoneNumber = `telprompt:${settings.panic}`;
                             }
                             Linking.openURL(phoneNumber);
-                        }
+                        }*/
+                            if (Platform.OS === 'android') {
+                                phoneNumber = `tel:190`;
+                            } else {
+                                phoneNumber = `telprompt:190`;
+                            }
+                            Linking.openURL(phoneNumber);
+                        
                     }
                 }
             ],

@@ -263,7 +263,8 @@ const styles = {
         elevation: 0
     },
     buttonTitle: {
-        fontSize: 18
+        fontSize: 18,
+        fontFamily: 'Inter-Bold'
     },
     inputTextStyle: {
         color: colors.BLACK,

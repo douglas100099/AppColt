@@ -182,7 +182,9 @@ export default class ProfileScreen extends React.Component {
                     style: 'cancel',
                 },
                 {
-                    text: languageJSON.yes, onPress: () => {
+                    text: languageJSON.yes,
+                    style: 'destructive', 
+                    onPress: () => {
                         var ref = firebase.database().ref('users/' + this.state.currentUser.uid + '/')
                         ref.remove().then(() => {
                             firebase.auth().signOut();

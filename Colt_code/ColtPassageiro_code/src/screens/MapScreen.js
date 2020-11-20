@@ -97,7 +97,7 @@ export default class MapScreen extends React.Component {
     getLocationUser() {
         const userLocation = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location');
 
-        userLocation.once('value', location => {
+        userLocation.on('value', location => {
             if (location.val()) {
                 let loc = location.val();
 

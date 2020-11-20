@@ -225,7 +225,6 @@ export default class FareScreen extends React.Component {
 
     //Confirma corrida e começa a procurar motorista
     confirmarCorrida() {
-        this.setState({ buttonDisabled: true });
         clearInterval(this.state.intervalDriversTime);
         var curuser = this.state.curUID.uid;
 
@@ -582,7 +581,7 @@ export default class FareScreen extends React.Component {
                                 <Text style={{ fontFamily: "Inter-Medium", fontSize: 23, opacity: 0.4 }}> Cadastrar CPF </Text>
                             </View>
                             <View style={{ position: 'absolute', right: 0 }}>
-                                <TouchableOpacity style={{ marginRight: 15 }} onPress={() => this.setState({ cpfModalVisible: false })}>
+                                <TouchableOpacity style={{ marginRight: 15 }} onPress={() =>  this.setState({ cpfModalVisible: false, buttonDisabled: false })}>
                                     <Icon
                                         name='x'
                                         type='feather'
@@ -593,9 +592,13 @@ export default class FareScreen extends React.Component {
                             </View>
                         </View>
                     </View>
+                    <Text  style={{ textAlign: 'center', marginTop: 15, fontFamily: 'Inter-Regular', fontSize: 15, paddingHorizontal: 10 }}>
+                        Para sua segurança e do motorista, precisamos que adicione o seu número de cpf e data de nascimento. 
+                        {`\n`}Não se preocupe, ninguém verá esses dados além de você! 
+                    </Text>
                     <View style={{ marginHorizontal: 50 }}>
                         <Input
-                            placeholder='Digite seu CPF...'
+                            placeholder='Digite seu CPF'
                             containerStyle={{ marginTop: 20, }}
                             editable={this.props.checkCPF ? false : true}
                             inputStyle={{ marginLeft: 12 }}
@@ -607,7 +610,7 @@ export default class FareScreen extends React.Component {
                             errorMessage={this.state.promoCodeValid ? null : languageJSON.first_name_blank_error}
                         />
                     </View>
-                    <View style={{ marginHorizontal: 65 }}>
+                    <View style={{ marginHorizontal: 50 }}>
                         <Input
                             placeholder='Data de nascimento'
                             editable={this.props.checkCPF ? false : true}
@@ -806,9 +809,9 @@ export default class FareScreen extends React.Component {
                 }).then(() => {
                     const userData = firebase.database().ref('users/' + this.state.curUID.uid);
                     userData.once('value', userData => {
-                    this.setState({ userDetails: userData.val() });
+                        this.setState({ userDetails: userData.val() });
                     }).then(() => {
-                        this.setState({ cpfModalVisible: false })
+                        this.setState({ cpfModalVisible: false, buttonDisabled: false })
                     })
                 })
             } else {
@@ -829,7 +832,8 @@ export default class FareScreen extends React.Component {
                 [
                     {
                         style: 'destructive',
-                        text: 'Voltar'
+                        text: 'Voltar',
+                        onPress: () => this.setState({ buttonDisabled: false }) 
                     },
                     { text: 'Adicionar', onPress: () => this.setState({ cpfModalVisible: true }) },
                 ],
@@ -877,7 +881,7 @@ export default class FareScreen extends React.Component {
                                 //title={this.state.region.whereText}
                                 centerOffset={{ x: 0.1, y: 0.1 }}
                                 anchor={{ x: 0.1, y: 0.1 }}
-                                onPress={() => this.props.navigation.replace('Search', { old: this.state.region })}
+                                onPress={() => this.state.buttonDisabled ? null : this.props.navigation.replace('Search', { old: this.state.region })}
                             >
                                 <LocationUser
                                     width={25}
@@ -894,7 +898,7 @@ export default class FareScreen extends React.Component {
                                 //title={this.state.region.droptext}
                                 centerOffset={{ x: 0.1, y: 0.1 }}
                                 anchor={{ x: 0.1, y: 0.1 }}
-                                onPress={() => this.props.navigation.replace('Search', { old: this.state.region })}
+                                onPress={() => this.state.buttonDisabled ? null : this.props.navigation.replace('Search', { old: this.state.region })}
                             >
 
                                 <LocationDrop />
@@ -914,13 +918,9 @@ export default class FareScreen extends React.Component {
                         </MapView>
                         : null}
 
-                    {this.state.registerCpf ?
-                        <RegisterCPF />
-                        : null}
-
                     {this.state.region && this.state.region.wherelatitude ?
                         <View style={styles.bordaIconeVoltar}>
-                            <TouchableOpacity onPress={() => { this.props.navigation.replace('Map') }}>
+                            <TouchableOpacity onPress={() => this.state.buttonDisabled ? null : this.props.navigation.replace('Map') }>
                                 <Icon
                                     name='chevron-left'
                                     type='MaterialIcons'
@@ -1002,7 +1002,7 @@ export default class FareScreen extends React.Component {
                                 borderColor: this.state.selected == 0 ? colors.BLACK : colors.GREY3,
                             }
                             ]} >
-                                <TouchableOpacity style={styles.touchCard1} onPress={() => this.selectCarType(0)}>
+                                <TouchableOpacity style={styles.touchCard1} onPress={() => this.state.buttonDisabled ? null : this.selectCarType(0)}>
                                     {/*<Icon
                                         name='info'
                                         type='feather'
@@ -1042,7 +1042,7 @@ export default class FareScreen extends React.Component {
                                 borderColor: this.state.selected == 1 ? colors.BLACK : colors.GREY3,
                             }
                             ]} >
-                                <TouchableOpacity style={styles.touchCard2} onPress={() => this.selectCarType(1)}>
+                                <TouchableOpacity style={styles.touchCard2} onPress={() =>  this.state.buttonDisabled ? null : this.selectCarType(1)}>
                                     {/*<Icon
                                         name='info'
                                         type='feather'
@@ -1087,7 +1087,7 @@ export default class FareScreen extends React.Component {
                             </View>
                             {this.state.metodoPagamento === 'Dinheiro' ?
                                 <View style={styles.containerDinheiro}>
-                                    <TouchableOpacity style={styles.containerDinheiro} onPress={() => { this.openModal() }}>
+                                    <TouchableOpacity style={styles.containerDinheiro} onPress={() =>  this.state.buttonDisabled ? null :  this.openModal() }>
                                         <View >
                                             <Icon
                                                 name='ios-cash'
@@ -1101,7 +1101,7 @@ export default class FareScreen extends React.Component {
                                 </View>
                                 : this.state.metodoPagamento === 'Carteira' ?
                                     <View style={styles.containerDinheiro}>
-                                        <TouchableOpacity style={styles.containerCarteira} onPress={() => { this.openModal() }}>
+                                        <TouchableOpacity style={styles.containerCarteira} onPress={() =>  this.state.buttonDisabled ? null : this.openModal() }>
                                             <View style={{ flexDirection: "row" }}>
                                                 <View>
                                                     <Icon
@@ -1117,7 +1117,7 @@ export default class FareScreen extends React.Component {
                                         </TouchableOpacity>
                                     </View>
                                     : <View style={styles.containerDinheiro}>
-                                        <TouchableOpacity style={styles.containerDinheiro} onPress={() => { this.openModal() }}>
+                                        <TouchableOpacity style={styles.containerDinheiro} onPress={() =>  this.state.buttonDisabled ? null : this.openModal() }>
                                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }} >
                                                 <Icon
                                                     name='wallet'
@@ -1135,12 +1135,25 @@ export default class FareScreen extends React.Component {
 
                         {/* Botao confirmar corrida */}
                         <View style={[styles.viewBotao, {
-                            shadowOpacity: this.state.buttonDisabled ? 0 : 0.4
+                            shadowOpacity: this.state.buttonDisabled ? 0 : 0.4,
                         }]}>
-                            <TouchableOpacity style={styles.confirmButtonStyle} disabled={this.state.buttonDisabled} onPress={() => { this.verifyCPF() }}>
-                                <Text style={styles.buttonText}> Confirmar corrida </Text>
+                            <TouchableOpacity style={[styles.confirmButtonStyle, {
+                                backgroundColor: this.state.buttonDisabled ? colors.GREY1 : colors.DEEPBLUE,
+                                marginHorizontal: this.state.buttonDisabled ? 75 : 30
+                            }]} disabled={this.state.buttonDisabled} onPress={() => { this.setState({ buttonDisabled: true }), this.verifyCPF() }}>
+                                {this.state.buttonDisabled ?
+                                    <ActivityIndicator
+                                        size={'small'}
+                                        color={colors.DEEPBLUE}
+                                    />
+                                    :
+                                    <Text style={styles.buttonText}> Confirmar corrida </Text>
+                                }
                             </TouchableOpacity>
                         </View>
+                        {this.state.buttonDisabled ?
+                            <Text style={{ textAlign: 'center', fontFamily: 'Inter-SemiBold' }} > Preparando corrida... </Text>
+                            : null}
                     </View>
                     : null
                 }
@@ -1401,9 +1414,7 @@ const styles = StyleSheet.create({
     confirmButtonStyle: {
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: colors.DEEPBLUE,
         height: 50,
-        marginHorizontal: 30,
         borderRadius: 30,
     },
     estimatedTimeBooking: {

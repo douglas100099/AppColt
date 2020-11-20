@@ -957,7 +957,7 @@ export default class FareScreen extends React.Component {
                             }
                         ]}
                     >
-                        <Text style={styles.fadingText}>Você está pagando R$ {this.state.settings.cancell_value},00 a mais por conta da taixa de cancelamento!</Text>
+                        <Text style={styles.fadingText}>Você está pagando R$ {this.state.settings.cancell_value},00 a mais por conta da taxa de cancelamento!</Text>
                     </Animated.View>
 
                     {this.state.cancellValue != 0 ?

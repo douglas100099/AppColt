@@ -8,6 +8,7 @@ import {
     Text,
     Modal,
     AsyncStorage,
+    Alert,
     Linking,
     ActivityIndicator,
     Platform,
@@ -23,7 +24,6 @@ import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import distanceCalc from '../common/distanceCalc';
 import { TrackNow } from '../components';
-import Polyline from '@mapbox/polyline';
 
 import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
 import ColtConfortCar from '../../assets/svg/ColtConfortCar';
@@ -207,13 +207,13 @@ export default class BookedCabScreen extends React.Component {
                                                 location2 = [dataBooking.drop.lat, dataBooking.drop.lng]
                                             }).then(() => {
                                                 var distance = distanceCalc(location1, location2)
-                                                
+
                                                 if (distance <= 5) { //5KM
                                                     if (allUsers[key].carType == this.state.carType) {
                                                         //Salva sempre o mais proximo
                                                         if (distance < distanciaValue) {
                                                             if (!allUsers[key].waiting_queue_riders && !allUsers[key].waiting_riders_list) {
-                                                               
+
                                                                 distanciaValue = distance
                                                                 this.driverUidSelected = key
                                                             }
@@ -322,18 +322,45 @@ export default class BookedCabScreen extends React.Component {
     //Cancell Button Press
     async onPressCancellBtn() {
         if (this.searchDriverQueue && this.state.driverSerach == false) {
-            this.onCancellBookingQueue()
+            Alert.alert(
+                'Alerta!',
+                'Deseja cancelar a corrida atual?',
+                [
+                    {
+                        style: 'destructive',
+                        text: 'Voltar',
+                    },
+                    { text: 'Continuar', onPress: () => this.onCancellBookingQueue() },
+                ],
+                { cancelable: true },
+            );
         } else {
-            if (this.state.bookingStatus == 'ACCEPTED' || this.state.bookingStatus == 'EMBARQUE') {
+            if (this.state.bookingStatus == 'ACCEPTED') {
                 if (this.state.data_accept != null) {
                     const timeCurrent = new Date().getTime();
 
                     if (timeCurrent - this.state.data_accept >= 30000) {
                         this.setState({ modalInfoVisible: true })
+                    } else {
+                        Alert.alert(
+                            'Alerta!',
+                            'Deseja cancelar a corrida atual?',
+                            [
+                                {
+                                    style: 'destructive',
+                                    text: 'Voltar',
+                                },
+                                { text: 'Continuar', onPress: () => this.onCancelConfirm() },
+                            ],
+                            { cancelable: true },
+                        );
                     }
                 } else {
                     this.setState({ modalVisible: true })
                 }
+            } 
+            else if (this.state.bookingStatus == 'EMBARQUE') {
+                this.setState({ modalInfoVisible: true })
             }
             else if (this.state.bookingStatus == 'NEW' || this.state.bookingStatus == 'REJECTED') {
                 this.onCancellSearchBooking(true)
@@ -369,7 +396,7 @@ export default class BookedCabScreen extends React.Component {
                         })
                     })
                 }
-                else if( this.state.bookingStatus == 'NEW'  || this.state.bookingStatus == "START" ) {
+                else if (this.state.bookingStatus == 'NEW' || this.state.bookingStatus == "START") {
                     alert("Não foi possível cancelar a corrida pois ela ja iniciou!")
                 }
             }
@@ -426,8 +453,9 @@ export default class BookedCabScreen extends React.Component {
                                 })
                             }
                         }).then(() => {
-                            firebase.database().ref('users/' + curbookingData.val().driver + '/').update({ queue: false })
-                            this.sendPushNotification(curbookingData.val().driver, this.state.firstNameRider + ' cancelou a corrida atual!')
+                            firebase.database().ref('users/' + curbookingData.val().driver + '/').update({ queue: false }).then(() => {
+                                this.sendPushNotification(curbookingData.val().driver, this.state.firstNameRider + ' cancelou a corrida atual!')
+                            })
                         }).then(() => {
                             firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').update({
                                 status: 'CANCELLED',
@@ -436,7 +464,7 @@ export default class BookedCabScreen extends React.Component {
                         })
                     })
                 }
-                else {
+                else if (curbookingData.val().status == 'START') {
                     alert("Não foi possível cancelar essa corrida, ela ja iniciou!")
                 }
             }
@@ -601,15 +629,15 @@ export default class BookedCabScreen extends React.Component {
                 <View style={styles.mapcontainer}>
                     {this.state.driverUID && this.state.region && this.state.bookingStatus && this.state.driverSerach == false ?
                         <TrackNow duid={this.state.driverUID} alldata={this.state.region} bookingStatus={this.state.bookingStatus} />
-                        : 
+                        :
                         <View style={{ marginTop: Platform.OS == 'ios' ? 130 : 90, alignSelf: 'center', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <ActivityIndicator
-                                size='large' 
+                                size='large'
                                 color={colors.DEEPBLUE}
                             />
                             <Text style={{ textAlign: 'center', fontFamily: 'Inter-Medium', fontSize: 16 }}> Buscando localização do motorista... </Text>
                         </View>
-                        }
+                    }
 
                     {this.state.driverSerach == false ?
                         <View>

@@ -6,6 +6,7 @@ import {
     Dimensions,
     Alert,
     TextInput,
+    ActivityIndicator,
     Image
 } from "react-native";
 import * as firebase from 'firebase'
@@ -15,6 +16,7 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 import { Icon } from 'react-native-elements';
 import { colors } from '../common/theme';
 import SegmentedControlTab from 'react-native-segmented-control-tab';
+import ActionSheet from "react-native-actionsheet";
 
 export default class EmailLoginScreen extends Component {
 
@@ -43,7 +45,7 @@ export default class EmailLoginScreen extends Component {
                             email: '',
                             password: '',
                             confirmpassword: '',
-                            btnDisabled: false 
+                            btnDisabled: false
                         });
                         this.emailInput.focus();
                         alert(error.code + " - " + error.message);
@@ -156,7 +158,7 @@ export default class EmailLoginScreen extends Component {
                 <View style={styles.topBar}>
                     <View style={{ position: 'absolute', left: 15 }}>
                         <TouchableOpacity onPress={() => { this.props.navigation.goBack(); }}>
-                            <View style={{  backgroundColor: colors.WHITE, width: 35, height: 35, borderRadius: 50 }} >
+                            <View style={{ backgroundColor: colors.WHITE, width: 35, height: 35, borderRadius: 50 }} >
                                 <Icon
                                     name='chevron-left'
                                     type='MaterialIcons'
@@ -219,7 +221,15 @@ export default class EmailLoginScreen extends Component {
                         : null}
 
                     <TouchableOpacity disabled={this.state.btnDisabled} onPress={this.onAction} style={styles.btnLogin}>
-                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: 18, color: colors.WHITE }}>{this.state.customStyleIndex == 0 ? languageJSON.login_button : languageJSON.register_link}</Text>
+                        {this.state.btnDisabled == false ?
+                            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 18, color: colors.WHITE }}>{this.state.customStyleIndex == 0 ? languageJSON.login_button : languageJSON.register_link}</Text>
+                            :
+                            <ActivityIndicator
+                                size="small"
+                                color={colors.WHITE}
+                                style={{ alignSelf: 'center' }}
+                            />
+                        }
                     </TouchableOpacity>
 
                     {this.state.customStyleIndex == 0 ?

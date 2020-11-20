@@ -646,10 +646,18 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                             payment_mode: paymentMode === 'Carteira' ? 'Carteira' : 'Dinheiro/Carteira',
                                             payment_status: 'PAID'
                                         }).then(() => {
-
                                             //ATUALIZA A CARTEIRA DO PASSAGEIRO RERTIRANDO O VALOR USADO 
                                             admin.database().ref('users/' + dataBooking.customer + '/').update({
                                                 walletBalance: newValue
+                                            }).then(() => {
+                                                admin.database().ref('users/' + dataBooking.customer + '/walletHistory').push({
+                                                    amount: dataBooking.pagamento.customer_paid,
+                                                    date: new Date().toLocaleDateString('pt-BR'),
+                                                    booking_ref: bookingId,
+                                                })
+                                                return true
+                                            }).catch(error => {
+                                                throw new Error("Erro atualizar carteira Passageiro")
                                             })
                                             return true
                                         }).catch(error => {
@@ -692,6 +700,15 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                             //ATUALIZA A CARTEIRA DO PASSAGEIRO RERTIRANDO O VALOR USADO 
                                             admin.database().ref('users/' + dataBooking.customer + '/').update({
                                                 walletBalance: 0
+                                            }).then(() => {
+                                                admin.database().ref('users/' + dataBooking.customer + '/walletHistory').push({
+                                                    amount: walletBalance,
+                                                    date: new Date().toLocaleDateString('pt-BR'),
+                                                    booking_ref: bookingId,
+                                                })
+                                                return true
+                                            }).catch(error => {
+                                                throw new Error("Erro atualizar carteira Passageiro")
                                             })
                                             return true
                                         }).catch(error => {

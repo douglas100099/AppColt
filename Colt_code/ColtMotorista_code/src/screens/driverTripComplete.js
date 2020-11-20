@@ -141,7 +141,11 @@ export default class DriverTripComplete extends React.Component {
                         }).then(() => {
                             if (queueDetails != null) {
                                 firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/rider_waiting_object/').remove().then(() => {
-                                    this.props.navigation.replace('DriverTripStart', { allDetails: queueDetails, regionUser: this.state.region })
+                                    firebase.database().ref('users/' + this.state.curUid + '/').update({
+                                        emCorrida: queueDetails.bookingId
+                                    }).then(() => {
+                                        this.props.navigation.replace('DriverTripStart', { allDetails: queueDetails, regionUser: this.state.region })
+                                    })
                                 })
                             } else {
                                 this.props

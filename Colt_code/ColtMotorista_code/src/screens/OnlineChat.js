@@ -47,6 +47,7 @@ export default class OnlineChat extends Component {
       id: "",
       chat: false,
       allChat: [],
+      lidaRider: false,
       messegesData: []
 
     };
@@ -80,6 +81,16 @@ export default class OnlineChat extends Component {
 
       }
       this.setState({ allChat: allMesseges })
+      let readChat = firebase.database().ref(`chat/` + this.getParamData.bookingId + '/');
+      readChat.on('value', readChat => {
+        let readInfo = readChat.val()
+        this.setState({ readed_rider: readChat.val().lidaRider })
+        if(readInfo.readed_driver === false){
+          firebase.database().ref(`chat/` + this.getParamData.bookingId + '/').update({
+            readed_driver: true
+          })
+        }
+      })
     })
     this.keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
@@ -267,6 +278,33 @@ export default class OnlineChat extends Component {
             inverted
           />
         </View>
+        {this.state.allChat.length > 0 ?
+        (this.state.readed_rider ?
+          <View style={{ flexDirection: 'row', alignSelf: 'flex-end' }}>
+            <Text style={{ color: colors.GREY2, textAlign: 'right', marginRight: 10, fontFamily: 'Inter-Regular', fontSize: 13 }}>Lida</Text>
+            <View style={{ height: 20, height: 20, alignSelf: 'flex-end', marginRight: 10 }}>
+              <Icon
+                name='check-circle'
+                type='feather'
+                color={colors.DEEPBLUE}
+                size={20}
+              />
+            </View>
+          </View>
+          :
+          <View style={{ flexDirection: 'row', alignSelf: 'flex-end' }}>
+            <Text style={{ color: colors.GREY2, textAlign: 'right', marginRight: 10, fontFamily: 'Inter-Regular', fontSize: 13 }}>Não lida</Text>
+            <View style={{ height: 20, height: 20, alignSelf: 'flex-end', marginRight: 10 }}>
+              <Icon
+                name='check'
+                type='feather'
+                color={colors.GREY2}
+                size={20}
+              />
+            </View>
+          </View>
+        )
+        :null}
         <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? 'padding' : 'height'}>
           <View style={styles.footer}>
             <TextInput

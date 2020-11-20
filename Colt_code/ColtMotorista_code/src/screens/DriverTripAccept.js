@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal, Image, Platform, Alert, ActivityIndicator } from 'react-native';
+import { Text, View, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal, Image, Platform, Alert, ActivityIndicator, AsyncStorage } from 'react-native';
 import { Icon } from 'react-native-elements';
 import Polyline from '@mapbox/polyline';
 import MapView, { PROVIDER_GOOGLE, Marker, AnimatedRegion } from 'react-native-maps';
@@ -65,6 +65,7 @@ export default class DriverTripAccept extends React.Component {
             curUid: '',
             id: 0,
             loader: false,
+            hideGanhos: true,
             distance: 0,
             isBlocked: false,
             loaderBtn: false,
@@ -223,11 +224,18 @@ export default class DriverTripAccept extends React.Component {
 
     playSound() {
         this.setState({ isSound: true })
-        this.sound.setIsLoopingAsync(true);
-        this.sound.setVolumeAsync(1);
-        this.sound.playAsync();
+        this.sound.playAsync().then((result) => {
+            if (result.isLoaded) {
+                this.sound.setIsLoopingAsync(true)
+                this.sound.setVolumeAsync(1)
+            }
+        }).catch((err) => {
+            console.log(err)
+            alert('Tivemos um problema com o som.')
+        })
         console.log('PLAY SOUND')
     }
+
 
     stopSound() {
         this.setState({ isSound: false })
@@ -291,6 +299,15 @@ export default class DriverTripAccept extends React.Component {
                         this.setState({ myBooking: myBookingarr.reverse() }, () => {
                             this.eraningCalculation()
                         })
+                    }
+                }
+            })
+            await AsyncStorage.getItem('onOffHide', (err, result) => {
+                if(result){
+                    if(result == 'ON'){
+                        this.setState({ hideGanhos: 'ON' })
+                    } else {
+                        this.setState({ hideGanhos: 'OFF' }) 
                     }
                 }
             })
@@ -448,7 +465,7 @@ export default class DriverTripAccept extends React.Component {
                     for (let key in waiting_riderData) {
                         waiting_riderData[key].bookingId = key;
                         jobs.push(waiting_riderData[key]);
-                        
+
                         var location1 = [waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng];
                         var location2 = [this.state.region.latitude, this.state.region.longitude];
                         var distancee = distanceCalc(location1, location2);
@@ -457,7 +474,7 @@ export default class DriverTripAccept extends React.Component {
                     this.setState({ chegouCorrida: true })
                     if (this.state.isSound == false) {
                         this.playSound()
-                        Linking.openURL('coltappmotorista://');
+                        //Linking.openURL('coltappmotorista://');
                     }
                 } else if (this.state.chegouCorrida == true) {
                     this.setState({ chegouCorrida: false })
@@ -665,6 +682,29 @@ export default class DriverTripAccept extends React.Component {
         this.map.animateToRegion(this.state.region, 500)
     }
 
+    hideGanhos = async () => {
+        this.setState({ loaderBtn: true })
+        try {
+            await AsyncStorage.getItem('onOffHide', (err, result) => {
+                if (result) {
+                    if (result == 'ON') {
+                        AsyncStorage.setItem('onOffHide', 'OFF').then(() => {
+                            this.setState({ hideGanhos: 'OFF' })
+                        })
+                    } else {
+                        AsyncStorage.setItem('onOffHide', 'ON').then(() => {
+                            this.setState({ hideGanhos: 'ON' })
+                        })
+                    }
+                } else {
+                    AsyncStorage.setItem('onOffHide', 'OFF')
+                }
+            })
+        } catch {
+            console.log('error')
+        }
+        this.setState({ loaderBtn: false })
+    }
 
     render() {
         const { region } = this.state;
@@ -733,7 +773,7 @@ export default class DriverTripAccept extends React.Component {
                                                     ref={marker => { this.marker = marker }}
                                                     coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
                                                     anchor={{ x: 0.5, y: 0.5 }}
-                                                    style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
+                                                    style={{ transform: [{ rotate: this.state.region.angle ? this.state.region.angle + "deg" : '0' + "deg" }] }}
                                                 >
                                                     <CellphoneSVG
                                                         width={35}
@@ -902,7 +942,7 @@ export default class DriverTripAccept extends React.Component {
                                             longitude: region ? this.state.region.longitude : 0
                                         }}
                                         anchor={{ x: 0.5, y: 0.5 }}
-                                        style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
+                                        style={{ transform: [{ rotate: this.state.region.angle ? this.state.region.angle + "deg" : '0' + "deg" }] }}
                                     >
                                         <CellphoneSVG
                                             height={35}
@@ -919,13 +959,24 @@ export default class DriverTripAccept extends React.Component {
 
 
                                 {/* BOTÃO GANHOS CENTRO */}
-                                <TouchableOpacity style={styles.touchaGanhos} disabled={this.state.loaderBtn} onPress={() => { this.carteira() }}>
-                                    {this.state.animatedGrana && this.state.today > 0 ?
-                                        <Animatable.Text useNativeDriver={true} delay={1100} onAnimationEnd={() => this.setState({ animatedGrana: false })} animation="fadeInLeft" style={{ position: 'absolute', left: 5, color: '#49c33b', fontSize: 22, fontFamily: 'Inter-Bold' }}>+</Animatable.Text>
-                                        :
-                                        null}
-                                    <Animatable.Text useNativeDriver={true} animation="bounceInLeft" style={styles.touchaValor}>R$ {this.state.today ? parseFloat(this.state.today).toFixed(2) : '0'}</Animatable.Text>
-                                </TouchableOpacity>
+                                {this.state.hideGanhos == 'ON' ?
+                                    <TouchableOpacity style={styles.touchaGanhos} disabled={this.state.loaderBtn} onPress={() => { this.carteira() }} onLongPress={() => { this.hideGanhos() }} >
+                                        {this.state.animatedGrana && this.state.today > 0 ?
+                                            <Animatable.Text useNativeDriver={true} delay={1100} onAnimationEnd={() => this.setState({ animatedGrana: false })} animation="fadeInLeft" style={{ position: 'absolute', left: 5, color: '#49c33b', fontSize: 22, fontFamily: 'Inter-Bold' }}>+</Animatable.Text>
+                                            :
+                                            null}
+                                        <Animatable.Text useNativeDriver={true} animation="bounceInLeft" style={styles.touchaValor}>R$ {this.state.today ? parseFloat(this.state.today).toFixed(2) : '0'}</Animatable.Text>
+                                    </TouchableOpacity>
+                                    :
+                                    <TouchableOpacity style={styles.touchaGanhos} disabled={this.state.loaderBtn} onPress={() => { this.carteira() }} onLongPress={() => { this.hideGanhos() }} >
+                                        <Icon
+                                            name='ios-eye-off'
+                                            type='ionicon'
+                                            color={colors.WHITE}
+                                            size={25}
+                                        />
+                                    </TouchableOpacity>
+                                }
 
                                 {/* BOTÃO FOTOS */}
                                 <TouchableOpacity style={styles.touchaFoto} disabled={this.state.loaderBtn} onPress={() => { this.photoPerfil() }}>

@@ -94,7 +94,6 @@ export default class DriverCompleteTrip extends React.Component {
         })
         const { status } = await Permissions.askAsync(Permissions.LOCATION);
         const gpsActived = await Location.hasServicesEnabledAsync()
-        console.log(gpsActived)
         if (status === "granted" && gpsActived) {
             this._getLocationAsync();
         } else {
@@ -123,9 +122,9 @@ export default class DriverCompleteTrip extends React.Component {
                 this.setState({ chegouCorridaQueue: true })
                 if (this.state.isSound == false) {
                     this.playSound()
-                    Linking.openURL('coltappmotorista://');
+                    //Linking.openURL('coltappmotorista://');
                 }
-            } else if (this.state.chegouCorrida == true) {
+            } else if (this.state.chegouCorridaQueue == true) {
                 this.setState({ chegouCorridaQueue: false })
                 if (this.state.isSound) {
                     this.stopSound()
@@ -138,9 +137,15 @@ export default class DriverCompleteTrip extends React.Component {
 
     playSound() {
         this.setState({ isSound: true })
-        this.sound.setIsLoopingAsync(true);
-        this.sound.setVolumeAsync(1);
-        this.sound.playAsync();
+        this.sound.playAsync().then((result) => {
+            if(result.isLoaded){
+                this.sound.setIsLoopingAsync(true)
+                this.sound.setVolumeAsync(1)
+            }
+        }).catch((err) => {
+            console.log(err)
+            alert('Tivemos um problema com o som.')
+        })
         console.log('PLAY SOUND')
     }
 
@@ -700,7 +705,7 @@ export default class DriverCompleteTrip extends React.Component {
                                 {this.state.region ?
                                     <Marker.Animated
                                         coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
-                                        style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
+                                        style={{ transform: [{ rotate: this.state.region.angle ? this.state.region.angle + "deg" : '0' + "deg"}] }}
                                         anchor={{ x: 0.5, y: 0.5 }}
                                     >
                                         <CellphoneSVG

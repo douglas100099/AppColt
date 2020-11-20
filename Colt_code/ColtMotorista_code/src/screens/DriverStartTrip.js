@@ -742,7 +742,7 @@ export default class DriverStartTrip extends React.Component {
                         {/* O RABO DE SETA ESTAVA AQUI, PROBLEMA ENCONTRADO DO MODO PRODUÇÃO, MARKER NO AIRMAP */}
                         <Marker.Animated
                             coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
-                            style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
+                            style={{ transform: [{ rotate: this.state.region.angle ? this.state.region.angle + "deg" : '0' + "deg"}] }}
                             anchor={{ x: 0.5, y: 0.5 }}
                         >
                             <CellphoneSVG

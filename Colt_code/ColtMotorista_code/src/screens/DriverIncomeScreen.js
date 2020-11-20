@@ -16,7 +16,6 @@ import {
 var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
 import RadioForm from 'react-native-simple-radio-button';
-import { NavigationActions, StackActions } from 'react-navigation';
 import {
     BarChart,
 } from "react-native-chart-kit";
@@ -55,14 +54,15 @@ export default class DriverIncomePage extends React.Component {
 
         };
         this.objetoPrincipal = {
-            "Dom": 0,
-            "Seg": 0,
-            "Ter": 0,
-            "Qua": 0,
-            "Qui": 0,
-            "Sex": 0,
-            "Sab": 0,
+            Dom: 0,
+            Seg: 0,
+            Ter: 0,
+            Qua: 0,
+            Qui: 0,
+            Sex: 0,
+            Sab: 0,
         };
+        this.valorSemana = 0,
         this._retrieveCurrency();
     }
 
@@ -602,42 +602,43 @@ export default class DriverIncomePage extends React.Component {
                 }
             }
         }
+        this.somarSemana()
+    }
+
+    somarSemana(){
+        const { Dom, Seg, Ter, Qua, Qui, Sex, Sab } = this.objetoPrincipal
+        if(this.objetoPrincipal){
+            this.valorSemana = Dom + Seg + Ter + Qua + Qui + Sex + Sab
+        }
     }
 
     insertValues(param, value) {
         switch (param) {
             case 0:
-                console.log(value + ' VALOR DOMINGO')
                 this.objetoPrincipal.Dom += value
                 break
 
             case 1:
-                console.log(value + ' VALOR SEGUNDA')
                 this.objetoPrincipal.Seg += value
                 break
 
             case 2:
-                console.log(value + ' VALOR TERÇA')
                 this.objetoPrincipal.Ter += value
                 break
 
             case 3:
-                console.log(value + ' VALOR QUARTA')
                 this.objetoPrincipal.Qua += value
                 break
 
             case 4:
-                console.log(value + ' VALOR QUINTA')
                 this.objetoPrincipal.Qui += value
                 break
 
             case 5:
-                console.log(value + ' VALOR SEXTA')
                 this.objetoPrincipal.Sex += value
                 break
 
             case 6:
-                console.log(value + ' VALOR SÁBADO')
                 this.objetoPrincipal.Sab += value
                 break
         }
@@ -671,10 +672,14 @@ export default class DriverIncomePage extends React.Component {
                     <View style={styles.viewEstatisticas}>
                         <View style={styles.viewGanhos}>
                             <View style={{ flex: 1, alignItems: 'center' }}>
-                                <View style={{ flex: 1, alignItems: 'center', flexDirection: 'row' }}>
+                                <View style={{ flex: 1, alignItems: 'center', flexDirection: 'row', justifyContent: 'space-around' }}>
                                     <View style={{ flex: 2, alignItems: 'center', justifyContent: 'center' }}>
                                         <Text style={styles.tituloMensal2}>Ganhos esse mês</Text>
                                         <Text style={styles.txtMensal2}>R$ {this.state.thisMothh ? parseFloat(this.state.thisMothh).toFixed(2) : '0'}</Text>
+                                    </View>
+                                    <View style={{ flex: 2, alignItems: 'center', justifyContent: 'center' }}>
+                                        <Text style={styles.tituloMensal2}>Ganhos essa semana</Text>
+                                        <Text style={styles.txtMensal2}>R$ {this.valorSemana ? parseFloat(this.valorSemana).toFixed(2) : '0'}</Text>
                                     </View>
                                 </View>
                             </View>
@@ -696,6 +701,9 @@ export default class DriverIncomePage extends React.Component {
                 {/* EXIBIÇÃO DO CHARTS, FLEX: 1 */}
 
                 <View style={{ flex: 1 }}>
+                    <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 20, marginBottom: 5 }}>
+                        <Text style={{ color: colors.BLACK, fontFamily: 'Inter-Bold', fontSize: 18 }}>Histórico da semana</Text>
+                    </View>
                     <BarChart
                         data={{
                             labels: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"],
@@ -713,15 +721,14 @@ export default class DriverIncomePage extends React.Component {
                                 }
                             ]
                         }}
-                        width={Dimensions.get("window").width / 1.05} // from react-native
+                        width={Dimensions.get("window").width / 1.02} // from react-native
                         height={220}
                         yAxisLabel="R$"
                         yAxisInterval={1} // optional, defaults to 1
                         chartConfig={chartConfig}
                         bezier
                         style={{
-                            marginVertical: 8,
-                            borderRadius: 15,
+                            //borderRadius: 15,
                             alignItems: 'center',
                         }}
                     />
@@ -732,14 +739,8 @@ export default class DriverIncomePage extends React.Component {
 
                 <ScrollView style={{ flex: 0.5 }}>
                     <View style={{ justifyContent: 'center' }}>
-                        <View style={{ alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 20 }}>
-                            <TouchableOpacity style={{ flexDirection: 'row', width: width / 2.5, height: 40, backgroundColor: colors.DEEPBLUE, borderRadius: 15, justifyContent: 'center', alignItems: 'center' }}
-                                onPress={() => this.pagarSaldo()}
-                            >
-                                <Text style={{ marginLeft: 5, fontSize: 16, fontFamily: 'Inter-Bold', color: colors.WHITE }}>Pagar saldo</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity style={{ flexDirection: 'row', width: width / 2.5, height: 40, backgroundColor: colors.DEEPBLUE, borderRadius: 15, justifyContent: 'center', alignItems: 'center' }}
+                        <View style={{ alignItems: 'center', marginHorizontal: 25 }}>
+                            <TouchableOpacity style={{ flexDirection: 'row', width: width / 2, height: 40, backgroundColor: colors.DEEPBLUE, borderRadius: 15, justifyContent: 'center', alignItems: 'center' }}
                                 onPress={() => this.sacarSaldo()}
                             >
                                 <Text style={{ marginLeft: 5, fontSize: 16, fontFamily: 'Inter-Bold', color: colors.WHITE }}>Sacar saldo</Text>
@@ -756,17 +757,23 @@ export default class DriverIncomePage extends React.Component {
 }
 
 const chartConfig = {
-    backgroundGradientFrom: "#1152FD",
+    backgroundGradientFrom: "#FFF",
     backgroundGradientFromOpacity: 0.8,
-    backgroundGradientTo: "#1152FD",
+    backgroundGradientTo: "#FFF",
     backgroundGradientToOpacity: 1,
-    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
     strokeWidth: 2, // optional, default 3
     barPercentage: 0.7,
-    fillShadowGradient: colors.BLACK,
-    fillShadowGradientOpacity: 0.8,
-    useShadowColorFromDataset: false // optional
-
+    fillShadowGradient: colors.DEEPBLUE,
+    fillShadowGradientOpacity: 1,
+    useShadowColorFromDataset: false,
+    propsForLabels:{
+        fontSize: 13,
+        fontWeight: 500,
+    },
+    propsForBackgroundLines:{
+        
+    }
 };
 
 const styles = StyleSheet.create({

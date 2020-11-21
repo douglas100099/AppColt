@@ -17,10 +17,6 @@ import * as Location from 'expo-location';
 var { width, height } = Dimensions.get('window');
 
 const LOCATION_TASK_NAME = 'background-location-task';
-const onAdd = () => showFloatingBubble()
-const onRequestPermission = () => requestPermission()
-const onCheckPermissoin = () => checkPermission()
-const onInit = () => initialize()
 
 TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data: { locations }, error }) => {
   if (error) {

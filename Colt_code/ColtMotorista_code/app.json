@@ -60,6 +60,7 @@
         "LOCATION",
         "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
+        "SYSTEM_ALERT_WINDOW",
         "ACCESS_COARSE_LOCATION",
         "CAMERA_ROLL"
       ],

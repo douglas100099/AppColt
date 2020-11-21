@@ -17,6 +17,7 @@ import MobileLoginScreen from './MobileLoginScreen';
 import IntroScreen from './IntroScreen';
 import ScreenWelcome from './ScreenWelcome';
 import WaitingDocs from './WaitingDocs';
+import Reports from './Reports';
 
 
 export {
@@ -38,5 +39,6 @@ export {
     MobileLoginScreen,
     ScreenWelcome,
     WaitingDocs,
-    IntroScreen
+    IntroScreen,
+    Reports,
 };

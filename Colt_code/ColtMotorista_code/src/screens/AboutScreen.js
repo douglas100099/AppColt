@@ -88,7 +88,7 @@ export default class AboutPage extends React.Component {
                                         button
                                         iconSize={30}
                                         fontStyle={{ color: colors.BLACK, fontSize: 16 }}
-                                        iconStyle={{ color: '#E1306C' }}
+                                        //iconStyle={{ color: '#E1306C' }}
                                         light
                                         iconType=''
                                         onPress={() => this.openInsta()}
@@ -101,7 +101,7 @@ export default class AboutPage extends React.Component {
                                         button
                                         iconSize={30}
                                         fontStyle={{ color: colors.BLACK, fontSize: 16 }}
-                                        iconStyle={{ color: '#25D366' }}
+                                        //iconStyle={{ color: '#25D366' }}
                                         light
                                         iconType='ionicon'
                                         onPress={() => this.openWhats()}

@@ -24,6 +24,7 @@ export default class SideMenu extends React.Component{
                 {key: 2, name: languageJSON.profile_settings, navigationName: 'Profile', icon: 'user', type: 'feather', child: 'secondChild'},
                 {key: 4, name: languageJSON.incomeText, navigationName: 'MyEarning', icon: 'dollar-sign', type: 'feather', child: 'ninethChild'},
                 {key: 3, name: languageJSON.my_bookings, navigationName: 'RideList', icon: 'clipboard', type: 'feather', child: 'thirdChild'},
+                {key: 5, name: 'Relátorios', navigationName: 'Reports', icon: 'trending-up', type: 'feather', child: 'fiveChild'},
                 {key: 9, name: languageJSON.about_us, navigationName: 'About', icon: 'headphones', type: 'feather', child: 'ninethChild'},
                 {key: 10, name: languageJSON.sign_out, icon: 'ios-log-out', type: 'ionicon', child: 'lastChild'}
             ],

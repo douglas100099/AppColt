@@ -48,6 +48,7 @@ const HEADING = 0;
 
 export default class DriverCompleteTrip extends React.Component {
 
+    myAbort = new AbortController()
     _isMounted = false;
 
     constructor(props) {
@@ -150,23 +151,27 @@ export default class DriverCompleteTrip extends React.Component {
     }
 
     playSound() {
-        this.setState({ isSound: true })
-        this.sound.playAsync().then((result) => {
-            if (result.isLoaded) {
-                this.sound.setIsLoopingAsync(true)
-                this.sound.setVolumeAsync(1)
-            }
-        }).catch((err) => {
-            console.log(err)
-            alert('Tivemos um problema com o som.')
-        })
-        console.log('PLAY SOUND')
+        if(this._isMounted){
+            this.setState({ isSound: true })
+            this.sound.playAsync().then((result) => {
+                if (result.isLoaded) {
+                    this.sound.setIsLoopingAsync(true)
+                    this.sound.setVolumeAsync(1)
+                }
+            }).catch((err) => {
+                console.log(err)
+                alert('Tivemos um problema com o som.')
+            })
+            console.log('PLAY SOUND')
+        }
     }
 
     stopSound() {
-        this.setState({ isSound: false })
-        this.sound.stopAsync();
-        console.log('STOP SOUND')
+        if(this._isMounted){
+            this.setState({ isSound: false })
+            this.sound.stopAsync();
+            console.log('STOP SOUND')
+        }
     }
 
     configAudio() {
@@ -179,7 +184,9 @@ export default class DriverCompleteTrip extends React.Component {
 
     chat() {
         if(this.state.driverDetails){
-            this.setState({ viewInfos: false })
+            if(this._isMounted){
+                this.setState({ viewInfos: false })
+            }
             this.props.navigation.navigate("Chat", { passData: this.state.driverDetails });
         } else {
             alert('Você não possui mais uma corrida em espera')
@@ -201,7 +208,9 @@ export default class DriverCompleteTrip extends React.Component {
         if (startTime && this._isMounted) {
             let time = startTime.toString()
             AsyncStorage.setItem('startTime', time)
-            this.setState({ startTime: startTime })
+            if(this._isMounted){
+                this.setState({ startTime: startTime })
+            }
         }
         const Data = firebase.database().ref('rates/');
         Data.once('value', rates => {
@@ -210,9 +219,11 @@ export default class DriverCompleteTrip extends React.Component {
                 for (var i = 0; i < carTypeWiseRate.car_type.length; i++) {
                     if (carTypeWiseRate.car_type[i].name == allDetails.carType) {
                         var rates = carTypeWiseRate.car_type[i];
-                        this.setState({
-                            rateDetails: rates
-                        })
+                        if(this._isMounted){
+                            this.setState({
+                                rateDetails: rates
+                            })
+                        }
                     }
                 }
             }
@@ -223,6 +234,7 @@ export default class DriverCompleteTrip extends React.Component {
     }
 
     componentWillUnmount() {
+        this.myAbort.abort()
         this._isMounted = false;
         this.sound.unloadAsync();
         if (this.location != undefined) {
@@ -267,9 +279,11 @@ export default class DriverCompleteTrip extends React.Component {
                     longitudeDelta: 0.0034,
                     angle: coords.heading,
                 };
-                this.setState({ region: region });
-                this.setLocationDB(region.latitude, region.longitude, region.angle);
-                this.checkDistKM();
+                if(this._isMounted){
+                    this.setState({ region: region });
+                    this.setLocationDB(region.latitude, region.longitude, region.angle);
+                    this.checkDistKM();
+                }
             },
             error => console.log(error)
         );
@@ -279,7 +293,7 @@ export default class DriverCompleteTrip extends React.Component {
     setLocationDB(lat, lng, angle) {
         let uid = firebase.auth().currentUser.uid;
         var latlng = lat + ',' + lng;
-        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
+        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, {signal: this.myAbort.signal})
             .then((response) => response.json())
             .then((responseJson) => {
                 if (responseJson.results[0] && responseJson.results[0].formatted_address) {
@@ -319,23 +333,27 @@ export default class DriverCompleteTrip extends React.Component {
         var location2 = [this.state.rideDetails.drop.lat, this.state.rideDetails.drop.lng];   //Driver lat and lang
         //calculate the distance of two locations
         var distance = distanceCalc(location1, location2);
-        this.setState({ kmRestante: distance })
+        if(this._isMounted){
+            this.setState({ kmRestante: distance })
+        }
     }
 
     checkDist(item) {
-        this.setState({ rideDetails: item },
-            () => {
-                var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
-                var location2 = [this.state.rideDetails.drop.lat, this.state.rideDetails.drop.lng];   //Driver lat and lang
-                //calculate the distance of two locations
-                var distance = distanceCalc(location1, location2);
-                var originalDistance = (distance);
-                if (originalDistance <= 0.8) {
-                    this.onPressEndTrip(this.state.rideDetails)
-                } else {
-                    this.showActionSheet()
-                }
-            })
+        if(this._isMounted){
+            this.setState({ rideDetails: item },
+                () => {
+                    var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
+                    var location2 = [this.state.rideDetails.drop.lat, this.state.rideDetails.drop.lng];   //Driver lat and lang
+                    //calculate the distance of two locations
+                    var distance = distanceCalc(location1, location2);
+                    var originalDistance = (distance);
+                    if (originalDistance <= 0.8) {
+                        this.onPressEndTrip(this.state.rideDetails)
+                    } else {
+                        this.showActionSheet()
+                    }
+                })
+        }
     }
 
     showActionSheet = () => {
@@ -393,7 +411,7 @@ export default class DriverCompleteTrip extends React.Component {
 
     locationAdd(pos) {
         var latlng = pos.latitude + ',' + pos.longitude;
-        return fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
+        return fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, {signal: this.myAbort.signal})
     }
 
     //driver current location fetching
@@ -470,7 +488,9 @@ export default class DriverCompleteTrip extends React.Component {
             let statusDetail = statusDetails.val()
             if (statusDetail) {
                 if (statusDetail.status === 'END' && statusDetail.pagamento.payment_status === 'PAID') {
-                    this.setState({ loadingModal: false })
+                    if(this._isMounted){
+                        this.setState({ loadingModal: false })
+                    }
                     this.props.navigation.replace('DriverFare', { allDetails: item, trip_cost: data.pagamento.trip_cost, trip_end_time: data.trip_end_time })
                 }
             }

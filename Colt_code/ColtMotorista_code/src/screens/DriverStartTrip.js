@@ -46,6 +46,7 @@ const HEADING = 0;
 
 export default class DriverStartTrip extends React.Component {
 
+    myAbort = new AbortController()
     _isMounted = false;
 
     constructor(props) {
@@ -120,6 +121,7 @@ export default class DriverStartTrip extends React.Component {
     }
 
     componentWillUnmount() {
+        this.myAbort.abort()
         this._isMounted = false;
         if (this.location != undefined) {
             console.log('REMOVEU O WATCH STARTTRIP')
@@ -148,15 +150,17 @@ export default class DriverStartTrip extends React.Component {
     }
 
     playSound() {
-        this.setState({ isSound: true })
-        this.sound.playAsync().then((result) => {
-            if (result.isLoaded) {
-                this.sound.setVolumeAsync(1)
-            }
-        }).catch((err) => {
-            console.log(err)
-            alert('Tivemos um problema com o som.')
-        })
+        if(this._isMounted){
+            this.setState({ isSound: true })
+            this.sound.playAsync().then((result) => {
+                if (result.isLoaded) {
+                    this.sound.setVolumeAsync(1)
+                }
+            }).catch((err) => {
+                console.log(err)
+                alert('Tivemos um problema com o som.')
+            })
+        }
     }
 
     configAudio() {
@@ -167,8 +171,10 @@ export default class DriverStartTrip extends React.Component {
     }
 
     stopSound() {
-        this.setState({ isSound: false })
-        this.sound.stopAsync();
+        if(this._isMounted){
+            this.setState({ isSound: false })
+            this.sound.stopAsync();
+        }
     }
 
     openAlert() {
@@ -202,10 +208,11 @@ export default class DriverStartTrip extends React.Component {
                     longitudeDelta: 0.0034,
                     angle: coords.heading
                 }
-
-                this.setState({ region: region });
-                this.setLocationDB(region.latitude, region.longitude, region.angle);
-                this.checkDistKM();
+                if(this._isMounted){
+                    this.setState({ region: region });
+                    this.setLocationDB(region.latitude, region.longitude, region.angle);
+                    this.checkDistKM();
+                }
             },
             error => console.log(error)
         )
@@ -216,13 +223,15 @@ export default class DriverStartTrip extends React.Component {
         var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
         var location2 = [this.state.rideDetails.pickup.lat, this.state.rideDetails.pickup.lng];   //Driver lat and lang
         var distance = distanceCalc(location1, location2);
-        this.setState({ kmRestante: distance })
+        if(this._isMounted){
+            this.setState({ kmRestante: distance })
+        }
     }
 
     setLocationDB(lat, lng, angle) {
         let uid = firebase.auth().currentUser.uid;
         var latlng = lat + ',' + lng;
-        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
+        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, {signal: this.myAbort.signal})
             .then((response) => response.json())
             .then((responseJson) => {
                 if (responseJson.results[0] && responseJson.results[0].formatted_address) {
@@ -251,27 +260,15 @@ export default class DriverStartTrip extends React.Component {
         tripRef.on('value', (snap) => {
             let tripData = snap.val();
             if (tripData) {
-                this.setState({ status: tripData.status })
-                if (tripData.status == "CANCELLED") {
-                    AsyncStorage.getItem('horaEmbarque', (err, result) => {
-                        if (result) {
-                            AsyncStorage.removeItem('horaEmbarque').then(() => {
-                                this.props
-                                    .navigation
-                                    .dispatch(StackActions.reset({
-                                    index: 0,
-                                    actions: [
-                                        NavigationActions.navigate({
-                                            routeName: 'DriverTripAccept',
-                                        }),
-                                    ],
-                                }))
-                            })
-                        } else {
-                            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/emCorrida').remove().then(() => {
-                                this.props
-                                    .navigation
-                                    .dispatch(StackActions.reset({
+                if(this._isMounted){
+                    this.setState({ status: tripData.status })
+                    if (tripData.status == "CANCELLED") {
+                        AsyncStorage.getItem('horaEmbarque', (err, result) => {
+                            if (result) {
+                                AsyncStorage.removeItem('horaEmbarque').then(() => {
+                                    this.props
+                                        .navigation
+                                        .dispatch(StackActions.reset({
                                         index: 0,
                                         actions: [
                                             NavigationActions.navigate({
@@ -279,70 +276,86 @@ export default class DriverStartTrip extends React.Component {
                                             }),
                                         ],
                                     }))
-                                alert('Corrida atual foi cancelada')
-                            })
-                        }
-                    })
-                }
-                if (tripData.status == "EMBARQUE") {
-                    AsyncStorage.getItem('horaEmbarque', (err, result) => {
-                        if (result) {
-                            var horaEmbarqueAsync = result
-                            var horaAsycnInt = parseInt(horaEmbarqueAsync)
-                            var horaEmbarque = new Date(horaAsycnInt)
-                            if (horaEmbarque) {
-                                var somarMin = horaEmbarque.setMinutes(horaEmbarque.getMinutes() + 5)
+                                })
+                            } else {
+                                firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/emCorrida').remove().then(() => {
+                                    this.props
+                                        .navigation
+                                        .dispatch(StackActions.reset({
+                                            index: 0,
+                                            actions: [
+                                                NavigationActions.navigate({
+                                                    routeName: 'DriverTripAccept',
+                                                }),
+                                            ],
+                                        }))
+                                    alert('Corrida atual foi cancelada')
+                                })
+                            }
+                        })
+                    }
+                    if (tripData.status == "EMBARQUE") {
+                        AsyncStorage.getItem('horaEmbarque', (err, result) => {
+                            if (result) {
+                                var horaEmbarqueAsync = result
+                                var horaAsycnInt = parseInt(horaEmbarqueAsync)
+                                var horaEmbarque = new Date(horaAsycnInt)
+                                if (horaEmbarque) {
+                                    var somarMin = horaEmbarque.setMinutes(horaEmbarque.getMinutes() + 5)
+                                    var horaFim = new Date(somarMin)
+                                    var horaFormatada = horaFim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                                    console.log(horaFormatada)
+                                }
+                                this.setState({ horaEmbarque: parseInt(horaEmbarqueAsync), horaFim: horaFormatada })
+                            } else {
+                                var horaEmbarque = new Date().getTime().toString()
+                                AsyncStorage.setItem('horaEmbarque', horaEmbarque)
+                                var horaAtual = new Date()
+                                var somarMin = horaAtual.setMinutes(horaAtual.getMinutes() + 5)
                                 var horaFim = new Date(somarMin)
                                 var horaFormatada = horaFim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                                this.setState({ horaEmbarque: parseInt(horaEmbarque), horaFim: horaFormatada })
                                 console.log(horaFormatada)
                             }
-                            this.setState({ horaEmbarque: parseInt(horaEmbarqueAsync), horaFim: horaFormatada })
-                        } else {
-                            var horaEmbarque = new Date().getTime().toString()
-                            AsyncStorage.setItem('horaEmbarque', horaEmbarque)
-                            var horaAtual = new Date()
-                            var somarMin = horaAtual.setMinutes(horaAtual.getMinutes() + 5)
-                            var horaFim = new Date(somarMin)
-                            var horaFormatada = horaFim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                            this.setState({ horaEmbarque: parseInt(horaEmbarque), horaFim: horaFormatada })
-                            console.log(horaFormatada)
-                        }
-                    })
+                        })
+                    }
                 }
             }
         })
     }
 
     checkDist(item) {
-        this.setState({ allData: item, loader: true },
-            () => {
-                var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
-                var location2 = [this.state.rideDetails.pickup.lat, this.state.rideDetails.pickup.lng];   //Driver lat and lang
-                //calculate the distance of two locations
-                var distance = distanceCalc(location1, location2);
-                var originalDistance = (distance);
-                if (originalDistance <= 0.8) {
-                    //this.onPressStartTrip(this.state.allData)
-                    this.embarque();
-                } else {
-                    this.showActionSheet()
-                }
-            })
+        if(this._isMounted){
+            this.setState({ allData: item, loader: true },
+                () => {
+                    var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
+                    var location2 = [this.state.rideDetails.pickup.lat, this.state.rideDetails.pickup.lng];   //Driver lat and lang
+                    //calculate the distance of two locations
+                    var distance = distanceCalc(location1, location2);
+                    var originalDistance = (distance);
+                    if (originalDistance <= 0.8) {
+                        //this.onPressStartTrip(this.state.allData)
+                        this.embarque();
+                    } else {
+                        this.showActionSheet()
+                    }
+                })
+        }
     }
 
     //start trip button press function
     onPressStartTrip(item) {
-        this.setState({ allData: item }, () => {
-            console.log(this.state.allData);
-            if (this.state.allData.otp) {
-                this.setState({ mediaSelectModal: true })
-            } else {
-                this.codeEnter(false, this.state.allData.otp);
-            }
-            //this.setState({mediaSelectModal:true})
-        });
-
-
+        if(this._isMounted){
+            this.setState({ allData: item }, () => {
+                console.log(this.state.allData);
+                if (this.state.allData.otp) {
+                    this.setState({ mediaSelectModal: true })
+                } else {
+                    this.codeEnter(false, this.state.allData.otp);
+                }
+                //this.setState({mediaSelectModal:true})
+            });
+        }
     }
 
     showActionSheet = () => {
@@ -354,7 +367,9 @@ export default class DriverStartTrip extends React.Component {
     }
 
     chat() {
-        this.setState({ viewInfos: false })
+        if(this._isMounted){
+            this.setState({ viewInfos: false })
+        }
         this.props.navigation.navigate("Chat", { passData: this.state.rideDetails });
     }
 
@@ -462,18 +477,22 @@ export default class DriverStartTrip extends React.Component {
     }
 
     animateToDestination() {
-        this.setState({ fitCordinates: true, followMap: false })
-        setTimeout(() => {
-            this.map.fitToCoordinates([{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }, { latitude: this.state.rideDetails.pickup.lat, longitude: this.state.rideDetails.pickup.lng }], {
-                edgePadding: { top: 80, right: 65, bottom: 50, left: 50 },
-                animated: true,
-            })
-        }, 200);
+        if(this._isMounted){
+            this.setState({ fitCordinates: true, followMap: false })
+            setTimeout(() => {
+                this.map.fitToCoordinates([{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }, { latitude: this.state.rideDetails.pickup.lat, longitude: this.state.rideDetails.pickup.lng }], {
+                    edgePadding: { top: 80, right: 65, bottom: 50, left: 50 },
+                    animated: true,
+                })
+            }, 200);
+        }
     }
 
     centerFollowMap() {
-        this.map.animateToRegion(this.state.region, 500)
-        setTimeout(() => { this.setState({ followMap: true, fitCordinates: false }) }, 1100)
+        if(this._isMounted){
+            this.map.animateToRegion(this.state.region, 500)
+            setTimeout(() => { this.setState({ followMap: true, fitCordinates: false }) }, 1100)
+        }
     }
 
     checkMap() {

@@ -1,8 +1,7 @@
 import React from 'react';
 import { Text, View, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal, Image, Platform, Alert, ActivityIndicator, AsyncStorage } from 'react-native';
 import { Icon } from 'react-native-elements';
-import Polyline from '@mapbox/polyline';
-import MapView, { PROVIDER_GOOGLE, Marker, AnimatedRegion } from 'react-native-maps';
+import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import { colors } from '../common/theme';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
@@ -14,14 +13,12 @@ import distanceCalc from '../common/distanceCalc';
 import { Pulse } from 'react-native-animated-spinkit'
 import Geocoder from 'react-native-geocoding';
 import { google_map_key } from '../common/key';
-import languageJSON from '../common/language';
 import { Audio } from 'expo-av';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Battery from 'expo-battery';
 import * as Animatable from 'react-native-animatable';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
-import Easing from 'react-native-reanimated';
 import * as Linking from 'expo-linking';
 import { getPixelSize } from '../constants/utils';
 import Directions from "../components/Directions";
@@ -31,8 +28,6 @@ import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
 import CellphoneSVG from '../SVG/CellphoneSVG';
 import MarkerPicSVG from '../SVG/MarkerPicSVG';
-import { useAssets } from 'expo-asset';
-
 Geocoder.init(google_map_key);
 
 const screen = Dimensions.get('window');
@@ -45,6 +40,7 @@ const HEADING = 0;
 
 export default class DriverTripAccept extends React.Component {
 
+    myAbort = new AbortController()
     _isMounted = false;
 
     constructor(props) {
@@ -112,10 +108,12 @@ export default class DriverTripAccept extends React.Component {
             let checkBlock = customerData.val()
             if (checkBlock.blocked_by_payment || checkBlock.blocked) {
                 if (checkBlock.blocked) {
-                    this.setState({
-                        isBlocked: checkBlock.blocked.isBlocked,
-                        reason: checkBlock.blocked.isBlocked
-                    })
+                    if(this._isMounted){
+                        this.setState({
+                            isBlocked: checkBlock.blocked.isBlocked,
+                            reason: checkBlock.blocked.isBlocked
+                        })
+                    }
                     const now = new Date(); // Data de hoje
                     const past = new Date(checkBlock.blocked.data); // Outra data no passado
                     const diff = Math.abs(now.getTime() - past.getTime()); // Subtrai uma data pela outra
@@ -168,7 +166,9 @@ export default class DriverTripAccept extends React.Component {
                             firebase.database().ref(`/users/` + this.state.curUid + '/').update({
                                 driverActiveStatus: true
                             }).then(() => {
-                                this.setState({ alertIsOpen: false, requestPermission: false });
+                                if(this._isMounted){
+                                    this.setState({ alertIsOpen: false, requestPermission: false });
+                                }
                                 //clearInterval(this.state.intervalCheckGps);
                             })
                         } else {
@@ -186,8 +186,10 @@ export default class DriverTripAccept extends React.Component {
     }
 
     async requestPermission() {
-        this.setState({ requestPermission: true })
-        await Location.requestPermissionsAsync();
+        if(this._isMounted){
+            this.setState({ requestPermission: true })
+            await Location.requestPermissionsAsync();
+        }
     }
 
     photoPerfil = () => {
@@ -260,13 +262,16 @@ export default class DriverTripAccept extends React.Component {
 
 
     stopSound() {
-        this.setState({ isSound: false })
-        this.sound.stopAsync();
-        console.log('STOP SOUND')
+        if(this._isMounted){
+            this.setState({ isSound: false })
+            this.sound.stopAsync();
+            console.log('STOP SOUND')
+        }
     }
 
 
-    async componentWillUnmount() {
+    componentWillUnmount() {
+        this.myAbort.abort()
         this._isMounted = false
         if (this.location != undefined) {
             this.location.remove()
@@ -283,7 +288,9 @@ export default class DriverTripAccept extends React.Component {
         const batteryLevel = await Battery.getBatteryLevelAsync();
         this.setState({ batteryLevel });
         this._subscription = Battery.addBatteryLevelListener(({ batteryLevel }) => {
-            this.setState({ batteryLevel });
+            if(this._isMounted){
+                this.setState({ batteryLevel });
+            }
         });
         if (this.state.batteryLevel) {
             if (this.state.batteryLevel <= 0.10) {
@@ -327,9 +334,13 @@ export default class DriverTripAccept extends React.Component {
             await AsyncStorage.getItem('onOffHide', (err, result) => {
                 if (result) {
                     if (result == 'ON') {
-                        this.setState({ hideGanhos: 'ON' })
+                        if(this._isMounted){
+                            this.setState({ hideGanhos: 'ON' })
+                        }
                     } else {
-                        this.setState({ hideGanhos: 'OFF' })
+                        if(this._isMounted){
+                            this.setState({ hideGanhos: 'OFF' })
+                        }
                     }
                 }
             })
@@ -401,9 +412,10 @@ export default class DriverTripAccept extends React.Component {
                         longitudeDelta: 0.045,
                         angle: coords.heading,
                     };
-
-                    this.setState({ region: region });
-                    this.setLocationDB(region.latitude, region.longitude, region.angle)
+                    if(this._isMounted){
+                        this.setState({ region: region });
+                        this.setLocationDB(region.latitude, region.longitude, region.angle)
+                    }
                 },
                 error => console.log(error)
             );
@@ -421,7 +433,7 @@ export default class DriverTripAccept extends React.Component {
     setLocationDB(lat, lng, angle) {
         let uid = firebase.auth().currentUser.uid;
         var latlng = lat + ',' + lng;
-        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
+        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, {signal: this.myAbort.signal})
             .then((response) => response.json())
             .then((responseJson) => {
                 if (responseJson.results[0] && responseJson.results[0].formatted_address) {
@@ -511,9 +523,6 @@ export default class DriverTripAccept extends React.Component {
                 }
                 this.setState({ tasklist: jobs.reverse() });
                 this.jobs = jobs;
-                /*if(this.state.chegouCorrida){
-                    setTimeout(() => {this.circularProgress.animate(100, 14000, Easing.quad)},1000);
-                }*/
             });
         }
     }
@@ -711,11 +720,15 @@ export default class DriverTripAccept extends React.Component {
                 if (result) {
                     if (result == 'ON') {
                         AsyncStorage.setItem('onOffHide', 'OFF').then(() => {
-                            this.setState({ hideGanhos: 'OFF' })
+                            if(this._isMounted){
+                                this.setState({ hideGanhos: 'OFF' })
+                            }
                         })
                     } else {
                         AsyncStorage.setItem('onOffHide', 'ON').then(() => {
-                            this.setState({ hideGanhos: 'ON' })
+                            if(this._isMounted){
+                                this.setState({ hideGanhos: 'ON' })
+                            }
                         })
                     }
                 } else {

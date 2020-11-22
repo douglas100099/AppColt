@@ -5,6 +5,7 @@ import {
     Text,
     Modal,
     Image,
+    ToastAndroid,
     Dimensions,
     AsyncStorage,
     Linking,
@@ -24,6 +25,7 @@ import * as Location from 'expo-location';
 import * as firebase from 'firebase';
 import distanceCalc from '../common/distanceCalc';
 import languageJSON from '../common/language';
+import { Audio } from 'expo-av';
 import CellphoneSVG from '../SVG/CellphoneSVG'
 import MarkerPicSVG from '../SVG/MarkerPicSVG';
 var { width, height } = Dimensions.get('window');
@@ -32,7 +34,6 @@ import dateStyle from '../common/dateStyle';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 import RadioForm from 'react-native-simple-radio-button';
-const LOCATION_TASK_NAME = 'background-location-task';
 import * as Animatable from 'react-native-animatable';
 import Directions from "../components/Directions";
 import customMapStyle from "../../mapstyle.json";
@@ -72,6 +73,8 @@ export default class DriverStartTrip extends React.Component {
             loaderCancel: false,
             kmRestante: 0,
             isAtrasado: false,
+            newMessage: false,
+            isSound: false,
         }
     }
 
@@ -108,6 +111,12 @@ export default class DriverStartTrip extends React.Component {
     componentDidMount() {
         this._isMounted = true;
         this.getCancelReasons();
+        this.checkNewMsg()
+        this.sound = new Audio.Sound();
+        const status = {
+            shouldPlay: false
+        };
+        this.sound.loadAsync(require('../../assets/sounds/message.mp3'), status, false)
     }
 
     componentWillUnmount() {
@@ -116,7 +125,50 @@ export default class DriverStartTrip extends React.Component {
             console.log('REMOVEU O WATCH STARTTRIP')
             this.location.remove()
         }
+        this.sound.unloadAsync();
         console.log('DESMONTOU A TELA START TRIP')
+    }
+
+    checkNewMsg(){
+        let msgData = firebase.database().ref(`chat/` + this.state.rideDetails.bookingId + '/')
+        msgData.on('value', snap => {
+            if(snap.val()){
+                let chatData = snap.val()
+                if(chatData.readed_driver === false){
+                    this.setState({ newMessage: true })
+                    if(this.state.isSound === false){
+                        this.playSound()
+                        ToastAndroid.show('Você recebeu uma nova mensagem.', ToastAndroid.SHORT);
+                    }
+                } else {
+                    this.setState({ newMessage: false, isSound: false })
+                }
+            }
+        })
+    }
+
+    playSound() {
+        this.setState({ isSound: true })
+        this.sound.playAsync().then((result) => {
+            if (result.isLoaded) {
+                this.sound.setVolumeAsync(1)
+            }
+        }).catch((err) => {
+            console.log(err)
+            alert('Tivemos um problema com o som.')
+        })
+    }
+
+    configAudio() {
+        Audio.setAudioModeAsync({
+            staysActiveInBackground: true,
+            shouldDuckAndroid: true,
+        })
+    }
+
+    stopSound() {
+        this.setState({ isSound: false })
+        this.sound.stopAsync();
     }
 
     openAlert() {
@@ -643,13 +695,6 @@ export default class DriverStartTrip extends React.Component {
                         <View style={styles.cancelContainer}>
                             <View style={styles.cancelReasonContainer}>
                                 <Text style={styles.cancelReasonText}>Qual o motivo do cancelamento?</Text>
-                                <View style={{ marginTop: 15, alignItems: 'center', marginHorizontal: 15, }}>
-                                    {this.state.isAtrasado ?
-                                        <Text style={{ fontSize: 14, color: colors.RED, fontFamily: 'Inter-Bold', textAlign: 'center' }}>Você será punido caso queira cancelar, aguarde os 5 min</Text>
-                                        :
-                                        <Text style={{ fontSize: 14, color: colors.BLACK, fontFamily: 'Inter-Bold', textAlign: 'center' }}>Você não será punido caso queira cancelar</Text>
-                                    }
-                                </View>
                             </View>
 
                             <View style={styles.radioContainer}>

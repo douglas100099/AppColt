@@ -44,11 +44,11 @@
       "config": {
         "googleMapsApiKey": "AIzaSyDALefKQ3xFjRRvw56_mRdPClMap41XAbM"
       },
-      "buildNumber": "1.0"
+      "buildNumber": "1.0.1"
     },
     "android": {
       "package": "com.myth.appcoltmotorista",
-      "versionCode": 10,
+      "versionCode": 11,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptativeIcon.png",
         "backgroundColor": "#1152FD"

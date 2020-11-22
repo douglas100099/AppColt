@@ -8,7 +8,8 @@ import {
     TouchableOpacity,
     AsyncStorage,
     Image,
-    Modal
+    Modal,
+    Dimensions,
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import { colors } from '../common/theme';
@@ -36,6 +37,7 @@ import Directions from "../components/Directions";
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import { getPixelSize } from '../constants/utils';
 import customMapStyle from "../../mapstyle.json";
+var { width, height } = Dimensions.get('window');
 
 const LATITUDE = 0;
 const LONGITUDE = 0;
@@ -70,6 +72,7 @@ export default class DriverCompleteTrip extends React.Component {
             duration: null,
             isSound: false,
             recalculou: false,
+            objectQueue: false,
         }
     }
 
@@ -83,7 +86,7 @@ export default class DriverCompleteTrip extends React.Component {
 
     async UNSAFE_componentWillMount() {
         const allDetails = this.props.navigation.getParam('allDetails')
-        const regionUser = this.props.navigation.getParam('regionUser')
+        const regionUser = this.props.navigation.getParam('regionUser') ? this.props.navigation.getParam('regionUser') : null
         this.setState({
             rideDetails: allDetails,
             region: regionUser,
@@ -122,7 +125,7 @@ export default class DriverCompleteTrip extends React.Component {
                 this.setState({ chegouCorridaQueue: true })
                 if (this.state.isSound == false) {
                     this.playSound()
-                    //Linking.openURL('coltappmotorista://');
+                    Linking.openURL('coltappmotorista://');
                 }
             } else if (this.state.chegouCorridaQueue == true) {
                 this.setState({ chegouCorridaQueue: false })
@@ -135,10 +138,21 @@ export default class DriverCompleteTrip extends React.Component {
         })
     }
 
+    checkingRidersQueue() {
+        let curUid = firebase.auth().currentUser.uid
+        const checkwaiting = firebase.database().ref('users/' + curUid + '/');
+        checkwaiting.on('value', snap => {
+            if (snap.val().rider_waiting_object) {
+                this.setState({ objectQueue: true })
+            }
+            this.setState({ objectQueue: false })
+        })
+    }
+
     playSound() {
         this.setState({ isSound: true })
         this.sound.playAsync().then((result) => {
-            if(result.isLoaded){
+            if (result.isLoaded) {
                 this.sound.setIsLoopingAsync(true)
                 this.sound.setVolumeAsync(1)
             }
@@ -161,6 +175,15 @@ export default class DriverCompleteTrip extends React.Component {
             staysActiveInBackground: true,
             shouldDuckAndroid: true,
         })
+    }
+
+    chat() {
+        if(this.state.driverDetails){
+            this.setState({ viewInfos: false })
+            this.props.navigation.navigate("Chat", { passData: this.state.driverDetails });
+        } else {
+            alert('Você não possui mais uma corrida em espera')
+        }
     }
 
 
@@ -194,17 +217,19 @@ export default class DriverCompleteTrip extends React.Component {
                 }
             }
         })
+        this.checkingRidersQueue()
         this.setQueueAvailable(true)
 
     }
 
     componentWillUnmount() {
+        this._isMounted = false;
+        this.sound.unloadAsync();
         if (this.location != undefined) {
             console.log('REMOVEU O WATCH COMPLETE TRIP')
             this.location.remove()
         }
         console.log('DESMONTOU A TELA COMPLETE TRIP')
-        this._isMounted = false;
     }
 
 
@@ -689,23 +714,23 @@ export default class DriverCompleteTrip extends React.Component {
 
                     <View style={{ flex: 1 }}>
                         <View style={{ flex: 1 }}>
-                            <MapView
-                                ref={map => { this.map = map }}
-                                style={styles.map}
-                                rotateEnabled={false}
-                                provider={PROVIDER_GOOGLE}
-                                showsUserLocation={false}
-                                showsCompass={false}
-                                showsScale={false}
-                                customMapStyle={customMapStyle}
-                                loadingEnabled
-                                showsMyLocationButton={false}
-                                region={this.checkMap()}
-                            >
-                                {this.state.region ?
+                            {this.state.region ?
+                                <MapView
+                                    ref={map => { this.map = map }}
+                                    style={styles.map}
+                                    rotateEnabled={false}
+                                    provider={PROVIDER_GOOGLE}
+                                    showsUserLocation={false}
+                                    showsCompass={false}
+                                    showsScale={false}
+                                    customMapStyle={customMapStyle}
+                                    loadingEnabled
+                                    showsMyLocationButton={false}
+                                    region={this.checkMap()}
+                                >
                                     <Marker.Animated
                                         coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
-                                        style={{ transform: [{ rotate: this.state.region.angle ? this.state.region.angle + "deg" : '0' + "deg"}] }}
+                                        style={{ transform: [{ rotate: this.state.region.angle ? this.state.region.angle + "deg" : '0' + "deg" }] }}
                                         anchor={{ x: 0.5, y: 0.5 }}
                                     >
                                         <CellphoneSVG
@@ -713,21 +738,22 @@ export default class DriverCompleteTrip extends React.Component {
                                             height={40}
                                         />
                                     </Marker.Animated>
-                                    : null}
-                                <Marker.Animated
-                                    coordinate={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng, }}
-                                    anchor={{ x: 0.5, y: 1 }}
-                                >
-                                    <MarkerDropSVG
-                                        width={40}
-                                        height={40}
+                                    <Marker.Animated
+                                        coordinate={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng, }}
+                                        anchor={{ x: 0.5, y: 1 }}
+                                    >
+                                        <MarkerDropSVG
+                                            width={40}
+                                            height={40}
+                                        />
+                                    </Marker.Animated>
+                                    <Directions
+                                        origin={{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }}
+                                        destination={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng }}
                                     />
-                                </Marker.Animated>
-                                <Directions
-                                    origin={{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }}
-                                    destination={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng }}
-                                />
-                            </MapView>
+                                </MapView>
+                                :
+                                null}
                             <View>
                                 <ActionSheetCustom
                                     ref={o => this.ActionSheet = o}
@@ -746,6 +772,27 @@ export default class DriverCompleteTrip extends React.Component {
                                     }}
                                 />
                             </View>
+                            {this.state.objectQueue ?
+                                <View style={{ flex: 1 }}>
+                                    <View style={{ position: 'absolute', top: 90, width: width / 1.6, height: 35, backgroundColor: colors.WHITE, elevation: 3, borderRadius: 15, alignItems: 'center', alignSelf: 'center', justifyContent: 'center' }}>
+                                        <Text style={{ color: colors.BLACK, fontFamily: 'Inter-Bold', fontSize: 13, textAlign: 'center' }}>Você possui uma corrida em espera</Text>
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <TouchableOpacity
+                                            style={styles.btnLigar}
+                                            onPress={() => this.chat()}
+                                        >
+                                            <Icon
+                                                name="message-circle"
+                                                type="feather"
+                                                size={30}
+                                                color={colors.BLACK}
+                                            />
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                                :
+                                null}
                             <TouchableOpacity style={styles.iconeMap} onPress={() => { this.centerFollowMap() }}>
                                 <Icon
                                     name="crosshair"
@@ -1101,6 +1148,19 @@ const styles = StyleSheet.create({
         elevation: 4,
         bottom: 65,
         right: 22,
+    },
+
+    btnLigar: {
+        height: 60,
+        width: 60,
+        backgroundColor: colors.WHITE,
+        borderRadius: 50,
+        position: 'absolute',
+        justifyContent: 'center',
+        alignItems: 'center',
+        bottom: 125,
+        left: 22,
+        elevation: 5
     },
 
     iconeFit: {

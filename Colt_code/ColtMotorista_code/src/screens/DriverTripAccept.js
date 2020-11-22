@@ -110,25 +110,47 @@ export default class DriverTripAccept extends React.Component {
         const checkarBlock = firebase.database().ref('users/' + this.state.curUid + '/');
         checkarBlock.once('value', customerData => {
             let checkBlock = customerData.val()
-            if (checkBlock.blocked) {
-                this.setState({
-                    isBlocked: checkBlock.blocked.isBlocked,
-                    reason: checkBlock.blocked.isBlocked
-                })
-                const now = new Date(); // Data de hoje
-                const past = new Date(checkBlock.blocked.data); // Outra data no passado
-                const diff = Math.abs(now.getTime() - past.getTime()); // Subtrai uma data pela outra
-                const hours = Math.ceil(diff / (1000 * 60 * 60)); // Divide o total pelo total de milisegundos correspondentes a 1 dia. (1000 milisegundos = 1 segundo).
-                if (checkBlock.blocked && hours == 24) {
-                    alert(checkBlock.blocked.motivo + ' Tempo restante: ' + (24 - hours) + ' Horas')
+            if (checkBlock.blocked_by_payment || checkBlock.blocked) {
+                if (checkBlock.blocked) {
+                    this.setState({
+                        isBlocked: checkBlock.blocked.isBlocked,
+                        reason: checkBlock.blocked.isBlocked
+                    })
+                    const now = new Date(); // Data de hoje
+                    const past = new Date(checkBlock.blocked.data); // Outra data no passado
+                    const diff = Math.abs(now.getTime() - past.getTime()); // Subtrai uma data pela outra
+                    const hours = Math.ceil(diff / (1000 * 60 * 60)); // Divide o total pelo total de milisegundos correspondentes a 1 dia. (1000 milisegundos = 1 segundo).
+                    if (checkBlock.blocked && hours <= 3) {
+                        alert(checkBlock.blocked.motivo + ' Tempo restante: ' + (3 - hours) + ' Horas')
+                    } else {
+                        firebase.database().ref(`/users/` + this.state.curUid + '/blocked').remove().then(
+                            firebase.database().ref(`/users/` + this.state.curUid + '/canceladasRecentes').update({
+                                count: 0,
+                                countRecentes: 0,
+                            })
+                        )
+                        alert('Motorista desbloqueado, fique online novamente.')
+                    }
                 } else {
-                    firebase.database().ref(`/users/` + this.state.curUid + '/blocked').remove().then(
-                        firebase.database().ref(`/users/` + this.state.curUid + '/canceladasRecentes').update({
-                            count: 0,
-                            countRecentes: 0,
-                        })
-                    )
-                    alert('Motorista desbloqueado, fique online novamente.')
+                    let dataFormatada = new Date(checkBlock.blocked_by_payment.date_blocked),
+                    dia = dataFormatada.getDate().toString().padStart(2, '0'),
+                    mes = (dataFormatada.getMonth() + 1).toString().padStart(2, '0'), //+1 pois no getMonth Janeiro começa com zero.
+                    ano = dataFormatada.getFullYear();
+                    if (checkBlock.blocked_by_payment) {
+                        Alert.alert(
+                            "Pagamento pendente",
+                            "Você foi bloqueado. Não identificamos seu pagamento da taxa da Colt com vencimento em: " +dia+'/'+mes+'/'+ano+ " , caso realizou o pagamento entre em contato com o suporte.",
+                            [
+                                {
+                                    text: "Suporte",
+                                    onPress: () => Linking.openURL('https://wa.me/5532998684398'),
+                                    style: "cancel"
+                                },
+                                { text: "OK", onPress: () => console.log("OK Pressed") }
+                            ],
+                            { cancelable: false }
+                        )
+                    }
                 }
             } else {
                 if (this.state.statusDetails == true) {
@@ -303,11 +325,11 @@ export default class DriverTripAccept extends React.Component {
                 }
             })
             await AsyncStorage.getItem('onOffHide', (err, result) => {
-                if(result){
-                    if(result == 'ON'){
+                if (result) {
+                    if (result == 'ON') {
                         this.setState({ hideGanhos: 'ON' })
                     } else {
-                        this.setState({ hideGanhos: 'OFF' }) 
+                        this.setState({ hideGanhos: 'OFF' })
                     }
                 }
             })
@@ -474,7 +496,7 @@ export default class DriverTripAccept extends React.Component {
                     this.setState({ chegouCorrida: true })
                     if (this.state.isSound == false) {
                         this.playSound()
-                        //Linking.openURL('coltappmotorista://');
+                        Linking.openURL('coltappmotorista://');
                     }
                 } else if (this.state.chegouCorrida == true) {
                     this.setState({ chegouCorrida: false })

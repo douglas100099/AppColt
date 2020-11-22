@@ -47,7 +47,7 @@ export default class OnlineChat extends Component {
       id: "",
       chat: false,
       allChat: [],
-      lidaRider: false,
+      readed_rider: false,
       messegesData: []
 
     };
@@ -84,7 +84,7 @@ export default class OnlineChat extends Component {
       let readChat = firebase.database().ref(`chat/` + this.getParamData.bookingId + '/');
       readChat.on('value', readChat => {
         let readInfo = readChat.val()
-        this.setState({ readed_rider: readChat.val().lidaRider })
+        this.setState({ readed_rider: readChat.val().readed_rider })
         if(readInfo.readed_driver === false){
           firebase.database().ref(`chat/` + this.getParamData.bookingId + '/').update({
             readed_driver: true

@@ -22,6 +22,8 @@ import { RequestPushMsg } from '../common/RequestPushMsg';
 import AvatarUser from "../../assets/svg/AvatarUser";
 export default class OnlineChat extends Component {
   getParamData;
+  currentScreen
+  _isMounted = false;
   constructor(props) {
     super(props);
     this.state = {
@@ -43,15 +45,18 @@ export default class OnlineChat extends Component {
       id: "",
       chat: false,
       allChat: [],
-      messegesData: []
-
+      messegesData: [],
     };
   }
 
 
   componentDidMount() {
+    this._isMounted = true;
+    this.currentScreen = true
     this.getParamData = this.props.navigation.getParam('passData');
     let firstName = this.props.navigation.getParam('firstNameRider');
+    this.listenerReaded()
+
     let bookingData = firebase.database().ref('bookings/' + this.getParamData.bokkingId)
     bookingData.on('value', response => {
       if (response.val()) {
@@ -70,8 +75,12 @@ export default class OnlineChat extends Component {
         }
 
       }
+      if( allMesseges[allMesseges.length -1].source == 'driver' ){
+        this.setState({ showReaded: false })
+      }
       this.setState({ allChat: allMesseges })
     })
+
     this.keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
       this._keyboardDidShow,
@@ -84,6 +93,7 @@ export default class OnlineChat extends Component {
 
 
   componentWillUnmount() {
+    this._isMounted = false;
     this.keyboardDidShowListener.remove();
     this.keyboardDidHideListener.remove();
   }
@@ -106,16 +116,34 @@ export default class OnlineChat extends Component {
     }
   }
 
+  listenerReaded() {
+    let read = firebase.database().ref(`chat/` + this.getParamData.bokkingId + '/readed_rider');
+    read.on('value', readChat => {
+      let readInfo = readChat.val()
+      if (readInfo == false && this.currentScreen && this._isMounted) {
+        
+        console.log(this.currentScreen + " SCREEN")
+          firebase.database().ref(`chat/` + this.getParamData.bokkingId + '/readed_rider').set(true)
+      }
+    })
+
+    let readChat = firebase.database().ref(`chat/` + this.getParamData.bokkingId + '/readed_driver');
+    readChat.on('value', readChat => {
+      let readInfo = readChat.val()
+      if (readInfo) {
+        this.setState({ readed_driver: readInfo })
+      }
+    })
+  }
+
   sendMessege(inputmessage) {
     var today = new Date();
     var time = today.toLocaleTimeString('pt-BR').split(':')[0] + ':' + today.toLocaleTimeString('pt-BR').split(':')[1];
     var dd = String(today.getDate()).padStart(2, '0');
     var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
     var yyyy = today.getFullYear();
-    today = mm + ':' + dd + ':' + yyyy;
+    today = dd + '/' + mm + '/' + yyyy;
 
-    let customer = this.state.carbookedInfo.customer;
-    let driver = this.state.carbookedInfo.driver
     let totalId = this.state.carbookedInfo.customer + ',' + this.state.carbookedInfo.driver
     this.setState({ id: totalId })
 
@@ -140,6 +168,11 @@ export default class OnlineChat extends Component {
               msgDate: today,
               msgTime: time,
               source: "rider"
+            }).then(() => {
+              this.setState({ readed_driver: false, showReaded: true })
+              firebase.database().ref(`chat/` + this.getParamData.bokkingId + '/').update({
+                readed_driver: false
+              })
             })
             this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + inputmessage)
           }
@@ -147,7 +180,8 @@ export default class OnlineChat extends Component {
             firebase.database().ref('chat' + '/' + this.getParamData.bokkingId + '/').update({
               distance: this.state.carbookedInfo.distance,
               car: this.state.carbookedInfo.carType,
-              bookingId: this.getParamData.bokkingId
+              bookingId: this.getParamData.bokkingId,
+              readed_driver: false
             }).then(() => {
               firebase.database().ref('chat' + '/' + this.getParamData.bokkingId + '/' + 'message' + '/' + this.state.id).push({
                 message: inputmessage,
@@ -157,6 +191,7 @@ export default class OnlineChat extends Component {
                 msgTime: time,
                 source: "rider"
               })
+              this.setState({ readed_driver: false, showReaded: true })
               this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + inputmessage)
             })
           }
@@ -164,7 +199,8 @@ export default class OnlineChat extends Component {
           firebase.database().ref('chat' + '/' + this.getParamData.bokkingId + '/').update({
             distance: this.state.carbookedInfo.distance,
             car: this.state.carbookedInfo.carType,
-            bookingId: this.getParamData.bokkingId
+            bookingId: this.getParamData.bokkingId,
+            readed_driver: false
           }).then(() => {
             if (this.state.id) {
               firebase.database().ref('chat' + '/' + this.getParamData.bokkingId + '/' + 'message' + '/' + this.state.id).push({
@@ -175,6 +211,7 @@ export default class OnlineChat extends Component {
                 msgTime: time,
                 source: "rider"
               })
+              this.setState({ readed_driver: false, showReaded: true })
               this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + inputmessage)
             }
           })
@@ -197,8 +234,8 @@ export default class OnlineChat extends Component {
     return (
       item.source == "rider" ?
         <View style={styles.drivermsgStyle}>
-            <Text style={styles.msgTextStyle}>{item ? item.message : languageJSON.chat_not_found}</Text>
-            <Text style={styles.msgTimeStyle}>{item ? item.msgTime : null}</Text>
+          <Text style={styles.msgTextStyle}>{item ? item.message : languageJSON.chat_not_found}</Text>
+          <Text style={styles.msgTimeStyle}>{item ? item.msgTime : null}</Text>
         </View>
         :
         <View style={styles.riderMsgStyle}>
@@ -213,7 +250,11 @@ export default class OnlineChat extends Component {
       <View style={styles.container}>
         <View style={styles.viewHeader}>
           <View style={styles.bordaIconeVoltar}>
-            <TouchableOpacity onPress={() => { this.props.navigation.goBack() }}>
+            <TouchableOpacity onPress={() => { 
+              this.currentScreen = false, 
+              console.log(this.currentScreen)
+              this.props.navigation.goBack() 
+              }}>
               <Icon
                 name='chevron-left'
                 type='MaterialIcons'
@@ -239,7 +280,7 @@ export default class OnlineChat extends Component {
             }
           </View>
         </View>
-        <View style={{flex: 1 }}>
+        <View style={{ flex: 1 }}>
           <FlatList
             data={this.state.allChat.reverse()}
             renderItem={this.renderItem}
@@ -247,6 +288,35 @@ export default class OnlineChat extends Component {
             inverted
           />
         </View>
+
+        {this.state.allChat.length > 0 && this.state.showReaded ?
+          (this.state.readed_driver ?
+            <View style={{ flexDirection: 'row', alignSelf: 'flex-end', alignItems: 'center' }}>
+              <Text style={{ color: colors.GREY2, marginRight: 5, fontFamily: 'Inter-Regular', fontSize: 13 }}>Lida</Text>
+              <View style={{ height: 20, height: 20, marginRight: 10 }}>
+                <Icon
+                  name='check-circle'
+                  type='feather'
+                  color={colors.DEEPBLUE}
+                  size={15}
+                />
+              </View>
+            </View>
+            :
+            <View style={{ flexDirection: 'row', alignSelf: 'flex-end' }}>
+              <Text style={{ color: colors.GREY2, textAlign: 'right', marginRight: 10, fontFamily: 'Inter-Regular', fontSize: 13 }}>Não lida</Text>
+              <View style={{ height: 20, height: 20, alignSelf: 'flex-end', marginRight: 10 }}>
+                <Icon
+                  name='check'
+                  type='feather'
+                  color={colors.GREY2}
+                  size={20}
+                />
+              </View>
+            </View>
+          )
+          : null}
+
         <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? 'padding' : 'height'}>
           <View style={styles.footer}>
             <TextInput
@@ -271,8 +341,8 @@ export default class OnlineChat extends Component {
       </View>
     );
   }
-
 }
+
 //Screen Styling
 const styles = StyleSheet.create({
   container: {

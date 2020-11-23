@@ -36,6 +36,7 @@ import mapStyleJson from '../../mapStyle.json';
 
 
 export default class FareScreen extends React.Component {
+    myAbort = new AbortController()
     constructor(props) {
         super(props);
         this._isMounted = false;
@@ -151,13 +152,14 @@ export default class FareScreen extends React.Component {
     };
 
     componentWillUnmount() {
+        this.myAbort.abort()
         this._isMounted = false;
     }
 
     //Pega a direção e detalhes da corrida 
     async getDirections(startLoc, destLoc) {
         try {
-            var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destLoc}&key=${google_map_key}`)
+            var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destLoc}&key=${google_map_key}`, {signal: this.myAbort.signal})
             var respJson = await resp.json();
 
             var arrayDetails = []

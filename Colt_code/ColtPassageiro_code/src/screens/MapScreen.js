@@ -110,7 +110,9 @@ export default class MapScreen extends React.Component {
                     }
                     if (this._isMounted && this.state.dontAnimateRegion == false) {
                         setTimeout(() => {
-                            this.mapView.animateToRegion(region, 500)
+                            if(this._isMounted){
+                                this.mapView.animateToRegion(region, 500)
+                            }
                         }, 1000)
                     }
                 }

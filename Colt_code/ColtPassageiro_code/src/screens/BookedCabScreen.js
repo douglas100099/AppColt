@@ -68,6 +68,7 @@ export default class BookedCabScreen extends React.Component {
         let param = this.props.navigation.getParam('byMapScreen')
         if (!param) {
             this.setState({ driverSerach: true })
+            this.searchDriver()
         }
     }
 
@@ -75,7 +76,6 @@ export default class BookedCabScreen extends React.Component {
         this._isMounted = true;
         this.state.bookingDataState == null ? this.getParamData = this.props.navigation.getParam('passData') : this.getParamData = this.state.bookingDataState
 
-        this.searchDriver()
         var curuser = firebase.auth().currentUser;
         let bookingResponse = firebase.database().ref(`users/` + curuser.uid + '/my-booking/' + this.getParamData.bokkingId);
         bookingResponse.on('value', currUserBookings => {

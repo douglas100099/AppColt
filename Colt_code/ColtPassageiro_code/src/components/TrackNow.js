@@ -39,7 +39,7 @@ export default class TrackNow extends React.Component {
         };
         this._isMounted = false;
         this.viewWidth = 30,
-        this.viewHeight = 30  
+            this.viewHeight = 30
     }
 
     async componentDidMount() {
@@ -90,51 +90,55 @@ export default class TrackNow extends React.Component {
         if (duid && alldata) {
             const dat = firebase.database().ref('users/' + duid + '/');
 
-            setInterval(() => {
-                dat.once('value', snapshot => {
-                    if (snapshot.val() && snapshot.val().location) {
-                        var data = snapshot.val().location;
-                        if (data) {
-                            this.setState({
-                                allData: paramData,
-                                destinationLoc: paramData.wherelatitude + ',' + paramData.wherelongitude,
-                                startLoc: data.lat + ',' + data.lng,
-                                latitude: data.lat,
-                                longitude: data.lng,
-                                angle: data.angle
-                            }, () => {
-                                if (bookingStatus == 'ACCEPTED') {
-                                    var location1 = [paramData.wherelatitude, paramData.wherelongitude];
-                                    var location2 = [data.lat, data.lng];
-                                    var distance = distanceCalc(location1, location2);
-                                    var originalDistance = distance * 1000;
+            this.setState({
+                intervalTrackNow:
+                    setInterval(() => {
+                        dat.once('value', snapshot => {
+                            if (snapshot.val() && snapshot.val().location) {
+                                var data = snapshot.val().location;
+                                if (data) {
+                                    this.setState({
+                                        allData: paramData,
+                                        destinationLoc: paramData.wherelatitude + ',' + paramData.wherelongitude,
+                                        startLoc: data.lat + ',' + data.lng,
+                                        latitude: data.lat,
+                                        longitude: data.lng,
+                                        angle: data.angle
+                                    }, () => {
+                                        if (bookingStatus == 'ACCEPTED') {
+                                            var location1 = [paramData.wherelatitude, paramData.wherelongitude];
+                                            var location2 = [data.lat, data.lng];
+                                            var distance = distanceCalc(location1, location2);
+                                            var originalDistance = distance * 1000;
 
-                                    if (originalDistance && originalDistance < 100) {
-                                        if (!this.state.allData.flag) {
-                                            this.setState({
-                                                flag: false
-                                            })
-                                            const dat = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/');
-                                            dat.once('value', snapshot => {
-                                                if (snapshot.val() && snapshot.val().pushToken) {
-                                                    RequestPushMsg(snapshot.val().pushToken, languageJSON.driver_near)
-                                                    paramData.flag = true;
+                                            if (originalDistance && originalDistance < 100) {
+                                                if (!this.state.allData.flag) {
+                                                    this.setState({
+                                                        flag: false
+                                                    })
+                                                    const dat = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/');
+                                                    dat.once('value', snapshot => {
+                                                        if (snapshot.val() && snapshot.val().pushToken) {
+                                                            RequestPushMsg(snapshot.val().pushToken, languageJSON.driver_near)
+                                                            paramData.flag = true;
+                                                        }
+                                                    })
                                                 }
-                                            })
+                                            }
                                         }
-                                    }
+                                        this.getDirections();
+                                    })
                                 }
-                                this.getDirections();
-                            })
-                        }
-                    }
-                })
-            }, 5000)
+                            }
+                        })
+                    }, 5000)
+            })
         }
     }
 
     componentWillUnmount() {
         this._isMounted = false
+        clearInterval(this.state.intervalTrackNow)
         navigator.geolocation.clearWatch(this.watchID);
     }
 
@@ -207,27 +211,27 @@ export default class TrackNow extends React.Component {
 
         if (zoom <= 21 && zoom > 19) {
             this.viewWidth = 60,
-            this.viewHeight= 60
-        } 
+                this.viewHeight = 60
+        }
         else if (zoom <= 19 && zoom > 18) {
             this.viewWidth = 50,
-            this.viewHeight= 50           
+                this.viewHeight = 50
         }
         else if (zoom <= 18 && zoom > 16) {
             this.viewWidth = 40,
-            this.viewHeight= 40         
+                this.viewHeight = 40
         }
         else if (zoom <= 16 && zoom > 15) {
             this.viewWidth = 30,
-            this.viewHeight= 30          
-        } 
+                this.viewHeight = 30
+        }
         else if (zoom <= 15 && zoom > 10) {
             this.viewWidth = 25,
-            this.viewHeight= 25     
+                this.viewHeight = 25
         }
         else if (zoom <= 10 && zoom > 0) {
             this.viewWidth = 20,
-            this.viewHeight = 20    
+                this.viewHeight = 20
         }
     }
 
@@ -242,7 +246,7 @@ export default class TrackNow extends React.Component {
                         showUserLocation
                         followUserLocation
                         loadingEnabled
-                        customMapStyle={ Platform.OS == 'ios' ?  mapStyleJson : null}
+                        customMapStyle={Platform.OS == 'ios' ? mapStyleJson : null}
                         showsCompass={false}
                         onRegionChange={() => { this.setState({ showsMyLocationBtn: true }), this._onMapChange() }}
                         showsScale={false}
@@ -259,7 +263,7 @@ export default class TrackNow extends React.Component {
                         {this.state.coords ?
                             <MapView.Polyline
                                 coordinates={this.state.coords}
-                                strokeWidth={4}
+                                strokeWidth={3}
                                 strokeColor={colors.DEEPBLUE}
                             />
                             : null}
@@ -317,7 +321,7 @@ const styles = StyleSheet.create({
     iconLocation: {
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: Platform.OS == 'ios' ?  50 : 30,
+        marginTop: Platform.OS == 'ios' ? 50 : 30,
         alignSelf: 'flex-end',
         marginRight: 15,
         backgroundColor: colors.WHITE,

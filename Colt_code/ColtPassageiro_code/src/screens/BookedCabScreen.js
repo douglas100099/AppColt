@@ -599,7 +599,6 @@ export default class BookedCabScreen extends React.Component {
                 }}
             >
                 <View style={{ flex: 1, backgroundColor: colors.WHITE, width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
-                    {/*<Image source={require('../../assets/images/searchDrivers.gif')} style={styles.styleGif} />*/}
                     <Text style={styles.textGif}> Procurando motoristas próximos </Text>
                     <Text style={styles.textGif2}> Por favor, não minimize o aplicativo enquanto buscamos um motorista. </Text>
                     <View style={{ justifyContent: 'center', alignItems: 'center', alignSelf: 'center', }}>

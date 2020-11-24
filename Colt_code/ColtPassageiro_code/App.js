@@ -52,7 +52,7 @@ export default class App extends React.Component {
   _loadResourcesAsync = async () => {
     return Promise.all([
       Asset.loadAsync([
-        require('./assets/images/searchDrivers.gif'),
+        require('./assets/images/loading.gif'),
       ]),
 
       Font.loadAsync({

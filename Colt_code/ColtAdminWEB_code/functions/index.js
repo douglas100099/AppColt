@@ -155,8 +155,8 @@ const RequestPushMsg = (token, msg) => {
 
 const checkUserAsaas = async (cpf) => {
     var myHeaders = new Headers();
-    myHeaders.append("access_token", "f2ceed19a84c26a38b9ad21bd7078a35ff17372e83db8c67569b98d8b3b6da08");
-    myHeaders.append("Cookie", "AWSALB=DD59xUIYEBepYXNoNytiXuFxbzTP7ffO0wNtGIp9XHLjWQL+dY0zcJd4YboggaWME0K0+E4bVjycoUr53xlP+RCS1eG9Mjqv39RWRPKYauJV5jtCru6VN8JDUkE9; AWSALBCORS=DD59xUIYEBepYXNoNytiXuFxbzTP7ffO0wNtGIp9XHLjWQL+dY0zcJd4YboggaWME0K0+E4bVjycoUr53xlP+RCS1eG9Mjqv39RWRPKYauJV5jtCru6VN8JDUkE9");
+    myHeaders.append("access_token", "d9bbfe4544663b00197cf53b35c3d9f84ae7bf8b85fa09c3aed37a2c65dcea3a");
+    //myHeaders.append("Cookie", "AWSALB=DD59xUIYEBepYXNoNytiXuFxbzTP7ffO0wNtGIp9XHLjWQL+dY0zcJd4YboggaWME0K0+E4bVjycoUr53xlP+RCS1eG9Mjqv39RWRPKYauJV5jtCru6VN8JDUkE9; AWSALBCORS=DD59xUIYEBepYXNoNytiXuFxbzTP7ffO0wNtGIp9XHLjWQL+dY0zcJd4YboggaWME0K0+E4bVjycoUr53xlP+RCS1eG9Mjqv39RWRPKYauJV5jtCru6VN8JDUkE9");
 
     var requestOptions = {
         method: 'GET',
@@ -164,7 +164,7 @@ const checkUserAsaas = async (cpf) => {
         redirect: 'follow'
     };
 
-    return fetch("https://sandbox.asaas.com//api/v3/customers?cpfCnpj=" + cpf, requestOptions)
+    return fetch("https://www.asaas.com/api/v3/customers?cpfCnpj=" + cpf, requestOptions)
         .then(response => response.text())
         .then(result => {
             let data = {}
@@ -179,8 +179,8 @@ const checkUserAsaas = async (cpf) => {
 const sendRequestPayment = async (customer, dueDate, value, externalReference) => {
     var myHeaders = new Headers();
     myHeaders.append("Content-Type", " application/json");
-    myHeaders.append("access_token", "f2ceed19a84c26a38b9ad21bd7078a35ff17372e83db8c67569b98d8b3b6da08");
-    myHeaders.append("Cookie", "AWSALB=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH; AWSALBCORS=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH");
+    myHeaders.append("access_token", "d9bbfe4544663b00197cf53b35c3d9f84ae7bf8b85fa09c3aed37a2c65dcea3a");
+   // myHeaders.append("Cookie", "AWSALB=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH; AWSALBCORS=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH");
 
     let newBody = {
         'customer': customer,
@@ -212,7 +212,7 @@ const sendRequestPayment = async (customer, dueDate, value, externalReference) =
         redirect: 'follow'
     };
 
-    return fetch("https://sandbox.asaas.com/api/v3/payments", requestOptions)
+    return fetch("https://www.asaas.com/api/v3/payments", requestOptions)
         .then(response => response.text())
         .then(result => {
             return console.log("COBRANÇA CRIADA >>>> " + result)
@@ -225,8 +225,8 @@ const sendRequestPayment = async (customer, dueDate, value, externalReference) =
 const createUserAsaas = async (raw) => {
     var myHeaders = new Headers();
     myHeaders.append("Content-Type", " application/json");
-    myHeaders.append("access_token", "f2ceed19a84c26a38b9ad21bd7078a35ff17372e83db8c67569b98d8b3b6da08");
-    myHeaders.append("Cookie", "AWSALB=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH; AWSALBCORS=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH");
+    myHeaders.append("access_token", "d9bbfe4544663b00197cf53b35c3d9f84ae7bf8b85fa09c3aed37a2c65dcea3a");
+    //myHeaders.append("Cookie", "AWSALB=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH; AWSALBCORS=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH");
 
     var requestOptions = {
         method: 'POST',
@@ -235,7 +235,7 @@ const createUserAsaas = async (raw) => {
         redirect: 'follow'
     };
 
-    return fetch("https://sandbox.asaas.com//api/v3/customers", requestOptions)
+    return fetch("https://www.asaas.com/api/v3/customers", requestOptions)
         .then(response => response.text())
         .then(result => {
             let data = {}
@@ -249,8 +249,8 @@ const createUserAsaas = async (raw) => {
 
 const checkPaymentAsaas = async (custumer) => {
     var myHeaders = new Headers();
-    myHeaders.append("access_token", " f2ceed19a84c26a38b9ad21bd7078a35ff17372e83db8c67569b98d8b3b6da08");
-    myHeaders.append("Cookie", "AWSALB=8ot6kpPxY2hftKe48q10n7WrdptQn7kvONpHNj3+Lh+BpeccnlOE/SE9lsl0XOKMKAVDqhq7QTXvbp7ogV7O9FARNb6ScQqymhS6VlFWkn81PzeYqp7bTVmUZW96; AWSALBCORS=8ot6kpPxY2hftKe48q10n7WrdptQn7kvONpHNj3+Lh+BpeccnlOE/SE9lsl0XOKMKAVDqhq7QTXvbp7ogV7O9FARNb6ScQqymhS6VlFWkn81PzeYqp7bTVmUZW96");
+    myHeaders.append("access_token", "d9bbfe4544663b00197cf53b35c3d9f84ae7bf8b85fa09c3aed37a2c65dcea3a");
+    //myHeaders.append("Cookie", "AWSALB=8ot6kpPxY2hftKe48q10n7WrdptQn7kvONpHNj3+Lh+BpeccnlOE/SE9lsl0XOKMKAVDqhq7QTXvbp7ogV7O9FARNb6ScQqymhS6VlFWkn81PzeYqp7bTVmUZW96; AWSALBCORS=8ot6kpPxY2hftKe48q10n7WrdptQn7kvONpHNj3+Lh+BpeccnlOE/SE9lsl0XOKMKAVDqhq7QTXvbp7ogV7O9FARNb6ScQqymhS6VlFWkn81PzeYqp7bTVmUZW96");
 
     var requestOptions = {
         method: 'GET',
@@ -258,7 +258,7 @@ const checkPaymentAsaas = async (custumer) => {
         redirect: 'follow'
     };
 
-    return fetch("https://sandbox.asaas.com/api/v3/payments?customer=" + custumer, requestOptions)
+    return fetch("https://www.asaas.com/api/v3/payments?customer=" + custumer, requestOptions)
         .then(response => response.text())
         .then(result => {
             let data = {}

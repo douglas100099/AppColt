@@ -45,6 +45,7 @@ export default class AboutPage extends React.Component {
     render() {
         return (
             <View style={styles.mainView}>
+               
                 <View style={styles.viewHeader}>
                     <View style={styles.viewTop}>
                         <View style={{ position: 'absolute', left: 10 }}>

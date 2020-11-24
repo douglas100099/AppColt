@@ -6331,6 +6331,11 @@ react-native-animatable@^1.2.4:
   dependencies:
     prop-types "^15.7.2"
 
+react-native-animated-spinkit@^1.4.2:
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/react-native-animated-spinkit/-/react-native-animated-spinkit-1.4.2.tgz#cb60ff8bcc2bb848409d9aa85ed528646ad1f953"
+  integrity sha512-CLFkynkqRueQK/XUknleiYQr3T0E8cY0KbuaV78JGiHhnF12C3k0ngDAOk6FHssZn3JXnTOVkJsrIBOYkttRmA==
+
 react-native-button@^2.3.0:
   version "2.4.0"
   resolved "https://registry.yarnpkg.com/react-native-button/-/react-native-button-2.4.0.tgz#42b487073a7ce7c54ab503f77c6ced1ab95742bf"

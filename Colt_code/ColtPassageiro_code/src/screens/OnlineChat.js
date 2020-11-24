@@ -46,6 +46,7 @@ export default class OnlineChat extends Component {
       chat: false,
       allChat: [],
       messegesData: [],
+      showReaded: true
     };
   }
 
@@ -75,9 +76,9 @@ export default class OnlineChat extends Component {
         }
 
       }
-      if( allMesseges[allMesseges.length -1].source == 'driver' ){
+      if( allMesseges.length > 0 && allMesseges[allMesseges.length -1].source == 'driver' ){
         this.setState({ showReaded: false })
-      }
+      } 
       this.setState({ allChat: allMesseges })
     })
 
@@ -171,7 +172,8 @@ export default class OnlineChat extends Component {
             }).then(() => {
               this.setState({ readed_driver: false, showReaded: true })
               firebase.database().ref(`chat/` + this.getParamData.bokkingId + '/').update({
-                readed_driver: false
+                readed_driver: false,
+                notify_driver: false
               })
             })
             this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + inputmessage)
@@ -181,7 +183,8 @@ export default class OnlineChat extends Component {
               distance: this.state.carbookedInfo.distance,
               car: this.state.carbookedInfo.carType,
               bookingId: this.getParamData.bokkingId,
-              readed_driver: false
+              readed_driver: false,
+              notify_driver: false
             }).then(() => {
               firebase.database().ref('chat' + '/' + this.getParamData.bokkingId + '/' + 'message' + '/' + this.state.id).push({
                 message: inputmessage,
@@ -200,7 +203,8 @@ export default class OnlineChat extends Component {
             distance: this.state.carbookedInfo.distance,
             car: this.state.carbookedInfo.carType,
             bookingId: this.getParamData.bokkingId,
-            readed_driver: false
+            readed_driver: false,
+            notify_driver: false
           }).then(() => {
             if (this.state.id) {
               firebase.database().ref('chat' + '/' + this.getParamData.bokkingId + '/' + 'message' + '/' + this.state.id).push({

@@ -1140,7 +1140,7 @@ export default class FareScreen extends React.Component {
                             shadowOpacity: this.state.buttonDisabled ? 0 : 0.4,
                         }]}>
                             <TouchableOpacity style={[styles.confirmButtonStyle, {
-                                backgroundColor: this.state.buttonDisabled ? colors.GREY1 : colors.DEEPBLUE,
+                                backgroundColor: this.state.buttonDisabled ? colors.GREY.background : colors.DEEPBLUE,
                                 marginHorizontal: this.state.buttonDisabled ? 75 : 30
                             }]} disabled={this.state.buttonDisabled} onPress={() => { this.setState({ buttonDisabled: true }), this.verifyCPF() }}>
                                 {this.state.buttonDisabled ?

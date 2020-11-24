@@ -30,6 +30,8 @@ import ColtConfortCar from '../../assets/svg/ColtConfortCar';
 import AvatarUser from '../../assets/svg/AvatarUser';
 import { NavigationActions, StackActions } from 'react-navigation';
 import { ScrollView } from 'react-native-gesture-handler';
+import { Pulse } from 'react-native-animated-spinkit'
+import IconCarMap from '../../assets/svg/IconCarMap';
 
 export default class BookedCabScreen extends React.Component {
     _isMounted = false;
@@ -75,6 +77,10 @@ export default class BookedCabScreen extends React.Component {
     componentDidMount() {
         this._isMounted = true;
         this.state.bookingDataState == null ? this.getParamData = this.props.navigation.getParam('passData') : this.getParamData = this.state.bookingDataState
+        let param = this.props.navigation.getParam('byMapScreen')
+        if (!param) {
+            this.searchDriver()
+        }
 
         var curuser = firebase.auth().currentUser;
         let bookingResponse = firebase.database().ref(`users/` + curuser.uid + '/my-booking/' + this.getParamData.bokkingId);
@@ -351,7 +357,7 @@ export default class BookedCabScreen extends React.Component {
                 } else {
                     this.setState({ modalVisible: true })
                 }
-            } 
+            }
             else if (this.state.bookingStatus == 'EMBARQUE') {
                 this.setState({ modalInfoVisible: true })
             }
@@ -593,10 +599,26 @@ export default class BookedCabScreen extends React.Component {
                 }}
             >
                 <View style={{ flex: 1, backgroundColor: colors.WHITE, width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
-                    <Image source={require('../../assets/images/searchDrivers.gif')} style={styles.styleGif} />
+                    {/*<Image source={require('../../assets/images/searchDrivers.gif')} style={styles.styleGif} />*/}
                     <Text style={styles.textGif}> Procurando motoristas próximos </Text>
                     <Text style={styles.textGif2}> Por favor, não minimize o aplicativo enquanto buscamos um motorista. </Text>
-                    {/*<ActivityIndicator size='large' color={colors.DEEPBLUE} />*/}
+                    <View style={{ justifyContent: 'center', alignItems: 'center', alignSelf: 'center', }}>
+                        <Pulse
+                            size={350}
+                            color={colors.GREY2}
+                        />
+                        <IconCarMap
+                            width={120}
+                            height={190}
+                            style={{
+                                position: 'absolute', elevation: 3,
+                                shadowColor: '#000',
+                                shadowOffset: { x: 0, y: 5 },
+                                shadowOpacity: 0.1,
+                                shadowRadius: 5,
+                            }}
+                        />
+                    </View>
                     <TouchableOpacity disabled={this.state.searchDisabled} style={styles.touchView} onPress={() => { this.setState({ searchDisabled: true }), this.onPressCancellBtn() }}>
                         <Text style={styles.textCancel}> Cancelar </Text>
                     </TouchableOpacity>

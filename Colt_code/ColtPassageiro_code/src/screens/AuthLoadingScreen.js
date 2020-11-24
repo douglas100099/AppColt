@@ -16,6 +16,7 @@ import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import Geocoder from 'react-native-geocoding';
 
+
 export class AuthLoadingScreen extends React.Component {
   constructor(props) {
     super(props);

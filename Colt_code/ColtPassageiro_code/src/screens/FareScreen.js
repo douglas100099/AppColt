@@ -33,6 +33,7 @@ import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
 import ColtConfortCar from '../../assets/svg/ColtConfortCar';
 import { VerifyCupom } from '../common/VerifyCupom';
 import mapStyleJson from '../../mapStyle.json';
+import mapStyleAndroid from '../../mapStyleAndroid.json';
 
 
 export default class FareScreen extends React.Component {
@@ -864,7 +865,7 @@ export default class FareScreen extends React.Component {
                             ref={map => { this.map = map }}
                             style={styles.map}
                             provider={PROVIDER_GOOGLE}
-                            customMapStyle={Platform.OS == 'ios' ? mapStyleJson : null}
+                            customMapStyle={mapStyleAndroid}
                             initialRegion={{
                                 latitude: (this.state.region.wherelatitude),
                                 longitude: (this.state.region.wherelongitude),

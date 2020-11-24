@@ -17,6 +17,7 @@ import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import distanceCalc from '../common/distanceCalc';
 import mapStyleJson from '../../mapStyle.json';
+import mapStyleAndroid from '../../mapStyleAndroid.json';
 
 import LocationUser from '../../assets/svg/LocationUser';
 import IconCarMap from '../../assets/svg/IconCarMap';
@@ -246,7 +247,7 @@ export default class TrackNow extends React.Component {
                         showUserLocation
                         followUserLocation
                         loadingEnabled
-                        customMapStyle={Platform.OS == 'ios' ? mapStyleJson : null}
+                        customMapStyle={mapStyleAndroid}
                         showsCompass={false}
                         onRegionChange={() => { this.setState({ showsMyLocationBtn: true }), this._onMapChange() }}
                         showsScale={false}

@@ -29,6 +29,7 @@ export default class RideListPage extends React.Component {
 
     //Go to ride details page
     goDetails(item, index) {
+        this.setState({ openRide: true })
         if (item && item.trip_cost > 0) {
             item.roundoffCost = Math.round(item.trip_cost).toFixed(2);
             item.roundoff = (Math.round(item.roundoffCost) - item.trip_cost).toFixed(2);
@@ -82,7 +83,7 @@ export default class RideListPage extends React.Component {
                     </View>
                 </View>
 
-                <RideList onPressButton={(item, index) => { this.goDetails(item, index) }} data={this.state.myrides}></RideList>
+                <RideList onPressButton={(item, index) => {  this.goDetails(item, index) }} data={this.state.myrides}></RideList>
             </View>
         );
     }

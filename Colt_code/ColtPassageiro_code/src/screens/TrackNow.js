@@ -24,6 +24,7 @@ import { getPixelSize } from '../common/utils';
 import * as firebase from 'firebase';
 import { google_map_key } from '../common/key';
 import mapStyleJson from '../../mapStyle.json';
+import mapStyleAndroid from '../../mapStyleAndroid.json';
 import languageJSON from '../common/language';
 
 import LocationUser from '../../assets/svg/LocationUser';
@@ -230,7 +231,7 @@ export default class TrackNow extends React.Component {
                             onRegionChange={() => this.setState({ dontGetRegion: true })}
                             showsCompass={false}
                             showsScale={false}
-                            customMapStyle={Platform.OS == 'ios' ? mapStyleJson : null}
+                            customMapStyle={mapStyleAndroid}
                             rotateEnabled={false}
                         >
 

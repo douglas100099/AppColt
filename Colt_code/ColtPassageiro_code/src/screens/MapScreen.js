@@ -14,6 +14,8 @@ import { TouchableOpacity, TouchableWithoutFeedback } from 'react-native-gesture
 import { MapComponent } from '../components';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import mapStyleJson from '../../mapStyle.json';
+import mapStyleAndroid from '../../mapStyleAndroid.json';
+
 import { Icon, Button, Avatar } from 'react-native-elements';
 import { colors } from '../common/theme';
 
@@ -395,7 +397,7 @@ export default class MapScreen extends React.Component {
                         refferalId: refId,
                         walletBalance: 0,
                     }).then(() => {
-                        if (userData.val().signupViaReferral == true) {
+                        /*if (userData.val().signupViaReferral == true) {
                             firebase.database().ref('referral/bonus').once('value', referal => {
                                 if (referal.val()) {
                                     this.bonusAmmount = referal.val().amount;
@@ -408,7 +410,7 @@ export default class MapScreen extends React.Component {
                                     })
                                 }
                             })
-                        }
+                        }*/
                     })
                 }
             }
@@ -591,7 +593,7 @@ export default class MapScreen extends React.Component {
                             showsCompass={false}
                             showsScale={false}
                             rotateEnabled={false}
-                            customMapStyle={Platform.OS == 'ios' ? mapStyleJson : null}
+                            customMapStyle={mapStyleAndroid}
                             //region={() => this.getRegionMap()}
                         >
                             {this.state.freeCars ? this.state.freeCars.map((item, index) => {

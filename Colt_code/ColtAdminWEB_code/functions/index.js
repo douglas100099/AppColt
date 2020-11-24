@@ -573,10 +573,7 @@ exports.manageMoney = functions.region('southamerica-east1').database.ref('booki
                     admin.database().ref('users/' + dataBooking.driver + '/').once('value', driverData => {
                         let saldoDriver = driverData.val().saldo
 
-                        console.log("SALDO ATUAL DO DRIVER -> " + saldoDriver)
-
                         if (dataBooking.pagamento.usedWalletMoney >= dataBooking.pagamento.convenience_fees) {
-                            console.log("O WALLET USADO È MAIOR QUE O CONVENIENCE ")
                             if (saldoDriver) {
                                 let newSaldo = saldoDriver + (dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees)
                                 admin.database().ref('users/' + dataBooking.driver + '/').update({

@@ -17,6 +17,7 @@ import AuthLoading from './components/AuthLoading';
 import Notifications from './views/Notifications';
 import DriverEarning from './views/DriverEarning';
 import Earningreports from './views/Earningreports';
+import WaitingAproved from './views/WaitingAproved';
 import Settings from './views/Settings';
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
             <ProtectedRoute exact component={BookingHistory} path="/bookings"/>
             <ProtectedRoute exact component={Promos} path="/promos"/>
             <ProtectedRoute exact component={Users} path="/users"/>
+            <ProtectedRoute exact component={WaitingAproved} path="/WaitingAproved"/>
             <ProtectedRoute exact component={Riders} path="/riders"/>
             <ProtectedRoute exact component={DriverEarning} path="/driverearning"/>
             <ProtectedRoute exact component={Referral} path="/referral"/>

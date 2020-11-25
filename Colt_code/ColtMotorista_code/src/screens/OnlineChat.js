@@ -273,10 +273,6 @@ export default class OnlineChat extends Component {
     }
   }
 
-  tocarSom() {
-    console.log('TESTE')
-  }
-
   _keyboardDidHide = (e) => {
     if (this.state.position !== 'absolute') {
       this.setState({
@@ -500,7 +496,23 @@ export default class OnlineChat extends Component {
                   <View style={styles.riderMsgStyle}>
                     <Text style={styles.riderMsgText}>{item ? item.message : languageJSON.chat_history_not_found}</Text>
                     {item.audio ?
-                      <Text style={styles.riderMsgText}>{item ? item.audio : ''}</Text>
+                      <View style={styles.riderMsgText2}>
+                        <View>
+                          <TouchableOpacity
+                          onPress={() => this.playSound(item.audio)}
+                          disable={this.state.isPlaying}
+                          style={{ height: 40, width: 40,backgroundColor: colors.WHITE, elevation: 4, borderRadius: 50, justifyContent:'center', alignItems: 'center' }}
+                          >
+                            <Icon
+                              name='ios-play'
+                              type='ionicon'
+                              color={colors.DEEPBLUE}
+                              size={35}
+                            />
+                          </TouchableOpacity>
+                        </View>
+                        <View style={{ height: 30, width: 85, justifyContent: 'center' }}></View>
+                      </View>
                       : null}
                     <Text style={styles.riderMsgTime}>{item ? item.msgTime : null}</Text>
                   </View>
@@ -753,8 +765,6 @@ const styles = StyleSheet.create({
     color: "#fff"
   },
   msgTextStyle2: {
-    //paddingBottom: 4,
-    //paddingHorizontal: 5,
     justifyContent: 'center',
     flexDirection: 'row',
     margin: 5,
@@ -763,10 +773,16 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 15,
     borderTopRightRadius: 15,
     borderTopLeftRadius: 50,
-    //textAlign: "right",
-    //fontFamily: 'Inter-Bold',
-    //fontSize: 18,
-    //color: "#fff"
+  },
+  riderMsgText2: {
+    justifyContent: 'center',
+    flexDirection: 'row',
+    margin: 5,
+    backgroundColor: colors.DEEPBLUE,
+    borderBottomLeftRadius: 50,
+    borderBottomRightRadius: 15,
+    borderTopRightRadius: 15,
+    borderTopLeftRadius: 50,
   },
   msgTimeStyle: {
     paddingHorizontal: 15,
@@ -797,14 +813,6 @@ const styles = StyleSheet.create({
     shadowOffset: { height: 1, width: 0 },
   },
   riderMsgText: {
-    paddingTop: 4,
-    paddingHorizontal: 15,
-    textAlign: "left",
-    fontFamily: 'Inter-Bold',
-    fontSize: 18,
-    color: colors.DEEPBLUE,
-  },
-  riderMsgText2: {
     paddingTop: 4,
     paddingHorizontal: 15,
     textAlign: "left",

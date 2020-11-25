@@ -111,10 +111,11 @@ export default class DriverStartTrip extends React.Component {
     }
 
     componentDidMount() {
-        this._isMounted = true;
-        this.getCancelReasons();
+        this._isMounted = true
+        this.currentScreen = true
+        this.getCancelReasons()
         this.checkNewMsg()
-        this.sound = new Audio.Sound();
+        this.sound = new Audio.Sound()
         const status = {
             shouldPlay: false
         };
@@ -137,15 +138,19 @@ export default class DriverStartTrip extends React.Component {
         msgData.on('value', snap => {
             if(snap.val()){
                 let chatData = snap.val()
-                if(chatData.readed_driver === false && chatData.notify_driver === false){
+                if(chatData.readed_driver === false && chatData.notify_driver === false && this.currentScreen){
                     if(this.state.isPlaying === false){
                         var duration = 0
                         this.sound.playAsync().then((result) => {
-                            this.setState({ isPlaying: result.isPlaying }), duration = result.durationMillis
+                            if(this._isMounted){
+                                this.setState({ isPlaying: result.isPlaying }), duration = result.durationMillis
+                            }
                         }).then(() => {
                             ToastAndroid.show('Você recebeu uma mensagem do passageiro.', ToastAndroid.SHORT);
                             firebase.database().ref(`chat/` + this.state.rideDetails.bookingId + '/notify_driver/').set(true).then(() =>{
-                                setTimeout(() => {this.sound.stopAsync(), this.setState({ isPlaying: false })}, duration)
+                                if(this._isMounted){
+                                    setTimeout(() => {this.sound.stopAsync(), this.setState({ isPlaying: false })}, duration)
+                                }
                             })
                         }).catch((err) => {
                             console.log(err)
@@ -367,6 +372,7 @@ export default class DriverStartTrip extends React.Component {
     }
 
     chat() {
+        this.currentScreen = false
         if(this._isMounted){
             this.setState({ viewInfos: false })
         }

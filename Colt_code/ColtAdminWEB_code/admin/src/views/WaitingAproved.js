@@ -10,7 +10,7 @@ import {isLive} from '../config/keys';
 import dateStyle from '../config/dateStyle';
 
 
-export default function Users() {
+export default function WaitingAproved() {
   const [data, setData] = useState([]);
   const [cars, setCars] = useState({});
   const usersdata = useSelector(state => state.usersdata);
@@ -19,7 +19,7 @@ export default function Users() {
 
   useEffect(()=>{
     if(usersdata.users){
-      const drivers = usersdata.users.filter(({ usertype }) => usertype === 'driver' )
+      const drivers = usersdata.users.filter(({ usertype, approved }) => usertype === 'driver' && approved === false  )
       for(let i=0;i<drivers.length;i++){
         setData(drivers);
       }
@@ -49,19 +49,14 @@ export default function Users() {
       { title: 'Aprovar CRLV',  field: 'crlvAproved', lookup: {APROVADO: "APROVADO", REENVIE: "REENVIE", AGUARANDO: "AGUARANDO" }},
       { title: 'Aprovar CNH',  field: 'cnhAproved', lookup: {APROVADO: "APROVADO", REENVIE: "REENVIE", AGUARANDO: "AGUARANDO" }},
       { title: 'Aprovar perfil',  field: 'perfilAproved', lookup: {APROVADO: "APROVADO", REENVIE: "REENVIE", AGUARANDO: "AGUARANDO" }},
-      { title: 'Online',  field: 'driverActiveStatus', type:'boolean'},
       { title: 'CNH',  field: 'licenseImage',render: rowData => rowData.licenseImage?<img alt='License' src={rowData.licenseImage} style={{width: 100, borderRadius: 100, height: 100}}/>:null},
       { title: 'CRLV',  field: 'imagemCrlv',render: rowData => rowData.imagemCrlv?<img alt='License' src={rowData.imagemCrlv} style={{width: 100, borderRadius: 100, height: 100}}/>:null},
-      { title: 'Saldo',  field: 'saldo', type:'numeric', editable:'never'},
-      { title: 'Ref', field: 'signupViaReferral', type:'boolean', editable:'never'},
-      { title: 'Ref ID',  field: 'refferalId', editable:'never'},
-      { title: 'Ocupado',  field: 'queue', type:'boolean'},
   ];
 
   return (
     usersdata.loading? <CircularLoading/>:
     <MaterialTable
-      title='Todos motoristas'
+      title='Aguardando Aprovação'
       columns={columns}
       data={data}
       options={{

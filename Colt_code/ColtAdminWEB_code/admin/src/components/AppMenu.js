@@ -62,6 +62,12 @@ function AppMenu() {
           </ListItemIcon>
           <Typography variant="inherit">Motoristas</Typography>
         </MenuItem>
+        <MenuItem component={Link} to="/WaitingAproved">
+          <ListItemIcon>
+            <PeopleIcon />
+          </ListItemIcon>
+          <Typography variant="inherit">Aguardando aprovação</Typography>
+        </MenuItem>
         <MenuItem component={Link} to="/riders">
           <ListItemIcon>
             <PeopleIcon />

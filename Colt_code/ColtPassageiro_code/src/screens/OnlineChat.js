@@ -16,10 +16,36 @@ import {
 import { colors } from "../common/theme";
 import { Icon, Header } from "react-native-elements";
 import * as firebase from 'firebase'
+import { Audio, AVPlaybackStatus } from 'expo-av';
 import languageJSON from '../common/language';
 var { height, width } = Dimensions.get('window');
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import AvatarUser from "../../assets/svg/AvatarUser";
+
+// DOUG PASSOU POR AQUI NA SURDINA
+const recordingOptions = {
+  // android not currently in use. Not getting results from speech to text with .m4a
+  // but parameters are required
+  android: {
+    extension: '.m4a',
+    outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4,
+    audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_AAC,
+    sampleRate: 44100,
+    numberOfChannels: 2,
+    bitRate: 128000,
+  },
+  ios: {
+    extension: '.wav',
+    audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_HIGH,
+    sampleRate: 44100,
+    numberOfChannels: 1,
+    bitRate: 128000,
+    linearPCMBitDepth: 16,
+    linearPCMIsBigEndian: false,
+    linearPCMIsFloat: false,
+  },
+};
+
 export default class OnlineChat extends Component {
   getParamData;
   currentScreen
@@ -46,7 +72,14 @@ export default class OnlineChat extends Component {
       chat: false,
       allChat: [],
       messegesData: [],
-      showReaded: true
+      showReaded: true,
+      isRecording: false,
+      isRecord: false,
+      uri: null,
+      isPlaying: false,
+      duration: 0,
+      timeTimeout: null,
+      isloaded: false,
     };
   }
 
@@ -54,6 +87,7 @@ export default class OnlineChat extends Component {
   componentDidMount() {
     this._isMounted = true;
     this.currentScreen = true
+    this.checkPermissions() // DOOUG PASSOU AQUI
     this.getParamData = this.props.navigation.getParam('passData');
     let firstName = this.props.navigation.getParam('firstNameRider');
     this.listenerReaded()
@@ -76,10 +110,10 @@ export default class OnlineChat extends Component {
         }
 
       }
-      if( allMesseges.length > 0 && allMesseges[allMesseges.length -1].source == 'driver' ){
+      if (allMesseges.length > 0 && allMesseges[allMesseges.length - 1].source == 'driver') {
         this.setState({ showReaded: false })
-      } 
-      this.setState({ allChat: allMesseges })
+      }
+      this.setState({ allChat: allMesseges.reverse() }) // DOOUG ARRUMOU AQUI OH .REVERSE
     })
 
     this.keyboardDidShowListener = Keyboard.addListener(
@@ -97,7 +131,174 @@ export default class OnlineChat extends Component {
     this._isMounted = false;
     this.keyboardDidShowListener.remove();
     this.keyboardDidHideListener.remove();
+    // DOOUG LARGOU UM PIN CASH ONGUEIME
+    if (this.sound && this.state.isloaded) {
+      this.sound.unloadAsync()
+      console.log('STOP AUDIO')
+    }
+    if (this.state.timeTimeout != null) {
+      clearTimeout(this.state.timeTimeout)
+    }
   }
+
+  // NOVA FUNCÇÕES RECORDING AUDIO
+  // LARGARAM AI OH
+  // AQUI SE O CARA APERTAR CHAMA ESSA FUNÇÃO PARA PREPARAR E INICIAR A GRAVAÇÃO COM O DEDO APERTADO E CLARO
+  startRecording = async () => {
+    if (this.state.statusPermi) {
+      this.recording = new Audio.Recording();
+
+      if (this._isMounted) {
+        this.setState({ isRecording: true, isRecord: false });
+      }
+      // some of these are not applicable, but are required
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
+        playsInSilentModeIOS: false,
+        shouldDuckAndroid: true,
+        interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
+        playThroughEarpieceAndroid: true,
+
+      });
+      try {
+        await this.recording.prepareToRecordAsync(recordingOptions);
+        await this.recording.startAsync();
+        console.log('ESTÁ GRAVANDO')
+      } catch (error) {
+        console.log(error);
+        this.stopRecording();
+      }
+    }
+  }
+
+  // DOOUG
+  // AQUI QUANDO O CARA SOLTA O BOTÃO, ELE STOPA E TIRA DA MEMORIA SALVANDO O URI DAQUELE RECORDING
+  stopRecording = async () => {
+    this.setState({ isRecording: false, isRecord: true });
+    try {
+      if (this._isMounted) {
+        this.setState({ uri: this.recording.getURI() })
+      }
+      console.log(this.recording.getURI())
+      await this.recording.stopAndUnloadAsync().then((result) => {
+        if (this._isMounted) {
+
+          this.setState({ duration: result.durationMillis })
+        }
+      });
+      console.log('PAROU A GRAVAÇÃO')
+    } catch (error) {
+    }
+  }
+
+  //DOOUG
+  // AQUI TOCA O SOM DO AUDIO GRAVADO
+  // TIMOUT FEITO PARA PEGAR A DURAÇÃO E PARAR O SOM AUTOMATICAMENTE QUANDO ACABAR
+  playSound(audio) {
+    if (this.state.isPlaying === false) {
+      console.log('TOCOU')
+      const status = {
+        shouldPlay: true
+      };
+      this.sound = new Audio.Sound();
+      if (this._isMounted) {
+        this.setState({ isPlaying: true })
+      }
+      let duration = 0
+      this.sound.loadAsync({ uri: audio }, status, false).then((result) => {
+        duration = result.durationMillis;
+        this.setState({ isloaded: result.isLoaded });
+      }).then(() => {
+        if (this._isMounted) {
+          this.setState({ timeTimeout: setTimeout(() => { this.setState({ isPlaying: false }), this.sound.stopAsync() }, duration) })
+        }
+      })
+    } else {
+      this.stopSound()
+    }
+  }
+
+  // DOOUG
+  // AQUI STOP O SOM DO QUANDO FOR PLAY, UTILIZEI TIMEOUT PARA VER SE O DE CIMA ESTA EM PLAY MSM
+  stopSound() {
+    if (this.state.timeTimeout != null) {
+      console.log('REMOVEU')
+      clearTimeout(this.state.timeTimeout)
+      this.sound.stopAsync();
+      if (this._isMounted) {
+        this.setState({ isPlaying: false })
+      }
+    }
+  }
+
+  //FUNÇÃO DOOUG LARGOU AI
+  // CHECA AS PERMI PRA MANDAR AUDIO
+  checkPermissions = async () => {
+    const { status } = await Permissions.askAsync(Permissions.AUDIO_RECORDING);
+    if (status === 'granted') {
+      if (this._isMounted) {
+        this.setState({ statusPermi: true })
+      }
+    }
+  }
+
+  // DOOUG
+  // AQUI CONVERTE O AUDIO CACHED PARA O FIREBASE
+  async convertAudioDB() {
+    this.setState({ loading: true })
+    const blob = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        resolve(xhr.response); // when BlobModule finishes reading, resolve with the blob
+      };
+      xhr.onerror = function () {
+        reject(new TypeError('Erro na conversão do áudio'));
+        //this.setState({ loading: false });
+        alert(languageJSON.upload_image_error);
+      };
+      let audioURI = this.recording.getURI()
+      xhr.responseType = 'blob'; // use BlobModule's UriHandler
+      xhr.open('GET', audioURI, true); // fetch the blob from uri in async mode
+      xhr.send(null); // no initial data
+    });
+
+    if ((blob.size / 1000000) > 3) {
+      this.setState({ loading: false }, () => { alert(languageJSON.image_size_error) })
+    }
+    else {
+      var timestamp = new Date().getTime()
+      var imageRef = firebase.storage().ref().child(`chat/audio/` + timestamp + `/`);
+      return imageRef.put(blob).then(() => {
+        blob.close()
+        this.setState({ isRecord: false, isRecording: false })
+        return imageRef.getDownloadURL()
+      }).then((audioURL) => {
+        this.verifyMessage(null, audioURL);
+      }).catch(error => {
+        console.log(error);
+        alert('Ops, tivemos um problema.');
+      });
+    }
+  }
+
+  // YURI
+  // AQUI VC QUE FEZ MSM FODA-SE
+  // SO QUE TAVA ERRADO AINDA MEU DEV AI O MOTORISTA CONTROLOU A EMBREAGEM E NÃO MORREU MAIS
+  verifyMessage(inputmessage, audio) {
+    if (inputmessage == '' || inputmessage == undefined || inputmessage == null) {
+      if (audio != undefined || audio != null) {
+        this.sendMessege(null, audio)
+        console.log('POSSUI AUDIO E NÃO MSG')
+      } else {
+        alert("Por favor, digite algo...");
+      }
+    } else {
+      this.sendMessege(inputmessage, null)
+      console.log('POSSUI MSG E NÃO ADUDIO')
+    }
+  }
+
   _keyboardDidShow = (e) => {
     if (this.state.position !== 'relative') {
       this.setState({
@@ -122,9 +323,9 @@ export default class OnlineChat extends Component {
     read.on('value', readChat => {
       let readInfo = readChat.val()
       if (readInfo == false && this.currentScreen && this._isMounted) {
-        
+
         console.log(this.currentScreen + " SCREEN")
-          firebase.database().ref(`chat/` + this.getParamData.bokkingId + '/readed_rider').set(true)
+        firebase.database().ref(`chat/` + this.getParamData.bokkingId + '/readed_rider').set(true)
       }
     })
 
@@ -137,7 +338,9 @@ export default class OnlineChat extends Component {
     })
   }
 
-  sendMessege(inputmessage) {
+  // DOOUG
+  // FIZ ALTERAÇÕES AQUI RECEBENDO UM SEGUNDO PARAMS, QUE NO CASO E O AUDIO NE CLARO COM CERTEZA
+  sendMessege(inputmessage, audioURL) {
     var today = new Date();
     var time = today.toLocaleTimeString('pt-BR').split(':')[0] + ':' + today.toLocaleTimeString('pt-BR').split(':')[1];
     var dd = String(today.getDate()).padStart(2, '0');
@@ -148,57 +351,34 @@ export default class OnlineChat extends Component {
     let totalId = this.state.carbookedInfo.customer + ',' + this.state.carbookedInfo.driver
     this.setState({ id: totalId })
 
-    if (inputmessage == '' || inputmessage == undefined || inputmessage == null) {
-      alert("Por favor, digite algo...");
-    } else {
-      let chat = firebase.database().ref('chat')
-      // if(chat){
-      chat.once('value', chat => {
-        if (chat.val()) {
-          let allChat = chat.val();
-          for (let key in allChat) {
-            if (this.getParamData.bokkingId == key) {
-              this.setState({ chat: true })
-            }
+    let chat = firebase.database().ref('chat')
+    chat.once('value', chat => {
+      if (chat.val()) {
+        let allChat = chat.val();
+        for (let key in allChat) {
+          if (this.getParamData.bokkingId == key) {
+            this.setState({ chat: true })
           }
-          if (this.state.chat == true) {
-            firebase.database().ref('chat' + '/' + this.getParamData.bokkingId + '/' + 'message' + '/' + this.state.id).push({
-              message: inputmessage,
-              from: this.state.carbookedInfo.customer,
-              type: "msg",
-              msgDate: today,
-              msgTime: time,
-              source: "rider"
-            }).then(() => {
-              this.setState({ readed_driver: false, showReaded: true })
-              firebase.database().ref(`chat/` + this.getParamData.bokkingId + '/').update({
-                readed_driver: false,
-                notify_driver: false
-              })
-            })
-            this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + inputmessage)
-          }
-          else {
-            firebase.database().ref('chat' + '/' + this.getParamData.bokkingId + '/').update({
-              distance: this.state.carbookedInfo.distance,
-              car: this.state.carbookedInfo.carType,
-              bookingId: this.getParamData.bokkingId,
+        }
+        if (this.state.chat == true) {
+          firebase.database().ref('chat' + '/' + this.getParamData.bokkingId + '/' + 'message' + '/' + this.state.id).push({
+            message: inputmessage ? inputmessage : null,
+            audio: audioURL ? audioURL : null,
+            from: this.state.carbookedInfo.customer,
+            type: "msg",
+            msgDate: today,
+            msgTime: time,
+            source: "rider"
+          }).then(() => {
+            this.setState({ readed_driver: false, showReaded: true })
+            firebase.database().ref(`chat/` + this.getParamData.bokkingId + '/').update({
               readed_driver: false,
               notify_driver: false
-            }).then(() => {
-              firebase.database().ref('chat' + '/' + this.getParamData.bokkingId + '/' + 'message' + '/' + this.state.id).push({
-                message: inputmessage,
-                from: this.state.carbookedInfo.customer,
-                type: "msg",
-                msgDate: today,
-                msgTime: time,
-                source: "rider"
-              })
-              this.setState({ readed_driver: false, showReaded: true })
-              this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + inputmessage)
             })
-          }
-        } else {
+          })
+          this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + inputmessage)
+        }
+        else {
           firebase.database().ref('chat' + '/' + this.getParamData.bokkingId + '/').update({
             distance: this.state.carbookedInfo.distance,
             car: this.state.carbookedInfo.carType,
@@ -206,23 +386,44 @@ export default class OnlineChat extends Component {
             readed_driver: false,
             notify_driver: false
           }).then(() => {
-            if (this.state.id) {
-              firebase.database().ref('chat' + '/' + this.getParamData.bokkingId + '/' + 'message' + '/' + this.state.id).push({
-                message: inputmessage,
-                from: this.state.carbookedInfo.customer,
-                type: "msg",
-                msgDate: today,
-                msgTime: time,
-                source: "rider"
-              })
-              this.setState({ readed_driver: false, showReaded: true })
-              this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + inputmessage)
-            }
+            firebase.database().ref('chat' + '/' + this.getParamData.bokkingId + '/' + 'message' + '/' + this.state.id).push({
+              message: inputmessage ? inputmessage : null,
+              audio: audioURL ? audioURL : null,
+              from: this.state.carbookedInfo.customer,
+              type: "msg",
+              msgDate: today,
+              msgTime: time,
+              source: "rider"
+            })
+            this.setState({ readed_driver: false, showReaded: true })
+            this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + inputmessage)
           })
         }
-      })
-      this.setState({ inputmessage: "" });
-    }
+      } else {
+        firebase.database().ref('chat' + '/' + this.getParamData.bokkingId + '/').update({
+          distance: this.state.carbookedInfo.distance,
+          car: this.state.carbookedInfo.carType,
+          bookingId: this.getParamData.bokkingId,
+          readed_driver: false,
+          notify_driver: false
+        }).then(() => {
+          if (this.state.id) {
+            firebase.database().ref('chat' + '/' + this.getParamData.bokkingId + '/' + 'message' + '/' + this.state.id).push({
+              message: inputmessage ? inputmessage : null,
+              audio: audioURL ? audioURL : null,
+              from: this.state.carbookedInfo.customer,
+              type: "msg",
+              msgDate: today,
+              msgTime: time,
+              source: "rider"
+            })
+            this.setState({ readed_driver: false, showReaded: true })
+            this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + inputmessage)
+          }
+        })
+      }
+    })
+    this.setState({ inputmessage: "" });
   }
 
   sendPushNotification(customerUID, msg) {
@@ -234,19 +435,11 @@ export default class OnlineChat extends Component {
       }
     })
   }
+
+  // O PROBLEMA DE DAR UNDEFINED LA FOI O QUE TE FALEI, O RENDER PRECISA ESTA NA JSX DEIXEI ESSA FUNÇÃO SO
+  // PARA TE MOSTRAR QUE OS INDIAS ESQUECEU DE CANTAR SIRIGAITA PRA NAGA SUBIR
   renderItem({ item, index }) {
-    return (
-      item.source == "rider" ?
-        <View style={styles.drivermsgStyle}>
-          <Text style={styles.msgTextStyle}>{item ? item.message : languageJSON.chat_not_found}</Text>
-          <Text style={styles.msgTimeStyle}>{item ? item.msgTime : null}</Text>
-        </View>
-        :
-        <View style={styles.riderMsgStyle}>
-          <Text style={styles.riderMsgText}>{item ? item.message : languageJSON.chat_not_found}</Text>
-          <Text style={styles.riderMsgTime}>{item ? item.msgTime : null}</Text>
-        </View>
-    );
+
   }
 
   render() {
@@ -254,11 +447,11 @@ export default class OnlineChat extends Component {
       <View style={styles.container}>
         <View style={styles.viewHeader}>
           <View style={styles.bordaIconeVoltar}>
-            <TouchableOpacity onPress={() => { 
-              this.currentScreen = false, 
-              console.log(this.currentScreen)
-              this.props.navigation.goBack() 
-              }}>
+            <TouchableOpacity onPress={() => {
+              this.currentScreen = false,
+                console.log(this.currentScreen)
+              this.props.navigation.goBack()
+            }}>
               <Icon
                 name='chevron-left'
                 type='MaterialIcons'
@@ -286,10 +479,62 @@ export default class OnlineChat extends Component {
         </View>
         <View style={{ flex: 1 }}>
           <FlatList
-            data={this.state.allChat.reverse()}
-            renderItem={this.renderItem}
-            //keyExtractor={(item, index) => index.toString()}
+            data={this.state.allChat} // RETIREI O REVERSE DAQUI ELE ESTA LA EM CIMA CE VIU ? RESOLVE O PROBLEMA DA FLAT LIST CHEIO DE DROGA
             inverted
+            keyExtractor={(item, index) => index.toString()} // VOLTAMOS COM O KEYEXTRACTOR
+            // O QUE ESTÁ EM BAIXO E O NOVO RENDER ITEM ARRUMADO INCLUSIVE ELE PRECISA FICAR AQUI
+            renderItem={({ item, index }) => {
+              return (
+                item.source == "rider" ?
+                  <View style={styles.drivermsgStyle}>
+                    <Text style={styles.msgTextStyle}>{item ? item.message : languageJSON.chat_not_found}</Text>
+                    {item.audio ?
+                      <View style={styles.msgTextStyle2}>
+                        <View>
+                          <TouchableOpacity
+                            onPress={() => this.playSound(item.audio)}
+                            disable={this.state.isPlaying}
+                            style={{ height: 40, width: 40, backgroundColor: colors.WHITE, elevation: 4, borderRadius: 50, justifyContent: 'center', alignItems: 'center' }}
+                          >
+                            <Icon
+                              name='ios-play'
+                              type='ionicon'
+                              color={colors.DEEPBLUE}
+                              size={35}
+                            />
+                          </TouchableOpacity>
+                        </View>
+                        <View style={{ height: 30, width: 85, justifyContent: 'center' }}></View>
+                      </View>
+                      : null}
+                    <Text style={styles.msgTimeStyle}>{item ? item.msgTime : null}</Text>
+                  </View>
+                  :
+                  <View style={styles.riderMsgStyle}>
+                    <Text style={styles.riderMsgText2}>{item ? item.message : languageJSON.chat_not_found}</Text>
+                    {item.audio ?
+                      <View style={styles.msgTextStyle2}>
+                        <View>
+                          <TouchableOpacity
+                            onPress={() => this.playSound(item.audio)}
+                            disable={this.state.isPlaying}
+                            style={{ height: 40, width: 40, backgroundColor: colors.DEEPBLUE, elevation: 4, borderRadius: 50, justifyContent: 'center', alignItems: 'center' }}
+                          >
+                            <Icon
+                              name='ios-play'
+                              type='ionicon'
+                              color={colors.WHITE}
+                              size={35}
+                            />
+                          </TouchableOpacity>
+                        </View>
+                        <View style={{ height: 30, width: 85, justifyContent: 'center' }}></View>
+                      </View>
+                      : null}
+                    <Text style={styles.riderMsgTime}>{item ? item.msgTime : null}</Text>
+                  </View>
+              );
+            }}
           />
         </View>
 
@@ -483,6 +728,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#fff"
   },
+
+  msgTextStyle2: {
+    justifyContent: 'center',
+    flexDirection: 'row',
+    margin: 5,
+    backgroundColor: colors.GREY3,
+    borderBottomLeftRadius: 50,
+    borderBottomRightRadius: 15,
+    borderTopRightRadius: 15,
+    borderTopLeftRadius: 50,
+  },
+
   msgTimeStyle: {
     paddingHorizontal: 15,
     paddingBottom: 4,
@@ -518,6 +775,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Bold',
     fontSize: 18,
     color: colors.DEEPBLUE,
+  },
+  riderMsgText2: {
+    justifyContent: 'center',
+    flexDirection: 'row',
+    margin: 5,
+    backgroundColor: colors.DEEPBLUE,
+    borderBottomLeftRadius: 50,
+    borderBottomRightRadius: 15,
+    borderTopRightRadius: 15,
+    borderTopLeftRadius: 50,
   },
   riderMsgTime: {
     paddingHorizontal: 15,

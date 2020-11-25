@@ -28,7 +28,7 @@ export default class SideMenu extends React.Component{
                 {key: 9, name: languageJSON.about_us, navigationName: 'About', icon: 'headphones', type: 'feather', child: 'ninethChild'},
                 {key: 10, name: languageJSON.sign_out, icon: 'ios-log-out', type: 'ionicon', child: 'lastChild'}
             ],
-            profile_image:null,
+            driver_image:null,
         }
         
     }
@@ -95,7 +95,7 @@ export default class SideMenu extends React.Component{
     render(){
         return(
             <View style={styles.mainViewStyle}>
-                <SideMenuHeader onPress={this.navigateToScreen("Profile") } headerStyle={styles.myHeader} userPhoto={this.state.profile_image} userName ={this.state.firstName + ' '+ this.state.lastName}></SideMenuHeader> 
+                <SideMenuHeader onPress={this.navigateToScreen("Profile") } headerStyle={styles.myHeader} userPhoto={this.state.driver_image} userName ={this.state.firstName + ' '+ this.state.lastName}></SideMenuHeader> 
                 
                 <View style={styles.compViewStyle}>
                     <View style={[styles.vertialLine,{height: (width <= 320) ? width/1.53 : width/1.68 }]}></View>

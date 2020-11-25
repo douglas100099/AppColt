@@ -37,7 +37,7 @@ export default class ProfileScreen extends React.Component {
             lastName: '',
             carType: '',
             myBookingarr: [],
-            profile_image: null,
+            driver_image: null,
             loader: false,
             checked: true,
             dataCriado: 0,
@@ -148,7 +148,7 @@ export default class ProfileScreen extends React.Component {
                 let data = 'data:image/jpeg;base64,' + result.base64
                 //console.log(result)
                 this.uploadmultimedia(result.uri)
-                this.setState({ profile_image: 'data:image/jpeg;base64,' + result.base64 }, () => {
+                this.setState({ driver_image: 'data:image/jpeg;base64,' + result.base64 }, () => {
                     this.setState({ loader: false })
                 });
             }
@@ -180,7 +180,7 @@ export default class ProfileScreen extends React.Component {
             return imageRef.getDownloadURL()
         }).then((url) => {
             firebase.database().ref(`/users/` + this.state.currentUser.uid + '/').update({
-                profile_image: url
+                driver_image: url
             })
         })
     }
@@ -285,7 +285,7 @@ export default class ProfileScreen extends React.Component {
                     <View style={styles.headerBoddy}>
                         <View style={styles.cardDriver}>
                             <View style={styles.photoDriver}>
-                                <Image source={this.state.profile_image ? { uri: this.state.profile_image } : require('../../assets/images/profilePic.png')} style={{ width: 98, height: 98, borderRadius: 100 }} />
+                                <Image source={this.state.driver_image ? { uri: this.state.driver_image } : require('../../assets/images/profilePic.png')} style={{ width: 98, height: 98, borderRadius: 100 }} />
                                 <View style={styles.ratingDriver}>
                                     <Icon
                                         name='ios-star'

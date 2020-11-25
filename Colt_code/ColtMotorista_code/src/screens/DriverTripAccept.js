@@ -208,7 +208,7 @@ export default class DriverTripAccept extends React.Component {
         try {
             if (this._isMounted) {
                 console.log('ENTROU NA FOTO PERFIL')
-                let ref = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/profile_image/');
+                let ref = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/driver_image/');
                 ref.once('value', (snapshot) => {
                     this.setState({
                         photoDriver: snapshot.val()
@@ -557,7 +557,7 @@ export default class DriverTripAccept extends React.Component {
                 otp: item.otp,
                 distance: item.distance,
                 driver: this.state.curUid,
-                driver_image: this.state.driverDetails.profile_image ? this.state.driverDetails.profile_image : "",
+                driver_image: this.state.driverDetails.driver_image ? this.state.driverDetails.driver_image : "",
                 driver_name: this.state.driverDetails.firstName + ' ' + this.state.driverDetails.lastName,
                 driver_firstName: this.state.driverDetails.firstName,
                 driver_contact: this.state.driverDetails.mobile,
@@ -585,7 +585,7 @@ export default class DriverTripAccept extends React.Component {
                 distance: item.distance,
                 imageRider: item.imageRider ? item.imageRider : null,
                 driver: this.state.curUid,
-                driver_image: this.state.driverDetails.profile_image ? this.state.driverDetails.profile_image : "",
+                driver_image: this.state.driverDetails.driver_image ? this.state.driverDetails.driver_image : "",
                 driver_name: this.state.driverDetails.firstName + ' ' + this.state.driverDetails.lastName,
                 driver_firstName: this.state.driverDetails.firstName,
                 driver_contact: this.state.driverDetails.mobile,

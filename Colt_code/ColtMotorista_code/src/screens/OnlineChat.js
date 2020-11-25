@@ -49,6 +49,7 @@ const recordingOptions = {
 
 export default class OnlineChat extends Component {
   _isMounted = false;
+  currentScreen
   getParamData;
   constructor(props) {
     super(props);

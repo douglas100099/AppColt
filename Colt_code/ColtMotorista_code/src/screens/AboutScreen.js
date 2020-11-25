@@ -16,15 +16,17 @@ import languageJSON from '../common/language';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import Easing from 'react-native-reanimated';
 import * as Linking from 'expo-linking';
+import * as Permissions from 'expo-permissions';
 
 
 export default class AboutPage extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {};
+        this.state = {
+        };
     }
 
-    componentDidMount() {
+    async componentDidMount() {
         const about = firebase.database().ref('About_Us/');
         about.once('value', aboutData => {
             if (aboutData.val()) {
@@ -34,11 +36,11 @@ export default class AboutPage extends React.Component {
         })
     }
 
-    openInsta(){
+    openInsta() {
         Linking.openURL('https://www.instagram.com/app.colt/');
     }
 
-    openWhats(){
+    openWhats() {
         Linking.openURL('https://wa.me/5532998684398');
     }
 

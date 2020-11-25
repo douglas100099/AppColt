@@ -76,6 +76,7 @@ export default class DriverStartTrip extends React.Component {
             isAtrasado: false,
             newMessage: false,
             isSound: false,
+            isPlaying: false,
         }
     }
 
@@ -136,14 +137,20 @@ export default class DriverStartTrip extends React.Component {
         msgData.on('value', snap => {
             if(snap.val()){
                 let chatData = snap.val()
-                if(chatData.readed_driver === false){
-                    this.setState({ newMessage: true })
-                    if(this.state.isSound === false){
-                        this.playSound()
-                        ToastAndroid.show('Você recebeu uma nova mensagem.', ToastAndroid.SHORT);
+                if(chatData.readed_driver === false && chatData.notify_driver === false){
+                    if(this.state.isPlaying === false){
+                        var duration = 0
+                        this.sound.playAsync().then((result) => {
+                            this.setState({ isPlaying: result.isPlaying }), duration = result.durationMillis
+                        }).then(() => {
+                            ToastAndroid.show('Você recebeu uma mensagem do passageiro.', ToastAndroid.SHORT);
+                            firebase.database().ref(`chat/` + this.state.rideDetails.bookingId + '/notify_driver/').set(true).then(() =>{
+                                setTimeout(() => {this.sound.stopAsync(), this.setState({ isPlaying: false })}, duration)
+                            })
+                        }).catch((err) => {
+                            console.log(err)
+                        })
                     }
-                } else {
-                    this.setState({ newMessage: false, isSound: false })
                 }
             }
         })
@@ -152,14 +159,7 @@ export default class DriverStartTrip extends React.Component {
     playSound() {
         if(this._isMounted){
             this.setState({ isSound: true })
-            this.sound.playAsync().then((result) => {
-                if (result.isLoaded) {
-                    this.sound.setVolumeAsync(1)
-                }
-            }).catch((err) => {
-                console.log(err)
-                alert('Tivemos um problema com o som.')
-            })
+            this.sound.playAsync()
         }
     }
 
@@ -541,7 +541,9 @@ export default class DriverStartTrip extends React.Component {
                 status: 'EMBARQUE',
             })
             this.sendPushNotification2(this.state.rideDetails.customer, 'O motorista chegou ao local de embarque.')
-            this.setState({ loader: false })
+            if(this._isMounted){
+                this.setState({ loader: false })
+            }
         })
     }
 

@@ -137,7 +137,7 @@ export default class DriverTripAccept extends React.Component {
                     if (checkBlock.blocked_by_payment) {
                         Alert.alert(
                             "Pagamento pendente",
-                            "Você foi bloqueado. Não identificamos seu pagamento da taxa da Colt com vencimento em: " +dia+'/'+mes+'/'+ano+ " , caso realizou o pagamento entre em contato com o suporte.",
+                            "Você foi bloqueado. Não identificamos seu pagamento da taxa da Colt com vencimento em: " +dia+'/'+mes+'/'+ano+ " , caso tenha realizado o pagamento entre em contato com o suporte.",
                             [
                                 {
                                     text: "Suporte",
@@ -503,15 +503,19 @@ export default class DriverTripAccept extends React.Component {
                         var location1 = [waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng];
                         var location2 = [this.state.region.latitude, this.state.region.longitude];
                         var distancee = distanceCalc(location1, location2);
-                        this.setState({ distance: distancee, acceptBtnDisable: false })
+                        if(this._isMounted){
+                            this.setState({ distance: distancee, acceptBtnDisable: false })
+                        }
                     }
                     this.setState({ chegouCorrida: true })
                     if (this.state.isSound == false) {
                         this.playSound()
-                        Linking.openURL('coltappmotorista://');
+                        //Linking.openURL('coltappmotorista://');
                     }
                 } else if (this.state.chegouCorrida == true) {
+                    if(this._isMounted){
                     this.setState({ chegouCorrida: false })
+                    }
                     if (this.state.isSound) {
                         this.stopSound()
                     }

@@ -74,6 +74,7 @@ export default class DriverCompleteTrip extends React.Component {
             isSound: false,
             recalculou: false,
             objectQueue: false,
+            timeoutCenter: null,
         }
     }
 
@@ -126,7 +127,7 @@ export default class DriverCompleteTrip extends React.Component {
                 this.setState({ chegouCorridaQueue: true })
                 if (this.state.isSound == false) {
                     this.playSound()
-                    Linking.openURL('coltappmotorista://');
+                    //Linking.openURL('coltappmotorista://');
                 }
             } else if (this.state.chegouCorridaQueue == true) {
                 this.setState({ chegouCorridaQueue: false })
@@ -242,6 +243,9 @@ export default class DriverCompleteTrip extends React.Component {
             this.location.remove()
         }
         console.log('DESMONTOU A TELA COMPLETE TRIP')
+        if(this.state.timeoutCenter != null){
+            clearInterval(this.state.timeoutCenter)
+        }
     }
 
 
@@ -712,7 +716,7 @@ export default class DriverCompleteTrip extends React.Component {
 
     centerFollowMap() {
         this.map.animateToRegion(this.state.region, 500)
-        setTimeout(() => { this.setState({ followMap: true, fitCordinates: false }) }, 1100)
+        this.setState({ timeoutCenter: setTimeout(() => { this.setState({ followMap: true, fitCordinates: false }) }, 1100)})
     }
 
     animateToDestination() {

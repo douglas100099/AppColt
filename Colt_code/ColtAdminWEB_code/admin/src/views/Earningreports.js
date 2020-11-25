@@ -10,6 +10,7 @@ export default function Earningreports() {
         { title: languageJson.year,field: 'year'},
         { title: languageJson.months, field: 'monthsName' },
         { title: languageJson.trip_cost_driver_share, field: 'rideCost' },
+        { title: 'Nome do motorista', field: 'driverName' },
         { title: languageJson.convenience_fee, field: 'convenienceFee' },
         { title: languageJson.Gross_trip_cost, field: 'tripCost' },
         { title: languageJson.Discounts, field: 'discountAmount' },

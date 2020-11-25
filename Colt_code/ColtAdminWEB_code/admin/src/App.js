@@ -10,6 +10,7 @@ import AddBookings from './views/AddBookings';
 import BookingHistory from './views/BookingHistory';
 import Promos from './views/Promos';
 import Users from './views/Users';
+import Riders from './views/Riders';
 import Referral from './views/Referral';
 import { fetchUser}  from "./actions/authactions";
 import AuthLoading from './components/AuthLoading';
@@ -31,6 +32,7 @@ function App() {
             <ProtectedRoute exact component={BookingHistory} path="/bookings"/>
             <ProtectedRoute exact component={Promos} path="/promos"/>
             <ProtectedRoute exact component={Users} path="/users"/>
+            <ProtectedRoute exact component={Riders} path="/riders"/>
             <ProtectedRoute exact component={DriverEarning} path="/driverearning"/>
             <ProtectedRoute exact component={Referral} path="/referral"/>
             <ProtectedRoute exact component={Notifications} path="/notifications"/>

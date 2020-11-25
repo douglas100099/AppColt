@@ -45,9 +45,10 @@ export default class DriverRegistrationPage extends React.Component {
       carType: CarType,
       createdAt: new Date().toISOString(),
       cpfNum: cpfNum,
-      crlvAproved: false,
-      cnhAproved: false,
-      perfilAproved: false,
+      crlvAproved: 'AGUARDANDO',
+      cnhAproved: 'AGUARDANDO',
+      perfilAproved: 'AGUARDANDO',
+      driverActiveStatus: false,
     }
     firebase.auth().currentUser.updateProfile({
       displayName:regData.firstName + ' '+ regData.lastName,
@@ -73,6 +74,7 @@ export default class DriverRegistrationPage extends React.Component {
     });
 
   }
+  
 
   //upload of picture
   async uploadmultimediaCrlv(fname, lname, mobile, email, urlCrlv, urlCnh, urlPerfil, CarType, cpfNum ) {

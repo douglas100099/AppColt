@@ -28,7 +28,7 @@ export const fetchUser = () => dispatch => {
             .then(() => {
               dispatch({
                 type: USER_SIGN_IN_FAILED,
-                payload: "This login is a valid user but not Admin"
+                payload: "Este login é um usuário válido, mas não Admin."
               });     
             })
             .catch(error => {
@@ -69,7 +69,7 @@ export const signIn = (username,password) => dispatch => {
   .catch(function(error) {
     dispatch({
       type: USER_SIGN_IN_FAILED,
-      payload: "Firebase Auth Error"
+      payload: "Erro no Auth Firebase"
     });
   });
 };

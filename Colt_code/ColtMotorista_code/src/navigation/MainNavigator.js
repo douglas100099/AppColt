@@ -18,6 +18,8 @@ import {
     EmailLoginScreen,
     MobileLoginScreen,
     ScreenWelcome,
+    WaitingDocs,
+    Reports,
     IntroScreen
 } from '../screens';
 import SideMenu from '../components/SideMenu';
@@ -105,6 +107,21 @@ var { width, height } = Dimensions.get('window');
             screen: AboutPage,
             navigationOptions:{
                 headerShown: false,
+            }
+        },
+        Reports: {
+            screen: Reports,
+            navigationOptions:{
+                headerShown: false,
+            }
+        },
+        Waiting:{
+            screen: WaitingDocs,
+            navigationOptions:{
+                headerShown: false,
+            },
+            defaultNavigationOptions: {
+                gestureEnabled: false,
             }
         },
     }

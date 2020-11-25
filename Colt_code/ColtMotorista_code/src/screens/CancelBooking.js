@@ -19,6 +19,7 @@ export default class CancelBooking extends React.Component {
         this.state = {
             loader: false,
             blocked: false,
+            loading: true,
             motivo: "",
             numeroPorcentagem: '0%',
             curUid: firebase.auth().currentUser.uid
@@ -39,6 +40,7 @@ export default class CancelBooking extends React.Component {
                             this.setCancell();
                         }, 1000)
                     }
+                    this.setState({ loading: false })
                 } else {
                     setTimeout(() => {
                         this.setCancell();
@@ -155,7 +157,7 @@ export default class CancelBooking extends React.Component {
                 this.bloquearDriver(this.motivo1)
                 this.setState({ loader: false, nPorcentagem: numeroPorcentagem })
             } else {
-                this.setState({ loader: false, motivo: this.motivo1 })
+                this.setState({ loader: false, motivo: this.motivo1, loading: false, })
             }
         }
     }
@@ -174,7 +176,10 @@ export default class CancelBooking extends React.Component {
             firebase.database().ref('users/' + this.state.curUid + '/in_reject_progress').update({
                 punido: true,
             })
-        )
+        ).then(() => {
+            this.setState({ loading: false })
+        })
+
     }
 
     continuarConectado() {
@@ -253,7 +258,8 @@ export default class CancelBooking extends React.Component {
                         </View>
                     </View>
                 </View>
-                {this.state.blocked ?
+                {this.state.loading ? null :
+                (this.state.blocked ?
                     <View style={{ flex: 0.7, justifyContent: 'center', alignItems: 'center' }}>
                         <View style={{ marginHorizontal: 8 }}>
                             <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.RED, textAlign: 'center' }}>{this.state.motivo}</Text>
@@ -280,6 +286,7 @@ export default class CancelBooking extends React.Component {
                             <Text style={{ fontSize: 16, fontFamily: 'Inter-Bold', color: colors.BLACK }}>Desconectar</Text>
                         </TouchableOpacity>
                     </View>
+                )
                 }
             </View>
         );

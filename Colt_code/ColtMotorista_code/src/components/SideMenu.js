@@ -24,6 +24,7 @@ export default class SideMenu extends React.Component{
                 {key: 2, name: languageJSON.profile_settings, navigationName: 'Profile', icon: 'user', type: 'feather', child: 'secondChild'},
                 {key: 4, name: languageJSON.incomeText, navigationName: 'MyEarning', icon: 'dollar-sign', type: 'feather', child: 'ninethChild'},
                 {key: 3, name: languageJSON.my_bookings, navigationName: 'RideList', icon: 'clipboard', type: 'feather', child: 'thirdChild'},
+                {key: 5, name: 'Relatórios', navigationName: 'Reports', icon: 'trending-up', type: 'feather', child: 'fiveChild'},
                 {key: 9, name: languageJSON.about_us, navigationName: 'About', icon: 'headphones', type: 'feather', child: 'ninethChild'},
                 {key: 10, name: languageJSON.sign_out, icon: 'ios-log-out', type: 'ionicon', child: 'lastChild'}
             ],
@@ -41,7 +42,7 @@ export default class SideMenu extends React.Component{
                 this.setState(currentUserData.val(),(res)=>{
                     if(currentUserData.val().driverActiveStatus == undefined){
                         userData.update({
-                            driverActiveStatus:true
+                            driverActiveStatus:false
                         })
                     }
                 });    
@@ -67,15 +68,18 @@ export default class SideMenu extends React.Component{
 
     //navigation to screens from side menu
     navigateToScreen = (route) => () => {
-        const checkRide=firebase.database().ref('users/'+ firebase.auth().currentUser.uid  + '/emCorrida');
+        const checkRide=firebase.database().ref('users/'+ firebase.auth().currentUser.uid + '/');
         checkRide.once('value',checkRider=>{
-            if(!checkRider.val()){
+            if(checkRider.val().approved == false || checkRider.val().perfilAproved == false || checkRider.val().cnhAproved == false || checkRider.val().crlvAproved == false ) {
+                alert('Sua conta ainda não foi aprovada.')
+            }
+            else if(!checkRider.val().emCorrida){
                 const navigateAction = NavigationActions.navigate({
                   routeName: route
                 });
                 this.props.navigation.dispatch(navigateAction);
             } else {
-                alert('Você possuí uma corrida em andamento.')
+                alert('Você possui uma corrida em andamento.')
             }
         })
     }

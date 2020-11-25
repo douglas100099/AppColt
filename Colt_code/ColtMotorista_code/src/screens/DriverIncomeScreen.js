@@ -16,7 +16,6 @@ import {
 var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
 import RadioForm from 'react-native-simple-radio-button';
-import { NavigationActions, StackActions } from 'react-navigation';
 import {
     BarChart,
 } from "react-native-chart-kit";
@@ -55,14 +54,15 @@ export default class DriverIncomePage extends React.Component {
 
         };
         this.objetoPrincipal = {
-            "Dom": 0,
-            "Seg": 0,
-            "Ter": 0,
-            "Qua": 0,
-            "Qui": 0,
-            "Sex": 0,
-            "Sab": 0,
+            Dom: 0,
+            Seg: 0,
+            Ter: 0,
+            Qua: 0,
+            Qui: 0,
+            Sex: 0,
+            Sab: 0,
         };
+        this.valorSemana = 0,
         this._retrieveCurrency();
     }
 
@@ -563,7 +563,7 @@ export default class DriverIncomePage extends React.Component {
 
 
     teste() {
-        let curr = new Date
+        let curr = new Date()
         let week = []
 
         for (let i = 0; i <= 6; i++) {
@@ -574,30 +574,41 @@ export default class DriverIncomePage extends React.Component {
 
         let tamanho = this.state.myBooking.length;
         let arrayCorridas = this.state.myBooking.reverse();
-        let tempDate = curr.getDate();
-        let tempIndex = curr.getDay()
+        let tempDate = new Date().getDate();
+        let tempIndex = new Date().getDay()
         let dias = 0;
 
         for (let i = tamanho - 1; i >= 0; i--) {
             let corridaRecente = new Date(arrayCorridas[i].data)
 
             //Verifica se o dia corrida é mesmo do dia atual
-            if (corridaRecente.getDate() == tempDate) {
-                for (let j = week.length - 1; j >= 0; j--) {
-                    if (corridaRecente.getDate() == week[j].getDate() && corridaRecente.getMonth() == week[j].getMonth() && corridaRecente.getFullYear() == week[j].getFullYear()) {
-
-                        this.insertValues(tempIndex, arrayCorridas[i].ganho)
-                        break
+            if(tempIndex < 0) {
+                break
+            } else {
+                if (corridaRecente.getDate() == tempDate) {
+                    for (let j = week.length - 1; j >= 0; j--) {
+                        if (corridaRecente.getDate() == week[j].getDate() && corridaRecente.getMonth() == week[j].getMonth() && corridaRecente.getFullYear() == week[j].getFullYear()) {
+                            this.insertValues(tempIndex, arrayCorridas[i].ganho)
+                            break
+                        }
                     }
                 }
+                //incrementa os variaveis pra percorrer os arrays da frente pra tras
+                else {
+                    i++
+                    dias++
+                    tempDate = corridaRecente.getDate()
+                    tempIndex = new Date().getDay() - dias;
+                }
             }
-            //incrementa os variaveis pra percorrer os arrays da frente pra tras
-            else {
-                i++
-                dias++
-                tempDate = corridaRecente.getDate()
-                tempIndex = curr.getDay() - dias;
-            }
+        }
+        this.somarSemana()
+    }
+
+    somarSemana(){
+        const { Dom, Seg, Ter, Qua, Qui, Sex, Sab } = this.objetoPrincipal
+        if(this.objetoPrincipal){
+            this.valorSemana = Dom + Seg + Ter + Qua + Qui + Sex + Sab
         }
     }
 
@@ -661,30 +672,14 @@ export default class DriverIncomePage extends React.Component {
                     <View style={styles.viewEstatisticas}>
                         <View style={styles.viewGanhos}>
                             <View style={{ flex: 1, alignItems: 'center' }}>
-                                <View style={{ flex: 1, alignItems: 'center', flexDirection: 'row' }}>
-                                    <View style={{ flex: 1, alignItems: 'flex-end', justifyContent: 'center' }}>
-                                        <TouchableOpacity>
-                                            <Icon
-                                                name="md-arrow-round-back"
-                                                type="ionicon"
-                                                size={22}
-                                                color={colors.WHITE}
-                                            />
-                                        </TouchableOpacity>
-                                    </View>
+                                <View style={{ flex: 1, alignItems: 'center', flexDirection: 'row', justifyContent: 'space-around' }}>
                                     <View style={{ flex: 2, alignItems: 'center', justifyContent: 'center' }}>
                                         <Text style={styles.tituloMensal2}>Ganhos esse mês</Text>
                                         <Text style={styles.txtMensal2}>R$ {this.state.thisMothh ? parseFloat(this.state.thisMothh).toFixed(2) : '0'}</Text>
                                     </View>
-                                    <View style={{ flex: 1, alignItems: 'flex-start', justifyContent: 'center' }}>
-                                        <TouchableOpacity>
-                                            <Icon
-                                                name="md-arrow-round-forward"
-                                                type="ionicon"
-                                                size={22}
-                                                color={colors.WHITE}
-                                            />
-                                        </TouchableOpacity>
+                                    <View style={{ flex: 2, alignItems: 'center', justifyContent: 'center' }}>
+                                        <Text style={styles.tituloMensal2}>Ganhos essa semana</Text>
+                                        <Text style={styles.txtMensal2}>R$ {this.valorSemana ? parseFloat(this.valorSemana).toFixed(2) : '0'}</Text>
                                     </View>
                                 </View>
                             </View>
@@ -695,8 +690,8 @@ export default class DriverIncomePage extends React.Component {
                                 </View>
                                 <View style={{ width: 1, height: 60, backgroundColor: colors.GREY1, justifyContent: 'center' }}></View>
                                 <View style={{ flex: 1, alignItems: 'center' }}>
-                                    <Text style={styles.tituloMensal}>Ganhos semana</Text>
-                                    <Text style={styles.txtMensal}>R$ {this.state.thisMothh ? parseFloat(this.state.thisMothh).toFixed(2) : '0'}</Text>
+                                    <Text style={styles.tituloMensal}>Saldo</Text>
+                                    <Text style={[styles.txtMensal3, {color: this.state.saldo >= 0 ? '#32db64' : colors.RED}]}>R$ {this.state.saldo ? parseFloat(this.state.saldo).toFixed(2) : '0'}</Text>
                                 </View>
                             </View>
                         </View>
@@ -706,6 +701,9 @@ export default class DriverIncomePage extends React.Component {
                 {/* EXIBIÇÃO DO CHARTS, FLEX: 1 */}
 
                 <View style={{ flex: 1 }}>
+                    <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 20, marginBottom: 5 }}>
+                        <Text style={{ color: colors.BLACK, fontFamily: 'Inter-Bold', fontSize: 18 }}>Histórico da semana</Text>
+                    </View>
                     <BarChart
                         data={{
                             labels: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"],
@@ -723,15 +721,14 @@ export default class DriverIncomePage extends React.Component {
                                 }
                             ]
                         }}
-                        width={Dimensions.get("window").width / 1.05} // from react-native
+                        width={Dimensions.get("window").width / 1.02} // from react-native
                         height={220}
                         yAxisLabel="R$"
                         yAxisInterval={1} // optional, defaults to 1
                         chartConfig={chartConfig}
                         bezier
                         style={{
-                            marginVertical: 8,
-                            borderRadius: 15,
+                            //borderRadius: 15,
                             alignItems: 'center',
                         }}
                     />
@@ -742,25 +739,8 @@ export default class DriverIncomePage extends React.Component {
 
                 <ScrollView style={{ flex: 0.5 }}>
                     <View style={{ justifyContent: 'center' }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: 5, marginBottom: 25, marginTop: 15, height: 55, backgroundColor: colors.GREY3 }}>
-                            <View style={{ marginLeft: 15 }}>
-                                <Icon
-                                    name='ios-wallet'
-                                    type='ionicon'
-                                    color='#32db64'
-                                />
-                            </View>
-                            <Text style={{ marginLeft: 10, fontSize: 18, fontFamily: 'Inter-Regular', color: colors.BLACK }}>Saldo:</Text>
-                            <Text style={{ marginLeft: 5, fontSize: 18, fontFamily: 'Inter-Bold', color: this.state.saldo >= 0 ? '#32db64' : colors.RED }}>{this.state.saldo ? parseFloat(this.state.saldo).toFixed(2) : '0'}</Text>
-                        </View>
-                        <View style={{ alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 20 }}>
-                            <TouchableOpacity style={{ flexDirection: 'row', width: width / 2.5, height: 40, backgroundColor: colors.DEEPBLUE, borderRadius: 15, justifyContent: 'center', alignItems: 'center' }}
-                                onPress={() => this.pagarSaldo()}
-                            >
-                                <Text style={{ marginLeft: 5, fontSize: 16, fontFamily: 'Inter-Bold', color: colors.WHITE }}>Pagar saldo</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity style={{ flexDirection: 'row', width: width / 2.5, height: 40, backgroundColor: colors.DEEPBLUE, borderRadius: 15, justifyContent: 'center', alignItems: 'center' }}
+                        <View style={{ alignItems: 'center', marginHorizontal: 25 }}>
+                            <TouchableOpacity style={{ flexDirection: 'row', width: width / 2, height: 40, backgroundColor: colors.DEEPBLUE, borderRadius: 15, justifyContent: 'center', alignItems: 'center' }}
                                 onPress={() => this.sacarSaldo()}
                             >
                                 <Text style={{ marginLeft: 5, fontSize: 16, fontFamily: 'Inter-Bold', color: colors.WHITE }}>Sacar saldo</Text>
@@ -777,17 +757,23 @@ export default class DriverIncomePage extends React.Component {
 }
 
 const chartConfig = {
-    backgroundGradientFrom: "#1152FD",
+    backgroundGradientFrom: "#FFF",
     backgroundGradientFromOpacity: 0.8,
-    backgroundGradientTo: "#1152FD",
+    backgroundGradientTo: "#FFF",
     backgroundGradientToOpacity: 1,
-    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
     strokeWidth: 2, // optional, default 3
     barPercentage: 0.7,
-    fillShadowGradient: colors.BLACK,
-    fillShadowGradientOpacity: 0.8,
-    useShadowColorFromDataset: false // optional
-
+    fillShadowGradient: colors.DEEPBLUE,
+    fillShadowGradientOpacity: 1,
+    useShadowColorFromDataset: false,
+    propsForLabels:{
+        fontSize: 13,
+        fontWeight: 500,
+    },
+    propsForBackgroundLines:{
+        
+    }
 };
 
 const styles = StyleSheet.create({
@@ -834,7 +820,12 @@ const styles = StyleSheet.create({
     txtMensal: {
         fontFamily: 'Inter-Bold',
         fontSize: 28,
-        color: colors.WHITE,
+        color: colors.WHITE
+    },
+
+    txtMensal3: {
+        fontFamily: 'Inter-Bold',
+        fontSize: 28,
     },
 
     tituloMensal: {

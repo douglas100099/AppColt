@@ -8,7 +8,8 @@ import {
     TouchableOpacity,
     AsyncStorage,
     Image,
-    Modal
+    Modal,
+    Dimensions,
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import { colors } from '../common/theme';
@@ -35,6 +36,8 @@ import { Audio } from 'expo-av';
 import Directions from "../components/Directions";
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import { getPixelSize } from '../constants/utils';
+import customMapStyle from "../../mapstyle.json";
+var { width, height } = Dimensions.get('window');
 
 const LATITUDE = 0;
 const LONGITUDE = 0;
@@ -45,6 +48,7 @@ const HEADING = 0;
 
 export default class DriverCompleteTrip extends React.Component {
 
+    myAbort = new AbortController()
     _isMounted = false;
 
     constructor(props) {
@@ -66,8 +70,11 @@ export default class DriverCompleteTrip extends React.Component {
             tasklist: [],
             chegouCorridaQueue: false,
             loader: false,
-            duration: 0,
+            duration: null,
             isSound: false,
+            recalculou: false,
+            objectQueue: false,
+            timeoutCenter: null,
         }
     }
 
@@ -81,7 +88,7 @@ export default class DriverCompleteTrip extends React.Component {
 
     async UNSAFE_componentWillMount() {
         const allDetails = this.props.navigation.getParam('allDetails')
-        const regionUser = this.props.navigation.getParam('regionUser')
+        const regionUser = this.props.navigation.getParam('regionUser') ? this.props.navigation.getParam('regionUser') : null
         this.setState({
             rideDetails: allDetails,
             region: regionUser,
@@ -92,7 +99,6 @@ export default class DriverCompleteTrip extends React.Component {
         })
         const { status } = await Permissions.askAsync(Permissions.LOCATION);
         const gpsActived = await Location.hasServicesEnabledAsync()
-        console.log(gpsActived)
         if (status === "granted" && gpsActived) {
             this._getLocationAsync();
         } else {
@@ -123,7 +129,7 @@ export default class DriverCompleteTrip extends React.Component {
                     this.playSound()
                     //Linking.openURL('coltappmotorista://');
                 }
-            } else if (this.state.chegouCorrida == true) {
+            } else if (this.state.chegouCorridaQueue == true) {
                 this.setState({ chegouCorridaQueue: false })
                 if (this.state.isSound) {
                     this.stopSound()
@@ -134,18 +140,39 @@ export default class DriverCompleteTrip extends React.Component {
         })
     }
 
+    checkingRidersQueue() {
+        let curUid = firebase.auth().currentUser.uid
+        const checkwaiting = firebase.database().ref('users/' + curUid + '/');
+        checkwaiting.on('value', snap => {
+            if (snap.val().rider_waiting_object) {
+                this.setState({ objectQueue: true })
+            }
+            this.setState({ objectQueue: false })
+        })
+    }
+
     playSound() {
-        this.setState({ isSound: true })
-        this.sound.setIsLoopingAsync(true);
-        this.sound.setVolumeAsync(1);
-        this.sound.playAsync();
-        console.log('PLAY SOUND')
+        if(this._isMounted){
+            this.setState({ isSound: true })
+            this.sound.playAsync().then((result) => {
+                if (result.isLoaded) {
+                    this.sound.setIsLoopingAsync(true)
+                    this.sound.setVolumeAsync(1)
+                }
+            }).catch((err) => {
+                console.log(err)
+                alert('Tivemos um problema com o som.')
+            })
+            console.log('PLAY SOUND')
+        }
     }
 
     stopSound() {
-        this.setState({ isSound: false })
-        this.sound.stopAsync();
-        console.log('STOP SOUND')
+        if(this._isMounted){
+            this.setState({ isSound: false })
+            this.sound.stopAsync();
+            console.log('STOP SOUND')
+        }
     }
 
     configAudio() {
@@ -154,6 +181,17 @@ export default class DriverCompleteTrip extends React.Component {
             staysActiveInBackground: true,
             shouldDuckAndroid: true,
         })
+    }
+
+    chat() {
+        if(this.state.driverDetails){
+            if(this._isMounted){
+                this.setState({ viewInfos: false })
+            }
+            this.props.navigation.navigate("Chat", { passData: this.state.driverDetails });
+        } else {
+            alert('Você não possui mais uma corrida em espera')
+        }
     }
 
 
@@ -171,7 +209,9 @@ export default class DriverCompleteTrip extends React.Component {
         if (startTime && this._isMounted) {
             let time = startTime.toString()
             AsyncStorage.setItem('startTime', time)
-            this.setState({ startTime: startTime })
+            if(this._isMounted){
+                this.setState({ startTime: startTime })
+            }
         }
         const Data = firebase.database().ref('rates/');
         Data.once('value', rates => {
@@ -180,24 +220,32 @@ export default class DriverCompleteTrip extends React.Component {
                 for (var i = 0; i < carTypeWiseRate.car_type.length; i++) {
                     if (carTypeWiseRate.car_type[i].name == allDetails.carType) {
                         var rates = carTypeWiseRate.car_type[i];
-                        this.setState({
-                            rateDetails: rates
-                        })
+                        if(this._isMounted){
+                            this.setState({
+                                rateDetails: rates
+                            })
+                        }
                     }
                 }
             }
         })
+        this.checkingRidersQueue()
         this.setQueueAvailable(true)
 
     }
 
     componentWillUnmount() {
+        this.myAbort.abort()
+        this._isMounted = false;
+        this.sound.unloadAsync();
         if (this.location != undefined) {
             console.log('REMOVEU O WATCH COMPLETE TRIP')
             this.location.remove()
         }
         console.log('DESMONTOU A TELA COMPLETE TRIP')
-        this._isMounted = false;
+        if(this.state.timeoutCenter != null){
+            clearInterval(this.state.timeoutCenter)
+        }
     }
 
 
@@ -235,9 +283,11 @@ export default class DriverCompleteTrip extends React.Component {
                     longitudeDelta: 0.0034,
                     angle: coords.heading,
                 };
-                this.setState({ region: region });
-                this.setLocationDB(region.latitude, region.longitude, region.angle);
-                this.checkDistKM();
+                if(this._isMounted){
+                    this.setState({ region: region });
+                    this.setLocationDB(region.latitude, region.longitude, region.angle);
+                    this.checkDistKM();
+                }
             },
             error => console.log(error)
         );
@@ -247,7 +297,7 @@ export default class DriverCompleteTrip extends React.Component {
     setLocationDB(lat, lng, angle) {
         let uid = firebase.auth().currentUser.uid;
         var latlng = lat + ',' + lng;
-        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
+        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, {signal: this.myAbort.signal})
             .then((response) => response.json())
             .then((responseJson) => {
                 if (responseJson.results[0] && responseJson.results[0].formatted_address) {
@@ -287,23 +337,27 @@ export default class DriverCompleteTrip extends React.Component {
         var location2 = [this.state.rideDetails.drop.lat, this.state.rideDetails.drop.lng];   //Driver lat and lang
         //calculate the distance of two locations
         var distance = distanceCalc(location1, location2);
-        this.setState({ kmRestante: distance })
+        if(this._isMounted){
+            this.setState({ kmRestante: distance })
+        }
     }
 
     checkDist(item) {
-        this.setState({ rideDetails: item },
-            () => {
-                var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
-                var location2 = [this.state.rideDetails.drop.lat, this.state.rideDetails.drop.lng];   //Driver lat and lang
-                //calculate the distance of two locations
-                var distance = distanceCalc(location1, location2);
-                var originalDistance = (distance);
-                if (originalDistance <= 0.8) {
-                    this.onPressEndTrip(this.state.rideDetails)
-                } else {
-                    this.showActionSheet()
-                }
-            })
+        if(this._isMounted){
+            this.setState({ rideDetails: item },
+                () => {
+                    var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
+                    var location2 = [this.state.rideDetails.drop.lat, this.state.rideDetails.drop.lng];   //Driver lat and lang
+                    //calculate the distance of two locations
+                    var distance = distanceCalc(location1, location2);
+                    var originalDistance = (distance);
+                    if (originalDistance <= 0.8) {
+                        this.onPressEndTrip(this.state.rideDetails)
+                    } else {
+                        this.showActionSheet()
+                    }
+                })
+        }
     }
 
     showActionSheet = () => {
@@ -346,7 +400,6 @@ export default class DriverCompleteTrip extends React.Component {
                 this.finalCostStore(item, this.state.rideDetails.pagamento.estimate, pos, respJson.routes[0].legs[0].distance.value, convenienceFee,
                     this.state.rideDetails.pagamento.discount_amount ? this.state.rideDetails.pagamento.discount_amount : 0,
                     this.state.rideDetails.pagamento.usedWalletMoney ? this.state.rideDetails.pagamento.usedWalletMoney : 0)
-                this.setState({ recalculou: false })
             } else {
                 var fareCalculation = farehelper(respJson.routes[0].legs[0].distance.value, totalTimeTaken, this.state.rateDetails ? this.state.rateDetails : 1, this.state.rideDetails.pagamento.cancellValue);
                 if (fareCalculation) {
@@ -354,7 +407,6 @@ export default class DriverCompleteTrip extends React.Component {
                         this.state.rideDetails.pagamento.discount_amount ? this.state.rideDetails.pagamento.discount_amount : 0,
                         this.state.rideDetails.pagamento.usedWalletMoney ? this.state.rideDetails.pagamento.usedWalletMoney : 0)
                 }
-                this.setState({ recalculou: true })
             }
         } else {
             this.openAlert();
@@ -363,7 +415,7 @@ export default class DriverCompleteTrip extends React.Component {
 
     locationAdd(pos) {
         var latlng = pos.latitude + ',' + pos.longitude;
-        return fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
+        return fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, {signal: this.myAbort.signal})
     }
 
     //driver current location fetching
@@ -388,7 +440,6 @@ export default class DriverCompleteTrip extends React.Component {
             promoCodeApplied: item.pagamento.promoCodeApplied,
             promoKey: item.pagamento.promoKey,
             cancellValue: item.pagamento.cancellValue,
-            recalculou: this.state.recalculou,
         }
         var data = {
             status: "END",
@@ -441,7 +492,9 @@ export default class DriverCompleteTrip extends React.Component {
             let statusDetail = statusDetails.val()
             if (statusDetail) {
                 if (statusDetail.status === 'END' && statusDetail.pagamento.payment_status === 'PAID') {
-                    this.setState({ loadingModal: false })
+                    if(this._isMounted){
+                        this.setState({ loadingModal: false })
+                    }
                     this.props.navigation.replace('DriverFare', { allDetails: item, trip_cost: data.pagamento.trip_cost, trip_end_time: data.trip_end_time })
                 }
             }
@@ -663,7 +716,7 @@ export default class DriverCompleteTrip extends React.Component {
 
     centerFollowMap() {
         this.map.animateToRegion(this.state.region, 500)
-        setTimeout(() => { this.setState({ followMap: true, fitCordinates: false }) }, 1100)
+        this.setState({ timeoutCenter: setTimeout(() => { this.setState({ followMap: true, fitCordinates: false }) }, 1100)})
     }
 
     animateToDestination() {
@@ -685,22 +738,23 @@ export default class DriverCompleteTrip extends React.Component {
 
                     <View style={{ flex: 1 }}>
                         <View style={{ flex: 1 }}>
-                            <MapView
-                                ref={map => { this.map = map }}
-                                style={styles.map}
-                                rotateEnabled={false}
-                                provider={PROVIDER_GOOGLE}
-                                showsUserLocation={false}
-                                showsCompass={false}
-                                showsScale={false}
-                                loadingEnabled
-                                showsMyLocationButton={false}
-                                region={this.checkMap()}
-                            >
-                                {this.state.region ?
+                            {this.state.region ?
+                                <MapView
+                                    ref={map => { this.map = map }}
+                                    style={styles.map}
+                                    rotateEnabled={false}
+                                    provider={PROVIDER_GOOGLE}
+                                    showsUserLocation={false}
+                                    showsCompass={false}
+                                    showsScale={false}
+                                    customMapStyle={customMapStyle}
+                                    loadingEnabled
+                                    showsMyLocationButton={false}
+                                    region={this.checkMap()}
+                                >
                                     <Marker.Animated
                                         coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
-                                        style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
+                                        style={{ transform: [{ rotate: this.state.region.angle ? this.state.region.angle + "deg" : '0' + "deg" }] }}
                                         anchor={{ x: 0.5, y: 0.5 }}
                                     >
                                         <CellphoneSVG
@@ -708,21 +762,22 @@ export default class DriverCompleteTrip extends React.Component {
                                             height={40}
                                         />
                                     </Marker.Animated>
-                                    : null}
-                                <Marker.Animated
-                                    coordinate={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng, }}
-                                    anchor={{ x: 0.5, y: 1 }}
-                                >
-                                    <MarkerDropSVG
-                                        width={40}
-                                        height={40}
+                                    <Marker.Animated
+                                        coordinate={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng, }}
+                                        anchor={{ x: 0.5, y: 1 }}
+                                    >
+                                        <MarkerDropSVG
+                                            width={40}
+                                            height={40}
+                                        />
+                                    </Marker.Animated>
+                                    <Directions
+                                        origin={{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }}
+                                        destination={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng }}
                                     />
-                                </Marker.Animated>
-                                <Directions
-                                    origin={{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }}
-                                    destination={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng }}
-                                />
-                            </MapView>
+                                </MapView>
+                                :
+                                null}
                             <View>
                                 <ActionSheetCustom
                                     ref={o => this.ActionSheet = o}
@@ -741,6 +796,27 @@ export default class DriverCompleteTrip extends React.Component {
                                     }}
                                 />
                             </View>
+                            {this.state.objectQueue ?
+                                <View style={{ flex: 1 }}>
+                                    <View style={{ position: 'absolute', top: 90, width: width / 1.6, height: 35, backgroundColor: colors.WHITE, elevation: 3, borderRadius: 15, alignItems: 'center', alignSelf: 'center', justifyContent: 'center' }}>
+                                        <Text style={{ color: colors.BLACK, fontFamily: 'Inter-Bold', fontSize: 13, textAlign: 'center' }}>Você possui uma corrida em espera</Text>
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <TouchableOpacity
+                                            style={styles.btnLigar}
+                                            onPress={() => this.chat()}
+                                        >
+                                            <Icon
+                                                name="message-circle"
+                                                type="feather"
+                                                size={30}
+                                                color={colors.BLACK}
+                                            />
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                                :
+                                null}
                             <TouchableOpacity style={styles.iconeMap} onPress={() => { this.centerFollowMap() }}>
                                 <Icon
                                     name="crosshair"
@@ -827,6 +903,7 @@ export default class DriverCompleteTrip extends React.Component {
                                                 zoomEnabled={false}
                                                 scrollEnabled={false}
                                                 showsCompass={false}
+                                                customMapStyle={customMapStyle}
                                                 showsScale={false}
                                                 showsMyLocationButton={false}
                                                 region={this.checkMap()}
@@ -1095,6 +1172,19 @@ const styles = StyleSheet.create({
         elevation: 4,
         bottom: 65,
         right: 22,
+    },
+
+    btnLigar: {
+        height: 60,
+        width: 60,
+        backgroundColor: colors.WHITE,
+        borderRadius: 50,
+        position: 'absolute',
+        justifyContent: 'center',
+        alignItems: 'center',
+        bottom: 125,
+        left: 22,
+        elevation: 5
     },
 
     iconeFit: {

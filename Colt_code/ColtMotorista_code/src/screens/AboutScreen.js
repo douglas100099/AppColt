@@ -1,5 +1,5 @@
 import React from 'react';
-import { Header, Icon } from 'react-native-elements';
+import { Header, Icon, SocialIcon } from 'react-native-elements';
 import { colors } from '../common/theme';
 import {
     StyleSheet,
@@ -8,21 +8,25 @@ import {
     ScrollView,
     TouchableOpacity,
     Dimensions,
+    Pressable,
 } from 'react-native';
 var { width } = Dimensions.get('window');
 import * as firebase from 'firebase';
 import languageJSON from '../common/language';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import Easing from 'react-native-reanimated';
+import * as Linking from 'expo-linking';
+import * as Permissions from 'expo-permissions';
 
 
 export default class AboutPage extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {};
+        this.state = {
+        };
     }
 
-    componentDidMount() {
+    async componentDidMount() {
         const about = firebase.database().ref('About_Us/');
         about.once('value', aboutData => {
             if (aboutData.val()) {
@@ -32,9 +36,16 @@ export default class AboutPage extends React.Component {
         })
     }
 
+    openInsta() {
+        Linking.openURL('https://www.instagram.com/app.colt/');
+    }
+
+    openWhats() {
+        Linking.openURL('https://wa.me/5532998684398');
+    }
+
     render() {
         return (
-
             <View style={styles.mainView}>
                 <View style={styles.header}>
                     <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK, textAlign: 'center' }}>Suporte</Text>
@@ -69,11 +80,41 @@ export default class AboutPage extends React.Component {
                                     <Text style={styles.contacttype1}> {this.state.phone ? this.state.phone : null}</Text>
                                 </View>
                             </View>
+                            <View style={{ justifyContent: 'center', marginTop: 25, marginHorizontal: 30 }}>
+                                <View style={{ marginHorizontal: 25, justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                                    <Text style={{ color: colors.BLACK, fontFamily: 'Inter-Bold', fontSize: 16 }}>Redes sociais</Text>
+                                </View>
+                                <View style={{ marginBottom: 10 }}>
+                                    <SocialIcon
+                                        title='Instagram'
+                                        button
+                                        iconSize={30}
+                                        fontStyle={{ color: colors.BLACK, fontSize: 16 }}
+                                        //iconStyle={{ color: '#E1306C' }}
+                                        light
+                                        iconType=''
+                                        onPress={() => this.openInsta()}
+                                        type='instagram'
+                                    />
+                                </View>
+                                <View style={{ marginBottom: 10 }}>
+                                    <SocialIcon
+                                        title='Envie-nos uma mensagem'
+                                        button
+                                        iconSize={30}
+                                        fontStyle={{ color: colors.BLACK, fontSize: 16 }}
+                                        //iconStyle={{ color: '#25D366' }}
+                                        light
+                                        iconType='ionicon'
+                                        onPress={() => this.openWhats()}
+                                        type='whatsapp'
+                                    />
+                                </View>
+                            </View>
                         </View>
                     </ScrollView>
                 </View>
             </View>
-
         );
     }
 
@@ -137,7 +178,7 @@ const styles = StyleSheet.create({
     contacttype2: {
         textAlign: 'left',
         marginTop: 4,
-        color: colors.GREY.secondary,
+        color: colors.BLACK,
         fontFamily: 'Inter-Bold',
         fontSize: 15,
     }

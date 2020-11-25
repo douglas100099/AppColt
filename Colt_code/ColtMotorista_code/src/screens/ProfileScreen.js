@@ -238,6 +238,22 @@ export default class ProfileScreen extends React.Component {
 
     }
 
+    openAlertt(){
+        Alert.alert(
+            "Editar informações",
+            "Entre em contato com o suporte para alterar suas informações.",
+            [
+                {
+                    text: "Suporte",
+                    onPress: () => Linking.openURL('https://wa.me/5532998684398'),
+                    style: "cancel"
+                },
+                { text: "OK", onPress: () => console.log("OK Pressed") }
+            ],
+            { cancelable: true }
+        )
+    }
+
     render() {
         let { image } = this.state;
         return (
@@ -255,7 +271,7 @@ export default class ProfileScreen extends React.Component {
                     </View>
                     <View style={{ position: 'absolute', marginTop: Platform.select({ ios: 55, android: 45 }), zIndex: 999, right: 20, }}>
                         <TouchableOpacity
-                            //onPress={() => this.props.navigation.replace('Welcome')}
+                            onPress={() => this.openAlertt()}
                             disabled={this.state.loaderBtn}
                         >
                             <Icon

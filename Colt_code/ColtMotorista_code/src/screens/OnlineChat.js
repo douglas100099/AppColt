@@ -16,15 +16,39 @@ import { colors } from "../common/theme";
 import * as Permissions from 'expo-permissions';
 import { Icon, Header } from "react-native-elements";
 import * as firebase from 'firebase'
-import { Audio } from 'expo-av';
+import { Audio, AVPlaybackStatus } from 'expo-av';
 import languageJSON from '../common/language';
 var { height, width } = Dimensions.get('window');
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import ProfileSVG from "../SVG/ProfileSVG";
+import { withNavigation } from 'react-navigation';
+import * as Animatable from 'react-native-animatable';
 
-const recording = new Audio.Recording();
+const recordingOptions = {
+  // android not currently in use. Not getting results from speech to text with .m4a
+  // but parameters are required
+  android: {
+    extension: '.m4a',
+    outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4,
+    audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_AAC,
+    sampleRate: 44100,
+    numberOfChannels: 2,
+    bitRate: 128000,
+  },
+  ios: {
+    extension: '.wav',
+    audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_HIGH,
+    sampleRate: 44100,
+    numberOfChannels: 1,
+    bitRate: 128000,
+    linearPCMBitDepth: 16,
+    linearPCMIsBigEndian: false,
+    linearPCMIsFloat: false,
+  },
+};
 
 export default class OnlineChat extends Component {
+  _isMounted = false;
   getParamData;
   constructor(props) {
     super(props);
@@ -47,24 +71,30 @@ export default class OnlineChat extends Component {
       id: "",
       chat: false,
       allChat: [],
-      messegesData: []
-
+      readed_rider: false,
+      messegesData: [],
+      showReaded: true,
+      isRecording: false,
+      isRecord: false,
+      uri: null,
+      isPlaying: false,
+      duration: 0,
+      timeTimeout: null,
     };
   }
 
 
   componentDidMount() {
-
-    /*const { status } = await Permissions.askAsync(Permissions.AUDIO_RECORDING)
-    this.setState({
-      haveRecordingPermissions: status === 'granted',
-    });*/
-
+    this._isMounted = true
+    this.currentScreen = true
+    this.checkPermissions()
     this.getParamData = this.props.navigation.getParam('passData');
     let bookingData = firebase.database().ref('bookings/' + this.getParamData.bookingId)
     bookingData.on('value', response => {
       if (response.val()) {
-        this.setState({ carbookedInfo: response.val()})
+        if (this._isMounted) {
+          this.setState({ carbookedInfo: response.val() })
+        }
       }
     })
     let msgData = firebase.database().ref(`chat/` + this.getParamData.bookingId + '/message')
@@ -79,8 +109,13 @@ export default class OnlineChat extends Component {
         }
 
       }
-      this.setState({ allChat: allMesseges })
+      this.setState({ allChat: allMesseges.reverse() })
+      this.listenerReaded();
+      if (allMesseges.length > 0 && allMesseges[allMesseges.length - 1].source == 'rider') {
+        this.setState({ showReaded: false })
+      }
     })
+
     this.keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
       this._keyboardDidShow,
@@ -91,8 +126,121 @@ export default class OnlineChat extends Component {
     );
   }
   componentWillUnmount() {
+    this._isMounted = false;
     this.keyboardDidShowListener.remove();
     this.keyboardDidHideListener.remove();
+    this.sound.unloadAsync()
+    if(this.state.timeTimeout != null){
+      clearTimeout(this.state.timeTimeout)
+    }
+  }
+
+  // NOVA FUNCÇÕES RECORDING AUDIO
+  startRecording = async () => {
+    if(this.state.statusPermi){
+      this.recording = new Audio.Recording();
+  
+      if(this._isMounted){
+        this.setState({ isRecording: true, isRecord: false });
+      }
+      // some of these are not applicable, but are required
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
+        playThroughEarpieceAndroid: true,
+  
+      });
+      try {
+        await this.recording.prepareToRecordAsync(recordingOptions);
+        await this.recording.startAsync();
+        console.log('ESTÁ GRAVANDO')
+      } catch (error) {
+        console.log(error);
+        this.stopRecording();
+      }
+    }
+  }
+
+  stopRecording = async () => {
+    this.setState({ isRecording: false, isRecord: true });
+    try {
+      if(this._isMounted){
+        this.setState({ uri: this.recording.getURI() })
+      }
+      console.log(this.recording.getURI())
+      await this.recording.stopAndUnloadAsync().then((result) => {
+        if(this._isMounted){
+
+          this.setState({ duration: result.durationMillis })
+        }
+      });
+      console.log('PAROU A GRAVAÇÃO')
+    } catch (error) {
+    }
+  }
+
+  playSound(audio) {
+    if (this.state.isPlaying === false) {
+      console.log('TOCOU')
+      const status = {
+        shouldPlay: true
+      };
+      this.sound = new Audio.Sound();
+      if(this._isMounted){
+        this.setState({ isPlaying: true })
+      }
+      let duration = 0
+      this.sound.loadAsync({ uri: audio }, status, false).then((result) => {
+        duration = result.durationMillis 
+      }).then(() => {
+        if(this._isMounted){
+          this.setState({ timeTimeout: setTimeout(() => {this.setState({ isPlaying: false }), this.sound.stopAsync()}, duration) })
+        }
+      })
+    } else {
+      this.stopSound()
+    }
+  }
+  
+  stopSound() {
+    if(this.state.timeTimeout != null){
+      console.log('REMOVEU')
+      clearTimeout(this.state.timeTimeout)
+      this.sound.stopAsync();
+      if(this._isMounted){
+        this.setState({ isPlaying: false })
+      }
+    } 
+  }
+
+  checkPermissions = async () => {
+    const { status } = await Permissions.askAsync(Permissions.AUDIO_RECORDING);
+    if (status === 'granted') {
+      if(this._isMounted){
+        this.setState({ statusPermi: true })
+      }
+    }
+  }
+
+  listenerReaded() {
+    let read = firebase.database().ref(`chat/` + this.getParamData.bookingId + '/readed_driver');
+    read.on('value', readChat => {
+      let readInfo = readChat.val()
+      if (readInfo == false && this.currentScreen && this._isMounted) {
+        firebase.database().ref(`chat/` + this.getParamData.bookingId + '/readed_driver').set(true)
+      }
+    })
+
+    let readChat = firebase.database().ref(`chat/` + this.getParamData.bookingId + '/readed_rider');
+    readChat.on('value', readChat => {
+      let readInfo = readChat.val()
+      if (readInfo) {
+        this.setState({ readed_rider: readInfo })
+      }
+    })
   }
 
   /*gravarAudio = async () => {
@@ -118,6 +266,10 @@ export default class OnlineChat extends Component {
     }
   }
 
+  tocarSom() {
+    console.log('TESTE')
+  }
+
   _keyboardDidHide = (e) => {
     if (this.state.position !== 'absolute') {
       this.setState({
@@ -127,82 +279,140 @@ export default class OnlineChat extends Component {
     }
   }
 
-  sendMessege(inputmessage) {
+  async convertAudioDB() {
+    this.setState({ loading: true })
+    const blob = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        resolve(xhr.response); // when BlobModule finishes reading, resolve with the blob
+      };
+      xhr.onerror = function () {
+        reject(new TypeError('Erro na conversão do áudio'));
+        //this.setState({ loading: false });
+        alert(languageJSON.upload_image_error);
+      };
+      let audioURI = this.recording.getURI()
+      xhr.responseType = 'blob'; // use BlobModule's UriHandler
+      xhr.open('GET', audioURI, true); // fetch the blob from uri in async mode
+      xhr.send(null); // no initial data
+    });
+
+    if ((blob.size / 1000000) > 3) {
+      this.setState({ loading: false }, () => { alert(languageJSON.image_size_error) })
+    }
+    else {
+      var timestamp = new Date().getTime()
+      var imageRef = firebase.storage().ref().child(`chat/audio/` + timestamp + `/`);
+      return imageRef.put(blob).then(() => {
+        blob.close()
+        this.setState({ isRecord: false, isRecording: false })
+        return imageRef.getDownloadURL()
+      }).then((audioURL) => {
+        this.verifyMessage(null, audioURL);
+      }).catch(error => {
+        console.log(error);
+        alert('Ops, tivemos um problema.');
+      });
+    }
+  }
+
+  verifyMessage(inputmessage, audio) {
+    if (inputmessage == '' || inputmessage == undefined || inputmessage == null) {
+      if (audio != undefined || audio != null) {
+        this.sendMessege(null, audio)
+        console.log('POSSUI AUDIO E NÃO MSG')
+      } else {
+        alert("Por favor, digite algo...");
+      }
+    } else {
+      this.sendMessege(inputmessage, null)
+      console.log('POSSUI MSG E NÃO ADUDIO')
+    }
+  }
+
+  sendMessege(inputmessage, audioURL) {
     var today = new Date();
     var time = today.toLocaleTimeString('pt-BR').split(':')[0] + ':' + today.toLocaleTimeString('pt-BR').split(':')[1]
     var dd = String(today.getDate()).padStart(2, '0');
     var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
     var yyyy = today.getFullYear();
-    today = mm + ':' + dd + ':' + yyyy;
+    today = dd + '/' + mm + '/' + yyyy;
 
     let customer = this.state.carbookedInfo.customer;
     let driver = this.state.carbookedInfo.driver
     let totalId = this.state.carbookedInfo.customer + ',' + this.state.carbookedInfo.driver
     this.setState({ id: totalId })
 
-    if (inputmessage == '' || inputmessage == undefined || inputmessage == null) {
-      alert("Por favor, digite algo...");
-    } else {
-      let chat = firebase.database().ref('chat')
-      // if(chat){
-      chat.once('value', chat => {
-        if (chat.val()) {
-          let allChat = chat.val();
-          for (let key in allChat) {
-            if (this.getParamData.bookingId == key) {
-              this.setState({ chat: true })
-            }
+    let chat = firebase.database().ref('chat')
+    chat.once('value', chat => {
+      if (chat.val()) {
+        let allChat = chat.val();
+        for (let key in allChat) {
+          if (this.getParamData.bookingId == key) {
+            this.setState({ chat: true })
           }
-          if (this.state.chat == true) {
+        }
+        if (this.state.chat == true) {
+          firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/' + 'message' + '/' + this.state.id).push({
+            message: inputmessage ? inputmessage : null,
+            audio: audioURL ? audioURL : null,
+            from: this.state.carbookedInfo.driver,
+            type: "msg",
+            msgDate: today,
+            msgTime: time,
+            source: "driver"
+          }).then(() => {
+            this.setState({ readed_rider: false, showReaded: true, loading: false })
+            firebase.database().ref(`chat/` + this.getParamData.bookingId + '/').update({
+              readed_rider: false
+            })
+          })
+          this.sendPushNotification(this.state.carbookedInfo.customer, this.state.carbookedInfo.driver_firstName + ': ' + inputmessage)
+        }
+        else {
+          firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/').update({
+            distance: this.state.carbookedInfo.distance,
+            car: this.state.carbookedInfo.carType,
+            bookingId: this.getParamData.bookingId,
+            readed_rider: false,
+          }).then(() => {
             firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/' + 'message' + '/' + this.state.id).push({
-              message: inputmessage,
+              message: inputmessage ? inputmessage : null,
+              audio: audioURL ? audioURL : null,
               from: this.state.carbookedInfo.driver,
               type: "msg",
               msgDate: today,
               msgTime: time,
               source: "driver"
             })
+            this.setState({ readed_rider: false, showReaded: true, loading: false })
             this.sendPushNotification(this.state.carbookedInfo.customer, this.state.carbookedInfo.driver_firstName + ': ' + inputmessage)
-          }
-          else {
-            firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/').update({
-              distance: this.state.carbookedInfo.distance,
-              car: this.state.carbookedInfo.carType,
-              bookingId: this.getParamData.bookingId
-            }).then(() => {
-              firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/' + 'message' + '/' + this.state.id).push({
-                message: inputmessage,
-                from: this.state.carbookedInfo.driver,
-                type: "msg",
-                msgDate: today,
-                msgTime: time,
-                source: "driver"
-              })
-              this.sendPushNotification(this.state.carbookedInfo.customer, this.state.carbookedInfo.driver_firstName + ': ' + inputmessage)
-            })
-          }
-        } else {
-          firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/').update({
-            distance: this.state.carbookedInfo.distance,
-            car: this.state.carbookedInfo.carType,
-            bookingId: this.getParamData.bookingId
-          }).then(() => {
-            if (this.state.id) {
-              firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/' + 'message' + '/' + this.state.id).push({
-                message: inputmessage,
-                from: this.state.carbookedInfo.driver,
-                type: "msg",
-                msgDate: today,
-                msgTime: time,
-                source: "driver"
-              })
-              this.sendPushNotification(this.state.carbookedInfo.customer, this.state.carbookedInfo.driver_firstName + ': ' + inputmessage)
-            }
           })
         }
-      })
-      this.setState({ inputmessage: "" });
-    }
+      } else {
+        firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/').update({
+          distance: this.state.carbookedInfo.distance,
+          car: this.state.carbookedInfo.carType,
+          bookingId: this.getParamData.bookingId,
+          readed_rider: false,
+        }).then(() => {
+          if (this.state.id) {
+            firebase.database().ref('chat' + '/' + this.getParamData.bookingId + '/' + 'message' + '/' + this.state.id).push({
+              message: inputmessage ? inputmessage : null,
+              audio: audioURL ? audioURL : null,
+              from: this.state.carbookedInfo.driver,
+              type: "msg",
+              msgDate: today,
+              msgTime: time,
+              source: "driver"
+            })
+            this.setState({ readed_rider: false, showReaded: true, loading: false })
+            this.sendPushNotification(this.state.carbookedInfo.customer, this.state.carbookedInfo.driver_firstName + ': ' + inputmessage)
+          }
+        })
+      }
+    })
+    this.setState({ inputmessage: "" });
   }
 
   sendPushNotification(customerUID, msg) {
@@ -215,18 +425,7 @@ export default class OnlineChat extends Component {
     })
   }
   renderItem({ item, index }) {
-    return (
-      item.source == "driver" ?
-        <View style={styles.drivermsgStyle}>
-            <Text style={styles.msgTextStyle}>{item ? item.message : languageJSON.chat_history_not_found}</Text>
-            <Text style={styles.msgTimeStyle}>{item ? item.msgTime : null}</Text>
-        </View>
-        :
-        <View style={styles.riderMsgStyle}>
-          <Text style={styles.riderMsgText}>{item ? item.message : languageJSON.chat_history_not_found}</Text>
-          <Text style={styles.riderMsgTime}>{item ? item.msgTime : null}</Text>
-        </View>
-    );
+
   }
 
   render() {
@@ -234,7 +433,7 @@ export default class OnlineChat extends Component {
       <View style={styles.container}>
         <View style={styles.viewHeader}>
           <View style={styles.bordaIconeVoltar}>
-            <TouchableOpacity onPress={() => { this.props.navigation.goBack() }}>
+            <TouchableOpacity onPress={() => { this.currentScreen = false, this.props.navigation.goBack() }}>
               <Icon
                 name='chevron-left'
                 type='MaterialIcons'
@@ -242,50 +441,151 @@ export default class OnlineChat extends Component {
               />
             </TouchableOpacity>
           </View>
-          <View style={{ flexDirection: 'column', alignItems: 'center' }}>
+          <View style={{ alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20, }}> {this.state.carbookedInfo.firstNameRider}</Text>
           </View>
-          <View style={{ backgroundColor: colors.BLACK, width: 53, justifyContent: 'center', alignItems: 'center', height: 53, position: 'absolute', bottom: 5, right: 10, borderRadius: 100 }}>
+          <View style={{ backgroundColor: colors.BLACK, width: 42, justifyContent: 'center', alignItems: 'center', height: 42, bottom: 5, position: 'absolute', right: 20, borderRadius: 100 }}>
             {this.state.carbookedInfo.imageRider ?
               <Image
                 source={{ uri: this.state.carbookedInfo.firstNameRider }}
-                style={{ width: 50, height: 50, borderRadius: 50, }}
+                style={{ width: 40, height: 40, borderRadius: 50, }}
               />
               :
               <ProfileSVG
-                width={50}
-                height={50}
+                width={40}
+                height={40}
               />
             }
           </View>
         </View>
-        <View style={{flex: 1 }}>
+        <View style={{ flex: 1 }}>
           <FlatList
-            data={this.state.allChat.reverse()}
-            renderItem={this.renderItem}
-            //keyExtractor={(item, index) => index.toString()}
+            data={this.state.allChat}
             inverted
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item, index }) => {
+              return (
+                item.source == "driver" ?
+                  <View style={styles.drivermsgStyle}>
+                    <Text style={styles.msgTextStyle}>{item ? item.message : languageJSON.chat_history_not_found}</Text>
+                    {item.audio ?
+                      <View style={styles.msgTextStyle2}>
+                        <TouchableOpacity
+                        onPress={() => this.playSound(item.audio)}
+                        //disable={this.state.isPlaying}
+                        >
+                          <Icon
+                            name='ios-play'
+                            type='ionicon'
+                            color={colors.BLACK}
+                            size={35}
+                          />
+                          
+                        </TouchableOpacity>
+                      </View>
+                      : null}
+                    <Text style={styles.msgTimeStyle}>{item ? item.msgTime : null}</Text>
+                  </View>
+                  :
+                  <View style={styles.riderMsgStyle}>
+                    <Text style={styles.riderMsgText}>{item ? item.message : languageJSON.chat_history_not_found}</Text>
+                    {item.audio ?
+                      <Text style={styles.riderMsgText}>{item ? item.audio : ''}</Text>
+                      : null}
+                    <Text style={styles.riderMsgTime}>{item ? item.msgTime : null}</Text>
+                  </View>
+              );
+            }}
           />
         </View>
+        {this.state.allChat.length > 0 && this.state.showReaded ?
+          (this.state.readed_rider ?
+            <View style={{ flexDirection: 'row', alignSelf: 'flex-end' }}>
+              <Text style={{ color: colors.GREY2, textAlign: 'right', marginRight: 10, fontFamily: 'Inter-Regular', fontSize: 13 }}>Lida</Text>
+              <View style={{ height: 20, height: 20, alignSelf: 'flex-end', marginRight: 10 }}>
+                <Icon
+                  name='check-circle'
+                  type='feather'
+                  color={colors.DEEPBLUE}
+                  size={20}
+                />
+              </View>
+            </View>
+            :
+            <View style={{ flexDirection: 'row', alignSelf: 'flex-end' }}>
+              <Text style={{ color: colors.GREY2, textAlign: 'right', marginRight: 10, fontFamily: 'Inter-Regular', fontSize: 13 }}>Não lida</Text>
+              <View style={{ height: 20, height: 20, alignSelf: 'flex-end', marginRight: 10 }}>
+                <Icon
+                  name='check'
+                  type='feather'
+                  color={colors.GREY2}
+                  size={20}
+                />
+              </View>
+            </View>
+          )
+          : null}
         <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? 'padding' : 'height'}>
           <View style={styles.footer}>
-            <TextInput
-              value={this.state.inputmessage}
-              style={styles.input}
-              underlineColorAndroid="transparent"
-              placeholder="Converse com o passageiro"
-              onChangeText={text => this.setState({ inputmessage: text })}
-            />
-
-            <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 40, height: 40, borderRadius: 50 }} onPress={() => this.sendMessege(this.state.inputmessage)}>
-              <Icon
-                name='ios-paper-plane'
-                type='ionicon'
-                color={colors.WHITE}
-                size={25}
-                containerStyle={{ paddingEnd: 3 }}
+            {!this.state.isRecording && this.state.isRecord === false ?
+              <TextInput
+                value={this.state.inputmessage}
+                style={styles.input}
+                //autoFocus={true}
+                underlineColorAndroid="transparent"
+                placeholder="Converse com o passageiro"
+                onChangeText={text => this.setState({ inputmessage: text })}
               />
-            </TouchableOpacity>
+              :
+              null}
+
+            {this.state.isRecord ?
+              <Text style={styles.input2}>Áudio gravado!</Text>
+              :
+              null}
+            {this.state.isRecord == false && this.state.isRecording ?
+              <Animatable.Text animation='flash' iterationCount="infinite" useNativeDriver={true} style={styles.input2}>Gravando audio ...</Animatable.Text>
+              : null}
+
+            {!this.state.isRecord ?
+              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 30, backgroundColor: colors.DEEPBLUE, width: 45, height: 45, borderRadius: 50 }} onPressIn={() => this.startRecording()} onPressOut={() => this.stopRecording()}>
+                <Icon
+                  name='ios-mic'
+                  type='ionicon'
+                  color={colors.WHITE}
+                  size={25}
+                />
+              </TouchableOpacity>
+              :
+              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 30, backgroundColor: colors.WHITE, borderWidth: 1, borderColor: colors.BLACK, width: 45, height: 45, borderRadius: 50 }} onPressIn={() => this.setState({ isRecording: false })} onPressOut={() => this.setState({ isRecord: false })}>
+                <Icon
+                  name='ios-trash'
+                  type='ionicon'
+                  color={colors.RED}
+                  size={25}
+                />
+              </TouchableOpacity>}
+
+            {!this.state.isRecording && !this.state.isRecord ?
+              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 45, height: 45, borderRadius: 50 }} onPress={() => this.verifyMessage(this.state.inputmessage, null)}>
+                <Icon
+                  name='ios-paper-plane'
+                  type='ionicon'
+                  color={colors.WHITE}
+                  size={25}
+                  containerStyle={{ paddingEnd: 3 }}
+                />
+              </TouchableOpacity>
+              :
+              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 45, height: 45, borderRadius: 50 }} onPress={() => this.convertAudioDB()}>
+                <Icon
+                  name='ios-checkmark'
+                  type='ionicon'
+                  color={colors.WHITE}
+                  size={45}
+                />
+              </TouchableOpacity>}
+
           </View>
         </KeyboardAvoidingView>
       </View>
@@ -384,17 +684,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: colors.WHITE,
     marginBottom: 20,
-    height: 50,
+    height: 60,
     alignItems: 'center',
-    borderTopWidth: 4,
+    justifyContent: 'center',
+    borderRadius: 10,
+    borderTopWidth: 3,
+    borderTopColor: colors.GREY1,
     borderColor: colors.GREY.background,
   },
   input: {
-    marginEnd: 20,
+    marginEnd: 50,
     marginLeft: 10,
     height: 50,
     fontSize: 18,
-    flex: 1
+    flex: 1,
+  },
+  input2: {
+    //marginEnd: 50,
+    marginLeft: 10,
+    //height: 50,
+    fontSize: 16,
+    color: colors.BLACK,
+    justifyContent: 'center',
+    fontFamily: 'Inter-Medium',
+    flex: 1,
   },
   send: {
     alignSelf: 'center',
@@ -429,6 +742,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#fff"
   },
+  msgTextStyle2: {
+    paddingTop: 4,
+    paddingHorizontal: 15,
+    //textAlign: "right",
+    //fontFamily: 'Inter-Bold',
+    //fontSize: 18,
+    //color: "#fff"
+  },
   msgTimeStyle: {
     paddingHorizontal: 15,
     paddingBottom: 4,
@@ -458,6 +779,14 @@ const styles = StyleSheet.create({
     shadowOffset: { height: 1, width: 0 },
   },
   riderMsgText: {
+    paddingTop: 4,
+    paddingHorizontal: 15,
+    textAlign: "left",
+    fontFamily: 'Inter-Bold',
+    fontSize: 18,
+    color: colors.DEEPBLUE,
+  },
+  riderMsgText2: {
     paddingTop: 4,
     paddingHorizontal: 15,
     textAlign: "left",

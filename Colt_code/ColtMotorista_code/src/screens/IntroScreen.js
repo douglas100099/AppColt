@@ -77,16 +77,17 @@ export default class IntroScreen extends Component {
                 this.state.verificationId,
                 this.state.verificationCode
             );
-            await firebase.auth().signInWithCredential(credential);
-            this.setState({
-                phoneNumber: null,
-                verificationId: null,
-                verificationCode: null
-            });
+            await firebase.auth().signInWithCredential(credential).then(
+                this.setState({
+                    phoneNumber: null,
+                    verificationId: null,
+                    verificationCode: null
+                })
+            )
         } catch (err) {
             alert('Código de verificação inválido');
+            this.setState({ btnContinuar: false, entrando: false })
         }
-        this.setState({ btnContinuar: false, entrando: false })
     }
 
     loading() {
@@ -115,6 +116,7 @@ export default class IntroScreen extends Component {
             verificationId: null,
             verificationCode: null,
             loaderBtn: false,
+            entrando: false,
         });
     }
 
@@ -142,7 +144,7 @@ export default class IntroScreen extends Component {
                     </View>
                 </View>
                 <View style={styles.viewMainInput}>
-                    {this.state.verificationId ? null :
+                    {this.state.verificationId && this.state.entrando === false ? null :
                     <View style={styles.viewInput}>
                         <Text style={styles.txtInput3}>Insira seu numero</Text>
                         <View style={styles.inputMobile}>
@@ -174,7 +176,7 @@ export default class IntroScreen extends Component {
                             </View>
                         </View>
                         : null}
-                    {this.state.verificationId ? null :
+                    {this.state.verificationId && this.state.entrando === false ? null :
                         <TouchableOpacity
                             onPress={() => this.onPressLogin()}
                             style={styles.materialButtonDark}

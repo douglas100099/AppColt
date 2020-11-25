@@ -13,15 +13,15 @@ export const fetchDriver =  () => dispatch => {
     bookingRef.on("value", snapshot => {
       if (snapshot.val()) {
           const mainArr = snapshot.val();
-          var monthsName = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+          var monthsName = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
           var renderobj = {};
            Object.keys(mainArr).map(j => {
 
-            if(mainArr[j].status === 'END' && mainArr[j].driver_share !== undefined){
+            if(mainArr[j].status === 'END' && mainArr[j].pagamento.driver_share !== undefined){
               let bdt = new Date(mainArr[j].tripdate);
               let uniqueKey = bdt.getFullYear()+'_'+bdt.getMonth()+'_'+mainArr[j].driver;
               if(renderobj[uniqueKey] && renderobj[uniqueKey].driverShare>0){
-                  renderobj[uniqueKey].driverShare = renderobj[uniqueKey].driverShare + mainArr[j].driver_share;
+                  renderobj[uniqueKey].driverShare = renderobj[uniqueKey].driverShare + mainArr[j].pagamento.driver_share;
               }else{
                   renderobj[uniqueKey]={};
                   renderobj[uniqueKey]['dated'] = mainArr[j].tripdate;
@@ -29,7 +29,7 @@ export const fetchDriver =  () => dispatch => {
                   renderobj[uniqueKey]['month'] = bdt.getMonth();
                   renderobj[uniqueKey]['monthsName'] = monthsName[bdt.getMonth()];
                   renderobj[uniqueKey]['driverName'] = mainArr[j].driver_name;
-                  renderobj[uniqueKey]['driverShare'] = mainArr[j].driver_share;
+                  renderobj[uniqueKey]['driverShare'] = mainArr[j].pagamento.driver_share;
                   renderobj[uniqueKey]['driverVehicleNo'] = mainArr[j].vehicle_number;
                   renderobj[uniqueKey]['driverUId'] = mainArr[j].driver;
                   renderobj[uniqueKey]['uniqueKey'] = uniqueKey; 

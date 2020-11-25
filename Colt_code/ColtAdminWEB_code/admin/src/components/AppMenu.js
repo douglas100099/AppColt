@@ -33,8 +33,8 @@ function AppMenu() {
 
     return (
     <div>
-      <div style={{display: 'flex', justifyContent: 'center',backgroundColor:'#444444'}}>
-        <img style={{marginTop:'20px',marginBottom:'20px',width:'120px',height:'120px'}} src={logo} alt="Logo" />
+      <div style={{display: 'flex', justifyContent: 'center',backgroundColor:'#1152FD', height: 200}}>
+        <img style={{marginTop:'20px',marginBottom:'20px',width:'132px',height:'50px', alignSelf: 'center'}} src={logo} alt="Logo" />
       </div>
       <Divider/>
       <MenuList>
@@ -60,7 +60,13 @@ function AppMenu() {
           <ListItemIcon>
             <PeopleIcon />
           </ListItemIcon>
-          <Typography variant="inherit">{languageJson.user}</Typography>
+          <Typography variant="inherit">Motoristas</Typography>
+        </MenuItem>
+        <MenuItem component={Link} to="/riders">
+          <ListItemIcon>
+            <PeopleIcon />
+          </ListItemIcon>
+          <Typography variant="inherit">Passageiros</Typography>
         </MenuItem>
         <MenuItem component={Link} to="/cartypes">
           <ListItemIcon>
@@ -108,7 +114,7 @@ function AppMenu() {
           <ListItemIcon>
             <ExitIcon />
           </ListItemIcon>
-          <Typography variant="inherit">{languageJson.logout}</Typography>
+          <Typography variant="inherit" color='error'>{languageJson.logout}</Typography>
         </MenuItem>
       </MenuList>
     </div>

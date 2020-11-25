@@ -1,8 +1,7 @@
 import React from 'react';
-import { Text, View, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal, Image, Platform, Alert, ActivityIndicator } from 'react-native';
+import { Text, View, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal, Image, Platform, Alert, ActivityIndicator, AsyncStorage } from 'react-native';
 import { Icon } from 'react-native-elements';
-import Polyline from '@mapbox/polyline';
-import MapView, { PROVIDER_GOOGLE, Marker, AnimatedRegion } from 'react-native-maps';
+import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import { colors } from '../common/theme';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
@@ -14,25 +13,21 @@ import distanceCalc from '../common/distanceCalc';
 import { Pulse } from 'react-native-animated-spinkit'
 import Geocoder from 'react-native-geocoding';
 import { google_map_key } from '../common/key';
-import languageJSON from '../common/language';
 import { Audio } from 'expo-av';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Battery from 'expo-battery';
 import * as Animatable from 'react-native-animatable';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
-import Easing from 'react-native-reanimated';
 import * as Linking from 'expo-linking';
 import { getPixelSize } from '../constants/utils';
 import Directions from "../components/Directions";
-import { customMapStyle } from "../../mapstyle.json";
+import customMapStyle from "../../mapstyle.json";
 
 import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
 import CellphoneSVG from '../SVG/CellphoneSVG';
 import MarkerPicSVG from '../SVG/MarkerPicSVG';
-import { useAssets } from 'expo-asset';
-
 Geocoder.init(google_map_key);
 
 const screen = Dimensions.get('window');
@@ -45,6 +40,7 @@ const HEADING = 0;
 
 export default class DriverTripAccept extends React.Component {
 
+    myAbort = new AbortController()
     _isMounted = false;
 
     constructor(props) {
@@ -65,6 +61,7 @@ export default class DriverTripAccept extends React.Component {
             curUid: '',
             id: 0,
             loader: false,
+            hideGanhos: true,
             distance: 0,
             isBlocked: false,
             loaderBtn: false,
@@ -109,25 +106,49 @@ export default class DriverTripAccept extends React.Component {
         const checkarBlock = firebase.database().ref('users/' + this.state.curUid + '/');
         checkarBlock.once('value', customerData => {
             let checkBlock = customerData.val()
-            if (checkBlock.blocked) {
-                this.setState({
-                    isBlocked: checkBlock.blocked.isBlocked,
-                    reason: checkBlock.blocked.isBlocked
-                })
-                const now = new Date(); // Data de hoje
-                const past = new Date(checkBlock.blocked.data); // Outra data no passado
-                const diff = Math.abs(now.getTime() - past.getTime()); // Subtrai uma data pela outra
-                const hours = Math.ceil(diff / (1000 * 60 * 60)); // Divide o total pelo total de milisegundos correspondentes a 1 dia. (1000 milisegundos = 1 segundo).
-                if (checkBlock.blocked && hours == 24) {
-                    alert(checkBlock.blocked.motivo + ' Tempo restante: ' + (24 - hours) + ' Horas')
-                } else {
-                    firebase.database().ref(`/users/` + this.state.curUid + '/blocked').remove().then(
-                        firebase.database().ref(`/users/` + this.state.curUid + '/canceladasRecentes').update({
-                            count: 0,
-                            countRecentes: 0,
+            if (checkBlock.blocked_by_payment || checkBlock.blocked) {
+                if (checkBlock.blocked) {
+                    if(this._isMounted){
+                        this.setState({
+                            isBlocked: checkBlock.blocked.isBlocked,
+                            reason: checkBlock.blocked.isBlocked
                         })
-                    )
-                    alert('Motorista desbloqueado, fique online novamente.')
+                    }
+                    const now = new Date(); // Data de hoje
+                    const past = new Date(checkBlock.blocked.data); // Outra data no passado
+                    const diff = Math.abs(now.getTime() - past.getTime()); // Subtrai uma data pela outra
+                    const hours = Math.ceil(diff / (1000 * 60 * 60)); // Divide o total pelo total de milisegundos correspondentes a 1 dia. (1000 milisegundos = 1 segundo).
+                    if (checkBlock.blocked && hours <= 3) {
+                        alert(checkBlock.blocked.motivo + ' Tempo restante: ' + (3 - hours) + ' Horas')
+                    } else {
+                        firebase.database().ref(`/users/` + this.state.curUid + '/blocked').remove().then(
+                            firebase.database().ref(`/users/` + this.state.curUid + '/canceladasRecentes').update({
+                                count: 0,
+                                countRecentes: 0,
+                            })
+                        )
+                        alert('Motorista desbloqueado, fique online novamente.')
+                    }
+                } else {
+                    let dataFormatada = new Date(checkBlock.blocked_by_payment.date_blocked),
+                    dia = dataFormatada.getDate().toString().padStart(2, '0'),
+                    mes = (dataFormatada.getMonth() + 1).toString().padStart(2, '0'), //+1 pois no getMonth Janeiro começa com zero.
+                    ano = dataFormatada.getFullYear();
+                    if (checkBlock.blocked_by_payment) {
+                        Alert.alert(
+                            "Pagamento pendente",
+                            "Você foi bloqueado. Não identificamos seu pagamento da taxa da Colt com vencimento em: " +dia+'/'+mes+'/'+ano+ " , caso tenha realizado o pagamento entre em contato com o suporte.",
+                            [
+                                {
+                                    text: "Suporte",
+                                    onPress: () => Linking.openURL('https://wa.me/5532998684398'),
+                                    style: "cancel"
+                                },
+                                { text: "OK", onPress: () => console.log("OK Pressed") }
+                            ],
+                            { cancelable: false }
+                        )
+                    }
                 }
             } else {
                 if (this.state.statusDetails == true) {
@@ -145,7 +166,9 @@ export default class DriverTripAccept extends React.Component {
                             firebase.database().ref(`/users/` + this.state.curUid + '/').update({
                                 driverActiveStatus: true
                             }).then(() => {
-                                this.setState({ alertIsOpen: false, requestPermission: false });
+                                if(this._isMounted){
+                                    this.setState({ alertIsOpen: false, requestPermission: false });
+                                }
                                 //clearInterval(this.state.intervalCheckGps);
                             })
                         } else {
@@ -163,8 +186,10 @@ export default class DriverTripAccept extends React.Component {
     }
 
     async requestPermission() {
-        this.setState({ requestPermission: true })
-        await Location.requestPermissionsAsync();
+        if(this._isMounted){
+            this.setState({ requestPermission: true })
+            await Location.requestPermissionsAsync();
+        }
     }
 
     photoPerfil = () => {
@@ -223,20 +248,30 @@ export default class DriverTripAccept extends React.Component {
 
     playSound() {
         this.setState({ isSound: true })
-        this.sound.setIsLoopingAsync(true);
-        this.sound.setVolumeAsync(1);
-        this.sound.playAsync();
+        this.sound.playAsync().then((result) => {
+            if (result.isLoaded) {
+                this.sound.setIsLoopingAsync(true)
+                this.sound.setVolumeAsync(1)
+            }
+        }).catch((err) => {
+            console.log(err)
+            alert('Tivemos um problema com o som.')
+        })
         console.log('PLAY SOUND')
     }
 
+
     stopSound() {
-        this.setState({ isSound: false })
-        this.sound.stopAsync();
-        console.log('STOP SOUND')
+        if(this._isMounted){
+            this.setState({ isSound: false })
+            this.sound.stopAsync();
+            console.log('STOP SOUND')
+        }
     }
 
 
-    async componentWillUnmount() {
+    componentWillUnmount() {
+        this.myAbort.abort()
         this._isMounted = false
         if (this.location != undefined) {
             this.location.remove()
@@ -253,7 +288,9 @@ export default class DriverTripAccept extends React.Component {
         const batteryLevel = await Battery.getBatteryLevelAsync();
         this.setState({ batteryLevel });
         this._subscription = Battery.addBatteryLevelListener(({ batteryLevel }) => {
-            this.setState({ batteryLevel });
+            if(this._isMounted){
+                this.setState({ batteryLevel });
+            }
         });
         if (this.state.batteryLevel) {
             if (this.state.batteryLevel <= 0.10) {
@@ -274,37 +311,6 @@ export default class DriverTripAccept extends React.Component {
         this._subscription = null;
     }
 
-    // find your origin and destination point coordinates and pass it to our method.
-    /*async getDirections(startLoc, destinationLoc, pickuplat, pickuplng, droplat, droplng) {
-        if (this._isMounted) {
-            try {
-                let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=${google_map_key}`)
-                let respJson = await resp.json();
-                let points = Polyline.decode(respJson.routes[0].overview_polyline.points);
-                let coords = points.map((point, index) => {
-                    return {
-                        latitude: point[0],
-                        longitude: point[1]
-                    }
-                })
-                this.setState({ coords: coords }, () => {
-                    if (this.state.chegouCorrida) {
-                        this.map2.fitToCoordinates([{ latitude: pickuplat, longitude: pickuplng }, { latitude: droplat, longitude: droplng }], {
-                            edgePadding: { top: 80, right: 65, bottom: 50, left: 50 },
-                            animated: true,
-                        })
-                        this.setState({ acceptBtnDisable: false })
-                    }
-                })
-                return coords
-            }
-            catch (error) {
-                alert('Ops, tivemos um problema ao marcar a direção no mapa.')
-                return error
-            }
-        }
-    }*/
-
     _getInfoEraning = async () => {
         try {
             let userUid = firebase.auth().currentUser.uid;
@@ -322,6 +328,19 @@ export default class DriverTripAccept extends React.Component {
                         this.setState({ myBooking: myBookingarr.reverse() }, () => {
                             this.eraningCalculation()
                         })
+                    }
+                }
+            })
+            await AsyncStorage.getItem('onOffHide', (err, result) => {
+                if (result) {
+                    if (result == 'ON') {
+                        if(this._isMounted){
+                            this.setState({ hideGanhos: 'ON' })
+                        }
+                    } else {
+                        if(this._isMounted){
+                            this.setState({ hideGanhos: 'OFF' })
+                        }
                     }
                 }
             })
@@ -393,9 +412,10 @@ export default class DriverTripAccept extends React.Component {
                         longitudeDelta: 0.045,
                         angle: coords.heading,
                     };
-
-                    this.setState({ region: region });
-                    this.setLocationDB(region.latitude, region.longitude, region.angle)
+                    if(this._isMounted){
+                        this.setState({ region: region });
+                        this.setLocationDB(region.latitude, region.longitude, region.angle)
+                    }
                 },
                 error => console.log(error)
             );
@@ -413,7 +433,7 @@ export default class DriverTripAccept extends React.Component {
     setLocationDB(lat, lng, angle) {
         let uid = firebase.auth().currentUser.uid;
         var latlng = lat + ',' + lng;
-        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
+        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, {signal: this.myAbort.signal})
             .then((response) => response.json())
             .then((responseJson) => {
                 if (responseJson.results[0] && responseJson.results[0].formatted_address) {
@@ -427,7 +447,6 @@ export default class DriverTripAccept extends React.Component {
                 }
             }).catch((error) => {
                 console.error(error);
-                alert('Ops, tivemos um problema.')
             });
     }
 
@@ -481,12 +500,12 @@ export default class DriverTripAccept extends React.Component {
                         waiting_riderData[key].bookingId = key;
                         jobs.push(waiting_riderData[key]);
 
-                        /*this.getDirections('"' + waiting_riderData[key].pickup.lat + ',' + waiting_riderData[key].pickup.lng + '"', '"' + this.state.region.latitude + ',' + this.state.region.longitude + '"',
-                            waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng, this.state.region.latitude, this.state.region.longitude)*/
                         var location1 = [waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng];
                         var location2 = [this.state.region.latitude, this.state.region.longitude];
                         var distancee = distanceCalc(location1, location2);
-                        this.setState({ distance: distancee, acceptBtnDisable: false })
+                        if(this._isMounted){
+                            this.setState({ distance: distancee, acceptBtnDisable: false })
+                        }
                     }
                     this.setState({ chegouCorrida: true })
                     if (this.state.isSound == false) {
@@ -494,7 +513,9 @@ export default class DriverTripAccept extends React.Component {
                         //Linking.openURL('coltappmotorista://');
                     }
                 } else if (this.state.chegouCorrida == true) {
+                    if(this._isMounted){
                     this.setState({ chegouCorrida: false })
+                    }
                     if (this.state.isSound) {
                         this.stopSound()
                     }
@@ -506,9 +527,6 @@ export default class DriverTripAccept extends React.Component {
                 }
                 this.setState({ tasklist: jobs.reverse() });
                 this.jobs = jobs;
-                /*if(this.state.chegouCorrida){
-                    setTimeout(() => {this.circularProgress.animate(100, 14000, Easing.quad)},1000);
-                }*/
             });
         }
     }
@@ -699,6 +717,33 @@ export default class DriverTripAccept extends React.Component {
         this.map.animateToRegion(this.state.region, 500)
     }
 
+    hideGanhos = async () => {
+        this.setState({ loaderBtn: true })
+        try {
+            await AsyncStorage.getItem('onOffHide', (err, result) => {
+                if (result) {
+                    if (result == 'ON') {
+                        AsyncStorage.setItem('onOffHide', 'OFF').then(() => {
+                            if(this._isMounted){
+                                this.setState({ hideGanhos: 'OFF' })
+                            }
+                        })
+                    } else {
+                        AsyncStorage.setItem('onOffHide', 'ON').then(() => {
+                            if(this._isMounted){
+                                this.setState({ hideGanhos: 'ON' })
+                            }
+                        })
+                    }
+                } else {
+                    AsyncStorage.setItem('onOffHide', 'OFF')
+                }
+            })
+        } catch {
+            console.log('error')
+        }
+        this.setState({ loaderBtn: false })
+    }
 
     render() {
         const { region } = this.state;
@@ -753,6 +798,7 @@ export default class DriverTripAccept extends React.Component {
                                                 scrollEnabled={false}
                                                 showsCompass={false}
                                                 showsScale={false}
+                                                customMapStyle={customMapStyle}
                                                 showsMyLocationButton={false}
                                                 Region={{
                                                     latitude: this.state.region.latitude,
@@ -766,7 +812,7 @@ export default class DriverTripAccept extends React.Component {
                                                     ref={marker => { this.marker = marker }}
                                                     coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
                                                     anchor={{ x: 0.5, y: 0.5 }}
-                                                    style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
+                                                    style={{ transform: [{ rotate: this.state.region.angle ? this.state.region.angle + "deg" : '0' + "deg" }] }}
                                                 >
                                                     <CellphoneSVG
                                                         width={35}
@@ -935,7 +981,7 @@ export default class DriverTripAccept extends React.Component {
                                             longitude: region ? this.state.region.longitude : 0
                                         }}
                                         anchor={{ x: 0.5, y: 0.5 }}
-                                        style={{ transform: [{ rotate: this.state.region.angle + "deg" }] }}
+                                        style={{ transform: [{ rotate: this.state.region.angle ? this.state.region.angle + "deg" : '0' + "deg" }] }}
                                     >
                                         <CellphoneSVG
                                             height={35}
@@ -952,13 +998,24 @@ export default class DriverTripAccept extends React.Component {
 
 
                                 {/* BOTÃO GANHOS CENTRO */}
-                                <TouchableOpacity style={styles.touchaGanhos} disabled={this.state.loaderBtn} onPress={() => { this.carteira() }}>
-                                    {this.state.animatedGrana && this.state.today > 0 ?
-                                        <Animatable.Text useNativeDriver={true} delay={1100} onAnimationEnd={() => this.setState({ animatedGrana: false })} animation="fadeInLeft" style={{ position: 'absolute', left: 5, color: '#49c33b', fontSize: 22, fontFamily: 'Inter-Bold' }}>+</Animatable.Text>
-                                        :
-                                        null}
-                                    <Animatable.Text useNativeDriver={true} animation="bounceInLeft" style={styles.touchaValor}>R$ {this.state.today ? parseFloat(this.state.today).toFixed(2) : '0'}</Animatable.Text>
-                                </TouchableOpacity>
+                                {this.state.hideGanhos == 'ON' ?
+                                    <TouchableOpacity style={styles.touchaGanhos} disabled={this.state.loaderBtn} onPress={() => { this.carteira() }} onLongPress={() => { this.hideGanhos() }} >
+                                        {this.state.animatedGrana && this.state.today > 0 ?
+                                            <Animatable.Text useNativeDriver={true} delay={1100} onAnimationEnd={() => this.setState({ animatedGrana: false })} animation="fadeInLeft" style={{ position: 'absolute', left: 5, color: '#49c33b', fontSize: 22, fontFamily: 'Inter-Bold' }}>+</Animatable.Text>
+                                            :
+                                            null}
+                                        <Animatable.Text useNativeDriver={true} animation="bounceInLeft" style={styles.touchaValor}>R$ {this.state.today ? parseFloat(this.state.today).toFixed(2) : '0'}</Animatable.Text>
+                                    </TouchableOpacity>
+                                    :
+                                    <TouchableOpacity style={styles.touchaGanhos} disabled={this.state.loaderBtn} onPress={() => { this.carteira() }} onLongPress={() => { this.hideGanhos() }} >
+                                        <Icon
+                                            name='ios-eye-off'
+                                            type='ionicon'
+                                            color={colors.WHITE}
+                                            size={25}
+                                        />
+                                    </TouchableOpacity>
+                                }
 
                                 {/* BOTÃO FOTOS */}
                                 <TouchableOpacity style={styles.touchaFoto} disabled={this.state.loaderBtn} onPress={() => { this.photoPerfil() }}>

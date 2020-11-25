@@ -56,7 +56,6 @@ export class AuthLoadingScreen extends React.Component {
     this._bootstrapAsync();
   }
 
-
   async StartBackgroundLocation() {
     const { status } = await Location.requestPermissionsAsync();
     if (status === 'granted') {
@@ -141,23 +140,17 @@ export class AuthLoadingScreen extends React.Component {
                   this.props.navigation.navigate('BookingCancel');
                 }
               }
-              else {
+              else if (userData.val().usertype == 'driver' && userData.val().approved == false) {
                 const settings = firebase.database().ref('settings');
                 settings.once('value', settingsData => {
                   if (settingsData.val() && settingsData.val().driver_approval) {
-                    firebase.auth().signOut();
-                    this.props.navigation.navigate("Intro");
-                    alert(languageJSON.driver_account_approve_err);
-                  }
-                  else {
-                    firebase.database().ref('users/' + user.uid).update({
-                      approved: true,
-                      driverActiveStatus: false,
-                      queue: false,
-                    });
-                    this.props.navigation.navigate("DriverRoot");
+                    this.props.navigation.navigate("Waiting");
                   }
                 });
+              } else {
+                firebase.auth().signOut();
+                this.props.navigation.navigate("Intro");
+                alert('Essa não é uma conta de motorista.');
               }
             } else {
               var data = {};
@@ -194,6 +187,7 @@ export class AuthLoadingScreen extends React.Component {
           });
         }
       } else {
+        console.log('navegou intro')
         this.props.navigation.navigate('Intro');
       }
     })

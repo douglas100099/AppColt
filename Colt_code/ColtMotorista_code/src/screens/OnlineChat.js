@@ -80,6 +80,7 @@ export default class OnlineChat extends Component {
       isPlaying: false,
       duration: 0,
       timeTimeout: null,
+      isloaded: false,
     };
   }
 
@@ -109,11 +110,12 @@ export default class OnlineChat extends Component {
         }
 
       }
-      this.setState({ allChat: allMesseges.reverse() })
       this.listenerReaded();
       if (allMesseges.length > 0 && allMesseges[allMesseges.length - 1].source == 'rider') {
         this.setState({ showReaded: false })
+        console.log('ENTROU AQUI')
       }
+      this.setState({ allChat: allMesseges.reverse() })
     })
 
     this.keyboardDidShowListener = Keyboard.addListener(
@@ -129,7 +131,10 @@ export default class OnlineChat extends Component {
     this._isMounted = false;
     this.keyboardDidShowListener.remove();
     this.keyboardDidHideListener.remove();
-    this.sound.unloadAsync()
+    if(this.sound && this.state.isloaded){
+      this.sound.unloadAsync()
+      console.log('STOP AUDIO')
+    }
     if(this.state.timeTimeout != null){
       clearTimeout(this.state.timeTimeout)
     }
@@ -147,7 +152,7 @@ export default class OnlineChat extends Component {
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
-        playsInSilentModeIOS: true,
+        playsInSilentModeIOS: false,
         shouldDuckAndroid: true,
         interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
         playThroughEarpieceAndroid: true,
@@ -194,7 +199,8 @@ export default class OnlineChat extends Component {
       }
       let duration = 0
       this.sound.loadAsync({ uri: audio }, status, false).then((result) => {
-        duration = result.durationMillis 
+        duration = result.durationMillis;
+        this.setState({ isloaded: result.isLoaded });
       }).then(() => {
         if(this._isMounted){
           this.setState({ timeTimeout: setTimeout(() => {this.setState({ isPlaying: false }), this.sound.stopAsync()}, duration) })
@@ -470,18 +476,21 @@ export default class OnlineChat extends Component {
                     <Text style={styles.msgTextStyle}>{item ? item.message : languageJSON.chat_history_not_found}</Text>
                     {item.audio ?
                       <View style={styles.msgTextStyle2}>
-                        <TouchableOpacity
-                        onPress={() => this.playSound(item.audio)}
-                        //disable={this.state.isPlaying}
-                        >
-                          <Icon
-                            name='ios-play'
-                            type='ionicon'
-                            color={colors.BLACK}
-                            size={35}
-                          />
-                          
-                        </TouchableOpacity>
+                        <View>
+                          <TouchableOpacity
+                          onPress={() => this.playSound(item.audio)}
+                          disable={this.state.isPlaying}
+                          style={{ height: 40, width: 40,backgroundColor: colors.WHITE, elevation: 4, borderRadius: 50, justifyContent:'center', alignItems: 'center' }}
+                          >
+                            <Icon
+                              name='ios-play'
+                              type='ionicon'
+                              color={colors.DEEPBLUE}
+                              size={35}
+                            />
+                          </TouchableOpacity>
+                        </View>
+                        <View style={{ height: 30, width: 85, justifyContent: 'center' }}></View>
                       </View>
                       : null}
                     <Text style={styles.msgTimeStyle}>{item ? item.msgTime : null}</Text>
@@ -567,7 +576,7 @@ export default class OnlineChat extends Component {
               </TouchableOpacity>}
 
             {!this.state.isRecording && !this.state.isRecord ?
-              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 45, height: 45, borderRadius: 50 }} onPress={() => this.verifyMessage(this.state.inputmessage, null)}>
+              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 45, height: 45, borderRadius: 50 }} disabled={this.state.loading} onPress={() => this.verifyMessage(this.state.inputmessage, null)}>
                 <Icon
                   name='ios-paper-plane'
                   type='ionicon'
@@ -577,7 +586,7 @@ export default class OnlineChat extends Component {
                 />
               </TouchableOpacity>
               :
-              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 45, height: 45, borderRadius: 50 }} onPress={() => this.convertAudioDB()}>
+              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 45, height: 45, borderRadius: 50 }} disabled={this.state.loading} onPress={() => this.convertAudioDB()}>
                 <Icon
                   name='ios-checkmark'
                   type='ionicon'
@@ -743,8 +752,16 @@ const styles = StyleSheet.create({
     color: "#fff"
   },
   msgTextStyle2: {
-    paddingTop: 4,
-    paddingHorizontal: 15,
+    //paddingBottom: 4,
+    //paddingHorizontal: 5,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    margin: 5,
+    backgroundColor: colors.GREY3,
+    borderBottomLeftRadius: 50,
+    borderBottomRightRadius: 15,
+    borderTopRightRadius: 15,
+    borderTopLeftRadius: 50,
     //textAlign: "right",
     //fontFamily: 'Inter-Bold',
     //fontSize: 18,

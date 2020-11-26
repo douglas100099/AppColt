@@ -112,7 +112,10 @@ export default class DriverStartTrip extends React.Component {
 
     componentDidMount() {
         this._isMounted = true
-        this.currentScreen = true
+        const { navigation } = this.props;
+        this.focusListener = navigation.addListener('didFocus', () => {
+            this.currentScreen = true
+        });
         this.getCancelReasons()
         this.checkNewMsg()
         this.sound = new Audio.Sound()
@@ -125,6 +128,7 @@ export default class DriverStartTrip extends React.Component {
     componentWillUnmount() {
         this.myAbort.abort()
         this._isMounted = false;
+        this.focusListener.remove();
         if (this.location != undefined) {
             console.log('REMOVEU O WATCH STARTTRIP')
             this.location.remove()
@@ -139,7 +143,11 @@ export default class DriverStartTrip extends React.Component {
             if(snap.val()){
                 let chatData = snap.val()
                 if(chatData.readed_driver === false && chatData.notify_driver === false && this.currentScreen){
+                    console.log('ENTROU AQUI')
+                    console.log(this.state.isPlaying)
+                    console.log('qual foi irmão')
                     if(this.state.isPlaying === false){
+                        console.log('ENTROU pra mandar')
                         var duration = 0
                         this.sound.playAsync().then((result) => {
                             if(this._isMounted){

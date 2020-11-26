@@ -114,7 +114,7 @@ export default class OnlineChat extends Component {
       this.listenerReaded();
       if (allMesseges.length > 0 && allMesseges[allMesseges.length - 1].source == 'rider') {
         this.setState({ showReaded: false })
-        console.log('ENTROU AQUI')
+        //console.log('ENTROU AQUI')
       }
       this.setState({ allChat: allMesseges.reverse() })
     })
@@ -450,7 +450,7 @@ export default class OnlineChat extends Component {
           <View style={{ backgroundColor: colors.BLACK, width: 42, justifyContent: 'center', alignItems: 'center', height: 42, bottom: 5, position: 'absolute', right: 20, borderRadius: 100 }}>
             {this.state.carbookedInfo.imageRider ?
               <Image
-                source={{ uri: this.state.carbookedInfo.firstNameRider }}
+                source={{ uri: this.state.carbookedInfo.imageRider }}
                 style={{ width: 40, height: 40, borderRadius: 50, }}
               />
               :

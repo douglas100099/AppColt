@@ -89,10 +89,14 @@ export default class SideMenu extends React.Component {
 
     //sign out and clear all async storage
     async signOut() {
-        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/pushToken').remove();
-        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/userPlatform').remove();
-        AsyncStorage.clear();
-        firebase.auth().signOut();
+        if( !this.state.disableSigOut  ){
+            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/pushToken').remove();
+            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/userPlatform').remove();
+            AsyncStorage.clear();
+            firebase.auth().signOut();
+        }else {
+            alert("Você possui uma corrida em andamento!")
+        }
     }
 
     //CHECKING TRIP END OR START
@@ -107,6 +111,9 @@ export default class SideMenu extends React.Component {
                         let bookingData = data['my-booking']
                         for (key in bookingData) {
                             bookingData[key].bookingKey = key
+                            /*if( bookingData[key].status === 'START' || bookingData[key].status === 'ACCEPTED' ){
+                                this.setState({ disableSigOut: true })
+                            }*/
                             if (bookingData[key].pagamento.payment_status) {
                                 if (bookingData[key].pagamento.payment_status === "PAID" && bookingData[key].status === 'END' 
                                 && bookingData[key].skip != true && !bookingData[key].rated_by_rider && bookingData[key].paymentstart != true ) {
@@ -141,6 +148,7 @@ export default class SideMenu extends React.Component {
                             if (this.state.settings.wallet == false && item.navigationName == 'wallet'  ) {
                                 return null;
                             }else{
+                                
                                 return(
                                 <TouchableOpacity
                                     onPress={

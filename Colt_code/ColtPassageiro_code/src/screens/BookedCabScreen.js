@@ -610,7 +610,7 @@ export default class BookedCabScreen extends React.Component {
                             width={120}
                             height={190}
                             style={{
-                                position: 'absolute', elevation: 3,
+                                position: 'absolute',
                                 shadowColor: '#000',
                                 shadowOffset: { x: 0, y: 5 },
                                 shadowOpacity: 0.1,

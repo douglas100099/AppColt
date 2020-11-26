@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
         color: colors.BLACK,
         fontFamily: 'Inter-Regular',
         paddingEnd: 20,
-        fontSize: 15,
+        fontSize: 14,
         alignSelf: 'center',
     },
     dropStyle: {
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
         marginBottom: 20,
         paddingLeft: 10,
-        paddingEnd: 20,
+        paddingEnd: 30,
     },
     drpIconStyle: {
         color: colors.RED,
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     dropPlaceStyle: {
         color: colors.BLACK,
         fontFamily: 'Inter-Regular',
-        fontSize: 15,
+        fontSize: 14,
         alignSelf: 'center',
     },
     logoStyle: {

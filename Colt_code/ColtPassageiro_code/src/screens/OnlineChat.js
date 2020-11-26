@@ -19,8 +19,10 @@ import * as firebase from 'firebase'
 import { Audio, AVPlaybackStatus } from 'expo-av';
 import languageJSON from '../common/language';
 var { height, width } = Dimensions.get('window');
+import * as Permissions from 'expo-permissions';
 import { RequestPushMsg } from '../common/RequestPushMsg';
 import AvatarUser from "../../assets/svg/AvatarUser";
+import * as Animatable from 'react-native-animatable';
 
 // DOUG PASSOU POR AQUI NA SURDINA
 const recordingOptions = {
@@ -41,6 +43,7 @@ const recordingOptions = {
     numberOfChannels: 1,
     bitRate: 128000,
     linearPCMBitDepth: 16,
+    playsInSilentModeIOS: true,
     linearPCMIsBigEndian: false,
     linearPCMIsFloat: false,
   },
@@ -155,7 +158,7 @@ export default class OnlineChat extends Component {
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
-        playsInSilentModeIOS: false,
+        playsInSilentModeIOS: true,
         shouldDuckAndroid: true,
         interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
         playThroughEarpieceAndroid: true,
@@ -255,7 +258,7 @@ export default class OnlineChat extends Component {
       xhr.onerror = function () {
         reject(new TypeError('Erro na conversão do áudio'));
         //this.setState({ loading: false });
-        alert(languageJSON.upload_image_error);
+        alert("ERROR 1");
       };
       let audioURI = this.recording.getURI()
       xhr.responseType = 'blob'; // use BlobModule's UriHandler
@@ -264,7 +267,7 @@ export default class OnlineChat extends Component {
     });
 
     if ((blob.size / 1000000) > 3) {
-      this.setState({ loading: false }, () => { alert(languageJSON.image_size_error) })
+      this.setState({ loading: false }, () => { alert("ERROR 2") })
     }
     else {
       var timestamp = new Date().getTime()
@@ -511,9 +514,9 @@ export default class OnlineChat extends Component {
                   </View>
                   :
                   <View style={styles.riderMsgStyle}>
-                    <Text style={styles.riderMsgText2}>{item ? item.message : languageJSON.chat_not_found}</Text>
+                    <Text style={styles.riderMsgText}>{item ? item.message : languageJSON.chat_not_found}</Text>
                     {item.audio ?
-                      <View style={styles.msgTextStyle2}>
+                      <View style={styles.riderMsgText2}>
                         <View>
                           <TouchableOpacity
                             onPress={() => this.playSound(item.audio)}
@@ -568,23 +571,67 @@ export default class OnlineChat extends Component {
 
         <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? 'padding' : 'height'}>
           <View style={styles.footer}>
-            <TextInput
-              value={this.state.inputmessage}
-              style={styles.input}
-              underlineColorAndroid="transparent"
-              placeholder={languageJSON.chat_input_title}
-              onChangeText={text => this.setState({ inputmessage: text })}
-            />
-
-            <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 40, height: 40, borderRadius: 50 }} onPress={() => this.sendMessege(this.state.inputmessage)}>
-              <Icon
-                name='ios-paper-plane'
-                type='ionicon'
-                color={colors.WHITE}
-                size={25}
-                containerStyle={{ paddingEnd: 3 }}
+            {!this.state.isRecording && this.state.isRecord === false ?
+              <TextInput
+                value={this.state.inputmessage}
+                style={styles.input}
+                autoFocus={false}
+                underlineColorAndroid="transparent"
+                placeholder={languageJSON.chat_input_title}
+                onChangeText={text => this.setState({ inputmessage: text })}
               />
-            </TouchableOpacity>
+              : null}
+
+            {/*this.state.isRecord ?
+              <Text style={styles.input2}>Áudio gravado!</Text>
+              :
+              null}
+            {this.state.isRecord == false && this.state.isRecording ?
+              <Animatable.Text animation='flash' iterationCount="infinite" useNativeDriver={true} style={styles.input2}>Gravando audio ...</Animatable.Text>
+              : null}
+
+            {!this.state.isRecord ?
+              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 30, borderWidth: 1, borderColor: colors.GREEN.light, width: 45, height: 45, borderRadius: 50 }} onPressIn={() => this.startRecording()} onPressOut={() => this.stopRecording()}>
+                <Icon
+                  name='ios-mic'
+                  type='ionicon'
+                  color={colors.GREEN.light}
+                  size={25}
+                />
+              </TouchableOpacity>
+              :
+              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 30, backgroundColor: colors.WHITE, borderWidth: 1, borderColor: colors.BLACK, width: 45, height: 45, borderRadius: 50 }} onPressIn={() => this.setState({ isRecording: false })} onPressOut={() => this.setState({ isRecord: false })}>
+                <Icon
+                  name='ios-trash'
+                  type='ionicon'
+                  color={colors.RED}
+                  size={25}
+                />
+              </TouchableOpacity>}
+
+            {!this.state.isRecording && !this.state.isRecord ?
+              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 45, height: 45, borderRadius: 50 }} disabled={this.state.loading} onPress={() => this.verifyMessage(this.state.inputmessage, null)}>
+                <Icon
+                  name='ios-paper-plane'
+                  type='ionicon'
+                  color={colors.WHITE}
+                  size={25}
+                  containerStyle={{ paddingEnd: 3 }}
+                />
+              </TouchableOpacity>
+              :
+
+              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 40, height: 40, borderRadius: 50 }} onPress={() => this.sendMessege(this.state.inputmessage)}>
+                <Icon
+                  name='ios-paper-plane'
+                  type='ionicon'
+                  color={colors.WHITE}
+                  size={25}
+                  containerStyle={{ paddingEnd: 3 }}
+                />
+              </TouchableOpacity>
+
+            */}
           </View>
         </KeyboardAvoidingView>
       </View>
@@ -652,6 +699,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.GREY.default,
     borderBottomWidth: 0
   },
+  input2: {
+    //marginEnd: 50,
+    marginLeft: 10,
+    //height: 50,
+    fontSize: 16,
+    color: colors.BLACK,
+    justifyContent: 'center',
+    fontFamily: 'Inter-Medium',
+    flex: 1,
+  },
 
   inrContStyle: {
     marginLeft: 10,
@@ -707,8 +764,8 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     marginTop: 10,
     marginRight: 10,
-    borderBottomLeftRadius: 30,
-    borderTopLeftRadius: 30,
+    borderBottomLeftRadius: 10,
+    borderTopLeftRadius: 10,
     borderTopRightRadius: 15,
     maxWidth: width - 20,
 
@@ -734,10 +791,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     margin: 5,
     backgroundColor: colors.GREY3,
-    borderBottomLeftRadius: 50,
-    borderBottomRightRadius: 15,
-    borderTopRightRadius: 15,
-    borderTopLeftRadius: 50,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    borderTopRightRadius: 10,
+    borderTopLeftRadius: 0,
   },
 
   msgTimeStyle: {
@@ -758,10 +815,10 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
 
     maxWidth: width - 20,
-    borderBottomLeftRadius: 50,
-    borderBottomRightRadius: 50,
-    borderTopLeftRadius: 50,
-    borderTopRightRadius: 50,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 10,
     elevation: 3,
     shadowOpacity: 0.3,
     shadowRadius: 5,

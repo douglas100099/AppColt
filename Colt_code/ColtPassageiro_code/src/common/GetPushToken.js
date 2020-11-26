@@ -37,7 +37,8 @@ export default async function registerForPushNotificationsAsync() {
   if(token){
     firebase.database().ref('users/'+firebase.auth().currentUser.uid+'/').update({
       pushToken:token,
-      userPlatform:Platform.OS == 'ios'?'IOS':'ANDROID'
+      userPlatform:Platform.OS == 'ios'?'IOS':'ANDROID',
+      deviceId: Constants.deviceId
     })
   }
 }

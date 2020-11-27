@@ -620,18 +620,18 @@ export default class OnlineChat extends Component {
                 />
               </TouchableOpacity>
               :
-
-              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 40, height: 40, borderRadius: 50 }} onPress={() => this.sendMessege(this.state.inputmessage)}>
-                <Icon
-                  name='ios-paper-plane'
-                  type='ionicon'
-                  color={colors.WHITE}
-                  size={25}
-                  containerStyle={{ paddingEnd: 3 }}
-                />
-              </TouchableOpacity>
-
             */}
+
+            <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 40, height: 40, borderRadius: 50 }} onPress={() => this.sendMessege(this.state.inputmessage)}>
+              <Icon
+                name='ios-paper-plane'
+                type='ionicon'
+                color={colors.WHITE}
+                size={25}
+                containerStyle={{ paddingEnd: 3 }}
+              />
+            </TouchableOpacity>
+
           </View>
         </KeyboardAvoidingView>
       </View>

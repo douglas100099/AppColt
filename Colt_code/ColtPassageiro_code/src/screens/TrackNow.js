@@ -62,10 +62,10 @@ export default class TrackNow extends React.Component {
                 let data = snapshot.val();
                 this.setState({
                     angle: data.angle,
-                    latitude: data.lat,
-                    longitude: data.lng,
+                    latitudeDriver: data.lat,
+                    longitudeDriver: data.lng,
                     startLoc: data.lat + ',' + data.lng,
-                });
+                })
             }
         })
 
@@ -169,7 +169,7 @@ export default class TrackNow extends React.Component {
     }
 
     fitCoordinates() {
-        this.map.fitToCoordinates([{ latitude: this.state.allData.pickup.lat, longitude: this.state.allData.pickup.lng }, { latitude: this.state.allData.drop.lat, longitude: this.state.allData.drop.lng }], {
+        this.map.fitToCoordinates([{ latitude: this.state.latitudeDriver, longitude: this.state.longitudeDriver }, { latitude: this.state.allData.drop.lat, longitude: this.state.allData.drop.lng }], {
             edgePadding: { top: getPixelSize(60), right: getPixelSize(60), bottom: getPixelSize(60), left: getPixelSize(60) },
             animated: true,
         }, () => {
@@ -238,7 +238,7 @@ export default class TrackNow extends React.Component {
                             {this.state.coords ?
                                 <MapView.Polyline
                                     coordinates={this.state.coords}
-                                    strokeWidth={2.5}
+                                    strokeWidth={3}
                                     strokeColor={colors.DEEPBLUE}
                                 />
                                 : null}
@@ -252,16 +252,16 @@ export default class TrackNow extends React.Component {
                                 }}
                                 useNativeDriver={false}
                                 coordinate={new AnimatedRegion({
-                                    latitude: this.state.latitude,
-                                    longitude: this.state.longitude,
+                                    latitude: this.state.latitudeDriver,
+                                    longitude: this.state.longitudeDriver,
                                     latitudeDelta: 0.009,
                                     longitudeDelta: 0.009
                                 })}
                                 anchor={{ x: 0.5, y: 0.5 }}
                             >
                                 <IconCarMap
-                                    width={45}
-                                    height={45}
+                                    width={40}
+                                    height={40}
                                     style={{
                                         transform: [{ rotate: this.state.angle + "deg" }],
                                         shadowColor: colors.BLACK,

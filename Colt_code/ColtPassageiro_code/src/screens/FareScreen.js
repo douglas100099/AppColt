@@ -431,9 +431,9 @@ export default class FareScreen extends React.Component {
         else if (item != null && index != null) {
             let verifyCupomData = {}
             if (this.state.selected == 0) {
-                verifyCupomData = VerifyCupom(item, index, this.state.estimatePrice1);
+                verifyCupomData = VerifyCupom(item, this.state.estimatePrice1);
             } else {
-                verifyCupomData = VerifyCupom(item, index, this.state.estimatePrice2);
+                verifyCupomData = VerifyCupom(item, this.state.estimatePrice2);
             }
 
             setTimeout(() => {
@@ -455,7 +455,7 @@ export default class FareScreen extends React.Component {
                 promo = response
                 if (promo.promoKey != undefined) {
                     let verifyCupomData = {}
-                    verifyCupomData = VerifyCupom(promo, promo.promoKey, this.state.estimateFare);
+                    verifyCupomData = VerifyCupom(promo, this.state.estimateFare);
 
                     if (verifyCupomData.promo_applied) {
                         if (this.state.selected == 0) {
@@ -465,6 +465,7 @@ export default class FareScreen extends React.Component {
                             this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice2: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
                         }
                     } else {
+                        this.setState({ checkPromoBtn: false })
                         alert(verifyCupomData)
                     }
                 } else {
@@ -552,7 +553,15 @@ export default class FareScreen extends React.Component {
                         />
                     </View>
                     <TouchableOpacity style={styles.btnConfirmarPromoModal} disabled={this.state.checkPromoBtn} onPress={() => { this.checkPromo() }}>
-                        <Text style={styles.textConfirmarPromoModal}> Confirmar </Text>
+                        {
+                            this.state.checkPromoBtn ?
+                                <ActivityIndicator
+                                    size={'small'}
+                                    color={colors.WHITE}
+                                />
+                                :
+                                <Text style={styles.textConfirmarPromoModal}> Confirmar </Text>
+                        }
                     </TouchableOpacity>
 
                     <View style={{ justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>

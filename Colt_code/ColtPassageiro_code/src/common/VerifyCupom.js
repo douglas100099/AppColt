@@ -1,4 +1,6 @@
-export function VerifyCupom (item, index, estimateFare) {
+import languageJSON from '../common/language';
+
+export function VerifyCupom (item, estimateFare) {
     var toDay = new Date();
     var promoValidity = item.promo_validity
     var expiryDay = promoValidity.split('/')[0];
@@ -14,9 +16,9 @@ export function VerifyCupom (item, index, estimateFare) {
         //Verifica se a promoção ja foi usada por alguem 
         if (userAvail != undefined) {
             if (toDay > expDate) {
-                alert(languageJSON.promo_exp)
+                return (languageJSON.promo_exp)
             } else if (userAvail.count >= item.promo_usage_limit) {
-                alert(languageJSON.promo_limit)
+                return (languageJSON.promo_limit)
             } else {
                 let discounttype = item.promo_discount_type.toUpperCase();
 
@@ -105,6 +107,6 @@ export function VerifyCupom (item, index, estimateFare) {
         }
         //Caso o valor da corrida seja menor que o valor limite da promoção
     } else {
-        return "O valor da corrida é menor que o mínimo para essa promoção"
+        return ("O valor da corrida é menor que o mínimo para essa promoção")
     }
 }

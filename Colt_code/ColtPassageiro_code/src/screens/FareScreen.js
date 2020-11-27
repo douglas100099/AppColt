@@ -420,7 +420,7 @@ export default class FareScreen extends React.Component {
         } else if (type == 1) {
             this.setState({ selected: 1, estimateFare: this.state.detailsBooking[1].estimateFare, distance: this.state.detailsBooking[1].distance, carType: this.state.rateDetailsObjects[1].name, carImage: this.state.rateDetailsObjects[1].image })
         }
-    }  
+    }
 
     //Verifica se o cupom digitado é valido
     async checkPromo(item, index, param) {
@@ -428,54 +428,72 @@ export default class FareScreen extends React.Component {
             this.setState({ checkPromoBtn: false })
             alert("Você já possui um cupom ativo!")
         }
-        else if (item != null && index != null) {
-            let verifyCupomData = {}
-            if (this.state.selected == 0) {
-                verifyCupomData = VerifyCupom(item, this.state.estimatePrice1, this.state.curUID.uid)
-            } else {
-                verifyCupomData = VerifyCupom(item, this.state.estimatePrice2, this.state.curUID.uid)
-            }
+        this.checkUserPromo(item).then((response) => {
 
-            setTimeout(() => {
-                if ( verifyCupomData.promo_applied) {
-                    if (this.state.selected == 0) { 
-                        this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice1: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
-
+            if (response) {
+                if (item != null && index != null) {
+                    let verifyCupomData = {}
+                    if (this.state.selected == 0) {
+                        verifyCupomData = VerifyCupom(item, this.state.estimatePrice1)
                     } else {
-                        this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice2: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
+                        verifyCupomData = VerifyCupom(item, this.state.estimatePrice2)
                     }
-                } else {
-                    alert(verifyCupomData)
-                }
-            }, 1000)
-        }
-        else if (this.state.promoCode != null) {
-            this.consultPromo().then((response) => {
-                var promo = {}
-                promo = response
-                if (promo.promoKey != undefined) {
-                    let verifyCupomData = VerifyCupom(promo, this.state.estimateFare, this.state.curUID.uid);
 
-                    console.log( verifyCupomData  + "CUPOM")
-                    if (verifyCupomData.promo_applied) {
-                        if (this.state.selected == 0) {
-                            this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice1: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
+                    setTimeout(() => {
+                        if (verifyCupomData.promo_applied) {
+                            if (this.state.selected == 0) {
+                                this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice1: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
+
+                            } else {
+                                this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice2: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
+                            }
                         } else {
-                            this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice2: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
+                            alert(verifyCupomData)
                         }
-                    } else {
-                        this.setState({ checkPromoBtn: false })
-                    }
+                    }, 1000)
+                }
+                else if (this.state.promoCode != null) {
+                    this.consultPromo().then((response) => {
+                        var promo = {}
+                        promo = response
+                        if (promo.promoKey != undefined) {
+                            let verifyCupomData = VerifyCupom(promo, this.state.estimateFare);
+
+                            console.log(verifyCupomData + "CUPOM")
+                            if (verifyCupomData.promo_applied) {
+                                if (this.state.selected == 0) {
+                                    this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice1: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
+                                } else {
+                                    this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice2: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
+                                }
+                            } else {
+                                this.setState({ checkPromoBtn: false })
+                            }
+                        } else {
+                            this.setState({ checkPromoBtn: false })
+                        }
+                    })
                 } else {
                     this.setState({ checkPromoBtn: false })
+                    alert("Código promocional inválido!")
                 }
-            })
-        } else {
-            this.setState({ checkPromoBtn: false })
-            alert("Código promocional inválido!")
+            }else {
+                this.setState({ checkPromoBtn: false })
+                alert("Você já usou esse cupom em outra corrida!")
+            }
+        })
+    }
+
+    async checkUserPromo(param) {
+        let obj = {}
+        obj = param.user_avail.details
+        for (let key in obj) {
+            if (obj[key].userId == this.state.curUID.uid) {
+                return true
+            }
         }
     }
-    
+
 
     async consultPromo() {
         this.setState({ checkPromoBtn: true })
@@ -956,7 +974,7 @@ export default class FareScreen extends React.Component {
                                 <Text style={styles.txtCupom}> {this.state.payDetails ? "-R$" + (this.state.payDetails.promo_details.promo_discount_value).toFixed(2) : "Cupom"} </Text>
                             </View>
                         </TouchableOpacity>
-                    : null}
+                        : null}
 
                     <Animated.View
                         style={[

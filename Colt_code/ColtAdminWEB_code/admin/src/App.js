@@ -18,6 +18,7 @@ import Notifications from './views/Notifications';
 import DriverEarning from './views/DriverEarning';
 import Earningreports from './views/Earningreports';
 import WaitingAproved from './views/WaitingAproved';
+import LivePreview from './views/LivePreview';
 import Settings from './views/Settings';
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
             <ProtectedRoute exact component={Users} path="/users"/>
             <ProtectedRoute exact component={WaitingAproved} path="/WaitingAproved"/>
             <ProtectedRoute exact component={Riders} path="/riders"/>
+            <ProtectedRoute exact component={LivePreview} path="/LivePreview"/>
             <ProtectedRoute exact component={DriverEarning} path="/driverearning"/>
             <ProtectedRoute exact component={Referral} path="/referral"/>
             <ProtectedRoute exact component={Notifications} path="/notifications"/>

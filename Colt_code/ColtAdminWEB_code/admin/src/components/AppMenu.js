@@ -74,6 +74,12 @@ function AppMenu() {
           </ListItemIcon>
           <Typography variant="inherit">Passageiros</Typography>
         </MenuItem>
+        <MenuItem component={Link} to="/LivePreview">
+          <ListItemIcon>
+            <PeopleIcon />
+          </ListItemIcon>
+          <Typography variant="inherit">Live Preview</Typography>
+        </MenuItem>
         <MenuItem component={Link} to="/cartypes">
           <ListItemIcon>
             <CarIcon />

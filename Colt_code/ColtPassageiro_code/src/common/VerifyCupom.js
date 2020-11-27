@@ -1,4 +1,4 @@
-export function VerifyCupom(item, index, estimateFare) {
+export function VerifyCupom (item, index, estimateFare) {
     var toDay = new Date();
     var promoValidity = item.promo_validity
     var expiryDay = promoValidity.split('/')[0];

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, Dimensions, StyleSheet, FlatList, Image, TouchableOpacity,AsyncStorage } from 'react-native';
+import { Text, View, Dimensions, StyleSheet, FlatList, Image, TouchableOpacity, AsyncStorage } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { NavigationActions, StackActions } from 'react-navigation';
 import * as firebase from 'firebase'; //Database
@@ -31,7 +31,8 @@ export default class SideMenu extends React.Component {
                 symbol: '',
                 cash: false,
                 wallet: false
-            }
+            },
+            disableSigOut: false
         }
     }
 
@@ -69,17 +70,17 @@ export default class SideMenu extends React.Component {
 
     //navigation to screens from side menu
     navigateToScreen = (route) => () => {
-        if( route === 'Map' ){
+        if (route === 'Map') {
             this.props
-            .navigation
-            .dispatch(StackActions.reset({
-                index: 0,
-                actions: [
-                    NavigationActions.navigate({
-                        routeName: 'Map',
-                    }),
-                ],
-            }))
+                .navigation
+                .dispatch(StackActions.reset({
+                    index: 0,
+                    actions: [
+                        NavigationActions.navigate({
+                            routeName: 'Map',
+                        }),
+                    ],
+                }))
         }
         const navigateAction = NavigationActions.navigate({
             routeName: route
@@ -89,14 +90,16 @@ export default class SideMenu extends React.Component {
 
     //sign out and clear all async storage
     async signOut() {
-        if( !this.state.disableSigOut  ){
-            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/pushToken').remove();
-            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/userPlatform').remove();
-            AsyncStorage.clear();
-            firebase.auth().signOut();
-        }else {
-            alert("Você possui uma corrida em andamento!")
-        }
+        firebase.database().ref('/bookings').orderByChild("status").equalTo('START' || 'ACCEPTED').once("value", (snapshot) => {
+            if (snapshot.val()) {
+                alert("Você possui uma corrida em andamento!")
+            } else {
+                firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/pushToken').remove();
+                firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/userPlatform').remove();
+                AsyncStorage.clear();
+                firebase.auth().signOut();
+            }
+        })
     }
 
     //CHECKING TRIP END OR START
@@ -111,12 +114,9 @@ export default class SideMenu extends React.Component {
                         let bookingData = data['my-booking']
                         for (key in bookingData) {
                             bookingData[key].bookingKey = key
-                            /*if( bookingData[key].status === 'START' || bookingData[key].status === 'ACCEPTED' ){
-                                this.setState({ disableSigOut: true })
-                            }*/
                             if (bookingData[key].pagamento.payment_status) {
-                                if (bookingData[key].pagamento.payment_status === "PAID" && bookingData[key].status === 'END' 
-                                && bookingData[key].skip != true && !bookingData[key].rated_by_rider && bookingData[key].paymentstart != true ) {
+                                if (bookingData[key].pagamento.payment_status === "PAID" && bookingData[key].status === 'END'
+                                    && bookingData[key].skip != true && !bookingData[key].rated_by_rider && bookingData[key].paymentstart != true) {
                                     bookingData[key].firstname = data.firstName;
                                     bookingData[key].lastname = data.lastName;
                                     bookingData[key].email = data.email;
@@ -138,37 +138,37 @@ export default class SideMenu extends React.Component {
                 <SideMenuHeader headerStyle={styles.myHeader} userPhoto={this.state.profile_image} userEmail={this.state.email} userPhone={this.state.mobile} userName={this.state.firstName + ' ' + this.state.lastName} ></SideMenuHeader>
 
                 <View style={styles.compViewStyle}>
-                    
+
                     <FlatList
                         data={this.state.sideMenuList}
                         keyExtractor={(item, index) => index.toString()}
                         style={{ marginTop: 20 }}
                         bounces={false}
                         renderItem={({ item, index }) => {
-                            if (this.state.settings.wallet == false && item.navigationName == 'wallet'  ) {
+                            if (this.state.settings.wallet == false && item.navigationName == 'wallet') {
                                 return null;
-                            }else{
-                                
-                                return(
-                                <TouchableOpacity
-                                    onPress={
-                                        (item.name == languageJSON.logout) ? () => this.signOut() :
-                                            this.navigateToScreen(item.navigationName)
-                                    }
-                                    style={
-                                        [styles.menuItemView, { marginTop: (index == this.state.sideMenuList.length - 1) ? width / 7 : 0 }]
-                                    }>
-                                    <View style={styles.viewIcon}>
-                                        <Icon
-                                            name={item.icon}
-                                            type={item.type}
-                                            color={colors.BLACK}
-                                            size={20}
-                                            containerStyle={styles.iconStyle}
-                                        />
-                                    </View>
-                                    <Text style={styles.menuName}>{item.name.toUpperCase()}</Text>
-                                </TouchableOpacity>
+                            } else {
+
+                                return (
+                                    <TouchableOpacity
+                                        onPress={
+                                            (item.name == languageJSON.logout) ? () => this.signOut() :
+                                                this.navigateToScreen(item.navigationName)
+                                        }
+                                        style={
+                                            [styles.menuItemView, { marginTop: (index == this.state.sideMenuList.length - 1) ? width / 7 : 0 }]
+                                        }>
+                                        <View style={styles.viewIcon}>
+                                            <Icon
+                                                name={item.icon}
+                                                type={item.type}
+                                                color={colors.BLACK}
+                                                size={20}
+                                                containerStyle={styles.iconStyle}
+                                            />
+                                        </View>
+                                        <Text style={styles.menuName}>{item.name.toUpperCase()}</Text>
+                                    </TouchableOpacity>
                                 )
                             }
                         }
@@ -205,9 +205,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: colors.WHITE,
-        shadowColor:colors.BLACK,
-        shadowOffset:{width:0,height:3},
-        shadowOpacity:0.3,
+        shadowColor: colors.BLACK,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.3,
         elevation: 3,
         left: 1
     },

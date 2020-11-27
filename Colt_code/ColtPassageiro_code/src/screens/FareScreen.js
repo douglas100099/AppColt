@@ -160,7 +160,7 @@ export default class FareScreen extends React.Component {
     //Pega a direção e detalhes da corrida 
     async getDirections(startLoc, destLoc) {
         try {
-            var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destLoc}&key=${google_map_key}`, {signal: this.myAbort.signal})
+            var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destLoc}&key=${google_map_key}`, { signal: this.myAbort.signal })
             var respJson = await resp.json();
 
             var arrayDetails = []
@@ -450,13 +450,13 @@ export default class FareScreen extends React.Component {
             }, 1000)
         }
         else if (this.state.promoCode != null) {
-            var promo = {}
-            promo = await this.consultPromo()
-            if (promo.promoKey != undefined) {
-                let verifyCupomData = {}
-                verifyCupomData = VerifyCupom(promo, promo.promoKey, this.state.estimateFare);
+            this.consultPromo().then((response) => {
+                var promo = {}
+                promo = response
+                if (promo.promoKey != undefined) {
+                    let verifyCupomData = {}
+                    verifyCupomData = VerifyCupom(promo, promo.promoKey, this.state.estimateFare);
 
-                setTimeout(() => {
                     if (verifyCupomData.promo_applied) {
                         if (this.state.selected == 0) {
                             this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice1: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
@@ -467,12 +467,11 @@ export default class FareScreen extends React.Component {
                     } else {
                         alert(verifyCupomData)
                     }
-                }, 500)
-
-            } else {
-                this.setState({ checkPromoBtn: false })
-                alert("Código promocional inválido!")
-            }
+                } else {
+                    this.setState({ checkPromoBtn: false })
+                    alert("Código promocional inválido!")
+                }
+            })
         } else {
             this.setState({ checkPromoBtn: false })
             alert("Código promocional inválido!")
@@ -483,7 +482,7 @@ export default class FareScreen extends React.Component {
         this.setState({ checkPromoBtn: true })
         var promoDetails = {}
         const promoData = firebase.database().ref('offers/');
-        await promoData.once('value', promoData => {
+        return promoData.once('value', promoData => {
             if (promoData.val()) {
                 let promo = promoData.val();
                 for (let key in promo) {
@@ -496,9 +495,9 @@ export default class FareScreen extends React.Component {
                     }
                 }
             }
+        }).then(() => {
+            return promoDetails
         })
-
-        return promoDetails
     }
 
     //Abre o modal de promoçao
@@ -584,7 +583,7 @@ export default class FareScreen extends React.Component {
                                 <Text style={{ fontFamily: "Inter-Medium", fontSize: 23, opacity: 0.4 }}> Cadastrar CPF </Text>
                             </View>
                             <View style={{ position: 'absolute', right: 0 }}>
-                                <TouchableOpacity style={{ marginRight: 15 }} onPress={() =>  this.setState({ cpfModalVisible: false, buttonDisabled: false })}>
+                                <TouchableOpacity style={{ marginRight: 15 }} onPress={() => this.setState({ cpfModalVisible: false, buttonDisabled: false })}>
                                     <Icon
                                         name='x'
                                         type='feather'
@@ -595,9 +594,9 @@ export default class FareScreen extends React.Component {
                             </View>
                         </View>
                     </View>
-                    <Text  style={{ textAlign: 'center', marginTop: 15, fontFamily: 'Inter-Regular', fontSize: 15, paddingHorizontal: 10 }}>
-                        Para sua segurança e do motorista, precisamos que adicione o seu número de cpf e data de nascimento. 
-                        {`\n`}Não se preocupe, ninguém verá esses dados além de você! 
+                    <Text style={{ textAlign: 'center', marginTop: 15, fontFamily: 'Inter-Regular', fontSize: 15, paddingHorizontal: 10 }}>
+                        Para sua segurança e do motorista, precisamos que adicione o seu número de cpf e data de nascimento.
+                        {`\n`}Não se preocupe, ninguém verá esses dados além de você!
                     </Text>
                     <View style={{ marginHorizontal: 50 }}>
                         <Input
@@ -836,7 +835,7 @@ export default class FareScreen extends React.Component {
                     {
                         style: 'destructive',
                         text: 'Voltar',
-                        onPress: () => this.setState({ buttonDisabled: false }) 
+                        onPress: () => this.setState({ buttonDisabled: false })
                     },
                     { text: 'Adicionar', onPress: () => this.setState({ cpfModalVisible: true }) },
                 ],
@@ -923,7 +922,7 @@ export default class FareScreen extends React.Component {
 
                     {this.state.region && this.state.region.wherelatitude ?
                         <View style={styles.bordaIconeVoltar}>
-                            <TouchableOpacity onPress={() => this.state.buttonDisabled ? null : this.props.navigation.replace('Map') }>
+                            <TouchableOpacity onPress={() => this.state.buttonDisabled ? null : this.props.navigation.replace('Map')}>
                                 <Icon
                                     name='chevron-left'
                                     type='MaterialIcons'
@@ -934,7 +933,7 @@ export default class FareScreen extends React.Component {
                         : null}
 
 
-                    {/*this.state.rateDetailsObjects[0] ?
+                    {this.state.rateDetailsObjects[0] ?
                         <TouchableOpacity style={[styles.btnAddPromo, {
                             borderColor: this.state.payDetails ? colors.GREEN.light : null,
                             borderWidth: this.state.payDetails ? 2 : 0
@@ -950,7 +949,7 @@ export default class FareScreen extends React.Component {
                                 <Text style={styles.txtCupom}> {this.state.payDetails ? "-R$" + (this.state.payDetails.promo_details.promo_discount_value).toFixed(2) : "Cupom"} </Text>
                             </View>
                         </TouchableOpacity>
-                    : null*/}
+                        : null}
 
                     <Animated.View
                         style={[
@@ -1045,7 +1044,7 @@ export default class FareScreen extends React.Component {
                                 borderColor: this.state.selected == 1 ? colors.BLACK : colors.GREY3,
                             }
                             ]} >
-                                <TouchableOpacity style={styles.touchCard2} onPress={() =>  this.state.buttonDisabled ? null : this.selectCarType(1)}>
+                                <TouchableOpacity style={styles.touchCard2} onPress={() => this.state.buttonDisabled ? null : this.selectCarType(1)}>
                                     {/*<Icon
                                         name='info'
                                         type='feather'
@@ -1090,7 +1089,7 @@ export default class FareScreen extends React.Component {
                             </View>
                             {this.state.metodoPagamento === 'Dinheiro' ?
                                 <View style={styles.containerDinheiro}>
-                                    <TouchableOpacity style={styles.containerDinheiro} onPress={() =>  this.state.buttonDisabled ? null :  this.openModal() }>
+                                    <TouchableOpacity style={styles.containerDinheiro} onPress={() => this.state.buttonDisabled ? null : this.openModal()}>
                                         <View >
                                             <Icon
                                                 name='ios-cash'
@@ -1104,7 +1103,7 @@ export default class FareScreen extends React.Component {
                                 </View>
                                 : this.state.metodoPagamento === 'Carteira' ?
                                     <View style={styles.containerDinheiro}>
-                                        <TouchableOpacity style={styles.containerCarteira} onPress={() =>  this.state.buttonDisabled ? null : this.openModal() }>
+                                        <TouchableOpacity style={styles.containerCarteira} onPress={() => this.state.buttonDisabled ? null : this.openModal()}>
                                             <View style={{ flexDirection: "row" }}>
                                                 <View>
                                                     <Icon
@@ -1120,7 +1119,7 @@ export default class FareScreen extends React.Component {
                                         </TouchableOpacity>
                                     </View>
                                     : <View style={styles.containerDinheiro}>
-                                        <TouchableOpacity style={styles.containerDinheiro} onPress={() =>  this.state.buttonDisabled ? null : this.openModal() }>
+                                        <TouchableOpacity style={styles.containerDinheiro} onPress={() => this.state.buttonDisabled ? null : this.openModal()}>
                                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }} >
                                                 <Icon
                                                     name='wallet'
@@ -1374,7 +1373,7 @@ const styles = StyleSheet.create({
         height: 45,
         borderRadius: 50,
         backgroundColor: colors.WHITE,
-        bottom: 10,
+        bottom: 60,
         marginBottom: 8,
         marginRight: 10,
         shadowColor: '#000',

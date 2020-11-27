@@ -60,6 +60,7 @@ export default class BookedCabScreen extends React.Component {
             embarque: false,
             modalInfoVisible: false,
             searchDisabled: false,
+            showBtnCancel: false
         }
         this.searchDriverQueue = false,
             this.currentRejected = false,
@@ -80,6 +81,7 @@ export default class BookedCabScreen extends React.Component {
         let param = this.props.navigation.getParam('byMapScreen')
         if (!param) {
             this.searchDriver()
+            this.setState({ showBtnCancel: true })
         }
 
         var curuser = firebase.auth().currentUser;
@@ -207,7 +209,7 @@ export default class BookedCabScreen extends React.Component {
                                             }).then(() => {
                                                 var distance = distanceCalc(location1, location2)
 
-                                                if (distance <= 5) { //5KM
+                                                if (distance <= 4 ) { //5KM
                                                     if (allUsers[key].carType == this.state.carType) {
                                                         //Salva sempre o mais proximo
                                                         if (distance < distanciaValue) {
@@ -618,9 +620,11 @@ export default class BookedCabScreen extends React.Component {
                             }}
                         />
                     </View>
-                    <TouchableOpacity disabled={this.state.searchDisabled} style={styles.touchView} onPress={() => { this.setState({ searchDisabled: true }), this.onPressCancellBtn() }}>
-                        <Text style={styles.textCancel}> Cancelar </Text>
-                    </TouchableOpacity>
+                    {this.state.showBtnCancel ?
+                        <TouchableOpacity disabled={this.state.searchDisabled} style={styles.touchView} onPress={() => { this.setState({ searchDisabled: true }), this.onPressCancellBtn() }}>
+                            <Text style={styles.textCancel}> Cancelar </Text>
+                        </TouchableOpacity>
+                        : null}
                 </View>
             </Modal>
         )

@@ -105,14 +105,9 @@ export default class PromoComp extends React.Component {
             </View>
             <View style={styles.applyBtnPosition} >
               <TouchableOpacity disabled={this.state.btnDisable} style={{ justifyContent: 'center', alignItems: 'center', borderRadius: 5, backgroundColor: 'rgba(63,220,90,0.6)', height: 30 }} onPress={() => this.onPressButton(item, index)}>
-                {this.state.btnDisable ?
-                  <ActivityIndicator
-                    size={'small'}
-                    color={colors.WHITE}
-                  />
-                  :
-                  <Text style={{ alignSelf: 'center', fontFamily: 'Inter-Bold', color: colors.WHITE }}> {languageJSON.apply} </Text>
-                }
+
+                <Text style={{ alignSelf: 'center', fontFamily: 'Inter-Bold', color: colors.WHITE }}> {languageJSON.apply} </Text>
+
 
               </TouchableOpacity>
             </View>
@@ -133,8 +128,7 @@ export default class PromoComp extends React.Component {
           />
           :
           <View style={{ alignSelf: 'center', top: 50 }}>
-            
-            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 15 }}>Nao há cupons disponiveis no momento</Text>
+            <Text style={{ fontFamily: 'Inter-Medium', opacity: .7, fontSize: 15 }}>Nao há cupons disponiveis no momento</Text>
           </View>
         }
       </View>

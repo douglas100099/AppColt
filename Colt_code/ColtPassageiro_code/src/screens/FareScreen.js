@@ -423,15 +423,25 @@ export default class FareScreen extends React.Component {
     }
 
     //Verifica se o cupom digitado é valido
-    async checkPromo(item, index, param) {
-        if (param) {
-            this.setState({ checkPromoBtn: false })
-            alert("Você já possui um cupom ativo!")
+    async checkPromo(item, index) {
+        if (this.state.payDetails) {
+            Alert.alert(
+                "Alerta!",
+                "Você já possui um cupom ativo!",
+                [
+                    {
+                        text: 'OK', onPress: () => {
+                            this.setState({ checkPromoBtn: false, checkPromoBtn2: false })
+                        }
+                    }
+                ],
+                { cancelable: false }
+            );
         }
-        this.checkUserPromo(item).then((response) => {
+        else if (item != null && index != null) {
+            this.checkUserPromo(item).then((response) => {
+                if (response == false) {
 
-            if (response) {
-                if (item != null && index != null) {
                     let verifyCupomData = {}
                     if (this.state.selected == 0) {
                         verifyCupomData = VerifyCupom(item, this.state.estimatePrice1)
@@ -442,24 +452,32 @@ export default class FareScreen extends React.Component {
                     setTimeout(() => {
                         if (verifyCupomData.promo_applied) {
                             if (this.state.selected == 0) {
-                                this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice1: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
+                                this.setState({ promodalVisible: false, checkPromoBtn: false, checkPromoBtn2: false, estimatePrice1: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
 
                             } else {
-                                this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice2: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
+                                this.setState({ promodalVisible: false, checkPromoBtn: false, checkPromoBtn2: false, estimatePrice2: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
                             }
                         } else {
                             alert(verifyCupomData)
+                            this.setState({ checkPromoBtn2: false })
                         }
                     }, 1000)
+                } else {
+                    this.setState({ checkPromoBtn: false, checkPromoBtn2: false })
+                    alert("Você já usou esse cupom em uma corrida anterior!")
                 }
-                else if (this.state.promoCode != null) {
-                    this.consultPromo().then((response) => {
-                        var promo = {}
-                        promo = response
-                        if (promo.promoKey != undefined) {
+            })
+        }
+        else if (this.state.promoCode != null) {
+            this.consultPromo().then((response) => {
+                var promo = {}
+                promo = response
+                if (promo.promoKey != undefined) {
+                    this.checkUserPromo(promo).then((response) => {
+                        console.log(response)
+                        if (!response) {
                             let verifyCupomData = VerifyCupom(promo, this.state.estimateFare);
 
-                            console.log(verifyCupomData + "CUPOM")
                             if (verifyCupomData.promo_applied) {
                                 if (this.state.selected == 0) {
                                     this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice1: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
@@ -471,29 +489,33 @@ export default class FareScreen extends React.Component {
                             }
                         } else {
                             this.setState({ checkPromoBtn: false })
+                            alert("Você já usou esse cupom em uma corrida anterior!")
                         }
                     })
                 } else {
                     this.setState({ checkPromoBtn: false })
                     alert("Código promocional inválido!")
                 }
-            }else {
-                this.setState({ checkPromoBtn: false })
-                alert("Você já usou esse cupom em outra corrida!")
-            }
-        })
+            })
+        } else {
+            this.setState({ checkPromoBtn: false })
+            alert("Código promocional inválido!")
+        }
     }
 
     async checkUserPromo(param) {
         let obj = {}
-        obj = param.user_avail.details
-        for (let key in obj) {
-            if (obj[key].userId == this.state.curUID.uid) {
-                return true
+        if (param && param.user_avail != undefined) {
+            obj = param.user_avail.details
+            for (let key in obj) {
+                if (obj[key].userId == this.state.curUID.uid) {
+                    return true
+                }
             }
+        } else {
+            return false
         }
     }
-
 
     async consultPromo() {
         this.setState({ checkPromoBtn: true })
@@ -568,7 +590,7 @@ export default class FareScreen extends React.Component {
                             errorMessage={this.state.promoCodeValid ? null : languageJSON.first_name_blank_error}
                         />
                     </View>
-                    <TouchableOpacity style={styles.btnConfirmarPromoModal} disabled={this.state.checkPromoBtn} onPress={() => { this.checkPromo() }}>
+                    <TouchableOpacity style={styles.btnConfirmarPromoModal} disabled={this.state.checkPromoBtn} onPress={() => { this.checkPromo(), this.setState({ checkPromoBtn: true }) }}>
                         {
                             this.state.checkPromoBtn ?
                                 <ActivityIndicator
@@ -583,11 +605,18 @@ export default class FareScreen extends React.Component {
                     <View style={{ justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
                         <Text style={{ fontFamily: 'Inter-Medium', fontSize: 15 }}> ou escolha uma das promoções abaixo. </Text>
                     </View>
-                    {this.state.payDetails ?
-                        <PromoComp onPressButton={(item, index) => { this.checkPromo(item, index, true) }}></PromoComp>
+                    {this.state.checkPromoBtn2 ?
+                        <View style={{ marginTop: 15, flexDirection: 'row', alignItems: 'center', alignSelf: 'center' }}>
+                            <ActivityIndicator
+                                size={'small'}
+                                color={colors.DEEPBLUE}
+                            />
+                            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 16 }}> Aplicando cupom... </Text>
+                        </View>
                         :
-                        <PromoComp onPressButton={(item, index) => { this.checkPromo(item, index, false) }}></PromoComp>
+                        <PromoComp onPressButton={(item, index) => { this.checkPromo(item, index, false), this.setState({ checkPromoBtn2: true }) }}></PromoComp>
                     }
+
                 </View>
             </Modal>
         )
@@ -754,7 +783,19 @@ export default class FareScreen extends React.Component {
                 }
             }
         } else {
-            this.alertNoAmountWallet()
+            () => {
+                Alert.alert(
+                    "Alerta!",
+                    "Você não possui saldo na carteira!",
+                    [
+                        {
+                            text: "OK",
+                            style: 'cancel'
+                        },
+                    ],
+                    { cancelable: false }
+                );
+            }
         }
     }
 
@@ -798,20 +839,6 @@ export default class FareScreen extends React.Component {
         )
     }
 
-    //Alerta de carteira sem nenhum saldo
-    alertNoAmountWallet() {
-        Alert.alert(
-            "Alerta!",
-            "Você não possui saldo na carteira!",
-            [
-                {
-                    text: "OK",
-                    style: 'cancel'
-                },
-            ],
-            { cancelable: false }
-        );
-    }
 
     //Enviar notificaçao
     sendPushNotification(customerUID, msg) {
@@ -1398,7 +1425,7 @@ const styles = StyleSheet.create({
         height: 45,
         borderRadius: 50,
         backgroundColor: colors.WHITE,
-        bottom: 10,
+        bottom: 50,
         marginBottom: 8,
         marginRight: 10,
         shadowColor: '#000',

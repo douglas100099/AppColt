@@ -420,7 +420,7 @@ export default class FareScreen extends React.Component {
         } else if (type == 1) {
             this.setState({ selected: 1, estimateFare: this.state.detailsBooking[1].estimateFare, distance: this.state.detailsBooking[1].distance, carType: this.state.rateDetailsObjects[1].name, carImage: this.state.rateDetailsObjects[1].image })
         }
-    }
+    }  
 
     //Verifica se o cupom digitado é valido
     async checkPromo(item, index, param) {
@@ -431,14 +431,14 @@ export default class FareScreen extends React.Component {
         else if (item != null && index != null) {
             let verifyCupomData = {}
             if (this.state.selected == 0) {
-                verifyCupomData = VerifyCupom(item, this.state.estimatePrice1);
+                verifyCupomData = VerifyCupom(item, this.state.estimatePrice1, this.state.curUID.uid)
             } else {
-                verifyCupomData = VerifyCupom(item, this.state.estimatePrice2);
+                verifyCupomData = VerifyCupom(item, this.state.estimatePrice2, this.state.curUID.uid)
             }
 
             setTimeout(() => {
-                if (verifyCupomData.promo_applied) {
-                    if (this.state.selected == 0) {
+                if ( verifyCupomData.promo_applied) {
+                    if (this.state.selected == 0) { 
                         this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice1: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
 
                     } else {
@@ -454,23 +454,20 @@ export default class FareScreen extends React.Component {
                 var promo = {}
                 promo = response
                 if (promo.promoKey != undefined) {
-                    let verifyCupomData = {}
-                    verifyCupomData = VerifyCupom(promo, this.state.estimateFare);
+                    let verifyCupomData = VerifyCupom(promo, this.state.estimateFare, this.state.curUID.uid);
 
+                    console.log( verifyCupomData  + "CUPOM")
                     if (verifyCupomData.promo_applied) {
                         if (this.state.selected == 0) {
                             this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice1: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
-
                         } else {
                             this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice2: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
                         }
                     } else {
                         this.setState({ checkPromoBtn: false })
-                        alert(verifyCupomData)
                     }
                 } else {
                     this.setState({ checkPromoBtn: false })
-                    alert("Código promocional inválido!")
                 }
             })
         } else {
@@ -478,6 +475,7 @@ export default class FareScreen extends React.Component {
             alert("Código promocional inválido!")
         }
     }
+    
 
     async consultPromo() {
         this.setState({ checkPromoBtn: true })
@@ -958,7 +956,7 @@ export default class FareScreen extends React.Component {
                                 <Text style={styles.txtCupom}> {this.state.payDetails ? "-R$" + (this.state.payDetails.promo_details.promo_discount_value).toFixed(2) : "Cupom"} </Text>
                             </View>
                         </TouchableOpacity>
-                        : null}
+                    : null}
 
                     <Animated.View
                         style={[
@@ -1382,7 +1380,7 @@ const styles = StyleSheet.create({
         height: 45,
         borderRadius: 50,
         backgroundColor: colors.WHITE,
-        bottom: 60,
+        bottom: 10,
         marginBottom: 8,
         marginRight: 10,
         shadowColor: '#000',

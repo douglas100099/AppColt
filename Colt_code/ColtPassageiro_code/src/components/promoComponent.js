@@ -5,7 +5,8 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  AsyncStorage
+  AsyncStorage,
+  ActivityIndicator
 } from "react-native";
 import { Avatar, Button } from "react-native-elements";
 import { colors } from "../common/theme";
@@ -63,7 +64,7 @@ export default class PromoComp extends React.Component {
           this.setState({
             data: allPromoData
           }, () => {
-           
+
           })
         }
       }
@@ -82,7 +83,7 @@ export default class PromoComp extends React.Component {
   newData = ({ item, index }) => {
     return (
       <View style={styles.container} >
-        <View style={styles.promoViewStyle}>
+        < View style={styles.promoViewStyle}>
           <View style={styles.promoPosition}>
             <View style={styles.avatarPosition}>
               <Avatar
@@ -103,8 +104,16 @@ export default class PromoComp extends React.Component {
 
             </View>
             <View style={styles.applyBtnPosition} >
-              <TouchableOpacity disabled={this.state.btnDisable } style={{ justifyContent: 'center', alignItems: 'center', borderRadius: 5, backgroundColor: 'rgba(63,220,90,0.6)', height: 30 }} onPress={() => this.onPressButton(item, index)}>
-                <Text style={{ alignSelf: 'center', fontFamily: 'Inter-Bold', color: colors.WHITE }}> {languageJSON.apply} </Text>
+              <TouchableOpacity disabled={this.state.btnDisable} style={{ justifyContent: 'center', alignItems: 'center', borderRadius: 5, backgroundColor: 'rgba(63,220,90,0.6)', height: 30 }} onPress={() => this.onPressButton(item, index)}>
+                {this.state.btnDisable ?
+                  <ActivityIndicator
+                    size={'small'}
+                    color={colors.WHITE}
+                  />
+                  :
+                  <Text style={{ alignSelf: 'center', fontFamily: 'Inter-Bold', color: colors.WHITE }}> {languageJSON.apply} </Text>
+                }
+
               </TouchableOpacity>
             </View>
           </View>
@@ -116,11 +125,18 @@ export default class PromoComp extends React.Component {
   render() {
     return (
       <View>
-        <FlatList
-          keyExtractor={(item, index) => index.toString()}
-          data={this.state.data}
-          renderItem={this.newData}
-        />
+        {this.state.data.length > 0 ?
+          <FlatList
+            keyExtractor={(item, index) => index.toString()}
+            data={this.state.data}
+            renderItem={this.newData}
+          />
+          :
+          <View style={{ alignSelf: 'center', top: 50 }}>
+            
+            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 15 }}>Nao há cupons disponiveis no momento</Text>
+          </View>
+        }
       </View>
     );
   }

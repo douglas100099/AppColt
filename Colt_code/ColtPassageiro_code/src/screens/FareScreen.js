@@ -35,6 +35,7 @@ import { VerifyCupom } from '../common/VerifyCupom';
 import mapStyleJson from '../../mapStyle.json';
 import mapStyleAndroid from '../../mapStyleAndroid.json';
 
+import { TextInputMask } from 'react-native-masked-text'
 
 export default class FareScreen extends React.Component {
     myAbort = new AbortController()
@@ -69,7 +70,7 @@ export default class FareScreen extends React.Component {
             infoModal: false,
             showViewInfo: true,
             cpfModalVisible: false,
-            nascDate: '',
+            dateInput: '',
             txtCPF: '',
             cancellValue: 0,
         },
@@ -648,35 +649,34 @@ export default class FareScreen extends React.Component {
                             </View>
                         </View>
                     </View>
-                    <Text style={{ textAlign: 'center', marginTop: 15, fontFamily: 'Inter-Regular', fontSize: 15, paddingHorizontal: 10 }}>
+                    <Text style={{ textAlign: 'center', marginTop: 30, fontFamily: 'Inter-Regular', fontSize: 16, paddingHorizontal: 10 }}>
                         Para sua segurança e do motorista, precisamos que adicione o seu número de cpf e data de nascimento.
-                        {`\n`}Não se preocupe, ninguém verá esses dados além de você!
                     </Text>
-                    <View style={{ marginHorizontal: 50 }}>
-                        <Input
+                    <View style={{ marginHorizontal: 65, borderRadius: 7, borderWidth: 1, marginTop: 20, borderColor: colors.GREY1 }}>
+                        <TextInputMask
+                            type={'cpf'}
                             placeholder='Digite seu CPF'
-                            containerStyle={{ marginTop: 20, }}
-                            editable={this.props.checkCPF ? false : true}
-                            inputStyle={{ marginLeft: 12 }}
-                            maxLength={11}
-                            keyboardType={'number-pad'}
-                            onChangeText={(text) => { this.setState({ txtCPF: text }) }}
                             value={this.state.txtCPF}
-                            autoFocus={true}
-                            errorMessage={this.state.promoCodeValid ? null : languageJSON.first_name_blank_error}
+                            onChangeText={(text) => { this.setState({ txtCPF: text }) }}
+                            style={{ fontSize: 20, marginLeft: 12, height: 40 }}
+                            maxLength={14}
+                            ref={(ref) => this.cpfInputRef = ref}
                         />
                     </View>
-                    <View style={{ marginHorizontal: 50 }}>
-                        <Input
+                    <View style={{ marginHorizontal: 65, borderRadius: 7, borderWidth: 1, marginTop: 20, borderColor: colors.GREY1 }}>
+                        <TextInputMask
+                            type={'datetime'}
                             placeholder='Data de nascimento'
-                            editable={this.props.checkCPF ? false : true}
-                            containerStyle={{ marginTop: 20 }}
-                            maxLength={8}
-                            keyboardType={'number-pad'}
-                            inputStyle={{ marginLeft: 12 }}
-                            onChangeText={(text) => { this.setState({ nascDate: text }) }}
-                            value={this.state.nascDate}
-                            errorMessage={this.state.promoCodeValid ? null : languageJSON.first_name_blank_error}
+                            options={{
+                                format: 'DD/MM/YYYY'
+                            }}
+                            value={this.state.dateInput}
+                            onChangeText={(maskedText) => {
+                                this.setState({ dateInput: maskedText })
+                            }}
+                            style={{ fontSize: 20, marginLeft: 12, height: 40 }}
+                            maxLength={10}
+                            ref={(ref) => this.dateInputRef = ref}
                         />
                     </View>
                     <TouchableOpacity style={styles.btnConfirmarPromoModal} disabled={this.state.checkCPF} onPress={() => { this.isValidCpf() }}>
@@ -852,29 +852,39 @@ export default class FareScreen extends React.Component {
     }
 
     isValidCpf() {
+        const unmaskedCpf = this.cpfInputRef.getRawValue()
+        const unmaskedDate = new Date(this.dateInputRef.getRawValue())
+
         this.setState({ checkCPF: true })
-        if (this.state.nascDate != '' && this.state.nascDate.length == 8) {
-            let cpf = checkCPF(this.state.txtCPF)
-            if (cpf) {
-                this.setState({ checkCPF: false })
-                firebase.database().ref('users/' + this.state.curUID.uid + '/').update({
-                    cpfNum: this.state.txtCPF,
-                    data_nascimento: this.state.nascDate
-                }).then(() => {
-                    const userData = firebase.database().ref('users/' + this.state.curUID.uid);
-                    userData.once('value', userData => {
-                        this.setState({ userDetails: userData.val() });
+        if (this.state.txtCPF != '' && this.state.txtCPF.length == 14) {
+            if (this.state.dateInput != '' && this.state.dateInput.length == 10) {
+                let cpf = checkCPF(unmaskedCpf)
+                if (cpf) {
+                    this.setState({ checkCPF: false })
+                    let month = unmaskedDate.getMonth() + 1
+                    let date =  unmaskedDate.getDate() + '/' + month + '/' + unmaskedDate.getFullYear()
+                    firebase.database().ref('users/' + this.state.curUID.uid + '/').update({
+                        cpfNum: unmaskedCpf,
+                        data_nascimento: date
                     }).then(() => {
-                        this.setState({ cpfModalVisible: false, buttonDisabled: false })
+                        const userData = firebase.database().ref('users/' + this.state.curUID.uid);
+                        userData.once('value', userData => {
+                            this.setState({ userDetails: userData.val() });
+                        }).then(() => {
+                            this.setState({ cpfModalVisible: false, buttonDisabled: false })
+                        })
                     })
-                })
+                } else {
+                    this.setState({ checkCPF: false })
+                    alert("CPF inválido!")
+                }
             } else {
                 this.setState({ checkCPF: false })
-                alert("CPF inválido!")
+                alert("Data de nascimento inválida!")
             }
         } else {
             this.setState({ checkCPF: false })
-            alert("Data de nascimento inválida!")
+            alert("CPF inválido!")
         }
     }
 

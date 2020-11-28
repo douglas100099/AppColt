@@ -80,8 +80,8 @@ export default class FareScreen extends React.Component {
     async componentDidMount() {
         this._isMounted = true;
         var getCroods = await this.props.navigation.getParam('data') ? await this.props.navigation.getParam('data') : null;
-        var minTimeEconomico = await this.props.navigation.getParam('minTimeEconomico') ? await this.props.navigation.getParam('minTimeEconomico') : null;
-        var minTimeConfort = await this.props.navigation.getParam('minTimeConfort') ? await this.props.navigation.getParam('minTimeConfort') : null;
+        var minTimeEconomico =  this.props.navigation.getParam('minTimeEconomico') ? await this.props.navigation.getParam('minTimeEconomico') : null;
+        var minTimeConfort =  this.props.navigation.getParam('minTimeConfort') ? await this.props.navigation.getParam('minTimeConfort') : null;
         var arrayRates = [];
 
         this.setState({

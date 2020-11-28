@@ -779,24 +779,33 @@ exports.addDetailsToPromo = functions.region('southamerica-east1').database.ref(
         let dataBooking = data.val();
 
         if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'PAID') {
-            return admin.database().ref('offers/' + dataBooking.pagamento.promoKey).on("value", (dataOffer) => {
+            return admin.database().ref('offers/' + dataBooking.pagamento.promoKey).once("value", dataOffer => {
                 let offerData = dataOffer.val()
 
+                console.log("OFFERS >> " + offerData)
+
                 let user_avail = offerData.user_avail;
+
+                console.log("USER AVAIL >> " + user_avail)
+
                 if (user_avail) {
                     return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
                         userId: dataBooking.customer
-                    }).then(() => {
+                    })
+                    .then(() => {
                         return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: user_avail.count + 1 })
-                    }).catch(error => {
+                    })
+                    .catch(error => {
                         return error
                     })
                 } else {
                     return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
                         userId: dataBooking.customer
-                    }).then(() => {
+                    })
+                    .then(() => {
                         return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: 1 })
-                    }).catch(error => {
+                    })
+                    .catch(error => {
                         return error
                     })
                 }

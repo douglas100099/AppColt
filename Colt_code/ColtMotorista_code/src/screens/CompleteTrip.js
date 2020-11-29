@@ -32,7 +32,7 @@ import IconCloseSVG from '../SVG/IconCloseSVG';
 import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Animatable from 'react-native-animatable';
 import { Audio } from 'expo-av';
-//import * as Linking from 'expo-linking';
+import * as Linking from 'expo-linking';
 import Directions from "../components/Directions";
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import { getPixelSize } from '../constants/utils';
@@ -127,7 +127,7 @@ export default class DriverCompleteTrip extends React.Component {
                 this.setState({ chegouCorridaQueue: true })
                 if (this.state.isSound == false) {
                     this.playSound()
-                    //Linking.openURL('coltappmotorista://');
+                    Linking.openURL('coltappmotorista://');
                 }
             } else if (this.state.chegouCorridaQueue == true) {
                 this.setState({ chegouCorridaQueue: false })

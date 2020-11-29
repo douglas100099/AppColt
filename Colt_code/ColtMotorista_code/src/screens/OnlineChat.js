@@ -89,7 +89,7 @@ export default class OnlineChat extends Component {
   componentDidMount() {
     this._isMounted = true
     this.currentScreen = true
-    this.checkPermissions()
+    //this.checkPermissions()
     this.getParamData = this.props.navigation.getParam('passData');
     let bookingData = firebase.database().ref('bookings/' + this.getParamData.bookingId)
     bookingData.on('value', response => {
@@ -132,17 +132,17 @@ export default class OnlineChat extends Component {
     this._isMounted = false;
     this.keyboardDidShowListener.remove();
     this.keyboardDidHideListener.remove();
-    if(this.sound && this.state.isloaded){
+    /*if(this.sound && this.state.isloaded){
       this.sound.unloadAsync()
       console.log('STOP AUDIO')
     }
     if(this.state.timeTimeout != null){
       clearTimeout(this.state.timeTimeout)
-    }
+    }*/
   }
 
   // NOVA FUNCÇÕES RECORDING AUDIO
-  startRecording = async () => {
+  /*startRecording = async () => {
     if(this.state.statusPermi){
       this.recording = new Audio.Recording();
   
@@ -230,7 +230,7 @@ export default class OnlineChat extends Component {
         this.setState({ statusPermi: true })
       }
     }
-  }
+  }*/
 
   listenerReaded() {
     let read = firebase.database().ref(`chat/` + this.getParamData.bookingId + '/readed_driver');
@@ -249,19 +249,6 @@ export default class OnlineChat extends Component {
       }
     })
   }
-
-  /*gravarAudio = async () => {
-    try {
-      if(this.state.startou) {
-        await recording.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY);
-        await recording.startAsync();
-        this.setState({ startou: true })
-      }
-
-    } catch (error) {
-      console.log('IRMÃO MICROFONE TA COM DEFEITO AI')
-    }
-  }*/
 
   _keyboardDidShow = (e) => {
     if (this.state.position !== 'relative') {
@@ -282,7 +269,7 @@ export default class OnlineChat extends Component {
     }
   }
 
-  async convertAudioDB() {
+  /*async convertAudioDB() {
     this.setState({ loading: true })
     const blob = await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -317,7 +304,7 @@ export default class OnlineChat extends Component {
         alert('Ops, tivemos um problema.');
       });
     }
-  }
+  }*/
 
   verifyMessage(inputmessage, audio) {
     if (inputmessage == '' || inputmessage == undefined || inputmessage == null) {
@@ -426,9 +413,6 @@ export default class OnlineChat extends Component {
         RequestPushMsg(allData.pushToken ? allData.pushToken : null, msg)
       }
     })
-  }
-  renderItem({ item, index }) {
-
   }
 
   render() {
@@ -549,7 +533,6 @@ export default class OnlineChat extends Component {
           : null}
         <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? 'padding' : 'height'}>
           <View style={styles.footer}>
-            {!this.state.isRecording && this.state.isRecord === false ?
               <TextInput
                 value={this.state.inputmessage}
                 style={styles.input}
@@ -558,9 +541,8 @@ export default class OnlineChat extends Component {
                 placeholder="Converse com o passageiro"
                 onChangeText={text => this.setState({ inputmessage: text })}
               />
-              :
-              null}
 
+            {/*
             {this.state.isRecord ?
               <Text style={styles.input2}>Áudio gravado!</Text>
               :
@@ -568,7 +550,9 @@ export default class OnlineChat extends Component {
             {this.state.isRecord == false && this.state.isRecording ?
               <Animatable.Text animation='flash' iterationCount="infinite" useNativeDriver={true} style={styles.input2}>Gravando audio ...</Animatable.Text>
               : null}
+            */}
 
+            {/*
             {!this.state.isRecord ?
               <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 30, backgroundColor: colors.DEEPBLUE, width: 45, height: 45, borderRadius: 50 }} onPressIn={() => this.startRecording()} onPressOut={() => this.stopRecording()}>
                 <Icon
@@ -587,9 +571,8 @@ export default class OnlineChat extends Component {
                   size={25}
                 />
               </TouchableOpacity>}
-
-            {!this.state.isRecording && !this.state.isRecord ?
-              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 45, height: 45, borderRadius: 50 }} disabled={this.state.loading} onPress={() => this.verifyMessage(this.state.inputmessage, null)}>
+              */}
+              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 45, height: 45, borderRadius: 50 }} onPress={() => this.verifyMessage(this.state.inputmessage, null)}>
                 <Icon
                   name='ios-paper-plane'
                   type='ionicon'
@@ -598,16 +581,6 @@ export default class OnlineChat extends Component {
                   containerStyle={{ paddingEnd: 3 }}
                 />
               </TouchableOpacity>
-              :
-              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 45, height: 45, borderRadius: 50 }} disabled={this.state.loading} onPress={() => this.convertAudioDB()}>
-                <Icon
-                  name='ios-checkmark'
-                  type='ionicon'
-                  color={colors.WHITE}
-                  size={45}
-                />
-              </TouchableOpacity>}
-
           </View>
         </KeyboardAvoidingView>
       </View>

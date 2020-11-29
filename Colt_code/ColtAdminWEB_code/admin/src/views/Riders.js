@@ -32,7 +32,7 @@ export default function Riders() {
       { title: languageJson.mobile, field: 'mobile'},
       { title: languageJson.profile_image,  field: 'profile_image',render: rowData => rowData.profile_image?<img alt='Profile' src={rowData.profile_image} style={{width: 50,borderRadius:'50%'}}/>:null},
       { title: 'Saldo carteira',  field: 'walletBalance', type:'numeric', editable:'never'},
-      { title: languageJson.signup_via_refferal, field: 'signupViaReferral', type:'boolean', editable:'never'},
+      { title: languageJson.signup_via_refferal, field: 'signupViaReferral', type:'boolean'},
       { title: languageJson.refferal_id,  field: 'refferalId', editable:'never'},
   ];
 

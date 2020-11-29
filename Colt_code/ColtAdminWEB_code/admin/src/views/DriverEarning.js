@@ -20,7 +20,7 @@ export default function DriverEarning() {
 
   useEffect(()=>{
         if(driverearningdata.driverearnings){
-            setData(driverearningdata.driverearnings);
+          setData(driverearningdata.driverearnings);
         }
   },[driverearningdata.driverearnings]);
 

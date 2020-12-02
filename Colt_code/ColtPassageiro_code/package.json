@@ -9,7 +9,7 @@
   "dependencies": {
     "@firebase/app-types": "^0.6.1",
     "@mapbox/polyline": "^1.1.1",
-    "@react-native-community/datetimepicker": "^3.0.6",
+    "@react-native-community/datetimepicker": "3.0.0",
     "@react-native-community/masked-view": "0.1.10",
     "expo": "^39.0.3",
     "expo-apple-authentication": "~2.2.1",

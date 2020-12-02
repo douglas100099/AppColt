@@ -175,13 +175,13 @@ export default class BookedCabScreen extends React.Component {
 
     async searchDriver() {
         if (this._isMounted) {
-            const userData = firebase.database().ref('users/');
+            const userData = firebase.database().ref('users/').orderByChild("usertype").equalTo('driver');
             var distanciaValue = 10;
 
             userData.once('value', driverData => {
                 var allUsers = driverData.val();
                 for (let key in allUsers) {
-                    if (allUsers[key].usertype == 'driver' && allUsers[key].driverActiveStatus == true) {
+                    if (allUsers[key].driverActiveStatus == true) {
                         //Verifica se o motorista rejeitou a corrida
                         firebase.database().ref('bookings/' + this.state.currentBookingId + '/rejectedDrivers').once('value', drivers => {
                             if (drivers.val()) {

@@ -29,7 +29,9 @@ import languageJSON from '../common/language';
 import Geocoder from 'react-native-geocoding';
 import distanceCalc from '../common/distanceCalc';
 import { NavigationActions, StackActions } from 'react-navigation';
+import { Chase } from 'react-native-animated-spinkit'
 
+import LocationUser from '../../assets/svg/LocationUser';
 import IconCarMap from '../../assets/svg/IconCarMap';
 
 const LATITUDE = 0;
@@ -75,7 +77,7 @@ export default class MapScreen extends React.Component {
             },
             dontAnimateRegion: false,
             geolocationFetchComplete: false,
-
+            haveBooking: false
         }
         this.viewWidth = 30,
             this.viewHeight = 30
@@ -86,9 +88,9 @@ export default class MapScreen extends React.Component {
             this.setState({
                 errorMessage: 'Ops, isso não funciona com Sketch no emulador Android. Tente usar em seu dispositivo!'
             });
-        } 
+        }
 
-        this.getLocationUser();
+        this.getLocationDB();
         this.getNameUser();
         this.getSavedLocations()
 
@@ -96,7 +98,7 @@ export default class MapScreen extends React.Component {
         this.onPressModal();
     }
 
-    getLocationUser() {
+    getLocationDB() {
         const userLocation = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location');
 
         userLocation.on('value', location => {
@@ -112,7 +114,7 @@ export default class MapScreen extends React.Component {
                     }
                     if (this._isMounted && this.state.dontAnimateRegion == false) {
                         setTimeout(() => {
-                            if(this._isMounted){
+                            if (this._isMounted) {
                                 this.mapView.animateToRegion(region, 500)
                             }
                         }, 1000)
@@ -141,7 +143,7 @@ export default class MapScreen extends React.Component {
             }
             else {
                 setTimeout(() => {
-                    this.getLocationUser()
+                    this.getLocationDB()
                 }, 500)
             }
         })
@@ -190,12 +192,45 @@ export default class MapScreen extends React.Component {
 
         this.intervalGetDrivers = setInterval(() => {
             if (this._isMounted) {
-                //this.getLocationUser();
                 if (this.state.passData && this.state.passData.wherelatitude) {
                     this.getDrivers();
+                    this._getLocationAsync()
                 }
             }
         }, 7000)
+    }
+
+    _getLocationAsync = async () => {
+        let { status } = await Permissions.askAsync(Permissions.LOCATION);
+        if (status !== 'granted') {
+            alert("Para acessar sua localização, é necessária permissão!");
+        } else {
+
+            let location = Platform.OS === 'android' ? await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 20000, }) :
+                await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 2000, })
+            if (location) {
+                var pos = {
+                    latitude: location.coords.latitude,
+                    longitude: location.coords.longitude,
+                };
+                if (pos) {
+                    let latlng = pos.latitude + ',' + pos.longitude;
+                    fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
+                        .then((response) => response.json())
+                        .then((responseJson) => {
+                            //Setando a localização do usuario no firebase
+                            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
+                                add: responseJson.results[0].formatted_address,
+                                lat: pos.latitude,
+                                lng: pos.longitude
+                            })
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                        });
+                }
+            }
+        }
     }
 
     getDrivers() {
@@ -204,7 +239,6 @@ export default class MapScreen extends React.Component {
         userData.once('value', userData => {
             if (userData.val()) {
                 let allUsers = userData.val();
-
                 this.prepareDrivers(allUsers);
             }
         })
@@ -360,10 +394,27 @@ export default class MapScreen extends React.Component {
             >
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.WHITE }}>
 
-                    <Image
+                    {/*<Image
                         style={{ width: 150, height: 150, backgroundColor: colors.TRANSPARENT }}
                         source={require('../../assets/images/loading.gif')}
-                    />
+                    />*/}
+                    <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                        <Chase
+                            size={100}
+                            color={colors.DEEPBLUE}
+                        />
+                        <LocationUser
+                            width={31}
+                            height={30}
+                            style={{
+                                position: 'absolute',
+                                shadowColor: '#000',
+                                shadowOffset: { x: 0, y: 5 },
+                                shadowOpacity: 0.1,
+                                shadowRadius: 5,
+                            }}
+                        />
+                    </View>
                     <View style={styles.viewTextLoading}>
                         <Text style={styles.textLoading}>Carregando sua localização, aguarde...</Text>
                     </View>
@@ -378,7 +429,8 @@ export default class MapScreen extends React.Component {
         userRoot.once('value', userData => {
             if (userData.val()) {
                 this.setState({
-                    nameUser: userData.val().firstName
+                    nameUser: userData.val().firstName,
+                    haveBooking: userData.val()['my-booking'] ? true : false
                 })
             }
         })
@@ -417,7 +469,7 @@ export default class MapScreen extends React.Component {
         })
     }
 
-    tapAddress = (selection) => {
+    tapAddress = () => {
         if (!this.state.statusCorrida) {
             this.setState({ dontAnimateRegion: true })
             this.props.navigation.navigate('Search', { old: this.state.passData, allCars: this.state.allCars ? this.state.allCars : null });
@@ -589,12 +641,12 @@ export default class MapScreen extends React.Component {
                             style={styles.map}
                             initialRegion={this.state.region}
                             onRegionChange={() => { this.setState({ showsMyLocationBtn: true }), this._onMapChange() }}
-                            enablePoweredByContainer={true}
+                            enablePoweredByContainer={false}
                             showsCompass={false}
                             showsScale={false}
                             rotateEnabled={false}
                             customMapStyle={mapStyleAndroid}
-                            //region={() => this.getRegionMap()}
+                        //region={() => this.getRegionMap()}
                         >
                             {this.state.freeCars ? this.state.freeCars.map((item, index) => {
                                 return (
@@ -662,10 +714,7 @@ export default class MapScreen extends React.Component {
                             </TouchableOpacity>
                         </View>
                         : null}
-
                 </View>
-
-
 
                 {
                     this.state.geolocationFetchComplete ?
@@ -674,7 +723,7 @@ export default class MapScreen extends React.Component {
                         }]}>
                             <View>
                                 <Text style={{ marginHorizontal: 15, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 13 : 15, margin: 10 }}> Olá
-                            <Text style={{ fontSize: width < 375 ? 17 : 18 }}> {this.state.nameUser ? this.state.nameUser : null}</Text>, que bom te ver novamente.
+                                <Text style={{ fontSize: width < 375 ? 17 : 18 }}> {this.state.nameUser ? this.state.nameUser : null}</Text>, que bom te ver{this.state.haveBooking ? ' novamente' : '!'}
                         </Text>
                                 <TouchableWithoutFeedback style={{ height: 63 }} onPress={() => this.tapAddress()}>
                                     <View style={styles.inputDrop}>
@@ -729,6 +778,9 @@ const styles = StyleSheet.create({
     mapcontainer: {
 
         flex: 3,
+    },
+    viewTextLoading: {
+        marginTop: 10,
     },
     textLoading: {
         fontFamily: 'Inter-Bold',
@@ -786,11 +838,9 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         position: 'absolute',
         backgroundColor: colors.WHITE,
-        borderWidth: 1,
-        borderColor: colors.GREY1,
-        borderRadius: 15,
+        borderRadius: 10,
         height: 55,
-        elevation: 5,
+        elevation: 3,
         shadowColor: '#000',
         shadowOpacity: 0.1,
         shadowOffset: { x: 0, y: 0 },

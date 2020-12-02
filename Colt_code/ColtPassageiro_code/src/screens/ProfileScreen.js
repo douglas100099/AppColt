@@ -37,8 +37,9 @@ export default class ProfileScreen extends React.Component {
                 symbol: '',
                 cash: false,
                 wallet: false
-            }
+            },
         }
+        this.checkDateBooking = false
     }
 
     componentDidMount() {
@@ -152,11 +153,9 @@ export default class ProfileScreen extends React.Component {
         })
     }
 
-    editProfile = () => {
+    editProfile() {
         this.props.navigation.push('editUser');
     }
-
-
 
     loader() {
         return (
@@ -171,30 +170,63 @@ export default class ProfileScreen extends React.Component {
     }
 
     //Delete current user
-    async deleteAccount() {
-        Alert.alert(
-            languageJSON.delete_account_modal_title,
-            languageJSON.delete_account_modal_subtitle,
-            [
-                {
-                    text: languageJSON.cancel,
-                    onPress: () => console.log('Cancel Pressed'),
-                    style: 'cancel',
-                },
-                {
-                    text: languageJSON.yes,
-                    style: 'destructive', 
-                    onPress: () => {
-                        var ref = firebase.database().ref('users/' + this.state.currentUser.uid + '/')
-                        ref.remove().then(() => {
-                            firebase.auth().signOut();
-                            firebase.auth().currentUser.delete()
-                        });
+    async checkDelete() {
+        firebase.database().ref('users/' + this.state.currentUser.uid).once('value', data => {
+            let bookings = data.val()['my-booking']
+            let current = new Date().getTime()
+
+            if (bookings) {
+                for (let key in bookings) {
+                    let dateBooking = new Date(bookings[key].tripdate).getTime()
+
+                    if (current - dateBooking < 1296000000) {
+                        this.checkDateBooking = true
+                        break
                     }
-                },
-            ],
-            { cancelable: false },
-        );
+                }
+            }
+        })
+    }
+
+    deleteAccount() {
+        this.checkDelete().then(() => {
+            if (this.checkDateBooking) {
+                Alert.alert(
+                    "Alerta!",
+                    "Por motivos de segurança, você não pode deletar a conta com uma corrida realizada em menos de 15 dias!",
+                    [
+                        {
+                            text: "Confirmar",
+                            style: 'cancel',
+                        },
+                    ],
+                    { cancelable: false },
+                )
+            } else {
+                Alert.alert(
+                    languageJSON.delete_account_modal_title,
+                    languageJSON.delete_account_modal_subtitle,
+                    [
+                        {
+                            text: "Cancelar",
+                            style: 'cancel',
+                        },
+                        {
+                            text: "Excluir",
+                            style: 'destructive',
+                            onPress: () => {
+                                var ref = firebase.database().ref('users/' + this.state.currentUser.uid + '/')
+                                ref.remove().then(() => {
+                                    firebase.auth().signOut();
+                                    firebase.auth().currentUser.delete()
+                                });
+                            }
+                        },
+                    ],
+                    { cancelable: false },
+                )
+            }
+        })
     }
 
     goWallet() {
@@ -202,10 +234,7 @@ export default class ProfileScreen extends React.Component {
     }
 
     render() {
-        let { image } = this.state;
-
         return (
-
             <View style={styles.mainView}>
                 <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollStyle}>
                     {
@@ -221,34 +250,26 @@ export default class ProfileScreen extends React.Component {
                         <View style={styles.imageParentView}>
                             <View style={styles.imageViewStyle} >
                                 {
-                                     this.state.loader == true ? this.loader() : 
-                                     this.state.userImage ? 
-                                     <TouchableOpacity onPress={this.showActionSheet}>
-                                         <Image source={{ uri: this.state.userImage }} style={{ width: 95, height: 95, borderRadius: 50 }} /> 
-                                     </TouchableOpacity>
-                                     :
-                                     <TouchableOpacity onPress={this.showActionSheet}>
-                                         <AvatarUser
-                                            width={95}
-                                            height={95}
-                                         />
-                                     </TouchableOpacity>
+                                    this.state.loader == true ? this.loader() :
+                                        this.state.userImage ?
+                                            <TouchableOpacity onPress={this.showActionSheet}>
+                                                <Image source={{ uri: this.state.userImage }} style={{ width: 95, height: 95, borderRadius: 50 }} />
+                                            </TouchableOpacity>
+                                            :
+                                            <TouchableOpacity onPress={this.showActionSheet}>
+                                                <AvatarUser
+                                                    width={95}
+                                                    height={95}
+                                                />
+                                            </TouchableOpacity>
                                 }
                             </View>
                         </View>
-                        <View style={styles.editarPerfil}>
-                            <Text style={styles.textPropStyle} >{this.state.firstName.toUpperCase() + " " + this.state.lastName.toUpperCase()}</Text>
-                            <View style={styles.iconBack}>
-                                <Icon
-                                    name='edit-2'
-                                    style={styles.iconImage}
-                                    size={18}
-                                    type='feather'
-                                    color={colors.BLACK}
-                                    onPress={this.editProfile}
-                                />
-                            </View>
-                        </View>
+                        <Text style={styles.textPropStyle} >{this.state.firstName.toUpperCase() + " " + this.state.lastName.toUpperCase()}</Text>
+
+                        <TouchableOpacity onPress={() => { this.editProfile() }}>
+                            <Text style={{ color: colors.DEEPBLUE, marginTop: 5, fontFamily: 'Inter-Bold', fontSize: 15 }} > Editar Perfil </Text>
+                        </TouchableOpacity>
                     </View>
 
                     <View style={styles.newViewStyle}>
@@ -264,15 +285,22 @@ export default class ProfileScreen extends React.Component {
                             </View>
                         </View>
                         <View style={styles.myViewStyle}>
-                            <View style={styles.iconViewStyle}>
+                            <TouchableOpacity style={styles.iconViewStyle} onPress={() => this.goWallet()}>
                                 <Icon
                                     name='dollar-sign'
                                     type='feather'
                                     color='#D5DDE0'
                                     size={25}
                                 />
-                                <Text onPress={() => this.goWallet()} style={styles.profStyle}>Meu saldo ({this.state.settings.symbol} {this.state.walletBalance ? parseFloat(this.state.walletBalance).toFixed(2) : 0.00})</Text>
-                            </View>
+                                <Text style={styles.profStyle}>Meu saldo ({this.state.settings.symbol} {this.state.walletBalance ? parseFloat(this.state.walletBalance).toFixed(2) : 0.00})</Text>
+                                <Icon
+                                    name='chevron-right'
+                                    type='MaterialIcons'
+                                    color={colors.GREY1}
+                                    size={40}
+                                    containerStyle={{ position: 'absolute', right: 0, marginRight: 10 }}
+                                />
+                            </TouchableOpacity>
                         </View>
                         <View style={styles.myViewStyle}>
                             <View style={styles.iconViewStyle}>
@@ -309,17 +337,11 @@ export default class ProfileScreen extends React.Component {
 
                     </View>
 
-                    <View style={styles.flexView3}>
-
-                        <TouchableOpacity onPress={() => { this.signOut() }} style={styles.textIconStyle2}>
-                            <Text style={styles.textButton2}>Sair</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.textIconStyle} onPress={() => { this.deleteAccount() }}>
+                    <TouchableOpacity onPress={() => { this.deleteAccount() }}>
+                        <View style={styles.textIconStyle}>
                             <Text style={styles.textButton}>Deletar conta</Text>
-                        </TouchableOpacity>
-
-                    </View>
+                        </View>
+                    </TouchableOpacity>
 
                 </ScrollView>
 
@@ -422,7 +444,7 @@ const styles = StyleSheet.create({
         color: colors.BLACK,
         fontFamily: 'Inter-Bold',
         marginRight: 8,
-
+        marginTop: 15
     },
     newViewStyle: {
         flex: 1,
@@ -479,7 +501,13 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 20,
+        marginTop: 54,
+        borderWidth: 2,
+        borderColor: colors.RED,
+        marginHorizontal: 20,
+        borderRadius: 10,
+        width: width - 50,
+        height: 60
     },
     textIconStyle2: {
         width: 250,
@@ -494,7 +522,6 @@ const styles = StyleSheet.create({
     },
     textButton: {
         color: colors.RED,
-        marginBottom: 15,
         fontFamily: 'Inter-Bold',
         fontSize: 18,
     },
@@ -515,7 +542,7 @@ const styles = StyleSheet.create({
         flex: 1
     },
     flexView3: {
-        marginTop: 54
+
     },
     loadingcontainer: {
         flex: 1,

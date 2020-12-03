@@ -6,6 +6,7 @@ import {
     Dimensions,
     Text,
     TouchableOpacity,
+    Modal,
     ScrollView,
     AsyncStorage,
     TouchableWithoutFeedback,
@@ -22,6 +23,7 @@ var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
 
 import AvatarUser from '../../assets/svg/AvatarUser';
+import { CircleFade } from 'react-native-animated-spinkit'
 
 export default class ProfileScreen extends React.Component {
 
@@ -38,6 +40,7 @@ export default class ProfileScreen extends React.Component {
                 cash: false,
                 wallet: false
             },
+            loadingDeleteAccount: false,
         }
         this.checkDateBooking = false
     }
@@ -101,8 +104,6 @@ export default class ProfileScreen extends React.Component {
             </View>
         )
     }
-
-
 
     _pickImage = async (res) => {
         var pickFrom = res;
@@ -189,8 +190,10 @@ export default class ProfileScreen extends React.Component {
     }
 
     deleteAccount() {
+        this.setState({ loadingDeleteAccount: true })
         this.checkDelete().then(() => {
             if (this.checkDateBooking) {
+                this.setState({ loadingDeleteAccount: false })
                 Alert.alert(
                     "Alerta!",
                     "Por motivos de segurança, você não pode deletar a conta com uma corrida realizada em menos de 15 dias!",
@@ -203,6 +206,7 @@ export default class ProfileScreen extends React.Component {
                     { cancelable: false },
                 )
             } else {
+                this.setState({ loadingDeleteAccount: false })
                 Alert.alert(
                     languageJSON.delete_account_modal_title,
                     languageJSON.delete_account_modal_subtitle,
@@ -227,6 +231,28 @@ export default class ProfileScreen extends React.Component {
                 )
             }
         })
+    }
+
+    loadingDeleteAccount(){
+        return (
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={this.state.loadingDeleteAccount}
+                onRequestClose={() => {
+                    this.setState({ loadingDeleteAccount: false })
+                }}
+            >
+                <View style={{ backgroundColor: "rgba(22,22,22,0.5)", width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ justifyContent: 'center', alignItems: 'center', alignSelf: 'center', }}>
+                        <CircleFade
+                            size={100}
+                            color={colors.WHITE}
+                        />
+                    </View>
+                </View>
+            </Modal>
+        )
     }
 
     goWallet() {
@@ -334,7 +360,6 @@ export default class ProfileScreen extends React.Component {
                                 </View>
                             </View>
                             : null}
-
                     </View>
 
                     <TouchableOpacity onPress={() => { this.deleteAccount() }}>
@@ -344,7 +369,9 @@ export default class ProfileScreen extends React.Component {
                     </TouchableOpacity>
 
                 </ScrollView>
-
+                {
+                    this.loadingDeleteAccount()
+                }
             </View>
         );
     }
@@ -381,7 +408,7 @@ const styles = StyleSheet.create({
     scrollStyle: {
         flex: 1,
         height: height,
-        backgroundColor: colors.WHITE
+        backgroundColor: colors.WHITE,
     },
     scrollViewStyle: {
         width: width,
@@ -502,8 +529,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginTop: 54,
-        borderWidth: 2,
-        borderColor: colors.RED,
         marginHorizontal: 20,
         borderRadius: 10,
         width: width - 50,

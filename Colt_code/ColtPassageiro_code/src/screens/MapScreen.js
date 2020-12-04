@@ -443,6 +443,11 @@ export default class MapScreen extends React.Component {
             if (userData.val()) {
                 if (userData.val().refferalId == undefined) {
                     let name = userData.val().firstName ? userData.val().firstName.toLowerCase() : '';
+                    name = name.replace(' ', '')
+                    if (name.length > 5) {
+                        name = name.split('')
+                        name = name[0] + name[1] + name[2]
+                    }
                     let uniqueNo = Math.floor(Math.random() * 9000) + 1000;
                     let refId = name + uniqueNo;
                     userRoot.update({
@@ -724,7 +729,7 @@ export default class MapScreen extends React.Component {
                             <View>
                                 <Text style={{ marginHorizontal: 15, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 13 : 15, margin: 10 }}> Olá
                                 <Text style={{ fontSize: width < 375 ? 17 : 18 }}> {this.state.nameUser ? this.state.nameUser : null}</Text>, que bom te ver{this.state.haveBooking ? ' novamente' : '!'}
-                        </Text>
+                                </Text>
                                 <TouchableWithoutFeedback style={{ height: 63 }} onPress={() => this.tapAddress()}>
                                     <View style={styles.inputDrop}>
                                         <View style={styles.textIconStyle}>

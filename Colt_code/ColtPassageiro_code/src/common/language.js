@@ -39,7 +39,7 @@ export default {
     spacer_message:'OU CONECTE-SE COM',
     confrim_password_placeholder:'Confirmar senha',
     confrim_password_not_match_err:'Password and Confirm Password do not match',
-    referral_id_placeholder:'Código de referência (Opcional)',
+    referral_id_placeholder:'Código de indicação (Opcional)',
     register_button:'Cadastrar',
     email_exist_error:'Esse e-mail está sendo usado por outra conta.',
     Account_linking_error:'Account linking error',

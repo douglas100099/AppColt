@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { Fragment, useRef } from 'react';
 import {
     StyleSheet,
     View,
@@ -32,10 +32,10 @@ import LocationDrop from '../../assets/svg/LocationDrop';
 import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
 import ColtConfortCar from '../../assets/svg/ColtConfortCar';
 import { VerifyCupom } from '../common/VerifyCupom';
-import mapStyleJson from '../../mapStyle.json';
 import mapStyleAndroid from '../../mapStyleAndroid.json';
 
 import { TextInputMask } from 'react-native-masked-text'
+import { ScrollView } from 'react-native-gesture-handler';
 
 export default class FareScreen extends React.Component {
     myAbort = new AbortController()
@@ -73,6 +73,7 @@ export default class FareScreen extends React.Component {
             dateInput: '',
             txtCPF: '',
             cancellValue: 0,
+            longDistance: false,
         },
             this.fadeAnim = new Animated.Value(0)
     }
@@ -80,8 +81,8 @@ export default class FareScreen extends React.Component {
     async componentDidMount() {
         this._isMounted = true;
         var getCroods = await this.props.navigation.getParam('data') ? await this.props.navigation.getParam('data') : null;
-        var minTimeEconomico =  this.props.navigation.getParam('minTimeEconomico') ? await this.props.navigation.getParam('minTimeEconomico') : null;
-        var minTimeConfort =  this.props.navigation.getParam('minTimeConfort') ? await this.props.navigation.getParam('minTimeConfort') : null;
+        var minTimeEconomico = this.props.navigation.getParam('minTimeEconomico') ? await this.props.navigation.getParam('minTimeEconomico') : null;
+        var minTimeConfort = this.props.navigation.getParam('minTimeConfort') ? await this.props.navigation.getParam('minTimeConfort') : null;
         var arrayRates = [];
 
         this.setState({
@@ -108,16 +109,21 @@ export default class FareScreen extends React.Component {
                     curUID: firebase.auth().currentUser,
                     buttonDisabled: false,
                     selected: 0
-                }, () => {
-                    if (this._isMounted = true) {
-                        this.getWalletBalance();
-                        this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
-                        const userData = firebase.database().ref('users/' + this.state.curUID.uid);
-                        userData.once('value', userData => {
-                            this.setState({ userDetails: userData.val() });
-                        })
-                    }
                 })
+            }
+        }).then(() => {
+            if (this._isMounted = true) {
+                let distance = distanceCalc([-22.224650, -43.867618], [this.state.region.wherelatitude, this.state.region.wherelongitude])
+                if (distance > 50) {
+                    this.setState({ longDistance: true })
+                } else {
+                    this.getWalletBalance();
+                    this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
+                    const userData = firebase.database().ref('users/' + this.state.curUID.uid);
+                    userData.once('value', userData => {
+                        this.setState({ userDetails: userData.val() });
+                    })
+                }
             }
         })
 
@@ -255,7 +261,6 @@ export default class FareScreen extends React.Component {
             cancellValue: this.state.cancellValue ? this.state.cancellValue : 0
         }
 
-
         this.state.cancellValue != 0 ? pagamentoObj.cancelRate = true : null
         this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value > 0 ? pagamentoObj.usedDiscount = true : null : null
         this.state.usedWalletMoney > 0 ? pagamentoObj.usedWallet = true : null
@@ -345,13 +350,15 @@ export default class FareScreen extends React.Component {
     }
 
     getDrivers() {
-        const userData = firebase.database().ref('users/');
-        userData.once('value', userData => {
-            if (userData.val()) {
-                let allUsers = userData.val();
-                this.prepareDrivers(allUsers);
-            }
-        })
+        if (!this.state.longDistance) {
+            const userData = firebase.database().ref('users/');
+            userData.once('value', userData => {
+                if (userData.val()) {
+                    let allUsers = userData.val();
+                    this.prepareDrivers(allUsers);
+                }
+            })
+        }
     }
 
     //Pega o tempo dos motoristas mais proximos
@@ -862,7 +869,7 @@ export default class FareScreen extends React.Component {
                 if (cpf) {
                     this.setState({ checkCPF: false })
                     let month = unmaskedDate.getMonth() + 1
-                    let date =  unmaskedDate.getDate() + '/' + month + '/' + unmaskedDate.getFullYear()
+                    let date = unmaskedDate.getDate() + '/' + month + '/' + unmaskedDate.getFullYear()
                     firebase.database().ref('users/' + this.state.curUID.uid + '/').update({
                         cpfNum: unmaskedCpf,
                         data_nascimento: date
@@ -995,7 +1002,7 @@ export default class FareScreen extends React.Component {
                         : null}
 
 
-                    {this.state.rateDetailsObjects[0] ?
+                    {this.state.rateDetailsObjects[0] && !this.state.longDistance ?
                         <TouchableOpacity style={[styles.btnAddPromo, {
                             borderColor: this.state.payDetails ? colors.GREEN.light : null,
                             borderWidth: this.state.payDetails ? 2 : 0
@@ -1059,55 +1066,69 @@ export default class FareScreen extends React.Component {
                 {/* View principal dos detalhes da corrida */}
                 {this.state.rateDetailsObjects[0] && this.state.openModalPayment == false ?
                     <View style={styles.containerBottom}>
-                        <View style={styles.cards}>
-                            <View style={[styles.cardInfo,
-                            {
-                                borderWidth: this.state.selected == 0 ? 1 : 0,
-                                borderColor: this.state.selected == 0 ? colors.BLACK : colors.GREY3,
-                            }
-                            ]} >
-                                <TouchableOpacity style={styles.touchCard1} onPress={() => this.state.buttonDisabled ? null : this.selectCarType(0)}>
-                                    {/*<Icon
+                        {this.state.longDistance ?
+                            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                                <Icon
+                                    name='frown'
+                                    type='feather'
+                                    size={50}
+                                    color={colors.GREY2}
+                                    containerStyle={{ opacity: .5, marginTop: 70 }}
+                                />
+                                <Text style={{ fontFamily: 'Inter-Medium', fontSize: 16, opacity: .5 }}> Ops, ainda não atendemos sua região. </Text>
+                            </View>
+                            :
+                            <Fragment>
+                                <ScrollView contentContainerStyle={{ justifyContent: 'center' }} horizontal={true} showsHorizontalScrollIndicator={false}>
+                                    <View style={styles.cards}>
+                                        <View style={[styles.cardInfo,
+                                        {
+                                            borderWidth: this.state.selected == 0 ? 1 : 0,
+                                            borderColor: this.state.selected == 0 ? colors.BLACK : colors.GREY3,
+                                        }
+                                        ]}>
+                                            <TouchableOpacity style={styles.touchCard1} onPress={() => this.state.buttonDisabled ? null : this.selectCarType(0)}>
+                                                {/*<Icon
                                         name='info'
                                         type='feather'
                                         size={19}
                                         color={colors.DEEPBLUE}
                                         containerStyle={{ position: 'absolute', left: 5, top: 5, opacity: .5 }}
                                     />*/}
-                                    <ColtEconomicoCar />
-                                    <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[0].name}</Text>
+                                                <ColtEconomicoCar />
+                                                <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[0].name}</Text>
 
-                                    {this.state.estimatePrice1 ?
-                                        <Text style={styles.price1}>{this.state.settings.symbol}
-                                            <Text style={styles.price2}>
-                                                {this.state.metodoPagamento === "Dinheiro/Carteira" ? ((this.state.estimatePrice1 - this.state.walletBallance)).toFixed(2) : (parseFloat(this.state.estimatePrice1)).toFixed(2)}
-                                            </Text>
-                                        </Text>
-                                        : null}
+                                                {this.state.estimatePrice1 ?
+                                                    <Text style={styles.price1}>{this.state.settings.symbol}
+                                                        <Text style={styles.price2}>
+                                                            {this.state.metodoPagamento === "Dinheiro/Carteira" ? ((this.state.estimatePrice1 - this.state.walletBallance)).toFixed(2) : (parseFloat(this.state.estimatePrice1)).toFixed(2)}
+                                                        </Text>
+                                                    </Text>
+                                                    : null}
 
-                                    {this.state.minTimeEconomico == null ?
-                                        <View style={[styles.timeBox, {
-                                            backgroundColor: 'transparent'
-                                        }]}>
-                                            <ActivityIndicator size="small" color={colors.DEEPBLUE} />
+                                                {this.state.minTimeEconomico == null ?
+                                                    <View style={[styles.timeBox, {
+                                                        backgroundColor: 'transparent'
+                                                    }]}>
+                                                        <ActivityIndicator size="small" color={colors.DEEPBLUE} />
+                                                    </View>
+                                                    :
+                                                    <View style={styles.timeBox}>
+                                                        <Text style={styles.estimatedTime}>{parseInt(this.state.minTimeEconomico / 60) + " min"} </Text>
+                                                    </View>
+                                                }
+                                            </TouchableOpacity>
                                         </View>
-                                        :
-                                        <View style={styles.timeBox}>
-                                            <Text style={styles.estimatedTime}>{parseInt(this.state.minTimeEconomico / 60) + " min"} </Text>
-                                        </View>
-                                    }
-                                </TouchableOpacity>
-                            </View>
 
-                            {/* Segundo card */}
-                            <View style={[styles.cardInfo2,
-                            {
-                                borderWidth: this.state.selected == 1 ? 1 : 0,
-                                borderColor: this.state.selected == 1 ? colors.BLACK : colors.GREY3,
-                            }
-                            ]} >
-                                <TouchableOpacity style={styles.touchCard2} onPress={() => this.state.buttonDisabled ? null : this.selectCarType(1)}>
-                                    {/*<Icon
+                                        {/* Segundo card */}
+                                        <View style={[styles.cardInfo2,
+                                        {
+                                            borderWidth: this.state.selected == 1 ? 1 : 0,
+                                            borderColor: this.state.selected == 1 ? colors.BLACK : colors.GREY3,
+                                        }
+                                        ]} >
+                                            <TouchableOpacity style={styles.touchCard2} onPress={() => this.state.buttonDisabled ? null : this.selectCarType(1)}>
+                                                {/*<Icon
                                         name='info'
                                         type='feather'
                                         size={19}
@@ -1115,112 +1136,111 @@ export default class FareScreen extends React.Component {
                                         containerStyle={{ position: 'absolute', left: 0, top: 5, opacity: .5 }}
                                     />*/}
 
-                                    <ColtConfortCar />
-                                    <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[1].name}</Text>
+                                                <ColtConfortCar />
+                                                <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[1].name}</Text>
 
-                                    {this.state.estimatePrice2 ?
-                                        <Text style={styles.price1}>
-                                            {this.state.settings.symbol}
-                                            <Text style={styles.price2}>
-                                                {this.state.metodoPagamento === "Dinheiro/Carteira" ? ((this.state.estimatePrice2 - this.state.walletBallance)).toFixed(2) : (parseFloat(this.state.estimatePrice2)).toFixed(2)}
-                                            </Text>
-                                        </Text>
-                                        : null}
+                                                {this.state.estimatePrice2 ?
+                                                    <Text style={styles.price1}>
+                                                        {this.state.settings.symbol}
+                                                        <Text style={styles.price2}>
+                                                            {this.state.metodoPagamento === "Dinheiro/Carteira" ? ((this.state.estimatePrice2 - this.state.walletBallance)).toFixed(2) : (parseFloat(this.state.estimatePrice2)).toFixed(2)}
+                                                        </Text>
+                                                    </Text>
+                                                    : null}
 
-                                    {this.state.minTimeConfort == null ?
-                                        <View style={[styles.timeBox, {
-                                            backgroundColor: 'transparent'
-                                        }]}>
-                                            <ActivityIndicator size="small" color={colors.DEEPBLUE} />
+                                                {this.state.minTimeConfort == null ?
+                                                    <View style={[styles.timeBox, {
+                                                        backgroundColor: 'transparent'
+                                                    }]}>
+                                                        <ActivityIndicator size="small" color={colors.DEEPBLUE} />
+                                                    </View>
+                                                    :
+                                                    <View style={styles.timeBox}>
+                                                        <Text style={styles.estimatedTime}>{parseInt(this.state.minTimeConfort / 60) + " min"} </Text>
+                                                    </View>
+                                                }
+                                            </TouchableOpacity>
                                         </View>
-                                        :
-                                        <View style={styles.timeBox}>
-                                            <Text style={styles.estimatedTime}>{parseInt(this.state.minTimeConfort / 60) + " min"} </Text>
-                                        </View>
-                                    }
-                                </TouchableOpacity>
-                            </View>
+                                    </View>
+                                </ScrollView>
 
-                        </View>
-
-                        {/* Tempo estimado da corrida */}
-                        <View style={styles.estimatedTimeBooking}>
-                            <View style={styles.containerTempo}>
-                                <Text style={styles.textEstimatedTime}>Tempo estimado </Text>
-                                <Text style={styles.estimatedTimeNumber}>{parseInt(this.state.estimatedTimeBooking / 60)} min</Text>
-                            </View>
-                            {this.state.metodoPagamento === 'Dinheiro' ?
-                                <View style={styles.containerDinheiro}>
-                                    <TouchableOpacity style={styles.containerDinheiro} onPress={() => this.state.buttonDisabled ? null : this.openModal()}>
-                                        <View >
-                                            <Icon
-                                                name='ios-cash'
-                                                type='ionicon'
-                                                size={22}
-                                                color={colors.GREEN.light}
-                                            />
-                                        </View>
-                                        <Text style={styles.metodoPagamento}> Dinheiro </Text>
-                                    </TouchableOpacity>
-                                </View>
-                                : this.state.metodoPagamento === 'Carteira' ?
-                                    <View style={styles.containerDinheiro}>
-                                        <TouchableOpacity style={styles.containerCarteira} onPress={() => this.state.buttonDisabled ? null : this.openModal()}>
-                                            <View style={{ flexDirection: "row" }}>
-                                                <View>
+                                <View style={styles.estimatedTimeBooking}>
+                                    <View style={styles.containerTempo}>
+                                        <Text style={styles.textEstimatedTime}>Tempo estimado </Text>
+                                        <Text style={styles.estimatedTimeNumber}>{parseInt(this.state.estimatedTimeBooking / 60)} min</Text>
+                                    </View>
+                                    {this.state.metodoPagamento === 'Dinheiro' ?
+                                        <View style={styles.containerDinheiro}>
+                                            <TouchableOpacity style={styles.containerDinheiro} onPress={() => this.state.buttonDisabled ? null : this.openModal()}>
+                                                <View >
                                                     <Icon
-                                                        name='wallet'
-                                                        type='simple-line-icon'
-                                                        size={17}
-                                                        color={colors.DEEPBLUE}
+                                                        name='ios-cash'
+                                                        type='ionicon'
+                                                        size={22}
+                                                        color={colors.GREEN.light}
                                                     />
                                                 </View>
-                                                <Text style={styles.metodoPagamento}> Carteira Colt </Text>
+                                                <Text style={styles.metodoPagamento}> Dinheiro </Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                        : this.state.metodoPagamento === 'Carteira' ?
+                                            <View style={styles.containerDinheiro}>
+                                                <TouchableOpacity style={styles.containerCarteira} onPress={() => this.state.buttonDisabled ? null : this.openModal()}>
+                                                    <View style={{ flexDirection: "row" }}>
+                                                        <View>
+                                                            <Icon
+                                                                name='wallet'
+                                                                type='simple-line-icon'
+                                                                size={17}
+                                                                color={colors.DEEPBLUE}
+                                                            />
+                                                        </View>
+                                                        <Text style={styles.metodoPagamento}> Carteira Colt </Text>
+                                                    </View>
+                                                    <Text style={{ fontFamily: 'Inter-Bold', opacity: 0.4 }} >SALDO: R${parseFloat(this.state.walletBallance > 0 ? this.state.walletBallance : 0).toFixed(2)} </Text>
+                                                </TouchableOpacity>
                                             </View>
-                                            <Text style={{ fontFamily: 'Inter-Bold', opacity: 0.4 }} >SALDO: R${parseFloat(this.state.walletBallance > 0 ? this.state.walletBallance : 0).toFixed(2)} </Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                    : <View style={styles.containerDinheiro}>
-                                        <TouchableOpacity style={styles.containerDinheiro} onPress={() => this.state.buttonDisabled ? null : this.openModal()}>
-                                            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }} >
-                                                <Icon
-                                                    name='wallet'
-                                                    type='simple-line-icon'
-                                                    size={17}
-                                                    color={colors.GREEN.light}
-                                                    containerStyle={{ opacity: 1 }}
-                                                />
+                                            : <View style={styles.containerDinheiro}>
+                                                <TouchableOpacity style={styles.containerDinheiro} onPress={() => this.state.buttonDisabled ? null : this.openModal()}>
+                                                    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }} >
+                                                        <Icon
+                                                            name='wallet'
+                                                            type='simple-line-icon'
+                                                            size={17}
+                                                            color={colors.GREEN.light}
+                                                            containerStyle={{ opacity: 1 }}
+                                                        />
+                                                    </View>
+                                                    <Text style={styles.metodoPagamentoDinCart}> Dinheiro + Carteira </Text>
+                                                </TouchableOpacity>
                                             </View>
-                                            <Text style={styles.metodoPagamentoDinCart}> Dinheiro + Carteira </Text>
-                                        </TouchableOpacity>
-                                    </View>
-                            }
-                        </View>
+                                    }
+                                </View>
 
-                        {/* Botao confirmar corrida */}
-                        <View style={[styles.viewBotao, {
-                            shadowOpacity: this.state.buttonDisabled ? 0 : 0.4,
-                        }]}>
-                            <TouchableOpacity style={[styles.confirmButtonStyle, {
-                                backgroundColor: this.state.buttonDisabled ? colors.GREY.background : colors.DEEPBLUE,
-                                marginHorizontal: this.state.buttonDisabled ? 75 : 30
-                            }]} disabled={this.state.buttonDisabled} onPress={() => { this.setState({ buttonDisabled: true }), this.verifyCPF() }}>
+                                <View style={[styles.viewBotao, {
+                                    shadowOpacity: this.state.buttonDisabled ? 0 : 0.4,
+                                }]}>
+                                    <TouchableOpacity style={[styles.confirmButtonStyle, {
+                                        backgroundColor: this.state.buttonDisabled ? colors.GREY.background : colors.DEEPBLUE,
+                                        marginHorizontal: this.state.buttonDisabled ? 75 : 30
+                                    }]} disabled={this.state.buttonDisabled} onPress={() => { this.setState({ buttonDisabled: true }), this.verifyCPF() }}>
+                                        {this.state.buttonDisabled ?
+                                            <ActivityIndicator
+                                                size={'small'}
+                                                color={colors.DEEPBLUE}
+                                            />
+                                            :
+                                            <Text style={styles.buttonText}> Confirmar corrida </Text>
+                                        }
+                                    </TouchableOpacity>
+                                </View>
                                 {this.state.buttonDisabled ?
-                                    <ActivityIndicator
-                                        size={'small'}
-                                        color={colors.DEEPBLUE}
-                                    />
-                                    :
-                                    <Text style={styles.buttonText}> Confirmar corrida </Text>
-                                }
-                            </TouchableOpacity>
-                        </View>
-                        {this.state.buttonDisabled ?
-                            <Text style={{ textAlign: 'center', fontFamily: 'Inter-SemiBold' }} > Preparando corrida... </Text>
-                            : null}
+                                    <Text style={{ textAlign: 'center', fontFamily: 'Inter-SemiBold' }} > Preparando corrida... </Text>
+                                    : null}
+                            </Fragment>
+                        }
                     </View>
-                    : null
-                }
+                    : null}
                 {
                     this.infoModal()
                 }
@@ -1355,7 +1375,7 @@ const styles = StyleSheet.create({
         height: 55,
         marginTop: 16,
         borderRadius: 10,
-        elevation: 5,
+        elevation: 2,
         shadowColor: colors.GREY2,
         shadowOpacity: 0.2,
         shadowOffset: { x: 0, y: 0 },
@@ -1369,7 +1389,7 @@ const styles = StyleSheet.create({
         height: 60,
         marginTop: 16,
         borderRadius: 10,
-        elevation: 5,
+        elevation: 2,
         shadowColor: colors.GREY2,
         shadowOpacity: 0.2,
         shadowOffset: { x: 0, y: 0 },
@@ -1467,7 +1487,7 @@ const styles = StyleSheet.create({
     },
     viewBotao: {
         paddingTop: 5,
-        paddingBottom: width < 375 ? 10 : 0,
+        paddingBottom: width < 375 ? 10 : 50,
         justifyContent: 'center',
         elevation: 5,
         shadowColor: colors.DEEPBLUE,
@@ -1485,7 +1505,7 @@ const styles = StyleSheet.create({
         paddingBottom: 10,
         paddingTop: 20,
         flexDirection: 'row',
-        marginHorizontal: 35,
+        marginHorizontal: 45,
         justifyContent: 'space-between',
     },
     containerTempo: {
@@ -1537,7 +1557,7 @@ const styles = StyleSheet.create({
     },
     cards: {
         backgroundColor: colors.WHITE,
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         flexDirection: 'row',
         marginHorizontal: 45,
         marginTop: 10
@@ -1557,6 +1577,7 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         width: 130,
         height: 150,
+        marginRight: 20,
         top: 6,
         elevation: 4,
         shadowColor: '#000',
@@ -1576,7 +1597,6 @@ const styles = StyleSheet.create({
         width: 130,
         height: 150,
         top: 6,
-        right: 0,
         elevation: 4,
         alignItems: 'center',
         shadowColor: '#000',

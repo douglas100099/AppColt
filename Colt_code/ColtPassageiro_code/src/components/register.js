@@ -263,7 +263,7 @@ export default class Registration extends React.Component {
                                     placeholderTextColor={colors.GREY2}
                                     value={this.state.mobile}
                                     keyboardType={'number-pad'}
-                                    maxLength={11}
+                                    maxLength={15}
                                     inputStyle={styles.inputTextStyle}
                                     onChangeText={(text) => { this.setState({ mobile: text }) }}
                                     errorMessage={this.state.mobileValid ? null : languageJSON.mobile_no_blank_error}

@@ -26,27 +26,13 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data: { locations }, error }
   }
   let location = locations[locations.length - 1];
   let uid = firebase.auth().currentUser.uid;
-  var latlng = location.coords.latitude + ',' + location.coords.longitude;
-  fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
-    .then((response) => response.json())
-    .then((responseJson) => {
-      if (responseJson.results[0] && responseJson.results[0].formatted_address) {
-        console.log('ENTROU NO IF PRIMEIRO DO TASK')
-        let address = responseJson.results[0].formatted_address;
-        if (locations.length > 0) {
-          console.log('SETANDO LOC NO BANCO DE DADOS TASK MANAGER')
-          firebase.database().ref('users/' + uid + '/location').update({
-            add: address,
-            lat: location.coords.latitude,
-            lng: location.coords.longitude,
-            angle: location.coords.heading,
-          });
-        }
-      }
-    }).catch((error) => {
-      console.error(error);
-      console.log('DEU ERRO EM SETAR A LOC TASK MANAGER')
+  if (locations.length > 0) {
+    firebase.database().ref('users/' + uid + '/location').update({
+      lat: location.coords.latitude,
+      lng: location.coords.longitude,
+      angle: location.coords.heading,
     });
+  }
 });
 
 
@@ -122,7 +108,7 @@ export class AuthLoadingScreen extends React.Component {
                         this.props.navigation.navigate('DriverTripStart', { allDetails: itemData, regionUser: currentObj.latitude ? currentObj : null })
                       }
                     } else if (itemData.status == 'END') {
-                      if(itemData) {
+                      if (itemData) {
                         this.props.navigation.navigate('DriverFare', { allDetails: itemData, trip_cost: itemData.pagamento.trip_cost, trip_end_time: itemData.trip_end_time })
                       }
                     } else if (itemData.status == 'CANCELLED') {

@@ -5,7 +5,6 @@ import {
     Text,
     Modal,
     Image,
-    ToastAndroid,
     Dimensions,
     AsyncStorage,
     Linking,
@@ -25,7 +24,6 @@ import * as Location from 'expo-location';
 import * as firebase from 'firebase';
 import distanceCalc from '../common/distanceCalc';
 import languageJSON from '../common/language';
-import { Audio } from 'expo-av';
 import CellphoneSVG from '../SVG/CellphoneSVG'
 import MarkerPicSVG from '../SVG/MarkerPicSVG';
 var { width, height } = Dimensions.get('window');
@@ -74,9 +72,6 @@ export default class DriverStartTrip extends React.Component {
             loaderCancel: false,
             kmRestante: 0,
             isAtrasado: false,
-            newMessage: false,
-            isSound: false,
-            isPlaying: false,
         }
     }
 
@@ -112,82 +107,17 @@ export default class DriverStartTrip extends React.Component {
 
     componentDidMount() {
         this._isMounted = true
-        const { navigation } = this.props;
-        this.focusListener = navigation.addListener('didFocus', () => {
-            this.currentScreen = true
-        });
         this.getCancelReasons()
-        this.checkNewMsg()
-        this.sound = new Audio.Sound()
-        const status = {
-            shouldPlay: false
-        };
-        this.sound.loadAsync(require('../../assets/sounds/message.mp3'), status, false)
     }
 
     componentWillUnmount() {
         this.myAbort.abort()
         this._isMounted = false;
-        this.focusListener.remove();
         if (this.location != undefined) {
             console.log('REMOVEU O WATCH STARTTRIP')
             this.location.remove()
         }
-        this.sound.unloadAsync();
         console.log('DESMONTOU A TELA START TRIP')
-    }
-
-    checkNewMsg(){
-        let msgData = firebase.database().ref(`chat/` + this.state.rideDetails.bookingId + '/')
-        msgData.on('value', snap => {
-            if(snap.val()){
-                let chatData = snap.val()
-                if(chatData.readed_driver === false && chatData.notify_driver === false && this.currentScreen){
-                    console.log('ENTROU AQUI')
-                    console.log(this.state.isPlaying)
-                    console.log('qual foi irmão')
-                    if(this.state.isPlaying === false){
-                        console.log('ENTROU pra mandar')
-                        var duration = 0
-                        this.sound.playAsync().then((result) => {
-                            if(this._isMounted){
-                                this.setState({ isPlaying: result.isPlaying }), duration = result.durationMillis
-                            }
-                        }).then(() => {
-                            ToastAndroid.show('Você recebeu uma mensagem do passageiro.', ToastAndroid.SHORT);
-                            firebase.database().ref(`chat/` + this.state.rideDetails.bookingId + '/notify_driver/').set(true).then(() =>{
-                                if(this._isMounted){
-                                    setTimeout(() => {this.sound.stopAsync(), this.setState({ isPlaying: false })}, duration)
-                                }
-                            })
-                        }).catch((err) => {
-                            console.log(err)
-                        })
-                    }
-                }
-            }
-        })
-    }
-
-    playSound() {
-        if(this._isMounted){
-            this.setState({ isSound: true })
-            this.sound.playAsync()
-        }
-    }
-
-    configAudio() {
-        Audio.setAudioModeAsync({
-            staysActiveInBackground: true,
-            shouldDuckAndroid: true,
-        })
-    }
-
-    stopSound() {
-        if(this._isMounted){
-            this.setState({ isSound: false })
-            this.sound.stopAsync();
-        }
     }
 
     openAlert() {
@@ -229,6 +159,7 @@ export default class DriverStartTrip extends React.Component {
             },
             error => console.log(error)
         )
+        this.updateAdress(region.latitude, region.longitude)
         return this.location
     };
 
@@ -241,31 +172,38 @@ export default class DriverStartTrip extends React.Component {
         }
     }
 
-    setLocationDB(lat, lng, angle) {
+    updateAdress(lat, lng) {
         let uid = firebase.auth().currentUser.uid;
         var latlng = lat + ',' + lng;
-        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, {signal: this.myAbort.signal})
+        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, { signal: this.myAbort.signal })
             .then((response) => response.json())
             .then((responseJson) => {
                 if (responseJson.results[0] && responseJson.results[0].formatted_address) {
                     let address = responseJson.results[0].formatted_address;
                     firebase.database().ref('users/' + uid + '/location').update({
                         add: address,
-                        lat: lat,
-                        lng: lng,
-                        angle: angle,
-                    })
+                    });
                 }
-            }).then(() => {
-                firebase.database().ref('bookings/' + this.state.rideDetails.bookingId + '/current/').update({
-                    lat: lat,
-                    lng: lng,
-                    angle: angle,
-                })
-            })
-            .catch((error) => {
+            }).catch((error) => {
                 console.error(error);
             });
+    }
+
+    setLocationDB(lat, lng, angle) {
+        let uid = firebase.auth().currentUser.uid;
+        firebase.database().ref('users/' + uid + '/location').update({
+            lat: lat,
+            lng: lng,
+            angle: angle,
+        }).then(() => {
+            firebase.database().ref('bookings/' + this.state.rideDetails.bookingId + '/current/').update({
+                lat: lat,
+                lng: lng,
+                angle: angle,
+            })
+        }).catch((error) => {
+            console.error(error);
+        });
     }
 
     checkStatus() {
@@ -380,7 +318,6 @@ export default class DriverStartTrip extends React.Component {
     }
 
     chat() {
-        this.currentScreen = false
         if(this._isMounted){
             this.setState({ viewInfos: false })
         }

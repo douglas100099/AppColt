@@ -12,6 +12,7 @@
     "@firebase/app-types": "^0.6.1",
     "@mapbox/polyline": "^1.1.0",
     "@react-native-community/masked-view": "0.1.10",
+    "@react-native-community/netinfo": "5.9.6",
     "@types/react-native": "^0.63.32",
     "expo": "^39.0.4",
     "expo-asset": "~8.2.0",

@@ -291,34 +291,43 @@ export default class DriverCompleteTrip extends React.Component {
             },
             error => console.log(error)
         );
+        this.updateAdress(region.latitude, region.longitude)
         return this.location
     };
 
-    setLocationDB(lat, lng, angle) {
+    updateAdress(lat, lng) {
         let uid = firebase.auth().currentUser.uid;
         var latlng = lat + ',' + lng;
-        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, {signal: this.myAbort.signal})
+        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, { signal: this.myAbort.signal })
             .then((response) => response.json())
             .then((responseJson) => {
                 if (responseJson.results[0] && responseJson.results[0].formatted_address) {
                     let address = responseJson.results[0].formatted_address;
                     firebase.database().ref('users/' + uid + '/location').update({
                         add: address,
-                        lat: lat,
-                        lng: lng,
-                        angle: angle,
-                    }).then(() => {
-                        var keys = this.state.rideDetails.bookingId
-                        firebase.database().ref('bookings/' + keys + '/current/').update({
-                            lat: lat,
-                            lng: lng,
-                            angle: angle,
-                        })
-                    })
+                    });
                 }
             }).catch((error) => {
                 console.error(error);
             });
+    }
+
+    setLocationDB(lat, lng, angle) {
+        let uid = firebase.auth().currentUser.uid;
+        firebase.database().ref('users/' + uid + '/location').update({
+            lat: lat,
+            lng: lng,
+            angle: angle,
+        }).then(() => {
+            var keys = this.state.rideDetails.bookingId
+            firebase.database().ref('bookings/' + keys + '/current/').update({
+                lat: lat,
+                lng: lng,
+                angle: angle,
+            })
+        }).catch((error) => {
+            console.error(error);
+        });
     }
 
     openAlert() {

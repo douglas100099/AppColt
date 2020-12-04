@@ -5,6 +5,7 @@ import { colors } from '../common/theme';
 import languageJSON from '../common/language';
 var { height } = Dimensions.get('window');
 import * as firebase from 'firebase'
+import BtnVoltar from '../components/BtnVoltar';
 export default class EditUser extends React.Component {
 
     constructor(props) {
@@ -99,13 +100,10 @@ export default class EditUser extends React.Component {
         const { onPressBack } = this.props
         return (
             <View style={styles.main}>
-                <Header
-                    backgroundColor={colors.TRANSPARENT}
-                    leftComponent={{ icon: 'md-close', type: 'ionicon', marginLeft: 10, color: colors.BLACK, size: 35, component: TouchableWithoutFeedback, onPress: onPressBack }}
-                    containerStyle={styles.headerContainerStyle}
-                    centerComponent={<Text style={styles.headerTitleStyle}>Atualizar perfil</Text>}
-                    innerContainerStyles={styles.headerInnerContainer}
-                />
+                <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: Platform.OS == 'ios' ? 50 : 30 }}>
+                    <BtnVoltar style={{ backgroundColor: colors.WHITE, position: 'absolute', left: 0, marginLeft: 10, marginBottom: 5 }} btnClick={this.goBack} />
+                    <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20 }}> Atualizar Perfil </Text>
+                </View>
                 <ScrollView style={styles.scrollViewStyle}>
                     <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? "padding" : "padding"} style={styles.form}>
                         <View style={styles.containerStyle}>
@@ -201,7 +199,7 @@ export default class EditUser extends React.Component {
                             <View style={styles.buttonContainer}>
                                 <Button
                                     onPress={() => { this.onPressRegister() }}
-                                    title='Atualizar'
+                                    title='Tudo certo'
                                     titleStyle={styles.buttonTitle}
                                     buttonStyle={styles.registerButton}
                                 />

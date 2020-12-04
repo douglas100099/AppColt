@@ -4,13 +4,13 @@ import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplet
 import { colors } from '../common/theme';
 import { google_map_key } from '../common/key';
 import { Icon } from 'react-native-elements';
-import { NavigationActions, StackActions } from 'react-navigation';
 var { height, width } = Dimensions.get('window');
 import * as firebase from 'firebase'
 
 import LocationIconSearch from '../../assets/svg/LocationIconSearch';
 import LocationUser from '../../assets/svg/LocationUser';
 import LocationDrop from '../../assets/svg/LocationDrop';
+import BtnVoltar from '../components/BtnVoltar';
 import { v4 as uuidv4 } from 'uuid';
 import { color } from 'react-native-reanimated';
 
@@ -150,10 +150,10 @@ export default class SearchScreen extends Component {
                     <View style={styles.IconTextTopModal}>
                         <TouchableOpacity style={styles.iconBackModal} onPress={() => { this.setState({ showSetAddress: false }) }}>
                             <Icon
-                                name='chevron-left'
-                                type='MaterialIcons'
+                                name='md-close'
+                                type='ionicon'
                                 color={colors.BLACK}
-                                size={40}
+                                size={35}
                             />
                         </TouchableOpacity>
                         <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20 }}> Adicionar endereço </Text>
@@ -332,6 +332,10 @@ export default class SearchScreen extends Component {
         params.setAddressText("")
     }
 
+    goBack = () => {
+        this.props.navigation.goBack()
+    }
+
     render() {
         const { searchFocused } = this.state;
         const { onLocationSelected } = this.props;
@@ -339,24 +343,7 @@ export default class SearchScreen extends Component {
         return (
             <View style={styles.mainView}>
                 <View style={styles.IconTextTop}>
-                    <TouchableOpacity style={styles.iconBack} onPress={() => { this.props.navigation.goBack(); }}>
-                        <Icon
-                            name='chevron-left'
-                            type='MaterialIcons'
-                            color={colors.BLACK}
-                            size={40}
-                        />
-                    </TouchableOpacity>
-
-                    {/*<TouchableOpacity style={styles.iconBack} onPress={() => { this.setState({ searchFocused2: false })}}>
-                        <Icon
-                            name='ios-add'
-                            type='ionicon'
-                            color={colors.DEEPBLUE}
-                            size={45}
-                            containerStyle={{ right: 15 }}
-                        />
-                    </TouchableOpacity>*/}
+                    <BtnVoltar style={{ backgroundColor: colors.WHITE, position: 'absolute', left: 0, marginLeft: 10,  marginBottom: 5 }} btnClick={this.goBack} />
                 </View>
 
                 <View style={{ position: 'absolute', left: 20, top: Platform.OS == 'ios' ? 102 : 75, flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
@@ -364,7 +351,7 @@ export default class SearchScreen extends Component {
                     <View style={{ backgroundColor: colors.DEEPBLUE, height: 40, width: 2 }} />
                     <LocationDrop style={{ top: -5 }} width={23} height={23} />
                 </View>
-                <View style={{ justifyContent: 'center', alignSelf: 'center', width: width - 30, height: 1, backgroundColor: colors.GREY1, position: 'absolute', top: Platform.OS == 'ios' ? 200 : 180 }} />
+                <View style={{ justifyContent: 'center', alignSelf: 'center', width: width, height: 1, backgroundColor: colors.GREY1, position: 'absolute', top: Platform.OS == 'ios' ? 200 : 180 }} />
 
                 <GooglePlacesAutocomplete
                     ref={(ref) => { this.searchPickup = ref; }}
@@ -687,7 +674,7 @@ export default class SearchScreen extends Component {
                                 {this.state.locationCasa != null ?
                                     <View style={{ width: width, flexDirection: 'row', alignItems: 'center' }}>
                                         <Text numberOfLines={1} style={{ maxWidth: width - 80, left: 20, fontFamily: 'Inter-Regular', fontSize: 15, opacity: 0.5 }}> {this.state.locationCasa.add} </Text>
-                                        <TouchableOpacity style={{ position: 'absolute', right: 35 }} onPress={() => { this.setState({ showSetAddress: true, modalFocused: true }) }}>
+                                        <TouchableOpacity style={{ position: 'absolute', right: 55 }} onPress={() => { this.setState({ showSetAddress: true, modalFocused: true }) }}>
                                             <Icon
                                                 name='ios-hammer'
                                                 type='ionicon'
@@ -732,7 +719,8 @@ const styles = StyleSheet.create({
     IconTextTop: {
         marginTop: Platform.OS == "ios" ? 45 : 25,
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
+        alignItems: 'flex-start'
     },
     iconBack: {
         marginLeft: 10,
@@ -746,8 +734,10 @@ const styles = StyleSheet.create({
     viewPrincipal: {
         position: 'absolute',
         top: Platform.OS == 'ios' ? 210 : 190,
-        backgroundColor: "rgba(22,22,22,0.03)",
-        width: width
+        width: width - 30,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.GREY2,
+        alignSelf: 'center'
     },
     addCasa: {
         flexDirection: 'row',
@@ -770,7 +760,7 @@ const styles = StyleSheet.create({
     },
     iconBackModal: {
         position: 'absolute',
-        left: 0,
+        right: 25,   
     },
     IconTextTopModal: {
         marginTop: Platform.OS == "ios" ? 50 : 10,

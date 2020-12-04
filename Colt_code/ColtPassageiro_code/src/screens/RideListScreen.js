@@ -1,5 +1,5 @@
 import React from 'react';
-import { RideList, Btnvoltar } from '../components';
+import { RideList } from '../components';
 import {
     StyleSheet,
     View,
@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Icon } from 'react-native-elements';
+import BtnVoltar from '../components/BtnVoltar';
 import { colors } from '../common/theme';
 import * as firebase from 'firebase';
 import languageJSON from '../common/language';
@@ -63,27 +64,21 @@ export default class RideListPage extends React.Component {
         })
     }
 
+    goBack = () => {
+        this.props.navigation.goBack()
+    }
 
     render() {
         return (
             <View style={styles.mainView}>
                 <View style={styles.viewHeader}>
                     <View style={styles.viewTop}>
-                        <View style={{ position: 'absolute', left: 10 }}>
-                            <TouchableOpacity style={styles.btnVoltar} onPress={() => { this.props.navigation.goBack() }}>
-                                <Icon
-                                    name='chevron-left'
-                                    type='MaterialIcons'
-                                    color={colors.BLACK}
-                                    size={32}
-                                />
-                            </TouchableOpacity>
-                        </View>
+                        <BtnVoltar style={{ backgroundColor: colors.WHITE, position: 'absolute', left: 0, marginLeft: 10, marginBottom: 5 }} btnClick={this.goBack} />
                         <Text style={{ fontFamily: 'Inter-Bold', fontSize: width < 375 ? 18 : 20 }}> Minhas corridas </Text>
                     </View>
                 </View>
 
-                <RideList onPressButton={(item, index) => {  this.goDetails(item, index) }} data={this.state.myrides}></RideList>
+                <RideList onPressButton={(item, index) => { this.goDetails(item, index) }} data={this.state.myrides}></RideList>
             </View>
         );
     }
@@ -98,12 +93,11 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     viewTop: {
+        justifyContent: 'center',
         flexDirection: 'row',
         alignItems: 'center',
         marginLeft: 10,
         marginTop: Platform.OS == 'ios' ? 60 : 40,
-        justifyContent: 'center',
-        alignItems: 'center'
     },
     btnVoltar: {
         backgroundColor: colors.WHITE,

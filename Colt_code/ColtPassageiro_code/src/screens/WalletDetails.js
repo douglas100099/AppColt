@@ -18,6 +18,7 @@ import * as firebase from 'firebase';
 import languageJSON from '../common/language';
 import { cloud_function_server_url } from '../common/serverUrl';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import BtnVoltar from '../components/BtnVoltar';
 
 export default class WalletDetails extends React.Component {
   constructor(props) {
@@ -89,21 +90,17 @@ export default class WalletDetails extends React.Component {
     }*/
   }
 
+  goBack = () => {
+    this.props.navigation.goBack()
+  }
+
   render() {
     const walletBar = height / 4;
     return (
       <View style={styles.mainView}>
         <View style={styles.viewHeader}>
-          <View style={styles.bordaIconeVoltar}>
-            <TouchableOpacity onPress={() => { this.props.navigation.goBack() }}>
-              <Icon
-                name='chevron-left'
-                type='MaterialIcons'
-                size={40}
-              />
-            </TouchableOpacity>
-          </View>
-          <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20}}> Carteira Colt </Text>
+          <BtnVoltar style={{ backgroundColor: colors.WHITE, position: 'absolute', left: 0, marginLeft: 10, marginBottom: 5 }} btnClick={this.goBack} />
+          <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20 }}> Carteira Colt </Text>
         </View>
         <View style={{ flex: 3 }}>
           <View style={{ flexDirection: 'row', justifyContent: "space-around", marginTop: 25 }}>
@@ -112,7 +109,7 @@ export default class WalletDetails extends React.Component {
               <Text style={styles.valorSaldo}>{this.state.settings.symbol}{this.state.allData ? parseFloat(this.state.allData.walletBalance > 0 ? this.state.allData.walletBalance : 0).toFixed(2) : ''}</Text>
             </View>
 
-            <TouchableOpacity style={{ width: (width/2)-10}} onPress={() => this.doReacharge()}>
+            <TouchableOpacity style={{ width: (width / 2) - 10 }} onPress={() => this.doReacharge()}>
               <View style={styles.btnAddMoney}>
                 <Icon
                   name='add-circle'
@@ -159,11 +156,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.WHITE,
   },
   viewHeader: {
-    flex: 1, 
+    flex: 1,
     top: Platform.OS == 'ios' ? 30 : 20,
-    backgroundColor: colors.WHITE, 
-    flexDirection: 'row', 
-    alignItems: 'center', 
+    backgroundColor: colors.WHITE,
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-around'
   },
   bordaIconeVoltar: {
@@ -182,51 +179,51 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
   },
   btnSaldo: {
-    width: (width/2)-10, 
-    height: (height/4) - 10, 
-    backgroundColor: colors.WHITE,  
-    borderRadius: 8, 
-    justifyContent: 'center', 
+    width: (width / 2) - 10,
+    height: (height / 4) - 10,
+    backgroundColor: colors.WHITE,
+    borderRadius: 8,
+    justifyContent: 'center',
     flexDirection: 'column',
-    elevation: 5, 
+    elevation: 5,
     shadowColor: '#000',
     shadowOffset: { x: 0, y: 5 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
   },
   txtSaldo: {
-    textAlign: 'center', 
-    fontSize: 18, 
-    fontFamily: 'Inter-Regular' 
+    textAlign: 'center',
+    fontSize: 18,
+    fontFamily: 'Inter-Regular'
   },
   valorSaldo: {
-    textAlign: 'center', 
-    fontSize: 28, 
-    fontWeight: '500', 
-    fontFamily: 'Inter-Bold', 
+    textAlign: 'center',
+    fontSize: 28,
+    fontWeight: '500',
+    fontFamily: 'Inter-Bold',
     color: '#1CA84F'
   },
   btnAddMoney: {
-    height: (height/4) - 10, 
-    backgroundColor: '#1CA84F', 
-    borderRadius: 8, 
-    justifyContent: 'center', 
-    flexDirection: 'column', 
-    elevation: 5, 
+    height: (height / 4) - 10,
+    backgroundColor: '#1CA84F',
+    borderRadius: 8,
+    justifyContent: 'center',
+    flexDirection: 'column',
+    elevation: 5,
     shadowColor: '#000',
     shadowOffset: { x: 0, y: 0 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
   },
   viewHistorico: {
-    position: 'absolute', 
-    bottom: Platform.OS == 'ios' ? 10 : 0, 
-    width: width, 
-    height: 35, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    backgroundColor: colors.GREY1, 
-    elevation: 5, 
+    position: 'absolute',
+    bottom: Platform.OS == 'ios' ? 10 : 0,
+    width: width,
+    height: 35,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.GREY1,
+    elevation: 5,
     shadowColor: '#000',
     shadowOffset: { x: 0, y: 0 },
     shadowOpacity: 0.2,

@@ -11,7 +11,8 @@ import {
     AsyncStorage,
     TouchableWithoutFeedback,
     ActivityIndicator,
-    Alert
+    Alert,
+    Platform
 } from 'react-native';
 import { Icon, Header } from 'react-native-elements';
 import ActionSheet from 'react-native-actionsheet';
@@ -21,6 +22,7 @@ import * as ImagePicker from 'expo-image-picker';
 import languageJSON from '../common/language';
 var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
+import BtnVoltar from '../components/BtnVoltar';
 
 import AvatarUser from '../../assets/svg/AvatarUser';
 import { CircleFade } from 'react-native-animated-spinkit'
@@ -233,7 +235,7 @@ export default class ProfileScreen extends React.Component {
         })
     }
 
-    loadingDeleteAccount(){
+    loadingDeleteAccount() {
         return (
             <Modal
                 animationType="fade"
@@ -259,19 +261,21 @@ export default class ProfileScreen extends React.Component {
         this.props.navigation.navigate('wallet');
     }
 
+    goBack = () => {
+        this.props.navigation.goBack()
+    }
+
     render() {
         return (
             <View style={styles.mainView}>
+                <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: Platform.OS == 'ios' ? 50 : 30 }}>
+                    <BtnVoltar style={{ backgroundColor: colors.WHITE, position: 'absolute', left: 0, marginLeft: 10, marginTop: 10, marginBottom: 5 }} btnClick={this.goBack} />
+                    <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20 }}> Perfil </Text>
+                </View>
                 <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollStyle}>
                     {
                         this.uploadImage()
                     }
-                    <Header
-                        backgroundColor={colors.WHITE}
-                        leftComponent={{ icon: 'chevron-left', type: 'MaterialIcons', color: colors.BLACK, size: 35, component: TouchableWithoutFeedback, onPress: () => { this.props.navigation.goBack(); } }}
-                        containerStyle={styles.headerStyle}
-                        innerContainerStyles={{ marginLeft: 10, marginRight: 10 }}
-                    />
                     <View style={styles.viewStyle}>
                         <View style={styles.imageParentView}>
                             <View style={styles.imageViewStyle} >
@@ -406,6 +410,7 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     scrollStyle: {
+        marginTop: 20,
         flex: 1,
         height: height,
         backgroundColor: colors.WHITE,
@@ -433,7 +438,7 @@ const styles = StyleSheet.create({
         fontSize: 15,
         left: 10,
         color: colors.BLACK,
-        fontFamily: 'Inter-Regular'
+        fontFamily: 'Inter-Medium'
     },
     iconCarteira: {
         marginLeft: 10
@@ -446,7 +451,7 @@ const styles = StyleSheet.create({
     viewStyle: {
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 13
+        marginTop: 15
     },
     imageParentView: {
         marginTop: 5,
@@ -498,12 +503,12 @@ const styles = StyleSheet.create({
         fontSize: 15,
         left: 10,
         color: colors.BLACK,
-        fontFamily: 'Inter-Regular'
+        fontFamily: 'Inter-Medium'
     },
     emailAdressStyle: {
         fontSize: 15,
         color: colors.BLACK,
-        fontFamily: 'Inter-Regular'
+        fontFamily: 'Inter-Medium'
     },
     mainIconView: {
         flex: 1,
@@ -516,23 +521,19 @@ const styles = StyleSheet.create({
         fontSize: 15,
         left: 10,
         color: colors.BLACK,
-        fontFamily: 'Inter-Regular'
+        fontFamily: 'Inter-Medium'
     },
     text2: {
         fontSize: 15,
         left: 10,
         color: colors.BLACK,
-        fontFamily: 'Inter-Regular'
+        fontFamily: 'Inter-Medium'
     },
     textIconStyle: {
         alignSelf: 'center',
         alignItems: 'center',
         justifyContent: 'center',
         marginTop: 54,
-        marginHorizontal: 20,
-        borderRadius: 10,
-        width: width - 50,
-        height: 60
     },
     textIconStyle2: {
         width: 250,

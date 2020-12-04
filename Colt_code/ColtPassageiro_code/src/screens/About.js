@@ -11,6 +11,7 @@ import {
     Modal,
     Platform,
 } from 'react-native';
+import BtnVoltar from '../components/BtnVoltar';
 var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
 import languageJSON from '../common/language';
@@ -42,26 +43,17 @@ export default class AboutPage extends React.Component {
             });
     }
 
+    goBack = () => {
+        this.props.navigation.goBack()
+    }
+
     render() {
         return (
             <View style={styles.mainView}>
-               
                 <View style={styles.viewHeader}>
-                    <View style={styles.viewTop}>
-                        <View style={{ position: 'absolute', left: 10 }}>
-                            <TouchableOpacity style={styles.btnVoltar} onPress={() => { this.props.navigation.goBack() }}>
-                                <Icon
-                                    name='chevron-left'
-                                    type='MaterialIcons'
-                                    color={colors.BLACK}
-                                    size={32}
-                                />
-                            </TouchableOpacity>
-                        </View>
-                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: width < 375 ? 18 : 20 }}> Sobre </Text>
-                    </View>
+                    <BtnVoltar style={{ backgroundColor: colors.WHITE, marginLeft: 10, marginBottom: 5 }} btnClick={this.goBack} />
                 </View>
-                <ScrollView style={{ backgroundColor: colors.WHITE}}>
+                <ScrollView style={{ backgroundColor: colors.WHITE }}>
                     <View style={{ marginTop: 20 }}>
                         <Text style={{ paddingEnd: 20, paddingStart: 20, fontFamily: 'Inter-Medium', textAlign: 'center', fontSize: 17 }}>
                             {this.state.data ? this.state.data.contents : null}

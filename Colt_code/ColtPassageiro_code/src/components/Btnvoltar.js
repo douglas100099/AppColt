@@ -4,10 +4,10 @@ import {
     Text,
     TouchableOpacity,
 } from 'react-native';
+import {  Icon } from 'react-native-elements';
 import { colors } from '../common/theme';
 
-
-export default class Btnvoltar extends React.Component {
+export default class BtnVoltar extends React.Component {
     render() {
         const { style, btnClick } = this.props;
         return (
@@ -30,7 +30,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         borderRadius: 50,
         width: 40,
-        height: 40
+        height: 40,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
     },
     iconVoltar: {
         justifyContent: 'center'

@@ -53,7 +53,6 @@ export default class WTransactionHistory extends React.Component {
 
                     });
                 }
-
             }
         })
         this._retrieveSettings();
@@ -74,7 +73,6 @@ export default class WTransactionHistory extends React.Component {
                                         size={25}
                                         color='#fff'
                                     />
-
                                 </View> :
                                 <View style={styles.crimageHolder}>
                                     <Icon
@@ -87,8 +85,11 @@ export default class WTransactionHistory extends React.Component {
                                 </View>
                             }
                             <View style={styles.statusView}>
-                                 <Text style={styles.historyamounttextStyle}>Você usou {this.state.settings.symbol + parseFloat(item.amount).toFixed(2)}</Text>                                   
-
+                                {item.type == 'Debit' ?
+                                <Text style={styles.historyamounttextStyle}>Você usou {this.state.settings.symbol + parseFloat(item.amount).toFixed(2)}</Text>      
+                                :
+                                <Text style={styles.historyamounttextStyle}>Você depositou {this.state.settings.symbol + parseFloat(item.amount).toFixed(2)}</Text>      
+                                }      
                                 <Text style={styles.textStyle2}>{item.date}</Text>
                             </View>
                         </View>

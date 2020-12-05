@@ -4,18 +4,18 @@ import {
   StyleSheet,
   View,
   Text,
-  TouchableWithoutFeedback,
   ScrollView,
   TextInput,
   FlatList,
   AsyncStorage
 } from 'react-native';
-import { Header } from 'react-native-elements';
 import { colors } from '../common/theme';
 import BtnVoltar from '../components/BtnVoltar';
+import PaymentWebView from '../components/PaymentWebView';
 
 import languageJSON from '../common/language';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { color } from 'react-native-reanimated';
 
 export default class AddMoneyScreen extends React.Component {
   constructor(props) {
@@ -29,9 +29,8 @@ export default class AddMoneyScreen extends React.Component {
         cash: false,
         wallet: false
       },
-      providers: null
+      payNow: false
     }
-
   }
 
   _retrieveSettings = async () => {
@@ -45,11 +44,34 @@ export default class AddMoneyScreen extends React.Component {
     }
   };
 
+  onSuccessHandler = (order_details) => {
+    let tDate = new Date();
+    let Walletballance = this.state.userdata.walletBalance + parseInt(this.state.payData.amount)
+    firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/walletBalance').set(Walletballance).then(() => {
+      firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/walletHistory').push({
+        type: 'Credit',
+        amount: parseInt(this.state.payData.amount),
+        date: tDate.toString(),
+        txRef: this.state.payData.order_id,
+        gateway: order_details.gateway,
+        transaction_id: order_details.transaction_id
+      })
+
+      setTimeout(() => {
+        this.props.navigation.navigate('wallet')
+      }, 3000)
+    })
+  }
+
+  onCanceledHandler = () => {
+      setTimeout(() => {
+        this.props.navigation.navigate('wallet')
+      }, 5000)
+  }
 
   componentDidMount() {
     let getParamData = this.props.navigation.getParam('allData');
-    let providers = this.props.navigation.getParam('providers');
-    this.setState({ allData: getParamData, providers: providers })
+    this.setState({ allData: getParamData })
     this._retrieveSettings();
   }
 
@@ -68,25 +90,19 @@ export default class AddMoneyScreen extends React.Component {
   }
 
   payNow() {
-    var d = new Date();
-    var time = d.getTime();
+    this.setState({ payNow: true })
+    var currentDate = new Date();
+    var time = currentDate.getTime();
     let payData = {
       email: this.state.allData.email,
       amount: this.state.amount,
-      order_id: time.toString(),
+      time_order_ms: time.toString(),
       name: "Adicionar Saldo Carteira",
       description: languageJSON.wallet_ballance,
       currency: this.state.settings.code,
       quantity: 1,
     }
-    if (payData) {
-      this.props.navigation.navigate("paymentMethod", {
-        payData: payData,
-        allData: this.state.allData,
-        settings: this.state.settings,
-        providers: this.state.providers
-      });
-    }
+    this.setState({ payData: payData })
   }
 
   newData = ({ item, index }) => {
@@ -95,47 +111,53 @@ export default class AddMoneyScreen extends React.Component {
     )
   }
 
-
-  //go back
   goBack = () => {
     this.props.navigation.goBack();
   }
+
   render() {
     return (
-      <View style={styles.mainView}>
-        <View style={styles.viewHeader}>
-          <BtnVoltar style={{ backgroundColor: colors.WHITE, position: 'absolute', left: 0, marginLeft: 10, marginBottom: 5 }} btnClick={this.goBack} />
-          <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20 }}> Selecione o Valor </Text>
-        </View>
-        <View style={styles.bodyContainer}>
-          <Text style={styles.walletbalText}>{languageJSON.Balance}: <Text style={styles.ballance}>{this.state.settings.symbol}{this.state.allData ? parseFloat(this.state.allData.walletBalance).toFixed(2) : ''}</Text></Text>
+      <View style={[styles.mainView, { backgroundColor: this.state.payNow == false ? colors.WHITE : colors.DEEPBLUE }]}>
 
-          <TextInput
-            style={styles.inputTextStyle}
-            editable={false}
-            placeholder={languageJSON.addMoneyTextInputPlaceholder + " (" + this.state.settings.symbol + ")"}
-            keyboardType={'number-pad'}
-            onChangeText={(text) => this.setState({ amount: text })}
-            value={this.state.amount}
-          />
-          <View style={styles.quickMoneyContainer}>
-            <ScrollView showsHorizontalScrollIndicator={false} horizontal={true}>
-              <FlatList
-                keyExtractor={(item, index) => index.toString()}
-                data={this.state.qickMoney}
-                renderItem={this.newData}
-                horizontal={true}
+        { this.state.payNow ?
+          <PaymentWebView payData={this.state.payData} onSuccess={this.onSuccessHandler} onCancel={this.onCanceledHandler} /> 
+          : null}
+
+        {this.state.payNow == false ?
+          <View>
+            <View style={styles.viewHeader}>
+              <BtnVoltar style={{ backgroundColor: colors.WHITE, position: 'absolute', left: 0, marginLeft: 10, marginBottom: 5 }} btnClick={this.goBack} />
+              <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20 }}> Selecione o Valor </Text>
+            </View>
+            <View style={styles.bodyContainer}>
+              <Text style={styles.walletbalText}>{languageJSON.Balance}: <Text style={styles.ballance}>{this.state.settings.symbol}{this.state.allData ? parseFloat(this.state.allData.walletBalance).toFixed(2) : ''}</Text></Text>
+
+              <TextInput
+                style={styles.inputTextStyle}
+                editable={false}
+                placeholder={languageJSON.addMoneyTextInputPlaceholder + " (" + this.state.settings.symbol + ")"}
+                keyboardType={'number-pad'}
+                onChangeText={(text) => this.setState({ amount: text })}
+                value={this.state.amount}
               />
-            </ScrollView>
+              <View style={styles.quickMoneyContainer}>
+                <ScrollView showsHorizontalScrollIndicator={false} horizontal={true}>
+                  <FlatList
+                    keyExtractor={(item, index) => index.toString()}
+                    data={this.state.qickMoney}
+                    renderItem={this.newData}
+                    horizontal={true}
+                  />
+                </ScrollView>
+              </View>
+              <TouchableOpacity
+                style={styles.buttonWrapper2}
+                onPress={() => { this.payNow() }}>
+                <Text style={styles.buttonTitle}>Confirmar valor</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <TouchableOpacity
-            style={styles.buttonWrapper2}
-            onPress={() => {
-              this.payNow();
-            }}>
-            <Text style={styles.buttonTitle}>Confirmar valor</Text>
-          </TouchableOpacity>
-        </View>
+          : null}
       </View>
     );
   }
@@ -155,7 +177,6 @@ const styles = StyleSheet.create({
 
   mainView: {
     flex: 1,
-    backgroundColor: colors.WHITE,
   },
   viewHeader: {
     top: Platform.OS == 'ios' ? 50 : 30,
@@ -165,18 +186,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around'
   },
   bodyContainer: {
-    top: Platform.OS == 'ios' ? 65 : 45,
+    top: Platform.OS == 'ios' ? 80 : 60,
     flexDirection: 'column',
     marginTop: 10,
     paddingHorizontal: 12
   },
   walletbalText: {
     fontSize: 17,
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'Inter-Medium',
     textAlign: 'center',
   },
   ballance: {
-    fontWeight: 'bold'
+    fontFamily: 'Inter-Bold'
   },
   inputTextStyle: {
     marginTop: 10,
@@ -184,9 +205,9 @@ const styles = StyleSheet.create({
     height: 50,
     borderBottomColor: colors.GREY1,
     borderBottomWidth: 1,
-    marginHorizontal: 85,
+    marginHorizontal: 100,
     justifyContent: 'center',
-    fontSize: 30
+    fontSize: 35
   },
   buttonWrapper2: {
     marginBottom: 10,

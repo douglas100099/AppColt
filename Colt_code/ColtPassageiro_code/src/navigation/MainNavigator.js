@@ -17,7 +17,6 @@ import {
     OnlineChat,
     WalletDetails,
     AddMoneyScreen,
-    SelectGatewayPage,
     EmailLoginScreen,
     IntroScreen
 } from '../screens';
@@ -117,13 +116,6 @@ export const AppStack = {
             headerShown: false
         }
     },
-
-    paymentMethod: {
-        screen: SelectGatewayPage,
-        navigationOptions: {
-            headerShown: false
-        }
-    }
 }
 
 //authentication stack for user before login

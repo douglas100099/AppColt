@@ -58,7 +58,7 @@ export default class WalletDetails extends React.Component {
       }
     })
     this._retrieveSettings();
-    this.getProviders();
+    //this.getProviders();
   }
 
 
@@ -80,13 +80,8 @@ export default class WalletDetails extends React.Component {
       });
   }
 
-  doReacharge() {
-    
-    if (this.state.providers) {
-      this.props.navigation.push('addMoney', { allData: this.state.allData, providers: this.state.providers });
-    } else {
-      alert('No Payment Providers Found.')
-    }
+  doReacharge() { 
+    this.props.navigation.push('addMoney', { allData: this.state.allData, providers: this.state.providers });
   }
 
   goBack = () => {

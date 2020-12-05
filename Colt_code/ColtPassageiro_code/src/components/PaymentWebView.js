@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { colors } from '../common/theme';
 import { WebView } from 'react-native-webview';
 import { cloud_function_server_url } from '../common/serverUrl';
 
@@ -13,7 +14,7 @@ export default class PaymentWebView extends Component {
     console.log(nativeEvent.url + " NATIVE EVENT")
     let matchUrl = nativeEvent.url.split('?');
     if (matchUrl[0] === cloud_function_server_url + '/success') {
-      var obj = { gateway: this.props.provider.name };
+      var obj = { gateway: 'stripe' };
       if (matchUrl[1]) {
         var pairs = matchUrl[1].split('&');
         for (i in pairs) {
@@ -33,7 +34,7 @@ export default class PaymentWebView extends Component {
 
   render() {
     var checkout_obj = {
-      uri: cloud_function_server_url + this.props.provider.link,
+      uri: cloud_function_server_url + '/stripe_link',
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: 'order_id=' + this.props.payData.order_id
@@ -51,6 +52,7 @@ export default class PaymentWebView extends Component {
         originWhitelist={['*']}
         source={checkout_obj}
         onLoadStart={this.onLoadStart}
+        style={{marginTop: 35}}
       />
     );
   }

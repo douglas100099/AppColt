@@ -11,33 +11,13 @@ global.Headers = fetch.Headers;
 
 admin.initializeApp();
 
-exports.get_providers = functions.https.onRequest((request, response) => {
-    response.send([
-        {
-            name: 'paypal',
-            image: 'https://dev.exicube.com/images/paypal-logo.png',
-            link: '/paypal_link'
-        },
-        {
-            name: 'stripe',
-            image: 'https://dev.exicube.com/images/stripe-logo.png',
-            link: '/stripe_link'
-        },
-        {
-            name: 'braintree',
-            image: 'https://dev.exicube.com/images/braintree-logo.png',
-            link: '/braintree_link'
-        }
-    ]);
-});
-
-exports.paypal_link = functions.https.onRequest(paypalcheckout.render_checkout);
+//exports.paypal_link = functions.https.onRequest(paypalcheckout.render_checkout);
 
 exports.stripe_link = functions.https.onRequest(stripecheckout.render_checkout);
 exports.process_stripe_payment = functions.https.onRequest(stripecheckout.process_checkout);
 
-exports.braintree_link = functions.https.onRequest(braintreecheckout.render_checkout);
-exports.process_braintree_payment = functions.https.onRequest(braintreecheckout.process_checkout);
+//exports.braintree_link = functions.https.onRequest(braintreecheckout.render_checkout);
+//exports.process_braintree_payment = functions.https.onRequest(braintreecheckout.process_checkout);
 
 exports.success = functions.https.onRequest((request, response) => {
     var amount_line = request.query.amount ? `<h3>Seu pagamento de R$<strong>${request.query.amount}</strong>,00 foi concluído com sucesso</h3>` : '';

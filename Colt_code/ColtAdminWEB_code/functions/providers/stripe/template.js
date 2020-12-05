@@ -2,12 +2,9 @@ function getTemplate(stripe_public_key, sessionId) {
     return `
         <html>
             <head>
-            <head> 
-            <title>Stripe Checkout</title>
-            </head>
             <body>
             <script src="https://js.stripe.com/v3"></script>
-            <h1>Loading...</h1>
+            <h1 align="center">Carregando...</h1>
             <div id="error-message"></div>
             <script>
                 (function () {

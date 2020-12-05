@@ -83,7 +83,7 @@ export class AuthLoadingScreen extends React.Component {
         var pos = {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
-        };
+        }
         var curuser = firebase.auth().currentUser.uid;
         if (pos) {
           let latlng = pos.latitude + ',' + pos.longitude;
@@ -98,8 +98,8 @@ export class AuthLoadingScreen extends React.Component {
               })
             })
             .catch((error) => {
-              console.error(error);
-            });
+              console.error(error)
+            })
         }
       }
     }
@@ -152,8 +152,6 @@ export class AuthLoadingScreen extends React.Component {
               };
               this.props.navigation.navigate("Reg", { requireData: data })
             }
-
-
             else {
               alert(languageJSON.email_verify_message);
               user.sendEmailVerification();

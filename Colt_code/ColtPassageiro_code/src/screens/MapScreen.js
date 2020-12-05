@@ -65,9 +65,6 @@ export default class MapScreen extends React.Component {
                 wherelatitude: 0,
                 wherelongitude: 0,
             },
-            allCars: [],
-            nearby: [],
-            mainCarTypes: [],
             freeCars: [],
             settings: {
                 symbol: '',
@@ -168,23 +165,6 @@ export default class MapScreen extends React.Component {
         })
     }
 
-    allCarsData() {
-        const cars = firebase.database().ref('rates/car_type');
-        cars.once('value', allCars => {
-            if (allCars.val()) {
-                let cars = allCars.val()
-                let arr = [];
-                for (let key in cars) {
-                    cars[key].minTime = ''
-                    cars[key].available = true;
-                    cars[key].active = false;
-                    arr.push(cars[key]);
-                }
-                this.setState({ mainCarTypes: arr });
-            }
-        })
-    }
-
     componentDidMount() {
         this._isMounted = true;
         this._retrieveSettings();
@@ -201,7 +181,7 @@ export default class MapScreen extends React.Component {
 
 
     getDrivers() {
-        const userData = firebase.database().ref('users/');
+        const userData = firebase.database().ref('/users').orderByChild("usertype").equalTo('driver')
 
         userData.once('value', userData => {
             if (userData.val()) {
@@ -212,60 +192,17 @@ export default class MapScreen extends React.Component {
     }
 
     async prepareDrivers(allUsers) {
-        let availableDrivers = [];
-        let freeCars = []; //Only for Ukraine Project
-        let arr = {};
-        let riderLocation = [this.state.passData.wherelatitude, this.state.passData.wherelongitude];
-        let startLoc = '"' + this.state.passData.wherelatitude + ', ' + this.state.passData.wherelongitude + '"';
+        let freeCars = [];
         for (let key in allUsers) {
             let driver = allUsers[key];
-            if ((driver.usertype) && (driver.usertype == 'driver') && (driver.approved == true) && (driver.queue == false) && (driver.driverActiveStatus == true)) {
+            if ( driver.approved == true && driver.queue == false && driver.driverActiveStatus == true) {
                 if (driver.location) {
-                    let driverLocation = [driver.location.lat, driver.location.lng];
-                    let distance = distanceCalc(riderLocation, driverLocation);
                     freeCars.push(driver);
-                    if (distance < 5) {
-                        let destLoc = '"' + driver.location.lat + ', ' + driver.location.lng + '"';
-                        let carType = driver.carType;
-                        driver.arriveDistance = distance;
-                        driver.arriveTime = await this.getDriverTime(startLoc, destLoc);
-
-                        if (arr[carType] && arr[carType].drivers) {
-                            arr[carType].drivers.push(driver);
-                            if (arr[carType].minDistance > distance) {
-                                arr[carType].minDistance = distance;
-                                arr[carType].minTime = driver.arriveTime.time_in_secs;
-                            }
-                        } else {
-                            arr[carType] = {};
-                            arr[carType].drivers = [];
-                            arr[carType].drivers.push(driver);
-                            arr[carType].minDistance = distance;
-                            arr[carType].minTime = driver.arriveTime.time_in_secs;
-                        }
-                        availableDrivers.push(driver);
-                    }
                 }
             }
         }
 
-        const allCars = this.state.mainCarTypes.slice();
-
-        for (let i = 0; i < allCars.length; i++) {
-            if (arr[allCars[i].name]) {
-                allCars[i].nearbyData = arr[allCars[i].name].drivers;
-                allCars[i].minTime = arr[allCars[i].name].minTime;
-                allCars[i].available = true;
-            } else {
-                allCars[i].minTime = '';
-                allCars[i].available = false;
-            }
-            allCars[i].active = this.state.passData.carType == allCars[i].name ? true : false;
-        }
-
         this.setState({
-            allCars: allCars,
-            nearby: availableDrivers,
             freeCars: freeCars,
         });
     }
@@ -287,24 +224,6 @@ export default class MapScreen extends React.Component {
             console.log("Asyncstorage issue 9");
         }
     };
-
-    getDriverTime(startLoc, destLoc) {
-        console.log("GET DRIVERS TIME")
-        return new Promise(function (resolve, reject) {
-            fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=${startLoc}&destinations=${destLoc}&key=${google_map_key}`)
-                .then((response) => response.json())
-                .then((res) =>
-                    resolve({
-                        distance_in_meter: res.rows[0].elements[0].distance.value,
-                        time_in_secs: res.rows[0].elements[0].duration.value,
-                        timein_text: res.rows[0].elements[0].duration.text
-                    })
-                )
-                .catch(error => {
-                    reject(error);
-                });
-        });
-    }
 
     onPressOk() {
         this.setState({
@@ -361,10 +280,6 @@ export default class MapScreen extends React.Component {
             >
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.WHITE }}>
 
-                    {/*<Image
-                        style={{ width: 150, height: 150, backgroundColor: colors.TRANSPARENT }}
-                        source={require('../../assets/images/loading.gif')}
-                    />*/}
                     <View style={{ justifyContent: 'center', alignItems: 'center' }}>
                         <Chase
                             size={100}
@@ -444,7 +359,7 @@ export default class MapScreen extends React.Component {
     tapAddress = () => {
         if (!this.state.statusCorrida) {
             this.setState({ dontAnimateRegion: true })
-            this.props.navigation.navigate('Search', { old: this.state.passData, allCars: this.state.allCars ? this.state.allCars : null });
+            this.props.navigation.navigate('Search', { old: this.state.passData });
         } else {
             alert("Você já possui uma corrida em andamento")
         }
@@ -466,16 +381,6 @@ export default class MapScreen extends React.Component {
             dataDetails.wherelatitude = this.state.passData.wherelatitude
             dataDetails.wherelongitude = this.state.passData.wherelongitude
             dataDetails.whereText = this.state.passData.whereText
-
-            if (this.state.allCars != null) {
-                for (key in this.state.allCars) {
-                    if (key == 0) {
-                        minTimeEco = this.state.allCars[key].minTime != '' ? this.state.allCars[key].minTime : null
-                    } else if (key == 1) {
-                        minTimeCon = this.state.allCars[key].minTime != '' ? this.state.allCars[key].minTime : null
-                    }
-                }
-            }
 
             this.props.navigation.replace('FareDetails', { data: dataDetails, minTimeEconomico: minTimeEco, minTimeConfort: minTimeCon });
         }

@@ -194,44 +194,11 @@ export default class MapScreen extends React.Component {
             if (this._isMounted) {
                 if (this.state.passData && this.state.passData.wherelatitude) {
                     this.getDrivers();
-                    this._getLocationAsync()
                 }
             }
         }, 7000)
     }
 
-    _getLocationAsync = async () => {
-        let { status } = await Permissions.askAsync(Permissions.LOCATION);
-        if (status !== 'granted') {
-            alert("Para acessar sua localização, é necessária permissão!");
-        } else {
-
-            let location = Platform.OS === 'android' ? await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 20000, }) :
-                await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 2000, })
-            if (location) {
-                var pos = {
-                    latitude: location.coords.latitude,
-                    longitude: location.coords.longitude,
-                };
-                if (pos) {
-                    let latlng = pos.latitude + ',' + pos.longitude;
-                    fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
-                        .then((response) => response.json())
-                        .then((responseJson) => {
-                            //Setando a localização do usuario no firebase
-                            firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
-                                add: responseJson.results[0].formatted_address,
-                                lat: pos.latitude,
-                                lng: pos.longitude
-                            })
-                        })
-                        .catch((error) => {
-                            console.error(error);
-                        });
-                }
-            }
-        }
-    }
 
     getDrivers() {
         const userData = firebase.database().ref('users/');

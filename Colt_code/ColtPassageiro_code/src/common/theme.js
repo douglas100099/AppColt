@@ -54,7 +54,7 @@ export const colors = {
 
   DEEPBLUE: '#1152FD',
 
-  REDCLEAN: "rgba(233,30,38,1)",
+  REDCLEAN: "rgba(233,30,38,.7)",
 
   BLACK: '#3E4958',
 

@@ -13,9 +13,9 @@ import { colors } from '../common/theme';
 import BtnVoltar from '../components/BtnVoltar';
 import PaymentWebView from '../components/PaymentWebView';
 
+import * as firebase from 'firebase';
 import languageJSON from '../common/language';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { color } from 'react-native-reanimated';
 
 export default class AddMoneyScreen extends React.Component {
   constructor(props) {
@@ -45,28 +45,32 @@ export default class AddMoneyScreen extends React.Component {
   };
 
   onSuccessHandler = (order_details) => {
-    let tDate = new Date();
-    let Walletballance = this.state.userdata.walletBalance + parseInt(this.state.payData.amount)
-    firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/walletBalance').set(Walletballance).then(() => {
-      firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/walletHistory').push({
-        type: 'Credit',
-        amount: parseInt(this.state.payData.amount),
-        date: tDate.toString(),
-        txRef: this.state.payData.order_id,
-        gateway: order_details.gateway,
-        transaction_id: order_details.transaction_id
-      })
+    const refWallet = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/walletBalance')
+    refWallet.once('value', walletBalance => {
 
-      setTimeout(() => {
-        this.props.navigation.navigate('wallet')
-      }, 3000)
+      let tDate = new Date();
+      let Walletballance = walletBalance.val() + parseInt(this.state.payData.amount)
+      refWallet.set(Walletballance).then(() => {
+          firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/walletHistory').push({
+            type: 'Credit',
+            amount: parseInt(this.state.payData.amount),
+            date: tDate.toString(),
+            txRef: this.state.payData.order_id,
+            gateway: order_details.gateway,
+            transaction_id: order_details.transaction_id
+          })
+
+          setTimeout(() => {
+            this.props.navigation.navigate('wallet')
+          }, 3000)
+        })
     })
   }
 
   onCanceledHandler = () => {
-      setTimeout(() => {
-        this.props.navigation.navigate('wallet')
-      }, 5000)
+    setTimeout(() => {
+      this.props.navigation.navigate('wallet')
+    }, 5000)
   }
 
   componentDidMount() {
@@ -96,7 +100,7 @@ export default class AddMoneyScreen extends React.Component {
     let payData = {
       email: this.state.allData.email,
       amount: this.state.amount,
-      time_order_ms: time.toString(),
+      order_id: time.toString(),
       name: "Adicionar Saldo Carteira",
       description: languageJSON.wallet_ballance,
       currency: this.state.settings.code,
@@ -120,7 +124,7 @@ export default class AddMoneyScreen extends React.Component {
       <View style={[styles.mainView, { backgroundColor: this.state.payNow == false ? colors.WHITE : colors.DEEPBLUE }]}>
 
         { this.state.payNow ?
-          <PaymentWebView payData={this.state.payData} onSuccess={this.onSuccessHandler} onCancel={this.onCanceledHandler} /> 
+          <PaymentWebView payData={this.state.payData} onSuccess={this.onSuccessHandler} onCancel={this.onCanceledHandler} />
           : null}
 
         {this.state.payNow == false ?

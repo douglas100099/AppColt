@@ -68,7 +68,7 @@ export default class WTransactionHistory extends React.Component {
                                 <View style={styles.drimageHolder}>
                                     <Icon
                                         iconStyle={styles.debiticonPositionStyle}
-                                        name='keyboard-backspace'
+                                        name='remove'
                                         type='MaterialIcons'
                                         size={25}
                                         color='#fff'
@@ -77,7 +77,7 @@ export default class WTransactionHistory extends React.Component {
                                 <View style={styles.crimageHolder}>
                                     <Icon
                                         iconStyle={styles.crediticonPositionStyle}
-                                        name='keyboard-backspace'
+                                        name='add'
                                         type='MaterialIcons'
                                         size={25}
                                         color='#fff'
@@ -90,7 +90,7 @@ export default class WTransactionHistory extends React.Component {
                                 :
                                 <Text style={styles.historyamounttextStyle}>Você depositou {this.state.settings.symbol + parseFloat(item.amount).toFixed(2)}</Text>      
                                 }      
-                                <Text style={styles.textStyle2}>{item.date}</Text>
+                                <Text style={styles.textStyle2}> {new Date(item.date).toLocaleDateString('pt-BR') + ' - ' + new Date(item.date).getHours() + ':' + new Date(item.date).getMinutes() + 'h'}</Text>
                             </View>
                         </View>
                     </View>
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#B41B00',
+        backgroundColor: colors.REDCLEAN,
         padding: 3
     },
     crimageHolder: {
@@ -146,11 +146,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#018E16',
+        backgroundColor: colors.GREEN.light,
         padding: 3
     },
     containsView: {
         justifyContent: 'center',
+        marginLeft: 10,
     },
 
     statusStyle: {

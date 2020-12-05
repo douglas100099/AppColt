@@ -30,7 +30,7 @@ export default class WalletDetails extends React.Component {
         cash: false,
         wallet: false
       },
-      providers: null
+      hiddenSaldo: false,
     };
   }
 
@@ -80,7 +80,7 @@ export default class WalletDetails extends React.Component {
       });
   }
 
-  doReacharge() { 
+  doReacharge() {
     this.props.navigation.push('addMoney', { allData: this.state.allData, providers: this.state.providers });
   }
 
@@ -98,10 +98,25 @@ export default class WalletDetails extends React.Component {
         </View>
         <View style={{ flex: 3 }}>
           <View style={{ flexDirection: 'row', justifyContent: "space-around", marginTop: 25 }}>
-            <View style={styles.btnSaldo}>
-              <Text style={styles.txtSaldo}>Saldo</Text>
-              <Text style={styles.valorSaldo}>{this.state.settings.symbol}{this.state.allData ? parseFloat(this.state.allData.walletBalance > 0 ? this.state.allData.walletBalance : 0).toFixed(2) : ''}</Text>
-            </View>
+            <TouchableOpacity onPress={() => { this.setState({ hiddenSaldo: !this.state.hiddenSaldo })}}>
+              <View style={styles.btnSaldo}>
+                <Text style={styles.txtSaldo}>Saldo</Text>
+                {this.state.hiddenSaldo ? 
+                <View
+                  style={{ height: 25, marginTop:10, marginBottom: 5, width: 110, alignSelf: 'center', backgroundColor: colors.GREY1 }}
+                />
+                : 
+                <Text style={styles.valorSaldo}>{this.state.settings.symbol}{this.state.allData ? parseFloat(this.state.allData.walletBalance > 0 ? this.state.allData.walletBalance : 0).toFixed(2) : ''}</Text>
+                }
+                <Icon
+                  name='visibility'
+                  type='MaterialIcons'
+                  color={colors.GREY2}
+                  size={30}
+                //iconStyle={{ lineHeight: 48 }}
+                />
+              </View>
+            </TouchableOpacity>
 
             <TouchableOpacity style={{ width: (width / 2) - 10 }} onPress={() => this.doReacharge()}>
               <View style={styles.btnAddMoney}>
@@ -216,11 +231,6 @@ const styles = StyleSheet.create({
     height: 35,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.GREY1,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { x: 0, y: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
+    backgroundColor: colors.GREY3,
   },
 });

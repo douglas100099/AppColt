@@ -1,5 +1,5 @@
-const stripe = require('stripe')('XXXXXXXXXXXXXXXXXXXXXX');
-const stripe_public_key = 'XXXXXXXXXXXXXXXXXXXXXX';
+const stripe = require('stripe')('sk_test_51HuqcRKV5kniTfhSU8zTdCt7j4h4mGfpi7LtWjd2Aaw8Sst8dWW8aPcKxzgzN5y1qPTOrmO6Cjwgm1tl47vdldzs00jbQKXS3U');
+const stripe_public_key = 'pk_test_51HuqcRKV5kniTfhS9YYHX2r0HpH6zYmygNJDjBFY0IJAHuLlHGYL2h6RdoWLetG9mWwtShX3DgSfSVZhIQpm1pxG00aZXI7nbC';
 
 const templateLib = require('./template');
 

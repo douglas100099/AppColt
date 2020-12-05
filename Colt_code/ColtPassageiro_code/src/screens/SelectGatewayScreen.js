@@ -13,10 +13,10 @@ export default class SelectGatewayPage extends React.Component {
     super(props);
     this.state = {
       payData: null,
-      providers:null,
-      userdata:null,
-      settings:null,
-      selectedProvider:null
+      providers: null,
+      userdata: null,
+      settings: null,
+      selectedProvider: null
     };
   }
 
@@ -117,14 +117,14 @@ export default class SelectGatewayPage extends React.Component {
       }, 5000)
     }
   };
-  
+
   goBack() {
-    this.setState({selectedProvider:null});
+    this.setState({ selectedProvider: null });
     this.props.navigation.goBack();
   }
 
-  selectProvider = (provider)=>{
-    this.setState({selectedProvider:provider});
+  selectProvider = (provider) => {
+    this.setState({ selectedProvider: provider });
   };
 
   render() {
@@ -137,25 +137,26 @@ export default class SelectGatewayPage extends React.Component {
           containerStyle={styles.headerStyle}
           innerContainerStyles={{ marginLeft: 10, marginRight: 10 }}
         />
-        {this.state.selectedProvider ? <PaymentWebView provider={this.state.selectedProvider} payData={this.state.payData} onSuccess={this.onSuccessHandler} onCancel={this.onCanceledHandler} /> : null}
-        {this.state.providers && this.state.selectedProvider==null ? 
+        {this.state.selectedProvider ?
+          <PaymentWebView provider={this.state.selectedProvider} payData={this.state.payData} onSuccess={this.onSuccessHandler} onCancel={this.onCanceledHandler} /> : null}
+        {this.state.providers && this.state.selectedProvider == null ?
           <ScrollView>
-              {
+            {
               this.state.providers.map((provider) => {
-                  return (
-                      <TouchableHighlight onPress={this.selectProvider.bind(this, provider)} underlayColor='#99d9f4'>
+                return (
+                  <TouchableHighlight onPress={this.selectProvider.bind(this, provider)} underlayColor='#99d9f4'>
                     <View style={[styles.box, { marginTop: 12 }]} key={provider.name}>
-                        <Image
-                          style={styles.thumb}
-                          source={{uri: provider.image}}
-                        />
+                      <Image
+                        style={styles.thumb}
+                        source={{ uri: provider.image }}
+                      />
                     </View>
-                      </TouchableHighlight>
-                  );
-                })
-              } 
-          </ScrollView> 
-          :null
+                  </TouchableHighlight>
+                );
+              })
+            }
+          </ScrollView>
+          : null
         }
       </View>
     );

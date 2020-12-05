@@ -91,7 +91,7 @@ export default class MapScreen extends React.Component {
         this.getNameUser();
         this.getSavedLocations()
 
-        this.allCarsData();
+        //this.allCarsData();
         this.onPressModal();
     }
 

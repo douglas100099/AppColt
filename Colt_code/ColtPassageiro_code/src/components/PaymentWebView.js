@@ -10,8 +10,8 @@ export default class PaymentWebView extends Component {
 
   onLoadStart = (syntheticEvent) => {
     const { nativeEvent } = syntheticEvent;
+    console.log(nativeEvent.url + " NATIVE EVENT")
     let matchUrl = nativeEvent.url.split('?');
-    console.log(nativeEvent)
     if (matchUrl[0] === cloud_function_server_url + '/success') {
       var obj = { gateway: this.props.provider.name };
       if (matchUrl[1]) {
@@ -39,7 +39,7 @@ export default class PaymentWebView extends Component {
       body: 'order_id=' + this.props.payData.order_id
         + '&amount=' + this.props.payData.amount
         + '&currency=' + this.props.payData.currency
-        + '&product_name=' + this.props.payData.product_name
+        + '&product_name=' + this.props.payData.name
         + '&quantity=' + this.props.payData.quantity
         + '&cust_id=' + this.props.payData.cust_id
         + '&mobile_no=' + this.props.payData.mobile_no

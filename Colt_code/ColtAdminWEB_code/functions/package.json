@@ -15,12 +15,12 @@
   "dependencies": {
     "braintree": "^2.21.0",
     "crypto": "^1.0.1",
-    "firebase-admin": "^8.13.0",
+    "firebase-admin": "^9.4.1",
     "firebase-functions": "^3.11.0",
     "node-fetch": "^2.6.1",
     "paystack": "^2.0.1",
     "request": "^2.88.2",
-    "stripe": "^7.14.0",
+    "stripe": "^7.63.1",
     "util": "^0.12.1"
   },
   "devDependencies": {

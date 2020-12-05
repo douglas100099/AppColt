@@ -101,7 +101,7 @@ export default class EditUser extends React.Component {
         return (
             <View style={styles.main}>
                 <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: Platform.OS == 'ios' ? 50 : 30 }}>
-                    <BtnVoltar style={{ backgroundColor: colors.WHITE, position: 'absolute', left: 0, marginLeft: 10, marginBottom: 5 }} btnClick={this.goBack} />
+                    <BtnVoltar style={{ backgroundColor: colors.WHITE, position: 'absolute', left: 0, marginLeft: 10, marginBottom: 5 }} btnClick={onPressBack} />
                     <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20 }}> Atualizar Perfil </Text>
                 </View>
                 <ScrollView style={styles.scrollViewStyle}>

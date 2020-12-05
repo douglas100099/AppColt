@@ -26,6 +26,10 @@ export default class EditProfilePage extends React.Component {
         
     }
 
+    goBack = () => {
+        this.props.navigation.goBack()
+    }
+
   render() {
     return (
         <View style={styles.containerView}>

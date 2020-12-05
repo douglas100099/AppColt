@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Header } from 'react-native-elements';
 import { colors } from '../common/theme';
+import BtnVoltar from '../components/BtnVoltar';
 
 import languageJSON from '../common/language';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -20,8 +21,8 @@ export default class AddMoneyScreen extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      amount: '5',
-      qickMoney: [{ amount: '5', selected: false }, { amount: '10', selected: false }, { amount: '20', selected: false }, { amount: '50', selected: false }, { amount: '100', selected: false }],
+      amount: '10',
+      qickMoney: [{ amount: '10', selected: false }, { amount: '15', selected: false }, { amount: '20', selected: false }, { amount: '30', selected: false }, { amount: '50', selected: false }],
       settings: {
         code: '',
         symbol: '',
@@ -73,7 +74,7 @@ export default class AddMoneyScreen extends React.Component {
       email: this.state.allData.email,
       amount: this.state.amount,
       order_id: time.toString(),
-      name: languageJSON.add_money,
+      name: "Adicionar Saldo Carteira",
       description: languageJSON.wallet_ballance,
       currency: this.state.settings.code,
       quantity: 1,
@@ -90,31 +91,28 @@ export default class AddMoneyScreen extends React.Component {
 
   newData = ({ item, index }) => {
     return (
-      <TouchableOpacity style={[styles.boxView, { backgroundColor: item.selected ? colors.GREY.default : '#e6e6e6' }]} onPress={() => { this.quckAdd(index); }}><Text style={styles.quckMoneyText, { color: item.selected ? '#fff' : '#000' }} >{this.state.settings.symbol}{item.amount}</Text></TouchableOpacity>
+      <TouchableOpacity style={[styles.boxView, { backgroundColor: item.selected ? colors.DEEPBLUE : colors.WHITE, borderWidth: item.selected ? 0 : 1, borderColor: item.selected ? 'transparent' : colors.GREY2 }]} onPress={() => { this.quckAdd(index); }}><Text style={styles.quckMoneyText, { color: item.selected ? '#fff' : '#000' }} >{this.state.settings.symbol}{item.amount}</Text></TouchableOpacity>
     )
   }
 
 
   //go back
-  goBack() {
+  goBack = () => {
     this.props.navigation.goBack();
   }
   render() {
     return (
       <View style={styles.mainView}>
-        <Header
-          backgroundColor={colors.GREY.default}
-          leftComponent={{ icon: 'ios-arrow-back', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.goBack() } }}
-          centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.add_money_tile}</Text>}
-          containerStyle={styles.headerStyle}
-          innerContainerStyles={{ marginLeft: 10, marginRight: 10 }}
-        />
-
+        <View style={styles.viewHeader}>
+          <BtnVoltar style={{ backgroundColor: colors.WHITE, position: 'absolute', left: 0, marginLeft: 10, marginBottom: 5 }} btnClick={this.goBack} />
+          <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20 }}> Selecione o Valor </Text>
+        </View>
         <View style={styles.bodyContainer}>
           <Text style={styles.walletbalText}>{languageJSON.Balance}: <Text style={styles.ballance}>{this.state.settings.symbol}{this.state.allData ? parseFloat(this.state.allData.walletBalance).toFixed(2) : ''}</Text></Text>
 
           <TextInput
             style={styles.inputTextStyle}
+            editable={false}
             placeholder={languageJSON.addMoneyTextInputPlaceholder + " (" + this.state.settings.symbol + ")"}
             keyboardType={'number-pad'}
             onChangeText={(text) => this.setState({ amount: text })}
@@ -135,7 +133,7 @@ export default class AddMoneyScreen extends React.Component {
             onPress={() => {
               this.payNow();
             }}>
-            <Text style={styles.buttonTitle}>{languageJSON.add_money_tile}</Text>
+            <Text style={styles.buttonTitle}>Confirmar valor</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -159,23 +157,35 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.WHITE,
   },
+  viewHeader: {
+    top: Platform.OS == 'ios' ? 50 : 30,
+    backgroundColor: colors.WHITE,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around'
+  },
   bodyContainer: {
-    flex: 1,
+    top: Platform.OS == 'ios' ? 65 : 45,
     flexDirection: 'column',
     marginTop: 10,
     paddingHorizontal: 12
   },
   walletbalText: {
-    fontSize: 17
+    fontSize: 17,
+    fontFamily: 'Inter-Bold',
+    textAlign: 'center',
   },
   ballance: {
     fontWeight: 'bold'
   },
   inputTextStyle: {
     marginTop: 10,
+    textAlign: 'center',
     height: 50,
     borderBottomColor: colors.GREY1,
     borderBottomWidth: 1,
+    marginHorizontal: 85,
+    justifyContent: 'center',
     fontSize: 30
   },
   buttonWrapper2: {
@@ -184,10 +194,11 @@ const styles = StyleSheet.create({
     height: 55,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.GREY.default,
-    borderRadius: 8,
+    backgroundColor: colors.DEEPBLUE,
+    borderRadius: 10,
   },
   buttonTitle: {
+    fontFamily: 'Inter-Bold',
     color: '#fff',
     fontSize: 18,
   },

@@ -40,15 +40,15 @@ exports.braintree_link = functions.https.onRequest(braintreecheckout.render_chec
 exports.process_braintree_payment = functions.https.onRequest(braintreecheckout.process_checkout);
 
 exports.success = functions.https.onRequest((request, response) => {
-    var amount_line = request.query.amount ? `<h3>Your Payment of <strong>${request.query.amount}</strong> was Successfull</h3>` : '';
-    var order_line = request.query.order_id ? `<h5>Order No : ${request.query.order_id}</h5>` : '';
-    var transaction_line = request.query.transaction_id ? `<h6>Transaction Ref No : ${request.query.transaction_id}</h6>` : '';
+    var amount_line = request.query.amount ? `<h3>Seu pagamento de R$<strong>${request.query.amount}</strong>,00 foi concluído com sucesso</h3>` : '';
+    var order_line = request.query.order_id ? `<h5>Número do pedido: ${request.query.order_id}</h5>` : '';
+    //var transaction_line = request.query.transaction_id ? `<h6>Referência da transação: ${request.query.transaction_id}</h6>` : '';
     response.status(200).send(`
         <!DOCTYPE HTML>
         <html>
         <head> 
             <meta name='viewport' content='width=device-width, initial-scale=1.0'> 
-            <title>Payment Success</title> 
+            <title>Pagamento</title> 
             <style> 
                 body { font-family: Verdana, Geneva, Tahoma, sans-serif; } 
                 h3, h6, h4 { margin: 0px; } 
@@ -66,8 +66,9 @@ exports.success = functions.https.onRequest((request, response) => {
                     <img src='https://cdn.pixabay.com/photo/2012/05/07/02/13/accept-47587_960_720.png' alt='Icon'> 
                     ${amount_line}
                     ${order_line}
-                    ${transaction_line}
-                    <h4>Thank you for your payment.</h4>
+                    
+                    <h4>Obrigado pelo seu pagamento!</h4>
+                    <h3>Os créditos já estão disponíveis em sua conta.</h3>
                 </div>
             </div>
         </body>
@@ -81,7 +82,7 @@ exports.cancel = functions.https.onRequest((request, response) => {
         <html>
         <head> 
             <meta name='viewport' content='width=device-width, initial-scale=1.0'> 
-            <title>Payment Cancelled</title> 
+            <title>Pagamento Cancelado!</title> 
             <style> 
                 body { font-family: Verdana, Geneva, Tahoma, sans-serif; } 
                 .container { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; padding: 60px 0; } 
@@ -96,8 +97,8 @@ exports.cancel = functions.https.onRequest((request, response) => {
             <div class='container'> 
                 <div class='contentDiv'> 
                     <img src='https://cdn.pixabay.com/photo/2012/05/07/02/13/cancel-47588_960_720.png' alt='Icon'> 
-                    <h3>Your Payment Failed</h3> 
-                    <h4>Please try again.</h4>
+                    <h3>Falha ao concluir seu pagamento.</h3> 
+                    <h4>Por favor, tente novamente.</h4>
                 </div> 
             </div>
         </body>
@@ -648,6 +649,7 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                                 walletBalance: newValue
                                             }).then(() => {
                                                 admin.database().ref('users/' + dataBooking.customer + '/walletHistory').push({
+                                                    type: 'Debit',
                                                     amount: dataBooking.pagamento.customer_paid,
                                                     date: new Date().toLocaleDateString('pt-BR'),
                                                     booking_ref: bookingId,
@@ -697,8 +699,9 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                             //ATUALIZA A CARTEIRA DO PASSAGEIRO RERTIRANDO O VALOR USADO 
                                             admin.database().ref('users/' + dataBooking.customer + '/').update({
                                                 walletBalance: 0
-                                            }).then(() => {
+                                            }).then(() => { 
                                                 admin.database().ref('users/' + dataBooking.customer + '/walletHistory').push({
+                                                    type: 'Debit',
                                                     amount: walletBalance,
                                                     date: new Date().toLocaleDateString('pt-BR'),
                                                     booking_ref: bookingId,

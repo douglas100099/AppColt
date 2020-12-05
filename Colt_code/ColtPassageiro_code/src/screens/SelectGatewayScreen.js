@@ -6,6 +6,7 @@ import { colors } from '../common/theme';
 import * as firebase from 'firebase';
 import PaymentWebView from '../components/PaymentWebView';
 import { ScrollView } from 'react-native-gesture-handler';
+import BtnVoltar from '../components/BtnVoltar';
 
 
 export default class SelectGatewayPage extends React.Component {
@@ -30,80 +31,23 @@ export default class SelectGatewayPage extends React.Component {
 
 
   onSuccessHandler = (order_details) => {
-    if (this.state.userdata.paymentType) {
-      firebase.database().ref('users/' + this.state.userdata.driver + '/my_bookings/' + this.state.userdata.bookingKey + '/').update({
-        payment_status: "PAID",
-        payment_mode: this.state.userdata.paymentMode,
-        customer_paid: this.state.userdata.customer_paid,
-        discount_amount: this.state.userdata.discount_amount,
-        usedWalletMoney: this.state.userdata.usedWalletAmmount,
-        cardPaymentAmount: this.state.userdata.cardPaymentAmount,
+    let tDate = new Date();
+    let Walletballance = this.state.userdata.walletBalance + parseInt(this.state.payData.amount)
+    firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/walletBalance').set(Walletballance).then(() => {
+      firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/walletHistory').push({
+        type: 'Credit',
+        amount: parseInt(this.state.payData.amount),
+        date: tDate.toString(),
+        txRef: this.state.payData.order_id,
         getway: order_details.gateway,
         transaction_id: order_details.transaction_id
-      }).then(() => {
-        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my-booking/' + this.state.userdata.bookingKey + '/').update({
-          payment_status: "PAID",
-          payment_mode: this.state.userdata.paymentMode,
-          customer_paid: this.state.userdata.customer_paid,
-          discount_amount: this.state.userdata.discount_amount,
-          usedWalletMoney: this.state.userdata.usedWalletAmmount,
-          cardPaymentAmount: this.state.userdata.cardPaymentAmount,
-          getway: order_details.gateway,
-          transaction_id: order_details.transaction_id
-        }).then(() => {
-          firebase.database().ref('bookings/' + this.state.userdata.bookingKey + '/').update({
-            payment_status: "PAID",
-            payment_mode: this.state.userdata.paymentMode,
-            customer_paid: this.state.userdata.customer_paid,
-            discount_amount: this.state.userdata.discount_amount,
-            usedWalletMoney: this.state.userdata.usedWalletAmmount,
-            cardPaymentAmount: this.state.userdata.cardPaymentAmount,
-            getway: order_details.gateway,
-            transaction_id: order_details.transaction_id
-          }).then(() => {
-
-            if (this.state.userdata.usedWalletAmmount) {
-              if (this.state.userdata.usedWalletAmmount > 0) {
-                let tDate = new Date();
-                firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/walletHistory').push({
-                  type: 'Debit',
-                  amount: this.state.userdata.usedWalletAmmount,
-                  date: tDate.toString(),
-                  txRef: this.state.userdata.bookingKey,
-                }).then(() => {
-                  firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/').update({
-                    walletBalance: this.state.userdata.currentwlbal - this.state.userdata.usedWalletAmmount
-                  })
-                })
-              }
-            }
-          })
-          setTimeout(() => {
-            this.props.navigation.navigate('ratingPage', { data: this.state.userdata });
-          }, 3000)
-
-        })
-
       })
 
-    } else {
-      let tDate = new Date();
-      let Walletballance = this.state.userdata.walletBalance + parseInt(this.state.payData.amount)
-      firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/walletBalance').set(Walletballance).then(() => {
-        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/walletHistory').push({
-          type: 'Credit',
-          amount: parseInt(this.state.payData.amount),
-          date: tDate.toString(),
-          txRef: this.state.payData.order_id,
-          getway: order_details.gateway,
-          transaction_id: order_details.transaction_id
-        })
+      setTimeout(() => {
+        this.props.navigation.navigate('wallet')
+      }, 3000)
+    });
 
-        setTimeout(() => {
-          this.props.navigation.navigate('wallet')
-        }, 3000)
-      });
-    }
   };
 
   onCanceledHandler = () => {
@@ -130,13 +74,10 @@ export default class SelectGatewayPage extends React.Component {
   render() {
     return (
       <View style={styles.container}>
-        <Header
-          backgroundColor={colors.GREY.default}
-          leftComponent={{ icon: 'ios-arrow-back', type: 'ionicon', color: colors.WHITE, size: 30, component: TouchableWithoutFeedback, onPress: () => { this.goBack() } }}
-          centerComponent={<Text style={styles.headerTitleStyle}>{languageJSON.payment}</Text>}
-          containerStyle={styles.headerStyle}
-          innerContainerStyles={{ marginLeft: 10, marginRight: 10 }}
-        />
+        <View style={styles.viewHeader}>
+          <BtnVoltar style={{ backgroundColor: colors.WHITE, position: 'absolute', left: 0, marginLeft: 10, marginBottom: 5 }} btnClick={this.goBack} />
+          <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20 }}> Carteira  </Text>
+        </View>
         {this.state.selectedProvider ?
           <PaymentWebView provider={this.state.selectedProvider} payData={this.state.payData} onSuccess={this.onSuccessHandler} onCancel={this.onCanceledHandler} /> : null}
         {this.state.providers && this.state.selectedProvider == null ?
@@ -144,8 +85,8 @@ export default class SelectGatewayPage extends React.Component {
             {
               this.state.providers.map((provider) => {
                 return (
-                  <TouchableHighlight onPress={this.selectProvider.bind(this, provider)} underlayColor='#99d9f4'>
-                    <View style={[styles.box, { marginTop: 12 }]} key={provider.name}>
+                  <TouchableHighlight onPress={this.selectProvider.bind(this, provider)} underlayColor='#fff'>
+                    <View style={[styles.box, { marginTop: 80 }]} key={provider.name}>
                       <Image
                         style={styles.thumb}
                         source={{ uri: provider.image }}
@@ -167,6 +108,13 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.WHITE,
     flex: 1
+  },
+  viewHeader: {
+    top: Platform.OS == 'ios' ? 50 : 30,
+    backgroundColor: colors.WHITE,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around'
   },
   headerStyle: {
     backgroundColor: colors.GREY.default,

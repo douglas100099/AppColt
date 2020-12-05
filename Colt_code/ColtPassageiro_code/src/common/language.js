@@ -165,7 +165,7 @@ export default {
     CashPaymentAmount:'Pay by cash',
     WalletPayment:'Pay by wallet',
     pay_mode:'Payment Mode',
-    Balance:'Saldo',
+    Balance:'Saldo atual',
     android_channel: 'Notificações',
     write_message:'Digite sua mensagem',
     terms:"Termos e Condições",

@@ -98,8 +98,7 @@ export default class WalletDetails extends React.Component {
         </View>
         <View style={{ flex: 3 }}>
           <View style={{ flexDirection: 'row', justifyContent: "space-around", marginTop: 25 }}>
-            <TouchableOpacity onPress={() => { this.setState({ hiddenSaldo: !this.state.hiddenSaldo })}}>
-              <View style={styles.btnSaldo}>
+            <TouchableOpacity style={styles.btnSaldo} onPress={() => { this.setState({ hiddenSaldo: !this.state.hiddenSaldo })}}>
                 <Text style={styles.txtSaldo}>Saldo</Text>
                 {this.state.hiddenSaldo ? 
                 <View
@@ -115,11 +114,10 @@ export default class WalletDetails extends React.Component {
                   size={30}
                 //iconStyle={{ lineHeight: 48 }}
                 />
-              </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={{ width: (width / 2) - 10 }} onPress={() => this.doReacharge()}>
-              <View style={styles.btnAddMoney}>
+            <TouchableOpacity style={styles.btnAddMoney} onPress={() => this.doReacharge()}>
+              <View >
                 <Icon
                   name='add-circle'
                   type='MaterialIcons'
@@ -194,7 +192,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     flexDirection: 'column',
-    elevation: 5,
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { x: 0, y: 5 },
     shadowOpacity: 0.1,
@@ -213,12 +211,13 @@ const styles = StyleSheet.create({
     color: '#1CA84F'
   },
   btnAddMoney: {
+    width: (width / 2) - 10,
     height: (height / 4) - 10,
     backgroundColor: '#1CA84F',
     borderRadius: 8,
     justifyContent: 'center',
     flexDirection: 'column',
-    elevation: 5,
+    elevation: 10,
     shadowColor: '#000',
     shadowOffset: { x: 0, y: 0 },
     shadowOpacity: 0.2,

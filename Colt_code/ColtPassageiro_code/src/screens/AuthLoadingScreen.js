@@ -26,12 +26,11 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data: { locations }, error }
     return;
   }
   let location = locations[locations.length - 1];
-  let uid = firebase.auth().currentUser.uid;
+  let uid = firebase.auth().currentUser.uid
   if (locations.length > 0) {
     firebase.database().ref('users/' + uid + '/location').update({
       lat: location.coords.latitude,
       lng: location.coords.longitude,
-      angle: location.coords.heading,
     });
   }
 });
@@ -46,12 +45,13 @@ export class AuthLoadingScreen extends React.Component {
 
   async StartBackgroundLocation() {
     const { status } = await Location.requestPermissionsAsync();
-    if (status === 'granted') {
+    let gpsActived = await Location.hasServicesEnabledAsync()
+    if (status === 'granted' && gpsActived) {
       console.log('Setando update do background')
       await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
         accuracy: Location.Accuracy.Highest,
         showsBackgroundLocationIndicator: true,
-        distanceInterval: 100,
+        distanceInterval: 1,
       });
     } else {
       alert('Localização desativada, habilite sua localização')
@@ -73,35 +73,24 @@ export class AuthLoadingScreen extends React.Component {
 
   _getLocationAsync = async () => {
     let { status } = await Permissions.askAsync(Permissions.LOCATION);
-    if (status !== 'granted') {
-      alert("Para acessar sua localização, é necessária permissão!");
-    } else {
+    let gpsActived = await Location.hasServicesEnabledAsync()
 
-      let location = Platform.OS === 'android' ? await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 20000, }) :
-        await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 2000, })
-      if (location) {
-        var pos = {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        }
-        var curuser = firebase.auth().currentUser.uid;
-        if (pos) {
-          let latlng = pos.latitude + ',' + pos.longitude;
-          fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
-            .then((response) => response.json())
-            .then((responseJson) => {
-              //Setando a localização do usuario no firebase
-              firebase.database().ref('users/' + curuser + '/location').update({
-                add: responseJson.results[0].formatted_address,
-                lat: pos.latitude,
-                lng: pos.longitude
-              })
-            })
-            .catch((error) => {
-              console.error(error)
-            })
-        }
-      }
+    if (status === "granted" && gpsActived) {
+      this.location = await Location.watchPositionAsync({
+        accuracy: Location.Accuracy.Highest,
+        distanceInterval: 10,
+        timeInterval: 2000
+      },
+        newLocation => {
+          let { coords } = newLocation;
+
+          firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
+            lat: coords.latitude,
+            lng: coords.longitude
+          });
+        },
+        error => console.log(error)
+      );
     }
   }
 
@@ -114,12 +103,11 @@ export class AuthLoadingScreen extends React.Component {
           userData.once('value', userData => {
             if (userData.val()) {
               if (userData.val().usertype == 'rider') {
-                //Token notifications
                 GetPushToken();
-                this.StartBackgroundLocation();
+                //this.StartBackgroundLocation();
 
                 this._setSettings();
-                //this._getLocationAsync();
+                this._getLocationAsync();
                 this.props.navigation.navigate('Root');
               }
               else {

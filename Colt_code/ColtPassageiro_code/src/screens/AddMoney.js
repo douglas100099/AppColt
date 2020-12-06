@@ -122,7 +122,6 @@ export default class AddMoneyScreen extends React.Component {
   render() {
     return (
       <View style={[styles.mainView, { backgroundColor: this.state.payNow == false ? colors.WHITE : colors.DEEPBLUE }]}>
-
         { this.state.payNow ?
           <PaymentWebView payData={this.state.payData} onSuccess={this.onSuccessHandler} onCancel={this.onCanceledHandler} />
           : null}
@@ -183,7 +182,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   viewHeader: {
-    top: Platform.OS == 'ios' ? 50 : 30,
+    top: Platform.OS == 'ios' ? 50 : 40,
     backgroundColor: colors.WHITE,
     flexDirection: 'row',
     alignItems: 'center',
@@ -211,7 +210,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     marginHorizontal: 100,
     justifyContent: 'center',
-    fontSize: 35
+    fontSize: 35,
+    color: colors.BLACK
   },
   buttonWrapper2: {
     marginBottom: 10,

@@ -29,7 +29,7 @@ import languageJSON from '../common/language';
 import Geocoder from 'react-native-geocoding';
 import distanceCalc from '../common/distanceCalc';
 import { NavigationActions, StackActions } from 'react-navigation';
-import { Chase } from 'react-native-animated-spinkit'
+import { Chase, Pulse } from 'react-native-animated-spinkit'
 
 import LocationUser from '../../assets/svg/LocationUser';
 import IconCarMap from '../../assets/svg/IconCarMap';
@@ -281,13 +281,13 @@ export default class MapScreen extends React.Component {
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.WHITE }}>
 
                     <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                        <Chase
-                            size={100}
+                        <Pulse
+                            size={150}
                             color={colors.DEEPBLUE}
                         />
                         <LocationUser
-                            width={31}
-                            height={30}
+                            width={41}
+                            height={40}
                             style={{
                                 position: 'absolute',
                                 shadowColor: '#000',

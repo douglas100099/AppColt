@@ -21,7 +21,7 @@ exports.process_stripe_payment = functions.https.onRequest(stripecheckout.proces
 
 exports.success = functions.https.onRequest((request, response) => {
     var amount_line = request.query.amount ? `<h3>Seu pagamento de R$<strong>${request.query.amount}</strong>,00 foi concluído com sucesso</h3>` : '';
-    var order_line = request.query.order_id ? `<h5>Número do pedido: ${request.query.order_id}</h5>` : '';
+    //var order_line = request.query.order_id ? `<h5>Número do pedido: ${request.query.order_id}</h5>` : '';
     //var transaction_line = request.query.transaction_id ? `<h6>Referência da transação: ${request.query.transaction_id}</h6>` : '';
     response.status(200).send(`
         <!DOCTYPE HTML>
@@ -33,7 +33,7 @@ exports.success = functions.https.onRequest((request, response) => {
                 body { font-family: Verdana, Geneva, Tahoma, sans-serif; } 
                 h3, h6, h4 { margin: 0px; } 
                 .container { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; padding: 60px 0; } 
-                .contentDiv { padding: 40px; box-shadow: 0px 0px 12px 0px rgba(0, 0, 0, 0.3); border-radius: 10px; width: 70%; margin: 0px auto; text-align: center; } 
+                .contentDiv { padding: 40px; box-shadow: 0px 0px 12px 0px rgba(0, 0, 0, 0.2); border-radius: 10px; width: 70%; margin: 0px auto; text-align: center; } 
                 .contentDiv img { width: 140px; display: block; margin: 0px auto; margin-bottom: 10px; } 
                 .contentDiv h3 { font-size: 22px; } 
                 .contentDiv h6 { font-size: 13px; margin: 5px 0; } 
@@ -43,12 +43,10 @@ exports.success = functions.https.onRequest((request, response) => {
         <body> 
             <div class='container'>
                 <div class='contentDiv'> 
-                    <img src='https://cdn.pixabay.com/photo/2012/05/07/02/13/accept-47587_960_720.png' alt='Icon'> 
-                    ${amount_line}
-                    ${order_line}
-                    
+                    <img src='https://firebasestorage.googleapis.com/v0/b/app-colt.appspot.com/o/Images_cloud_function%2Fchecked.png?alt=media&token=04cafd5b-4937-4763-b266-6c22d6f29c8b' alt='Icon'> 
+                    ${amount_line}                
                     <h4>Obrigado pelo seu pagamento!</h4>
-                    <h3>Os créditos já estão disponíveis em sua conta.</h3>
+                    <h4>Os créditos já estão disponíveis em sua conta.</h4>
                 </div>
             </div>
         </body>
@@ -76,7 +74,7 @@ exports.cancel = functions.https.onRequest((request, response) => {
         <body> 
             <div class='container'> 
                 <div class='contentDiv'> 
-                    <img src='https://cdn.pixabay.com/photo/2012/05/07/02/13/cancel-47588_960_720.png' alt='Icon'> 
+                    <img src='https://firebasestorage.googleapis.com/v0/b/app-colt.appspot.com/o/Images_cloud_function%2Fcancel.png?alt=media&token=b09d00d7-723d-41cd-8543-d0649717c4d2' alt='Icon'> 
                     <h3>Falha ao concluir seu pagamento.</h3> 
                     <h4>Por favor, tente novamente.</h4>
                 </div> 
@@ -136,7 +134,7 @@ const RequestPushMsg = (token, msg) => {
 
 const checkUserAsaas = async (cpf) => {
     var myHeaders = new Headers();
-    myHeaders.append("access_token", "d9bbfe4544663b00197cf53b35c3d9f84ae7bf8b85fa09c3aed37a2c65dcea3a");
+    myHeaders.append("access_token", "4e0ddc24005186271172d15cd64db47a1e07b443e2f0a1f236c0ccb25ff5a84b");
     //myHeaders.append("Cookie", "AWSALB=DD59xUIYEBepYXNoNytiXuFxbzTP7ffO0wNtGIp9XHLjWQL+dY0zcJd4YboggaWME0K0+E4bVjycoUr53xlP+RCS1eG9Mjqv39RWRPKYauJV5jtCru6VN8JDUkE9; AWSALBCORS=DD59xUIYEBepYXNoNytiXuFxbzTP7ffO0wNtGIp9XHLjWQL+dY0zcJd4YboggaWME0K0+E4bVjycoUr53xlP+RCS1eG9Mjqv39RWRPKYauJV5jtCru6VN8JDUkE9");
 
     var requestOptions = {
@@ -160,7 +158,7 @@ const checkUserAsaas = async (cpf) => {
 const sendRequestPayment = async (customer, dueDate, value, externalReference) => {
     var myHeaders = new Headers();
     myHeaders.append("Content-Type", " application/json");
-    myHeaders.append("access_token", "d9bbfe4544663b00197cf53b35c3d9f84ae7bf8b85fa09c3aed37a2c65dcea3a");
+    myHeaders.append("access_token", "4e0ddc24005186271172d15cd64db47a1e07b443e2f0a1f236c0ccb25ff5a84b");
     // myHeaders.append("Cookie", "AWSALB=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH; AWSALBCORS=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH");
 
     let newBody = {
@@ -206,7 +204,7 @@ const sendRequestPayment = async (customer, dueDate, value, externalReference) =
 const createUserAsaas = async (raw) => {
     var myHeaders = new Headers();
     myHeaders.append("Content-Type", " application/json");
-    myHeaders.append("access_token", "d9bbfe4544663b00197cf53b35c3d9f84ae7bf8b85fa09c3aed37a2c65dcea3a");
+    myHeaders.append("access_token", "4e0ddc24005186271172d15cd64db47a1e07b443e2f0a1f236c0ccb25ff5a84b");
     //myHeaders.append("Cookie", "AWSALB=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH; AWSALBCORS=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH");
 
     var requestOptions = {
@@ -230,7 +228,7 @@ const createUserAsaas = async (raw) => {
 
 const checkPaymentAsaas = async (custumer) => {
     var myHeaders = new Headers();
-    myHeaders.append("access_token", "d9bbfe4544663b00197cf53b35c3d9f84ae7bf8b85fa09c3aed37a2c65dcea3a");
+    myHeaders.append("access_token", "4e0ddc24005186271172d15cd64db47a1e07b443e2f0a1f236c0ccb25ff5a84b");
     //myHeaders.append("Cookie", "AWSALB=8ot6kpPxY2hftKe48q10n7WrdptQn7kvONpHNj3+Lh+BpeccnlOE/SE9lsl0XOKMKAVDqhq7QTXvbp7ogV7O9FARNb6ScQqymhS6VlFWkn81PzeYqp7bTVmUZW96; AWSALBCORS=8ot6kpPxY2hftKe48q10n7WrdptQn7kvONpHNj3+Lh+BpeccnlOE/SE9lsl0XOKMKAVDqhq7QTXvbp7ogV7O9FARNb6ScQqymhS6VlFWkn81PzeYqp7bTVmUZW96");
 
     var requestOptions = {
@@ -260,7 +258,8 @@ exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.
                 if (dataUsers[key].saldo) {
                     if (dataUsers[key].saldo <= -5) {
                         checkUserAsaas(dataUsers[key].cpfNum).then((response) => {
-                            let newValue = dataUsers[key].saldo * (-1)
+                            let value = dataUsers[key].saldo * (-1)
+                            let newValue = parseFloat(value).toFixed(2)
 
                             //Pega a data atual e adiciona +5 pro vencimento do boleto
                             var date = new Date()
@@ -281,6 +280,7 @@ exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.
                                             vencimento_boleto: resultToAsaas
                                         }
                                     })
+                                    RequestPushMsg(dataUsers[key].pushToken, 'Seu boleto no valor de R$' + newValue + ' referente à taxa quinzenal do aplicativo Colt, já está disponível para pagamento!' )
                                     return null
                                 }).catch(error => {
                                     throw new Error("Erro ao Enviar boleto Asaas - Função principal")

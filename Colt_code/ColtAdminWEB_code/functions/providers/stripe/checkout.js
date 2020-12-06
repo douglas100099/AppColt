@@ -1,5 +1,5 @@
-const stripe = require('stripe')('sk_test_51Hur0mADmmhL2ekcKtUKMjUOHmSnv8EU8OzGCqQ8wA8lMJ0Jq1zVzVWNPCtRSVoMAJSuDCOF3aKa6MOcoBp0v519004MWiCvHR');
-const stripe_public_key = 'pk_test_51Hur0mADmmhL2ekc73JK6zN8MSKnIqDAXWmfKluWvm0ybL5cKw7yZZqiquuj6yRaan6gfIAOoontG7iOO893Pvg100Zlfhwiir';
+const stripe = require('stripe')('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');
+const stripe_public_key = 'pk_live_51Hur0mADmmhL2ekcBYfSsOOMDlkbWstk7wbfjXLRLMJsGsUuP3Y3KLOCLUmLw9gP1WpzetpLxkrEdp33q8oGfrEU00KgHr7Nak';
 
 const templateLib = require('./template');
 

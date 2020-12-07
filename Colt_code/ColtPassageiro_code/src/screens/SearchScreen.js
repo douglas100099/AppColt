@@ -166,7 +166,7 @@ export default class SearchScreen extends Component {
                             type='ionicon'
                             color={colors.BLACK}
                             size={25}
-                            containerStyle={{ position: 'absolute', left: 22, opacity: 0.2 }}
+                            containerStyle={{ position: 'absolute', left: 22 }}
                         />
 
                         <GooglePlacesAutocomplete
@@ -667,25 +667,25 @@ export default class SearchScreen extends Component {
                                 <Icon
                                     name='ios-home'
                                     type='ionicon'
-                                    color={colors.GREY2}
+                                    color={colors.DARK}
                                     size={20}
-                                    containerStyle={{ left: 15, opacity: 0.6 }}
+                                    containerStyle={{ left: 10,  }}
                                 />
                                 {this.state.locationCasa != null ?
                                     <View style={{ width: width, flexDirection: 'row', alignItems: 'center' }}>
-                                        <Text numberOfLines={1} style={{ maxWidth: width - 80, left: 20, fontFamily: 'Inter-Regular', fontSize: 15, opacity: 0.5 }}> {this.state.locationCasa.add} </Text>
+                                        <Text numberOfLines={1} style={{ maxWidth: width - 110, left: 15, fontFamily: 'Inter-Regular', fontSize: 15, opacity: 0.5 }}> {this.state.locationCasa.add} </Text>
                                         <TouchableOpacity style={{ position: 'absolute', right: 55 }} onPress={() => { this.setState({ showSetAddress: true, modalFocused: true }) }}>
                                             <Icon
-                                                name='ios-hammer'
-                                                type='ionicon'
+                                                name='edit'
+                                                type='MaterialIcons'
                                                 color={colors.BLACK}
-                                                size={30}
-                                                containerStyle={{ opacity: 0.2 }}
+                                                size={25}
+                                                containerStyle={{ opacity: 0.7 }}
                                             />
                                         </TouchableOpacity>
                                     </View>
                                     :
-                                    <Text style={{ left: 20, fontFamily: 'Inter-Regular', fontSize: width < 375 ? 17 : 19, opacity: 0.3 }}> Salvar endereço </Text>
+                                    <Text style={{ left: 15, fontFamily: 'Inter-Regular', fontSize: width < 375 ? 17 : 19, opacity: 0.3 }}> Salvar endereço </Text>
                                 }
                             </View>
                         </TouchableOpacity>

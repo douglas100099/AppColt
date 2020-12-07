@@ -81,8 +81,8 @@ export default class FareScreen extends React.Component {
     async componentDidMount() {
         this._isMounted = true;
         var getCroods = await this.props.navigation.getParam('data') ? await this.props.navigation.getParam('data') : null;
-        var minTimeEconomico = this.props.navigation.getParam('minTimeEconomico') ? await this.props.navigation.getParam('minTimeEconomico') : null;
-        var minTimeConfort = this.props.navigation.getParam('minTimeConfort') ? await this.props.navigation.getParam('minTimeConfort') : null;
+        //var minTimeEconomico = this.props.navigation.getParam('minTimeEconomico') ? await this.props.navigation.getParam('minTimeEconomico') : null;
+        //var minTimeConfort = this.props.navigation.getParam('minTimeConfort') ? await this.props.navigation.getParam('minTimeConfort') : null;
         var arrayRates = [];
 
         this.setState({
@@ -102,8 +102,8 @@ export default class FareScreen extends React.Component {
                     arrayRates.push(ratesObject)
                 }
                 this.setState({
-                    minTimeEconomico: minTimeEconomico,
-                    minTimeConfort: minTimeConfort,
+                    minTimeEconomico: null,
+                    minTimeConfort: null,
                     rateDetailsObjects: arrayRates,
                     region: getCroods,
                     curUID: firebase.auth().currentUser,
@@ -114,7 +114,7 @@ export default class FareScreen extends React.Component {
         }).then(() => {
             if (this._isMounted = true) {
                 let distance = distanceCalc([-22.224650, -43.867618], [this.state.region.wherelatitude, this.state.region.wherelongitude])
-                if (distance > 50) {
+                if (distance > 200) {
                     this.setState({ longDistance: true })
                 } else {
                     this.getWalletBalance();
@@ -991,7 +991,7 @@ export default class FareScreen extends React.Component {
 
                     {this.state.region && this.state.region.wherelatitude ?
                         <View style={styles.bordaIconeVoltar}>
-                            <TouchableOpacity onPress={() => this.state.buttonDisabled ? null : this.props.navigation.replace('Map')}>
+                            <TouchableOpacity onPress={() => this.state.buttonDisabled ? null : this.props.navigation.goBack()}>
                                 <Icon
                                     name='chevron-left'
                                     type='MaterialIcons'

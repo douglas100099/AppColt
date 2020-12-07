@@ -35,7 +35,7 @@ export default class PaymentWebView extends Component {
     var checkout_obj = {
       uri: cloud_function_server_url + '/stripe_link',
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      //headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: 'order_id=' + this.props.payData.order_id
         + '&amount=' + this.props.payData.amount
         + '&currency=' + this.props.payData.currency

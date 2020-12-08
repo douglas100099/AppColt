@@ -20,6 +20,7 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 export default class AddMoneyScreen extends React.Component {
   constructor(props) {
     super(props);
+    this._isMounted = false
     this.state = {
       amount: '10',
       qickMoney: [{ amount: '10', selected: false }, { amount: '15', selected: false }, { amount: '20', selected: false }, { amount: '30', selected: false }, { amount: '50', selected: false }],
@@ -69,14 +70,21 @@ export default class AddMoneyScreen extends React.Component {
 
   onCanceledHandler = () => {
     setTimeout(() => {
-      this.props.navigation.navigate('wallet')
-    }, 5000)
+      if(this._isMounted ){
+        this.props.navigation.navigate('wallet')
+      }
+    }, 3000)
   }
 
   componentDidMount() {
+    this._isMounted = true
     let getParamData = this.props.navigation.getParam('allData');
     this.setState({ allData: getParamData })
     this._retrieveSettings();
+  }
+
+  componentWillUnmount(){
+    this._isMounted = false
   }
 
   quckAdd(index) {

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import {
+    Typography,
+    Paper,
+} from '@material-ui/core';
 import { useSelector } from "react-redux";
 import { google_map_key } from "../config/keys";
 import Map from '../components/Map';
-import { Card, CardHeader, CardBody, Row, Col } from "reactstrap";
 
 
 const Dashboard = () => {
@@ -42,31 +45,21 @@ const Dashboard = () => {
     },[usersdata.users]);
 
     return (
-        <>
-        <div className="content">
-          <Row>
-            <Col md="12">
-              <Card className="card-plain">
-                <CardHeader>Live Preview</CardHeader>
-                <CardBody>
-                  <div
-                    id="map"
-                    className="map"
-                    style={{ position: "relative", overflow: "hidden" }}
-                  >
+            <div>
+            { mylocation?
+            <Paper style={{marginTop:'25px'}}>
+                <Typography variant="h6" style={{margin:"20px 0 0 15px"}}>Motoristas online</Typography>
                 <Map mapcenter={mylocation} locations={locations}
                     googleMapURL={"https://maps.googleapis.com/maps/api/js?key=" + google_map_key + "&v=3.exp&libraries=geometry,drawing,places"}
-                    loadingElement={<div style={{ height: `100%` }} />}
-                    containerElement={<div style={{ height: `100%` }} />}
-                    mapElement={<div style={{ height: `100%` }} />}
+                    loadingElement={<div style={{ height: `500` }} />}
+                    containerElement={<div style={{ height: `500px` }} />}
+                    mapElement={<div style={{ height: `500px` }} />}
                 />
-                  </div>
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
-        </div>
-      </>
+            </Paper>
+            :
+            <Typography variant="h6" style={{margin:"20px 0 0 15px",color:'#FF0000'}}>Habilitar localização</Typography>
+            }
+            </div>
 
     )
 }

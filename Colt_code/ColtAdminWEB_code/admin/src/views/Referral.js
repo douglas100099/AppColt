@@ -1,19 +1,20 @@
 import React,{ useState,useEffect } from 'react';
-import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
-import logo from '../assets/logo.png';
 import { useSelector, useDispatch } from "react-redux";
 import AlertDialog from '../components/AlertDialog';
+import CircularLoading from "../components/CircularLoading";
 import  languageJson  from "../config/language";
+import {isLive} from '../config/keys';
+
 import {
-  signIn,
-  clearLoginError
-}  from "../actions/authactions";
+    editBonus,
+    clearReferralError
+}  from "../actions/referralactions";
 
 const useStyles = makeStyles(theme => ({
   '@global': {
@@ -42,47 +43,45 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const Login = (props) => {
-  const auth = useSelector(state => state.auth);
+const Referral = (props) => {
+  const referraldata = useSelector(state => state.referraldata);
   const dispatch = useDispatch();
   const classes  = useStyles();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [bonus, setBonus] = useState("");
+  const [clicked, setClicked] = useState(false);
 
   useEffect(()=>{
-    if(auth.info){
-      props.history.push('/');
+    if(referraldata.bonus){
+      setBonus(referraldata.bonus);
     }
-  });
+  },[referraldata.bonus]);
 
-  const handleEmailChange = (e) =>{
-    setEmail(e.target.value);
-  }  
-
-  const handlePasswordChange = (e) =>{
-    setPassword(e.target.value);
+  const handleBonusChange = (e) =>{
+    setBonus(e.target.value);
   }  
 
   const handleSubmit = (e) =>{
     e.preventDefault();
-    dispatch(signIn(email,password));
+    if(isLive){
+      setClicked(true);
+      dispatch(editBonus(parseFloat(bonus)));
+    }else{
+      alert('Restricted in Demo App.');
+    }
   }
 
   const handleClose = () => {
-    setEmail("");
-    setPassword("");
-    dispatch(clearLoginError());
+    setClicked(false);
+    dispatch(clearReferralError());
   };
 
   return (
+    referraldata.loading? <CircularLoading/>:
     <Container component="main" maxWidth="xs">
       <CssBaseline />
       <div className={classes.paper}>
-        <Avatar className={classes.avatar}>
-          <img src={logo} alt="Logo" />
-        </Avatar>
         <Typography component="h1" variant="h5">
-          {languageJson.sign_in}
+          {languageJson.refferal_bonus}
         </Typography>
         <form className={classes.form} onSubmit={handleSubmit}>
           <TextField
@@ -90,26 +89,13 @@ const Login = (props) => {
               margin="normal"
               required
               fullWidth
-              id="email"
-              label={languageJson.email_address}
-              name="email"
-              autoComplete="email"
-              onChange={handleEmailChange}
-              value={email}
+              id="bonus"
+              label={languageJson.refferal_bonus}
+              name="bonus"
+              autoComplete="bonus"
+              onChange={handleBonusChange}
+              value={bonus}
               autoFocus
-          />
-          <TextField
-              variant="outlined"
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label={languageJson.password}
-              type="password"
-              id="password"
-              value={password}
-              onChange={handlePasswordChange}
-              autoComplete="current-password"
           />
           <Button
               type="submit"
@@ -118,14 +104,14 @@ const Login = (props) => {
               color="primary"
               className={classes.submit}
           >
-              {languageJson.sign_in}
+              {languageJson.submit}
           </Button>
         </form>
       </div>
-      <AlertDialog open={auth.error.flag} onClose={handleClose}>{languageJson.sign_in_error}</AlertDialog>
+      <AlertDialog open={referraldata.error.flag && clicked} onClose={handleClose}>{languageJson.update_failed}</AlertDialog>
     </Container>
   );
   
 }
 
-export default Login;
+export default Referral;

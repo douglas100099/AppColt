@@ -8,6 +8,7 @@ import Container from '@material-ui/core/Container';
 import { useSelector, useDispatch } from "react-redux";
 import AlertDialog from '../components/AlertDialog';
 import CircularLoading from "../components/CircularLoading";
+import languageJson from "../config/language";
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import {isLive} from '../config/keys';
@@ -106,7 +107,7 @@ const Settings = (props) => {
         <div className={classes.paper}>
           <form className={classes.form} onSubmit={handleSubmit}>
             <Typography component="h1" variant="h5">
-              Configurações
+              {languageJson.settings_title}
             </Typography>
             <TextField
               variant="outlined"
@@ -114,7 +115,7 @@ const Settings = (props) => {
               required
               fullWidth
               id="symbol"
-              label='R$'
+              label={languageJson.currency_symbol}
               name="symbol"
               autoComplete="symbol"
               onChange={handleSymbolChange}
@@ -127,14 +128,14 @@ const Settings = (props) => {
               required
               fullWidth
               id="code"
-              label='País'
+              label={languageJson.currency_code}
               name="code"
               autoComplete="code"
               onChange={handleCodeChange}
               value={data.code}
             />
             <Typography component="h1" variant="h5" style={{ marginTop: '30px' }}>
-                Métodos de pagamento
+              {languageJson.payment_modes_title}
             </Typography>
             <FormControlLabel
               control={
@@ -145,7 +146,7 @@ const Settings = (props) => {
                   color="primary"
                 />
               }
-              label='Dinheiro'
+              label={languageJson.settings_label1}
             />
             <FormControlLabel
               control={
@@ -156,17 +157,17 @@ const Settings = (props) => {
                   color="primary"
                 />
               }
-              label='Cartão'
+              label={languageJson.settings_label2}
             />
             <Typography component="h1" variant="h5" style={{ marginTop: '30px' }}>
-                Configurações de segurança
+              {languageJson.security_title}
             </Typography>
             <TextField
               variant="outlined"
               margin="normal"
               fullWidth
               id="panic"
-              label='Número de emergência'
+              label={languageJson.panic_num}
               name="panic"
               autoComplete="panic"
               onChange={handlePanicChange}
@@ -181,7 +182,7 @@ const Settings = (props) => {
                   color="primary"
                 />
               }
-              label='Corrida OTP'
+              label={languageJson.settings_label3}
             />
             <FormControlLabel
               control={
@@ -192,7 +193,7 @@ const Settings = (props) => {
                   color="primary"
                 />
               }
-              label='Aprovar'
+              label={languageJson.settings_label4}
             />
             <FormControlLabel
               control={
@@ -203,7 +204,7 @@ const Settings = (props) => {
                   color="primary"
                 />
               }
-              label='Verificação de email obrigatória'
+              label={languageJson.settings_label5}
             />
             <Button
               type="submit"
@@ -212,11 +213,11 @@ const Settings = (props) => {
               color="primary"
               className={classes.submit}
             >
-              Salvar
+              {languageJson.submit}
             </Button>
           </form>
         </div>
-        <AlertDialog open={settingsdata.error.flag && clicked} onClose={handleClose}>Error</AlertDialog>
+        <AlertDialog open={settingsdata.error.flag && clicked} onClose={handleClose}>{languageJson.update_failed}</AlertDialog>
       </Container>
   );
 

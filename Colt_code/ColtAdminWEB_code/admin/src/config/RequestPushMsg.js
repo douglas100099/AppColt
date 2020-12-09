@@ -1,4 +1,4 @@
-
+import  languageJSON  from './language';
 export default function RequestPushMsg(token,msg){
     fetch('https://exp.host/--/api/v2/push/send', {       
         method: 'POST', 
@@ -10,9 +10,9 @@ export default function RequestPushMsg(token,msg){
          }, 
        body: JSON.stringify({                 
             "to": token,                        
-            "title": 'Teste',                  
+            "title": languageJSON.notification_title,                  
             "body": msg,  
-            "data": {"msg":msg,"title":'Teste'},          
+            "data": {"msg":msg,"title":languageJSON.notification_title},          
             "priority": "high",            
             "sound":"default",   
             "channelId": "messages",

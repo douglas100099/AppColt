@@ -9,6 +9,7 @@ import PropTypes from 'prop-types';
 import Button from '@material-ui/core/Button';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import { useSelector } from "react-redux";
+import languageJson from '../config/language';
 
 export default function ConfirmationDialogRaw(props) {
     const { onClose, value: valueProp, open, ...other } = props;
@@ -50,7 +51,7 @@ export default function ConfirmationDialogRaw(props) {
         open={open}
         {...other}
       >
-        <DialogTitle id="confirmation-dialog-title">Selecione a razão</DialogTitle>
+        <DialogTitle id="confirmation-dialog-title">{languageJson.select_reason}</DialogTitle>
         <DialogContent dividers>
           <RadioGroup
             ref={radioGroupRef}
@@ -66,10 +67,10 @@ export default function ConfirmationDialogRaw(props) {
         </DialogContent>
         <DialogActions>
           <Button autoFocus onClick={handleCancel} color="primary">
-            Cancelar
+            {languageJson.cancel}
           </Button>
           <Button onClick={handleOk} color="primary">
-            Ok
+            {languageJson.ok}
           </Button>
         </DialogActions>
       </Dialog>

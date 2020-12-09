@@ -23,6 +23,7 @@ import * as Linking from 'expo-linking';
 import { getPixelSize } from '../constants/utils';
 import Directions from "../components/Directions";
 import customMapStyle from "../../mapstyle.json";
+import NetInfo from '@react-native-community/netinfo';
 
 import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
@@ -103,90 +104,105 @@ export default class DriverTripAccept extends React.Component {
     async onChangeFunction() {
         let verificarGPS = await Location.hasServicesEnabledAsync();
         const { status } = await Permissions.askAsync(Permissions.LOCATION);
-        const checkarBlock = firebase.database().ref('users/' + this.state.curUid + '/');
-        checkarBlock.once('value', customerData => {
-            let checkBlock = customerData.val()
-            if (checkBlock.blocked_by_payment || checkBlock.blocked) {
-                if (checkBlock.blocked) {
-                    if(this._isMounted){
-                        this.setState({
-                            isBlocked: checkBlock.blocked.isBlocked,
-                            reason: checkBlock.blocked.isBlocked
-                        })
-                    }
-                    const now = new Date(); // Data de hoje
-                    const past = new Date(checkBlock.blocked.data); // Outra data no passado
-                    const diff = Math.abs(now.getTime() - past.getTime()); // Subtrai uma data pela outra
-                    const hours = Math.ceil(diff / (1000 * 60 * 60)); // Divide o total pelo total de milisegundos correspondentes a 1 dia. (1000 milisegundos = 1 segundo).
-                    if (checkBlock.blocked && hours <= 3) {
-                        alert(checkBlock.blocked.motivo + ' Tempo restante: ' + (3 - hours) + ' Horas')
-                    } else {
-                        firebase.database().ref(`/users/` + this.state.curUid + '/blocked').remove().then(
-                            firebase.database().ref(`/users/` + this.state.curUid + '/canceladasRecentes').update({
-                                count: 0,
-                                countRecentes: 0,
-                            })
-                        )
-                        alert('Motorista desbloqueado, fique online novamente.')
-                    }
-                } else {
-                    let dataFormatada = new Date(checkBlock.blocked_by_payment.date_blocked),
-                    dia = dataFormatada.getDate().toString().padStart(2, '0'),
-                    mes = (dataFormatada.getMonth() + 1).toString().padStart(2, '0'), //+1 pois no getMonth Janeiro começa com zero.
-                    ano = dataFormatada.getFullYear();
-                    if (checkBlock.blocked_by_payment) {
-                        Alert.alert(
-                            "Pagamento pendente",
-                            "Você foi bloqueado. Não identificamos seu pagamento da taxa da Colt com vencimento em: " +dia+'/'+mes+'/'+ano+ " , caso tenha realizado o pagamento entre em contato com o suporte.",
-                            [
-                                {
-                                    text: "Suporte",
-                                    onPress: () => Linking.openURL('https://wa.me/5532998684398'),
-                                    style: "cancel"
-                                },
-                                { text: "OK", onPress: () => console.log("OK Pressed") }
-                            ],
-                            { cancelable: false }
-                        )
-                    }
-                }
-            } else {
-                if (this.state.statusDetails == true) {
-                    firebase.database().ref(`/users/` + this.state.curUid + '/').update({
-                        driverActiveStatus: false
-                    }).then(() => {
-                        this.checkingGps();
-                    })
-                } else {
-                    if (status === "granted") {
-                        if (this.state.statusDetails == false && verificarGPS && this.state.batteryLevel > 0.10) {
-                            if (this.location == null) {
-                                this._getLocationAsync();
+        NetInfo.fetch().then(state => {
+            if (state.isConnected) {
+                const checkarBlock = firebase.database().ref('users/' + this.state.curUid + '/');
+                checkarBlock.once('value', customerData => {
+                    let checkBlock = customerData.val()
+                    if (checkBlock.blocked_by_payment || checkBlock.blocked) {
+                        if (checkBlock.blocked) {
+                            if (this._isMounted) {
+                                this.setState({
+                                    isBlocked: checkBlock.blocked.isBlocked,
+                                    reason: checkBlock.blocked.isBlocked
+                                })
                             }
-                            firebase.database().ref(`/users/` + this.state.curUid + '/').update({
-                                driverActiveStatus: true
-                            }).then(() => {
-                                if(this._isMounted){
-                                    this.setState({ alertIsOpen: false, requestPermission: false });
-                                }
-                                //clearInterval(this.state.intervalCheckGps);
-                            })
+                            const now = new Date(); // Data de hoje
+                            const past = new Date(checkBlock.blocked.data); // Outra data no passado
+                            const diff = Math.abs(now.getTime() - past.getTime()); // Subtrai uma data pela outra
+                            const hours = Math.ceil(diff / (1000 * 60 * 60)); // Divide o total pelo total de milisegundos correspondentes a 1 dia. (1000 milisegundos = 1 segundo).
+                            if (checkBlock.blocked && hours <= 3) {
+                                alert(checkBlock.blocked.motivo + ' Tempo restante: ' + (3 - hours) + ' Horas')
+                            } else {
+                                firebase.database().ref(`/users/` + this.state.curUid + '/blocked').remove().then(
+                                    firebase.database().ref(`/users/` + this.state.curUid + '/canceladasRecentes').update({
+                                        count: 0,
+                                        countRecentes: 0,
+                                    })
+                                )
+                                alert('Motorista desbloqueado, fique online novamente.')
+                            }
                         } else {
-                            if (this.state.intervalCheckGps == null) {
-                                this.openAlert()
-                                this.checkingGps()
+                            let dataFormatada = new Date(checkBlock.blocked_by_payment.date_blocked),
+                                dia = dataFormatada.getDate().toString().padStart(2, '0'),
+                                mes = (dataFormatada.getMonth() + 1).toString().padStart(2, '0'), //+1 pois no getMonth Janeiro começa com zero.
+                                ano = dataFormatada.getFullYear();
+                            if (checkBlock.blocked_by_payment) {
+                                Alert.alert(
+                                    "Pagamento pendente",
+                                    "Você foi bloqueado. Não identificamos seu pagamento da taxa da Colt com vencimento em: " + dia + '/' + mes + '/' + ano + " , caso tenha realizado o pagamento entre em contato com o suporte.",
+                                    [
+                                        {
+                                            text: "Suporte",
+                                            onPress: () => Linking.openURL('https://wa.me/5532984536635'),
+                                            style: "cancel"
+                                        },
+                                        { text: "OK", onPress: () => console.log("OK Pressed") }
+                                    ],
+                                    { cancelable: false }
+                                )
                             }
                         }
                     } else {
-                        this.requestPermission()
+                        if (this.state.statusDetails == true) {
+                            firebase.database().ref(`/users/` + this.state.curUid + '/').update({
+                                driverActiveStatus: false
+                            }).then(() => {
+                                this.checkingGps();
+                            })
+                        } else {
+                            if (status === "granted") {
+                                if (this.state.statusDetails == false && verificarGPS && this.state.batteryLevel > 0.10) {
+                                    if (this.location == null) {
+                                        this._getLocationAsync();
+                                    }
+                                    firebase.database().ref(`/users/` + this.state.curUid + '/').update({
+                                        driverActiveStatus: true
+                                    }).then(() => {
+                                        if (this._isMounted) {
+                                            this.setState({ alertIsOpen: false, requestPermission: false });
+                                        }
+                                        //clearInterval(this.state.intervalCheckGps);
+                                    })
+                                } else {
+                                    if (this.state.intervalCheckGps == null) {
+                                        this.openAlert()
+                                        this.checkingGps()
+                                    }
+                                }
+                            } else {
+                                this.requestPermission()
+                            }
+                        }
                     }
-                }
+                })
+
+
+            } else {
+                Alert.alert(
+                    "Sem conexão com a internet",
+                    "Parece que você não possui uma conexão ativa, verifique e tente novamente.",
+                    [
+                        { text: "OK", onPress: () => console.log("OK Pressed") }
+                    ],
+                    { cancelable: false }
+                );
             }
-        })
+        });
     }
 
     async requestPermission() {
-        if(this._isMounted){
+        if (this._isMounted) {
             this.setState({ requestPermission: true })
             await Location.requestPermissionsAsync();
         }
@@ -262,7 +278,7 @@ export default class DriverTripAccept extends React.Component {
 
 
     stopSound() {
-        if(this._isMounted){
+        if (this._isMounted) {
             this.setState({ isSound: false })
             this.sound.stopAsync();
             console.log('STOP SOUND')
@@ -288,7 +304,7 @@ export default class DriverTripAccept extends React.Component {
         const batteryLevel = await Battery.getBatteryLevelAsync();
         this.setState({ batteryLevel });
         this._subscription = Battery.addBatteryLevelListener(({ batteryLevel }) => {
-            if(this._isMounted){
+            if (this._isMounted) {
                 this.setState({ batteryLevel });
             }
         });
@@ -334,11 +350,11 @@ export default class DriverTripAccept extends React.Component {
             await AsyncStorage.getItem('onOffHide', (err, result) => {
                 if (result) {
                     if (result == 'ON') {
-                        if(this._isMounted){
+                        if (this._isMounted) {
                             this.setState({ hideGanhos: 'ON' })
                         }
                     } else {
-                        if(this._isMounted){
+                        if (this._isMounted) {
                             this.setState({ hideGanhos: 'OFF' })
                         }
                     }
@@ -392,6 +408,7 @@ export default class DriverTripAccept extends React.Component {
 
     // NOVA FORMA DE PEGAR A LOCALIZAÇÃO DO USUARIO
     _getLocationAsync = async () => {
+        let region = {}
 
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
         let gpsActived = await Location.hasServicesEnabledAsync()
@@ -405,20 +422,21 @@ export default class DriverTripAccept extends React.Component {
                 newLocation => {
                     let { coords } = newLocation;
                     // console.log(coords);
-                    let region = {
+                    region = {
                         latitude: coords.latitude,
                         longitude: coords.longitude,
                         latitudeDelta: 0.045,
                         longitudeDelta: 0.045,
                         angle: coords.heading,
                     };
-                    if(this._isMounted){
+                    if (this._isMounted) {
                         this.setState({ region: region });
                         this.setLocationDB(region.latitude, region.longitude, region.angle)
                     }
                 },
                 error => console.log(error)
             );
+            this.updateAdress(region.latitude, region.longitude)
             return this.location
         } else {
             this.openAlert();
@@ -429,11 +447,38 @@ export default class DriverTripAccept extends React.Component {
         }
     };
 
-    // SALVA NO BANCO A NOVA LOCALIZAÇÃO
-    setLocationDB(lat, lng, angle) {
+    updateAdress(lat, lng) {
         let uid = firebase.auth().currentUser.uid;
         var latlng = lat + ',' + lng;
-        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, {signal: this.myAbort.signal})
+        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, { signal: this.myAbort.signal })
+            .then((response) => response.json())
+            .then((responseJson) => {
+                if (responseJson.results[0] && responseJson.results[0].formatted_address) {
+                    let address = responseJson.results[0].formatted_address;
+                    firebase.database().ref('users/' + uid + '/location').update({
+                        add: address,
+                    });
+                }
+            }).catch((error) => {
+                console.error(error);
+            });
+    }
+
+    setLocationDB(lat, lng, angle) {
+        let uid = firebase.auth().currentUser.uid;
+        firebase.database().ref('users/' + uid + '/location').update({
+            lat: lat,
+            lng: lng,
+            angle: angle,
+        });
+    }
+
+    // SALVA NO BANCO A NOVA LOCALIZAÇÃO
+    // FOI COMENTADO, CAUSADOR DE QUEBRA FINANCEIRAS
+    /*setLocationDB(lat, lng, angle) {
+        let uid = firebase.auth().currentUser.uid;
+        var latlng = lat + ',' + lng;
+        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, { signal: this.myAbort.signal })
             .then((response) => response.json())
             .then((responseJson) => {
                 if (responseJson.results[0] && responseJson.results[0].formatted_address) {
@@ -448,7 +493,7 @@ export default class DriverTripAccept extends React.Component {
             }).catch((error) => {
                 console.error(error);
             });
-    }
+    } */
 
     checkingGps() {
         this.setState({
@@ -503,18 +548,18 @@ export default class DriverTripAccept extends React.Component {
                         var location1 = [waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng];
                         var location2 = [this.state.region.latitude, this.state.region.longitude];
                         var distancee = distanceCalc(location1, location2);
-                        if(this._isMounted){
+                        if (this._isMounted) {
                             this.setState({ distance: distancee, acceptBtnDisable: false })
                         }
                     }
                     this.setState({ chegouCorrida: true })
                     if (this.state.isSound == false) {
                         this.playSound()
-                        //Linking.openURL('coltappmotorista://');
+                        Linking.openURL('coltappmotorista://');
                     }
                 } else if (this.state.chegouCorrida == true) {
-                    if(this._isMounted){
-                    this.setState({ chegouCorrida: false })
+                    if (this._isMounted) {
+                        this.setState({ chegouCorrida: false })
                     }
                     if (this.state.isSound) {
                         this.stopSound()
@@ -724,13 +769,13 @@ export default class DriverTripAccept extends React.Component {
                 if (result) {
                     if (result == 'ON') {
                         AsyncStorage.setItem('onOffHide', 'OFF').then(() => {
-                            if(this._isMounted){
+                            if (this._isMounted) {
                                 this.setState({ hideGanhos: 'OFF' })
                             }
                         })
                     } else {
                         AsyncStorage.setItem('onOffHide', 'ON').then(() => {
-                            if(this._isMounted){
+                            if (this._isMounted) {
                                 this.setState({ hideGanhos: 'ON' })
                             }
                         })
@@ -990,7 +1035,7 @@ export default class DriverTripAccept extends React.Component {
                                     </Marker.Animated>
                                     : null}
                             </MapView>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: Platform.select({ ios: 60, android: 16 }) }}>
                                 {/* BOTÃO MENU VOLTAR */}
                                 <TouchableOpacity style={styles.touchaVoltar} onPress={() => { this.props.navigation.toggleDrawer(); }}>
                                     <IconMenuSVG height={28} width={28} />

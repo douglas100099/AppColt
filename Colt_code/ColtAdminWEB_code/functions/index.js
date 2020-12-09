@@ -180,7 +180,7 @@ const sendRequestPayment = async (customer, dueDate, value, externalReference) =
     var myHeaders = new Headers();
     myHeaders.append("Content-Type", " application/json");
     myHeaders.append("access_token", "d9bbfe4544663b00197cf53b35c3d9f84ae7bf8b85fa09c3aed37a2c65dcea3a");
-   // myHeaders.append("Cookie", "AWSALB=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH; AWSALBCORS=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH");
+    // myHeaders.append("Cookie", "AWSALB=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH; AWSALBCORS=xqREzA9/fNyj+AMH+sRST2COLviwz1Rn7wnVyUCBpVx0ADn0CzFn9qbowYhxVI1EbhU3L1bv7SdMH9ANurzw81ErJmP6Xs74tHLogeN6CaTLR56cz3CqdDw93wMH");
 
     let newBody = {
         'customer': customer,
@@ -767,7 +767,8 @@ exports.removeCancelValue = functions.region('southamerica-east1').database.ref(
         let dataBooking = data.val();
         if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'PAID') {
             return admin.database().ref('users/' + dataBooking.customer + '/cancell_details/').remove()
-        } else {
+        }
+        else if (dataBooking.status === 'CANCELLED') {
             return false
         }
     })
@@ -778,29 +779,39 @@ exports.addDetailsToPromo = functions.region('southamerica-east1').database.ref(
         let dataBooking = data.val();
 
         if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'PAID') {
-            return admin.database().ref('offers/' + dataBooking.pagamento.promoKey).on("value", (dataOffer) => {
+            return admin.database().ref('offers/' + dataBooking.pagamento.promoKey).once("value", dataOffer => {
                 let offerData = dataOffer.val()
 
+                console.log("OFFERS >> " + offerData)
+
                 let user_avail = offerData.user_avail;
+
+                console.log("USER AVAIL >> " + user_avail)
+
                 if (user_avail) {
                     return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
                         userId: dataBooking.customer
-                    }).then(() => {
+                    })
+                    .then(() => {
                         return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: user_avail.count + 1 })
-                    }).catch(error => {
+                    })
+                    .catch(error => {
                         return error
                     })
                 } else {
                     return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
                         userId: dataBooking.customer
-                    }).then(() => {
-                        return (admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: 1 }))
-                    }).catch(error => {
+                    })
+                    .then(() => {
+                        return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: 1 })
+                    })
+                    .catch(error => {
                         return error
                     })
                 }
             })
-        } else {
+        }
+        else if (dataBooking.status === 'CANCELLED') {
             return false
         }
     })

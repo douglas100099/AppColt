@@ -93,7 +93,7 @@ export default class AboutPage extends React.Component {
                                         //iconStyle={{ color: '#E1306C' }}
                                         light
                                         iconType=''
-                                        onPress={() => this.openInsta()}
+                                        //onPress={() => this.openInsta()}
                                         type='instagram'
                                     />
                                 </View>
@@ -106,7 +106,7 @@ export default class AboutPage extends React.Component {
                                         //iconStyle={{ color: '#25D366' }}
                                         light
                                         iconType='ionicon'
-                                        onPress={() => this.openWhats()}
+                                        //onPress={() => this.openWhats()}
                                         type='whatsapp'
                                     />
                                 </View>

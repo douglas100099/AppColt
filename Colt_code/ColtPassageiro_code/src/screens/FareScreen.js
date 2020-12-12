@@ -76,14 +76,12 @@ export default class FareScreen extends React.Component {
             cancellValue: 0,
             longDistance: false,
         },
-            this.fadeAnim = new Animated.Value(0)
+        this.fadeAnim = new Animated.Value(0)
     }
 
     async componentDidMount() {
         this._isMounted = true;
         var getCroods = await this.props.navigation.getParam('data') ? await this.props.navigation.getParam('data') : null;
-        //var minTimeEconomico = this.props.navigation.getParam('minTimeEconomico') ? await this.props.navigation.getParam('minTimeEconomico') : null;
-        //var minTimeConfort = this.props.navigation.getParam('minTimeConfort') ? await this.props.navigation.getParam('minTimeConfort') : null;
         var arrayRates = [];
 
         this.setState({
@@ -115,7 +113,7 @@ export default class FareScreen extends React.Component {
         }).then(() => {
             if (this._isMounted = true) {
                 let distance = distanceCalc([-22.224650, -43.867618], [this.state.region.wherelatitude, this.state.region.wherelongitude])
-                if (distance > 50) {
+                if (distance > 100) {
                     this.setState({ longDistance: true })
                 } else {
                     this.getWalletBalance();
@@ -833,7 +831,12 @@ export default class FareScreen extends React.Component {
                                     size={20}
                                     containerStyle={{ opacity: 0.2, marginTop: 3 }}
                                 />
-                                <Text style={styles.txtCupom}> {this.state.payDetails ? "-R$" + (this.state.payDetails.promo_details.promo_discount_value).toFixed(2) : "Cupom"} </Text>
+                                <Text style={styles.txtCupom}> {this.state.payDetails ?
+                                    this.state.payDetails.promo_details.discount_type == 'flat' ?
+                                        "-R$" + (this.state.payDetails.promo_details.promo_discount_value).toFixed(2)
+                                        :
+                                        '-' + (this.state.payDetails.promo_details.promo_discount_value).toFixed(0) + '%'
+                                    : "Cupom"} </Text>
                             </View>
                         </TouchableOpacity>
                         : null}

@@ -166,6 +166,9 @@ export default class MapScreen extends React.Component {
         this._retrieveSettings();
         this.tripSatusCheck()
 
+        const data = this.props.navigation.getParam('fromSearch') ? this.props.navigation.getParam('fromSearch')  : null
+        console.log("TESTE")
+
         this.intervalGetDrivers = setInterval(() => {
             if (this._isMounted) {
                 if (this.state.passData && this.state.passData.wherelatitude) {
@@ -651,7 +654,6 @@ export default class MapScreen extends React.Component {
 
 const styles = StyleSheet.create({
     mapcontainer: {
-
         flex: 3,
     },
     viewTextLoading: {

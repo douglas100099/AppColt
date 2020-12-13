@@ -5,7 +5,7 @@ import { colors } from '../common/theme';
 import languageJSON from '../common/language';
 var { height } = Dimensions.get('window');
 import * as firebase from 'firebase'
-import BtnVoltar from '../components/BtnVoltar';
+import BtnVoltar from './BtnVoltar';
 export default class EditUser extends React.Component {
 
     constructor(props) {

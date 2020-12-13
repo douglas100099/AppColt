@@ -8,109 +8,106 @@ export function VerifyCupom(item, estimateFare) {
     var em = promoValidity.split('/')[1];
     var expiryMonth = em == 12 ? em - 1 : em
     var expiryYear = promoValidity.split('/')[2];
-    var fexpDate = expiryMonth + '/' + expiryDay + '/' + expiryYear
+    var fexpDate = expiryDay + '/' + expiryMonth + '/' + expiryYear
     var expDate = new Date(fexpDate)
+    var dataPromo = {}
+    dataPromo.values = []
 
-    if (estimateFare > item.min_order) {
-        var userAvail = item.user_avail ? item.user_avail.details : false
+    var userAvail = item.user_avail ? item.user_avail.details : false
 
-        //Verifica se a promoção ja foi usada por alguem 
-        if (userAvail != false) {
-            // Verifica se o user ja usou aquele cupom
-            if (toDay > expDate) {
-                return (languageJSON.promo_exp)
-            } else if (userAvail.count >= item.promo_usage_limit) {
-                return (languageJSON.promo_limit)
-            }
-            else {
-                let discounttype = item.promo_discount_type.toUpperCase();
+    //Verifica se a promoção ja foi usada por alguem 
+    if (userAvail != false) {
 
+        if (toDay > expDate) {
+            return (languageJSON.promo_exp)
+        } else if (userAvail.count >= item.promo_usage_limit) {
+            return (languageJSON.promo_limit)
+        }
+        else {
+            let discounttype = item.promo_discount_type.toUpperCase();
+            for (let key = 0; key < estimateFare.length; key++) {
                 //Verifica se o tipo de desconto é porcentagem
                 if (discounttype == 'PERCENTAGE') {
-                    let discount = estimateFare * item.promo_discount_value / 100; //Calculo de desconto
+
+                    let discount = estimateFare[key] * item.promo_discount_value / 100; //Calculo de desconto
                     if (discount > item.max_promo_discount_value) {
                         let discount = item.max_promo_discount_value; //Atribuir o desconto maximo se o desconto for maior q o limite
 
-                        let data = {}
-                        data.discount = discount
-                        data.promo_applied = true
-                        data.promo_details = { promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
-                        data.payableAmmount = (estimateFare - discount) < 0 ? 0 : (estimateFare - discount).toFixed(2)
-                        data.metodoPagamento = "Dinheiro"
-
-                        return data;
-
-                    } else {
-                        let data = {}
-                        data.discount = discount
-                        data.promo_applied = true
-                        data.promo_details = { promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
-                        data.payableAmmount = (estimateFare - discount) < 0 ? 0 : (estimateFare - discount).toFixed(2)
-                        data.metodoPagamento = "Dinheiro"
-
-                        return data
+                        dataPromo.discount = discount
+                        dataPromo.promo_applied = true
+                        dataPromo.promo_details = { promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
+                        let payableAmmount = (estimateFare[key] - discount) < 0 ? 0 : (estimateFare[key] - discount).toFixed(2)
+                        dataPromo.values.push(payableAmmount)
+                        dataPromo.metodoPagamento = "Dinheiro"
+                    } 
+                    else {
+                        dataPromo.discount = discount
+                        dataPromo.promo_applied = true
+                        dataPromo.promo_details = { promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
+                        let payableAmmount = (estimateFare[key] - discount) < 0 ? 0 : (estimateFare[key] - discount).toFixed(2)
+                        dataPromo.values.push(payableAmmount)
+                        dataPromo.metodoPagamento = "Dinheiro"
                     }
-
-                    //Desconto tipo Flat
-                } else {
-                    let discount = estimateFare - item.promo_discount_value;
-                    let data = {}
-                    data.discount = discount
-                    data.promo_applied = true
-                    data.promo_details = { promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
-                    data.payableAmmount = discount < 0 ? 0 : discount.toFixed(2)
-                    data.metodoPagamento = "Dinheiro"
-
-                    return data
+                } 
+                //Desconto tipo Flat
+                else {
+                    let discount = estimateFare[key] - item.promo_discount_value;
+                    dataPromo.discount = discount
+                    dataPromo.promo_applied = true
+                    dataPromo.promo_details = { promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
+                    let payableAmmount = discount < 0 ? 0 : discount.toFixed(2)
+                    dataPromo.values.push(payableAmmount)
+                    dataPromo.metodoPagamento = "Dinheiro"
                 }
             }
+            return dataPromo
+        }
+    }
+    //Caso a promoção n tenha sido usada por ninguem
+    else {
+        if (toDay > expDate) {
+            return (languageJSON.promo_exp)
         } else {
-            //Caso a promoção n tenha sido usada por ninguem
-            if (toDay > fexpDate) {
-                return (languageJSON.promo_exp)
-            } else {
-                let discounttype = item.promo_discount_type.toUpperCase();
+            let discounttype = item.promo_discount_type.toUpperCase();
+
+            for (let key = 0; key < estimateFare.length; key++) {
+
                 if (discounttype == 'PERCENTAGE') {
-                    var discount = estimateFare * item.promo_discount_value / 100;
+                    var discount = estimateFare[key] * item.promo_discount_value / 100;
                     if (discount > item.max_promo_discount_value) {
                         let discount = item.max_promo_discount_value;
 
-                        let data = {}
-                        data.discount = discount
-                        data.promo_applied = true
-                        data.promo_details = { promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
-                        data.payableAmmount = (estimateFare - discount) < 0 ? 0 : (estimateFare - discount).toFixed(2)
-                        data.metodoPagamento = "Dinheiro"
+                        dataPromo.discount = discount
+                        dataPromo.promo_applied = true
+                        dataPromo.promo_details = { promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
+                        let payableAmmount = (estimateFare[key] - discount) < 0 ? 0 : (estimateFare[key] - discount).toFixed(2)
+                        dataPromo.values.push(payableAmmount)
+                        dataPromo.metodoPagamento = "Dinheiro"
 
-                        return data
-
-                    } else {
-                        let data = {}
-                        data.discount = discount
-                        data.promo_applied = true
-                        data.promo_details = { promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
-                        data.payableAmmount = (estimateFare - discount) < 0 ? 0 : (estimateFare - discount).toFixed(2)
-                        data.metodoPagamento = "Dinheiro"
-
-                        return dataPromo
+                    } 
+                    else {
+                        dataPromo.discount = discount
+                        dataPromo.promo_applied = true
+                        dataPromo.promo_details = { promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
+                        let payableAmmount = (estimateFare[key] - discount) < 0 ? 0 : (estimateFare[key] - discount).toFixed(2)
+                        dataPromo.values.push(payableAmmount)
+                        dataPromo.metodoPagamento = "Dinheiro"
                     }
-                } else {
-                    let discount = estimateFare - item.promo_discount_value;
+                } 
+                else {
+                    let discount = estimateFare[key] - item.promo_discount_value;
 
-                    let data = {}
-                    data.discount = discount
-                    data.promo_applied = true
-                    data.promo_details = { promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
-                    data.payableAmmount = discount < 0 ? 0 : discount.toFixed(2)
-                    data.metodoPagamento = "Dinheiro"
+                    dataPromo.discount = discount
+                    dataPromo.promo_applied = true
+                    dataPromo.promo_details = { promo_code: item.promoCode ? item.promoCode : '', promo_key: item.promoKey, promo_name: item.promo_name, discount_type: item.promo_discount_type, promo_discount_value: item.promo_discount_value, max_discount: item.max_promo_discount_value, minimumorder: item.min_order }
+                    let payableAmmount = discount < 0 ? 0 : discount.toFixed(2)
+                    dataPromo.values.push(payableAmmount)
 
-                    return data
+                    dataPromo.metodoPagamento = "Dinheiro"
                 }
             }
+            return dataPromo
         }
-        //Caso o valor da corrida seja menor que o valor limite da promoção
-    } else {
-        return ("O valor da corrida é menor que o mínimo para essa promoção")
     }
 }
 

@@ -8,23 +8,14 @@ import { Line, Bar } from "react-chartjs-2";
 
 // reactstrap components
 import {
-  Button,
-  ButtonGroup,
   Card,
   CardHeader,
   CardBody,
   CardTitle,
-  DropdownToggle,
-  DropdownMenu,
-  DropdownItem,
-  UncontrolledDropdown,
-  Label,
-  FormGroup,
-  Input,
-  Table,
   Row,
+  Badge,
+  UncontrolledAlert,
   Col,
-  UncontrolledTooltip
 } from "reactstrap";
 import MaterialTable from 'material-table';
 
@@ -40,6 +31,8 @@ const Dashboard = () => {
 
   const [data, setData] = useState([]);
   const [data2, setData2] = useState([]);
+  const [dataOnline, setDataOnline] = useState([]);
+  const [dataEst, setDataEst] = useState([]);
   const [mylocation, setMylocation] = useState(null);
   const [driverOnline, setLocations] = useState(0);
   const [driverEmCorrida, setDriverEmCorrida] = useState(0);
@@ -54,6 +47,7 @@ const Dashboard = () => {
   const [totalCorridas, setCorridasTotais] = useState(0);
   const [corridasAceitasHj, setCorridasAceitas] = useState(0);
   const [corridasCanceladasHj, setCorridasCanceladas] = useState(0);
+  const [corridasNatendidasHj, setCorridasNatendidas] = useState(0);
   const [corridasAndamentoHj, setCorridasAndamento] = useState(0);
 
   const [monthlytaxa, setMonthlytaxa] = useState(0);
@@ -67,24 +61,69 @@ const Dashboard = () => {
   const settingsdata = useSelector(state => state.settingsdata);
 
   const columns = [
-    { title: 'Foto', field: 'imageRider', render: rowData => rowData.imageRider ? <img alt='Profile' src={rowData.imageRider} style={{ width: 50, borderRadius: '50%' }} /> : null },
-    { title: 'Foto', field: 'driver_image', render: rowData => rowData.driver_image ? <img alt='Profile' src={rowData.driver_image} style={{ width: 50, borderRadius: '50%' }} /> : null },
+    { title: 'Foto', field: 'imageRider', render: rowData => rowData.imageRider ? <img alt='Profile' height={32} width={32} src={rowData.imageRider} /> : <img alt='Profile' height={32} width={32} src={require("../assets/img/profilePic.png")} /> },
+    { title: 'Nome', field: 'customer_name', editable: 'never' },
+    { title: 'Nome', field: 'driver_name', editable: 'never' },
+    { title: 'Foto', field: 'driver_image', render: rowData => rowData.driver_image ? <img alt='Profile' height={32} width={32} src={rowData.driver_image} /> : null },
   ]
+
+  const columns2 = [
+    { title: 'Foto', field: 'imageRider', render: rowData => rowData.imageRider ? <img alt='Profile' height={32} width={32} src={rowData.imageRider} /> : <img alt='Profile' height={32} width={32} src={require("../assets/img/profilePic.png")} /> },
+    { title: 'Nome', field: 'customer_name', editable: 'never' },
+    { title: 'Nome', field: 'driver_name', editable: 'never' },
+    { title: 'Foto', field: 'driver_image', render: rowData => rowData.driver_image ? <img alt='Profile' height={32} width={32} src={rowData.driver_image} /> : null },
+  ]
+
+  const columnsOnline = [
+    { title: 'Nome', field: 'firstName', editable: 'never' },
+    { title: 'Foto', field: 'driver_image', render: rowData => rowData.driver_image ? <img alt='Profile' height={32} width={32} src={rowData.driver_image} /> : null },
+    { title: 'Status', field: 'emCorrida', render: rowData => rowData.emCorrida ? <Badge color="info" pill>Em corrida</Badge> : <Badge color="success" pill>Online</Badge> },
+  ]
+
+  const columnsEst = [
+    { title: 'Nome', field: 'firstName', editable: 'never' },
+    { title: 'Foto', field: 'driver_image', render: rowData => rowData.driver_image ? <img alt='Profile' height={32} width={32} src={rowData.driver_image} /> : null },
+    { title: 'Negadas', field: 'canceladasRecentes', render: rowData => rowData.canceladasRecentes.count ? <h6>{rowData.canceladasRecentes.count}</h6> : <h6>0</h6> },
+  ]
+
 
   useEffect(() => {
     if (usersdata.users) {
       const drivers = usersdata.users.filter(({ usertype }) => usertype === 'driver');
+      let today = new Date();
       let driverOnline = 0;
       let totalOnline = drivers.length
       let driverEmCorrida = 0;
+      let driverOnlineN = [];
+      let dataEst = [];
       for (let i = 0; i < drivers.length; i++) {
         if (drivers[i].approved && drivers[i].driverActiveStatus) {
           driverOnline++
+          driverOnlineN.push(drivers[i])
         }
         if (drivers[i].emCorrida) {
           driverEmCorrida++
         }
+        if (drivers[i].canceladasRecentes) {
+          if (drivers[i].canceladasRecentes.data) {
+            let tDate = new Date(drivers[i].canceladasRecentes.data);
+            if (tDate.getDate() === today.getDate() && tDate.getMonth() === today.getMonth()) {
+              dataEst.push(drivers[i])
+            }
+          }
+        }
+        if (drivers[i].my_bookings) {
+          for (let j = 0; j < drivers[i].my_bookings.length; j++) {
+            const { tripdate, } = drivers[j].my_bookings
+            let tDate = new Date(tripdate);
+            if (tDate.getDate() === today.getDate() && tDate.getMonth() === today.getMonth()) {
+              dataEst.push(drivers[i])
+            }
+          }
+        }
       }
+      setDataEst(dataEst);
+      setDataOnline(driverOnlineN);
       setDriverEmCorrida(driverEmCorrida);
       setTotalMotorista(totalOnline);
       setLocations(driverOnline);
@@ -106,6 +145,7 @@ const Dashboard = () => {
       let todayConvenience = 0;
       let corridasHoje = 0;
       let corridasMes = 0;
+      let tdCorridasNatendidas = 0;
       let totalCorridas = 0;
       //
       let tdCorridasAceitas = 0;
@@ -113,7 +153,7 @@ const Dashboard = () => {
       let tdCorridasAndamento = 0;
       //
       for (let i = 0; i < bookinglistdata.bookings.length; i++) {
-        const { tripdate, status } = bookinglistdata.bookings[i]
+        const { tripdate, status, requestedDriver, rejectedDrivers } = bookinglistdata.bookings[i]
         const { trip_cost, discount_amount, convenience_fees } = bookinglistdata.bookings[i].pagamento;
         let tDate = new Date(tripdate);
         if (trip_cost >= 0 && discount_amount >= 0) {
@@ -136,19 +176,22 @@ const Dashboard = () => {
             todayConvenience = todayConvenience + convenience_fees;
           }
           totconvenienceTrans = totconvenienceTrans + convenience_fees;
-        } if(status === "END"){
+        } if (status === "END") {
           if (tDate.getDate() === today.getDate() && tDate.getMonth() === today.getMonth()) {
             tdCorridasAceitas++
           }
-        } if(status === "CANCELLED"){
+        } if (status === "CANCELLED") {
           if (tDate.getDate() === today.getDate() && tDate.getMonth() === today.getMonth()) {
             tdCorridasCanceladas++
+            if (!requestedDriver && !rejectedDrivers) {
+              tdCorridasNatendidas++
+            }
           }
-        } if(status === "ACCEPTED" || status === "START" || status === "EMBARQUE"){
+        } if (status === "ACCEPTED" || status === "START" || status === "EMBARQUE") {
           if (tDate.getDate() === today.getDate() && tDate.getMonth() === today.getMonth()) {
             tdCorridasAndamento++
           }
-        } if(status === "ACCEPTED" || status === "START" || status === "EMBARQUE" || status === "NEW"){
+        } if (status === "ACCEPTED" || status === "START" || status === "EMBARQUE" || status === "NEW" || status === "END" || status === "CANCELLED") {
           if (tDate.getDate() === today.getDate() && tDate.getMonth() === today.getMonth()) {
             corridasHoje++
           }
@@ -176,6 +219,7 @@ const Dashboard = () => {
       setCorridasTotais(totalCorridas);
 
       setCorridasAceitas(tdCorridasAceitas);
+      setCorridasNatendidas(tdCorridasNatendidas);
       setCorridasCanceladas(tdCorridasCanceladas);
       setCorridasAndamento(tdCorridasAndamento);
 
@@ -367,9 +411,9 @@ const Dashboard = () => {
           <Col lg="2" md="12">
             <Card className="card-chart">
               <CardHeader>
-                <h5 className="card-category">Corridas aceitas</h5>
+                <h5 className="card-category">Corridas realizadas</h5>
                 <CardTitle tag="h3" className="text-right">
-                  <i className="text-primary" /> {corridasAceitasHj}
+                  <i className="text-primary" /> {corridasAceitasHj + ' / ' + corridasHoje}
                 </CardTitle>
               </CardHeader>
             </Card>
@@ -377,9 +421,9 @@ const Dashboard = () => {
           <Col lg="2" md="12">
             <Card className="card-chart">
               <CardHeader>
-                <h5 className="card-category">Corridas negadas</h5>
+                <h5 className="card-category">Corridas Rejeitadas/Canceladas</h5>
                 <CardTitle tag="h3" className="text-right">
-                  <i className="text-primary" /> {corridasCanceladasHj}
+                  <i className="text-primary" /> {corridasCanceladasHj + ' / ' + corridasHoje}
                 </CardTitle>
               </CardHeader>
             </Card>
@@ -387,9 +431,9 @@ const Dashboard = () => {
           <Col lg="2" md="12">
             <Card className="card-chart">
               <CardHeader>
-                <h5 className="card-category">Corridas não atendidas</h5>
+                <h5 className="card-category">Motorista N/ encontrado</h5>
                 <CardTitle tag="h3" className="text-right">
-                  <i className="text-primary" /> {corridasCanceladasHj}
+                  <i className="text-primary" /> {corridasNatendidasHj + ' / ' + corridasHoje}
                 </CardTitle>
               </CardHeader>
             </Card>
@@ -442,11 +486,91 @@ const Dashboard = () => {
               </CardHeader>
               <CardBody>
                 <MaterialTable
-                  columns={columns}
-                  data={data.reverse()}
+                  columns={columns2}
+                  data={data2.reverse()}
                   options={{
                     actionsColumnIndex: -1,
                     header: false,
+                    headerStyle: {
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      backgroundColor: '#27293d',
+                      fontFamily: "Poppins",
+                      fontWeight: 400,
+                      fontSize: 14,
+                      lineHeight: 1.5,
+                      borderWidth: 0.2,
+                      borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                    rowStyle: {
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      fontFamily: "Poppins",
+                      fontSize: 14,
+                      lineHeight: 1.5,
+                    },
+                    //columnsButton: true,
+                    showTitle: false,
+                    search: false,
+                  }}
+                  style={{
+                    backgroundColor: '#27293d',
+                    fontFamily: "Poppins",
+                  }}
+                />
+              </CardBody>
+            </Card>
+          </Col>
+          <Col lg="6" md="12">
+            <Card>
+              <CardHeader>
+                <CardTitle tag="h4">Motoristas Online</CardTitle>
+              </CardHeader>
+              <CardBody>
+                <MaterialTable
+                  columns={columnsOnline}
+                  data={dataOnline.reverse()}
+                  options={{
+                    actionsColumnIndex: -1,
+                    header: false,
+                    headerStyle: {
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      backgroundColor: '#27293d',
+                      fontFamily: "Poppins",
+                      fontWeight: 400,
+                      fontSize: 14,
+                      lineHeight: 1.5,
+                      borderWidth: 0.2,
+                      borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                    rowStyle: {
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      fontFamily: "Poppins",
+                      fontSize: 14,
+                      lineHeight: 1.5,
+                    },
+                    //columnsButton: true,
+                    showTitle: false,
+                    search: false,
+                  }}
+                  style={{
+                    backgroundColor: '#27293d',
+                    fontFamily: "Poppins",
+                  }}
+                />
+              </CardBody>
+            </Card>
+          </Col>
+          <Col lg="6" md="12">
+            <Card>
+              <CardHeader>
+                <CardTitle tag="h4">Estatística diária</CardTitle>
+              </CardHeader>
+              <CardBody>
+                <MaterialTable
+                  columns={columnsEst}
+                  data={dataEst.reverse()}
+                  options={{
+                    actionsColumnIndex: -1,
+                    header: true,
                     headerStyle: {
                       color: 'rgba(255, 255, 255, 0.7)',
                       backgroundColor: '#27293d',

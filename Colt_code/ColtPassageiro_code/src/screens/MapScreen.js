@@ -138,11 +138,7 @@ export default class MapScreen extends React.Component {
                     this.getDrivers()
                 })
             }
-            else {
-                setTimeout(() => {
-                    this.getLocationDB()
-                }, 500)
-            }
+            
         })
     }
 
@@ -169,6 +165,9 @@ export default class MapScreen extends React.Component {
         this._isMounted = true;
         this._retrieveSettings();
         this.tripSatusCheck()
+
+        const data = this.props.navigation.getParam('fromSearch') ? this.props.navigation.getParam('fromSearch')  : null
+        console.log("TESTE")
 
         this.intervalGetDrivers = setInterval(() => {
             if (this._isMounted) {
@@ -363,7 +362,7 @@ export default class MapScreen extends React.Component {
         } else {
             alert("Você já possui uma corrida em andamento")
         }
-    };
+    }
 
     goToFareByMap() {
         if (this.state.statusCorrida) {
@@ -382,7 +381,7 @@ export default class MapScreen extends React.Component {
             dataDetails.wherelongitude = this.state.passData.wherelongitude
             dataDetails.whereText = this.state.passData.whereText
 
-            this.props.navigation.replace('FareDetails', { data: dataDetails, minTimeEconomico: minTimeEco, minTimeConfort: minTimeCon });
+            this.props.navigation.navigate('FareDetails', { data: dataDetails, minTimeEconomico: minTimeEco, minTimeConfort: minTimeCon });
         }
     }
 
@@ -502,8 +501,6 @@ export default class MapScreen extends React.Component {
         }
     }
 
-
-
     render() {
         return (
             <View style={styles.mainViewStyle}>
@@ -621,18 +618,20 @@ export default class MapScreen extends React.Component {
                             {this.state.locationCasa != null ?
                                 <TouchableOpacity onPress={() => this.goToFareByMap()}>
                                     <View style={{ flexDirection: 'row', alignItems: 'center', height: width < 375 ? 50 : 60, width: width }}>
-                                        <View style={{ left: 12, flex: 0.2 }}>
+                                        <View style={{ marginLeft: 20, marginRight: 0, width:40, height:40, justifyContent: 'center', alignItems: 'center', borderRadius: 50, backgroundColor: colors.DEEPBLUE,  }}>
                                             <Icon
                                                 name='ios-home'
                                                 type='ionicon'
-                                                color={colors.GREY2}
-                                                size={25}
-                                                containerStyle={{ opacity: 0.4 }}
+                                                color={colors.WHITE}
+                                                size={23}
+                                                //containerStyle={{ opacity: 0.4 }}
                                             />
                                         </View>
                                         <View style={{ left: 12, flex: 2 }}>
-                                            <Text style={{ fontFamily: 'Inter-Medium', fontSize: width < 375 ? 17 : 19 }}> Casa </Text>
-                                            <Text numberOfLines={1} style={{ paddingTop: 3, opacity: 0.4, maxWidth: width - 60, fontFamily: 'Inter-Medium', fontSize: width < 375 ? 13 : 14 }}> {this.state.locationCasa.add.split('-')[0]} </Text>
+                                            <Text style={{ fontFamily: 'Inter-Medium', fontSize: width < 375 ? 17 : 19 }}> Endereço salvo </Text>
+                                            <Text numberOfLines={1} style={{ paddingTop: 3, opacity: 0.4, maxWidth: width - 100, fontFamily: 'Inter-Medium', fontSize: width < 375 ? 13 : 14 }}>
+                                                 {this.state.locationCasa.add.split('-')[0] + '-' + this.state.locationCasa.add.split('-')[1]} 
+                                            </Text>
                                         </View>
                                     </View>
                                 </TouchableOpacity>
@@ -653,7 +652,6 @@ export default class MapScreen extends React.Component {
 
 const styles = StyleSheet.create({
     mapcontainer: {
-
         flex: 3,
     },
     viewTextLoading: {

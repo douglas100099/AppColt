@@ -360,6 +360,7 @@ exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub
                                             vencimento_boleto: resultToAsaas
                                         }
                                     })
+                                    RequestPushMsg(dataUsers[key].pushToken, 'Seu boleto no valor de R$' + newValue + ' referente à taxa quinzenal do aplicativo Colt, já está disponível para pagamento!' )
                                     return null
                                 }).catch(error => {
                                     throw new Error("Erro ao Enviar boleto Asaas - Função principal")
@@ -839,6 +840,7 @@ exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref
                     }
 
                     admin.database().ref('bookings/' + bookingId).update({ status: 'REJECTED' })
+                    admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + bookingId + '/').update({ status: 'REJECTED' })
                 }
             }
         })

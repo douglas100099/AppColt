@@ -19,6 +19,7 @@ export const notifyRef = databaseRef.child("notifications/");
 export const notifyEditRef = (id) => databaseRef.child("notifications/"+ id);
 export const referralRef = databaseRef.child("referral/bonus/amount");
 export const singleUserRef = (uid) => databaseRef.child("users/" + uid);
+export const refUserChild = (uid, child) => databaseRef.child("users/" + uid + '/' + child + '/');
 export const settingsRef = databaseRef.child("settings");
 
 

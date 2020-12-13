@@ -23,6 +23,7 @@ import languageJSON from '../common/language';
 var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
 import BtnVoltar from '../components/BtnVoltar';
+import { TextInputMask } from 'react-native-masked-text'
 
 import AvatarUser from '../../assets/svg/AvatarUser';
 import { CircleFade } from 'react-native-animated-spinkit'
@@ -69,9 +70,9 @@ export default class ProfileScreen extends React.Component {
             const userData = firebase.database().ref('users/' + this.state.currentUser.uid);
             userData.on('value', userData => {
                 if (userData.val()) {
-                    var str = userData.val().location.add
-                    var tempAdd = str.split(",")[2] + ',' + str.split(",")[4];
-                    this.setState({ tempAddress: tempAdd, userImage: userData.val().profile_image });
+                    this.setState({ userImage: userData.val().profile_image, 
+                    savedLocation: userData.val().savedLocations ? userData.val().savedLocations.add.split(',')[0] + userData.val().savedLocations.add.split(',')[1]
+                    : null });
                     this.setState(userData.val(), (res) => {
                     });
                 }
@@ -335,21 +336,23 @@ export default class ProfileScreen extends React.Component {
                         <View style={styles.myViewStyle}>
                             <View style={styles.iconViewStyle}>
                                 <Icon
-                                    name='map-pin'
-                                    type='feather'
-                                    color='#D5DDE0'
-                                />
-                                <Text style={styles.text1}>{this.state.tempAddress}</Text>
-                            </View>
-                        </View>
-                        <View style={styles.myViewStyle}>
-                            <View style={styles.iconViewStyle}>
-                                <Icon
                                     name='phone'
                                     type='feather'
                                     color='#D5DDE0'
                                 />
-                                <Text style={styles.text1}>{this.state.mobile}</Text>
+                                <TextInputMask
+                                    type={'cel-phone'}
+                                    placeholder='Data de nascimento'
+                                    options={{
+                                        format: 'DD/MM/YYYY'
+                                    }}
+                                    editable={false}
+                                    value={this.state.mobile}
+
+                                    style={styles.text1}
+                                    maxLength={20}
+                                    ref={(ref) => this.dateInputRef = ref}
+                                />
                             </View>
                         </View>
                         {this.state.refferalId ?
@@ -364,6 +367,23 @@ export default class ProfileScreen extends React.Component {
                                 </View>
                             </View>
                             : null}
+
+                    </View>
+                    <View style={styles.viewLocate}>
+                        <Text style={styles.txtLocate}> Local salvo </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 15 }}>
+                            <Icon
+                                name='place'
+                                type='Materialicons'
+                                color='#D5DDE0'
+                            />
+                            {
+                                this.state.savedLocation ?
+                                    <Text style={styles.txtSavedLocation}> {this.state.savedLocation} </Text>
+                                    :
+                                    <Text> Você ainda não possui um endereço salvo.</Text>
+                            }
+                        </View>
                     </View>
 
                     <TouchableOpacity onPress={() => { this.deleteAccount() }}>
@@ -435,7 +455,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between'
     },
     profStyle: {
-        fontSize: 15,
+        fontSize: 16,
         left: 10,
         color: colors.BLACK,
         fontFamily: 'Inter-Medium'
@@ -483,16 +503,26 @@ const styles = StyleSheet.create({
         backgroundColor: colors.WHITE,
         marginLeft: 15,
         marginRight: 15,
-        height: 270,
+        height: 250,
         borderRadius: 15,
         marginTop: 20
     },
     myViewStyle: {
         flex: 1,
-        left: 20,
-        marginRight: 40,
         borderBottomColor: colors.GREY1,
         borderBottomWidth: 1,
+    },
+    viewLocate: {
+        left: 15,
+        marginTop: 20,
+    },
+    txtLocate: {
+        fontFamily: 'Inter-Bold',
+        fontSize: 19,
+    },
+    txtSavedLocation: {
+        fontFamily: 'Inter-Medium',
+        fontSize: 16,
     },
     iconViewStyle: {
         flex: 2,
@@ -500,13 +530,13 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     emailStyle: {
-        fontSize: 15,
+        fontSize: 16,
         left: 10,
         color: colors.BLACK,
         fontFamily: 'Inter-Medium'
     },
     emailAdressStyle: {
-        fontSize: 15,
+        fontSize: 16,
         color: colors.BLACK,
         fontFamily: 'Inter-Medium'
     },
@@ -518,22 +548,21 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1
     },
     text1: {
-        fontSize: 15,
+        fontSize: 16,
         left: 10,
         color: colors.BLACK,
         fontFamily: 'Inter-Medium'
     },
     text2: {
-        fontSize: 15,
+        fontSize: 16,
         left: 10,
         color: colors.BLACK,
         fontFamily: 'Inter-Medium'
     },
     textIconStyle: {
-        alignSelf: 'center',
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 54,
+        marginTop: 130,
     },
     textIconStyle2: {
         width: 250,

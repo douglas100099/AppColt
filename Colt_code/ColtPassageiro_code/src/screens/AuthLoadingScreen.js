@@ -17,45 +17,11 @@ import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import Geocoder from 'react-native-geocoding';
 
-const LOCATION_TASK_NAME = 'background-location-task';
-
-TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data: { locations }, error }) => {
-  if (error) {
-    console.log("Task Error");
-    alert('Ops, tivemos um problema.');
-    return;
-  }
-  let location = locations[locations.length - 1];
-  let uid = firebase.auth().currentUser.uid
-  if (locations.length > 0) {
-    firebase.database().ref('users/' + uid + '/location').update({
-      lat: location.coords.latitude,
-      lng: location.coords.longitude,
-    });
-  }
-});
-
-
 export class AuthLoadingScreen extends React.Component {
   constructor(props) {
     super(props);
     Geocoder.init(google_map_key);
     this.bootstrapAsync();
-  }
-
-  async StartBackgroundLocation() {
-    const { status } = await Location.requestPermissionsAsync();
-    let gpsActived = await Location.hasServicesEnabledAsync()
-    if (status === 'granted' && gpsActived) {
-      console.log('Setando update do background')
-      await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-        accuracy: Location.Accuracy.Highest,
-        showsBackgroundLocationIndicator: true,
-        distanceInterval: 1,
-      });
-    } else {
-      alert('Localização desativada, habilite sua localização')
-    }
   }
 
   _setSettings = async () => {
@@ -75,23 +41,59 @@ export class AuthLoadingScreen extends React.Component {
     let { status } = await Permissions.askAsync(Permissions.LOCATION);
     let gpsActived = await Location.hasServicesEnabledAsync()
 
-    if (status === "granted" && gpsActived) {
-      this.location = await Location.watchPositionAsync({
-        accuracy: Location.Accuracy.Highest,
-        distanceInterval: 10,
-        timeInterval: 2000
-      },
-        newLocation => {
-          let { coords } = newLocation;
-
-          firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
-            lat: coords.latitude,
-            lng: coords.longitude
-          });
-        },
-        error => console.log(error)
-      );
+    if (status !== 'granted') {
+      alert("Para acessar sua localização, é necessário sua permissão!");
     }
+    else if (!gpsActived) {
+      alert("Ative seu GPS para permitir que a 'Colt' determine sua localização");
+      await Location.requestPermissionsAsync();
+    }
+    else {
+      let location = Platform.OS === 'android' ? await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 20000, }) :
+        await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 2000, })
+      if (location) {
+        var pos = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        };
+        if (pos) {
+          let latlng = pos.latitude + ',' + pos.longitude;
+          fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key)
+            .then((response) => response.json())
+            .then((responseJson) => {
+              //Setando a localização do usuario no firebase
+              firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
+                add: responseJson.results[0].formatted_address,
+                lat: pos.latitude,
+                lng: pos.longitude
+              }).then(() => {
+                this._watchPosition()
+              })
+            })
+            .catch((error) => {
+              console.error(error);
+            });
+        }
+      }
+    }
+  }
+
+  _watchPosition = async () => {
+    await Location.watchPositionAsync({
+      accuracy: Location.Accuracy.Highest,
+      distanceInterval: 10,
+      timeInterval: 2000
+    },
+      newLocation => {
+        let { coords } = newLocation;
+
+        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
+          lat: coords.latitude,
+          lng: coords.longitude
+        });
+      },
+      error => console.log(error)
+    );
   }
 
   // Fetch the token from storage then navigate to our appropriate place

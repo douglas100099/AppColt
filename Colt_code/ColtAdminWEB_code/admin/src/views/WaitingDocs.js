@@ -54,15 +54,15 @@ export default function WaitingDocs() {
     { title: 'Modelo', field: 'vehicleModel', editComponent: props => (<Input type="email" name="name" value={props.value} id="exampleModelo" onChange={e => props.onChange(e.target.value)} placeholder="Modelo veículo"/>)},
     { title: 'Placa', field: 'vehicleNumber', editComponent: props => (<Input type="email" name="name" value={props.value} id="examplePlaca" onChange={e => props.onChange(e.target.value)} placeholder="Placa"/>)},
     { title: 'Categoria', field: 'carType',lookup: cars, editComponent: props => (<Input type="select" value={props.value} name="select" onChange={e => props.onChange(e.target.value)} id="exampleSelect1"><option>Colt econômico</option><option>Colt confort</option></Input>)},
-    { title: 'Nº CPF', field: 'cpfNum', editComponent: props => (<Input type="number" name="name" value={props.value} id="examplePlaca" onChange={e => props.onChange(e.target.value)} placeholder="CPF"/>)},
-    { title: 'Nº CNH', field: 'cnh', editComponent: props => (<Input type="number" name="name" value={props.value} id="examplePlaca" onChange={e => props.onChange(e.target.value)} placeholder="CNH"/>)},
-    { title: 'Renavam', field: 'renavam', editComponent: props => (<Input type="number" name="name" value={props.value} id="examplePlaca" onChange={e => props.onChange(e.target.value)} placeholder="RENAVAM"/>)},
-    { title: 'Venc. CNH', field: 'dataValidade', editComponent: props => (<Input type="number" name="name" value={props.value} id="examplePlaca" onChange={e => props.onChange(e.target.value)} placeholder="Validade CNH"/>)},
-    { title: 'Data Nascimento', field: 'dataNasc', editComponent: props => (<Input type="number" name="name" value={props.value} id="examplePlaca" onChange={e => props.onChange(e.target.value)} placeholder="Data Nascimento"/>)},
+    { title: 'Nº CPF', field: 'cpfNum', editComponent: props => (<Input name="name" value={props.value} id="examplePlaca" onChange={e => props.onChange(e.target.value)} placeholder="CPF"/>)},
+    { title: 'Nº CNH', field: 'cnh', editComponent: props => (<Input name="name" value={props.value} id="examplePlaca" onChange={e => props.onChange(e.target.value)} placeholder="CNH"/>)},
+    { title: 'Renavam', field: 'renavam', editComponent: props => (<Input name="name" value={props.value} id="examplePlaca" onChange={e => props.onChange(e.target.value)} placeholder="RENAVAM"/>)},
+    { title: 'Venc. CNH', field: 'dataValidade', editComponent: props => (<Input name="name" value={props.value} id="examplePlaca" onChange={e => props.onChange(e.target.value)} placeholder="Validade CNH"/>)},
+    { title: 'Data Nascimento', field: 'dataNasc', editComponent: props => (<Input name="name" value={props.value} id="examplePlaca" onChange={e => props.onChange(e.target.value)} placeholder="Data Nascimento"/>)},
     { title: 'Aprovado',  field: 'approved', type:'boolean'},
-    { title: 'Apro CRLV',  field: 'crlvAproved', lookup: {APROVADO: "APROVADO", REENVIE: "REENVIE", AGUARANDO: "AGUARANDO" }, editComponent: props => (<Input type="select" value={props.value} name="select" onChange={e => props.onChange(e.target.value)} id="exampleSelect1"><option>APROVADO</option><option>REENVIE</option><option>AGUARANDO</option></Input>) },
-    { title: 'Apro CNH',  field: 'cnhAproved', lookup: {APROVADO: "APROVADO", REENVIE: "REENVIE", AGUARANDO: "AGUARANDO" }, editComponent: props => (<Input type="select" value={props.value} name="select" onChange={e => props.onChange(e.target.value)} id="exampleSelect1"><option>APROVADO</option><option>REENVIE</option><option>AGUARANDO</option></Input>)},
-    { title: 'Apro perfil',  field: 'perfilAproved', lookup: {APROVADO: "APROVADO", REENVIE: "REENVIE", AGUARANDO: "AGUARANDO" }, editComponent: props => (<Input type="select" value={props.value} name="select" onChange={e => props.onChange(e.target.value)} id="exampleSelect1"><option>APROVADO</option><option>REENVIE</option><option>AGUARANDO</option></Input>)},
+    { title: 'Apro CRLV',  field: 'crlvAproved', lookup: {APROVADO: "APROVADO", REENVIE: "REENVIE", AGUARANDO: "AGUARANDO" }},
+    { title: 'Apro CNH',  field: 'cnhAproved', lookup: {APROVADO: "APROVADO", REENVIE: "REENVIE", AGUARANDO: "AGUARANDO" }},
+    { title: 'Apro perfil',  field: 'perfilAproved', lookup: {APROVADO: "APROVADO", REENVIE: "REENVIE", AGUARANDO: "AGUARANDO" }},
   ];
 
   return (

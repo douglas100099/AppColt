@@ -33,6 +33,7 @@ import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
 import ColtConfortCar from '../../assets/svg/ColtConfortCar';
 import { VerifyCupom } from '../common/VerifyCupom';
 import mapStyleAndroid from '../../mapStyleAndroid.json';
+import PromoModal from '../components/PromoModal';
 
 import { TextInputMask } from 'react-native-masked-text'
 import { ScrollView } from 'react-native-gesture-handler';
@@ -75,14 +76,12 @@ export default class FareScreen extends React.Component {
             cancellValue: 0,
             longDistance: false,
         },
-            this.fadeAnim = new Animated.Value(0)
+        this.fadeAnim = new Animated.Value(0)
     }
 
     async componentDidMount() {
         this._isMounted = true;
         var getCroods = await this.props.navigation.getParam('data') ? await this.props.navigation.getParam('data') : null;
-        var minTimeEconomico = this.props.navigation.getParam('minTimeEconomico') ? await this.props.navigation.getParam('minTimeEconomico') : null;
-        var minTimeConfort = this.props.navigation.getParam('minTimeConfort') ? await this.props.navigation.getParam('minTimeConfort') : null;
         var arrayRates = [];
 
         this.setState({
@@ -102,8 +101,8 @@ export default class FareScreen extends React.Component {
                     arrayRates.push(ratesObject)
                 }
                 this.setState({
-                    minTimeEconomico: minTimeEconomico,
-                    minTimeConfort: minTimeConfort,
+                    minTimeEconomico: null,
+                    minTimeConfort: null,
                     rateDetailsObjects: arrayRates,
                     region: getCroods,
                     curUID: firebase.auth().currentUser,
@@ -114,7 +113,7 @@ export default class FareScreen extends React.Component {
         }).then(() => {
             if (this._isMounted = true) {
                 let distance = distanceCalc([-22.224650, -43.867618], [this.state.region.wherelatitude, this.state.region.wherelongitude])
-                if (distance > 50) {
+                if (distance > 100) {
                     this.setState({ longDistance: true })
                 } else {
                     this.getWalletBalance();
@@ -351,7 +350,7 @@ export default class FareScreen extends React.Component {
 
     getDrivers() {
         if (!this.state.longDistance) {
-            const userData = firebase.database().ref('users/');
+            const userData = firebase.database().ref('users/').orderByChild("usertype").equalTo('driver');
             userData.once('value', userData => {
                 if (userData.val()) {
                     let allUsers = userData.val();
@@ -367,12 +366,12 @@ export default class FareScreen extends React.Component {
         let startLoc = '"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"';
         for (let key in allUsers) {
             let driver = allUsers[key];
-            if ((driver.usertype) && (driver.usertype == 'driver') && (driver.approved == true) && (driver.queue == false) && (driver.driverActiveStatus == true)) {
+            if (driver.approved == true && driver.queue == false && driver.driverActiveStatus == true) {
                 if (driver.location) {
                     let driverLocation = [driver.location.lat, driver.location.lng];
                     let distance = distanceCalc(riderLocation, driverLocation);
 
-                    if (distance < 5) {
+                    if (distance < 4) {
                         let destLoc = '"' + driver.location.lat + ', ' + driver.location.lng + '"';
                         let carType = driver.carType;
                         driver.arriveTime = await this.getDriverTime(startLoc, destLoc);
@@ -430,205 +429,10 @@ export default class FareScreen extends React.Component {
         }
     }
 
-    //Verifica se o cupom digitado é valido
-    async checkPromo(item, index) {
-        if (this.state.payDetails) {
-            Alert.alert(
-                "Alerta!",
-                "Você já possui um cupom ativo!",
-                [
-                    {
-                        text: 'OK', onPress: () => {
-                            this.setState({ checkPromoBtn: false, checkPromoBtn2: false })
-                        }
-                    }
-                ],
-                { cancelable: false }
-            );
-        }
-        else if (item != null && index != null) {
-            this.checkUserPromo(item).then((response) => {
-                if (response == false) {
-
-                    let verifyCupomData = {}
-                    if (this.state.selected == 0) {
-                        verifyCupomData = VerifyCupom(item, this.state.estimatePrice1)
-                    } else {
-                        verifyCupomData = VerifyCupom(item, this.state.estimatePrice2)
-                    }
-
-                    setTimeout(() => {
-                        if (verifyCupomData.promo_applied) {
-                            if (this.state.selected == 0) {
-                                this.setState({ promodalVisible: false, checkPromoBtn: false, checkPromoBtn2: false, estimatePrice1: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
-
-                            } else {
-                                this.setState({ promodalVisible: false, checkPromoBtn: false, checkPromoBtn2: false, estimatePrice2: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
-                            }
-                        } else {
-                            alert(verifyCupomData)
-                            this.setState({ checkPromoBtn2: false })
-                        }
-                    }, 1000)
-                } else {
-                    this.setState({ checkPromoBtn: false, checkPromoBtn2: false })
-                    alert("Você já usou esse cupom em uma corrida anterior!")
-                }
-            })
-        }
-        else if (this.state.promoCode != null) {
-            this.consultPromo().then((response) => {
-                var promo = {}
-                promo = response
-                if (promo.promoKey != undefined) {
-                    this.checkUserPromo(promo).then((response) => {
-                        console.log(response)
-                        if (!response) {
-                            let verifyCupomData = VerifyCupom(promo, this.state.estimateFare);
-
-                            if (verifyCupomData.promo_applied) {
-                                if (this.state.selected == 0) {
-                                    this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice1: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
-                                } else {
-                                    this.setState({ promodalVisible: false, checkPromoBtn: false, estimatePrice2: verifyCupomData.payableAmmount, payDetails: verifyCupomData, metodoPagamento: verifyCupomData.metodoPagamento })
-                                }
-                            } else {
-                                this.setState({ checkPromoBtn: false })
-                            }
-                        } else {
-                            this.setState({ checkPromoBtn: false })
-                            alert("Você já usou esse cupom em uma corrida anterior!")
-                        }
-                    })
-                } else {
-                    this.setState({ checkPromoBtn: false })
-                    alert("Código promocional inválido!")
-                }
-            })
-        } else {
-            this.setState({ checkPromoBtn: false })
-            alert("Código promocional inválido!")
-        }
+    closeModalPayment = () => {
+        this.setState({ promodalVisible: false })
     }
 
-    async checkUserPromo(param) {
-        let obj = {}
-        if (param && param.user_avail != undefined) {
-            obj = param.user_avail.details
-            for (let key in obj) {
-                if (obj[key].userId == this.state.curUID.uid) {
-                    return true
-                }
-            }
-        } else {
-            return false
-        }
-    }
-
-    async consultPromo() {
-        this.setState({ checkPromoBtn: true })
-        var promoDetails = {}
-        const promoData = firebase.database().ref('offers/');
-        return promoData.once('value', promoData => {
-            if (promoData.val()) {
-                let promo = promoData.val();
-                for (let key in promo) {
-                    promo[key].promoKey = key
-                    if (promo[key].promoCode) {
-                        if (promo[key].promoCode == this.state.promoCode.toUpperCase()) {
-                            promoDetails = promo[key]
-                            break
-                        }
-                    }
-                }
-            }
-        }).then(() => {
-            return promoDetails
-        })
-    }
-
-    //Abre o modal de promoçao
-    openPromoModal() {
-        this.setState({
-            promodalVisible: true,
-        })
-    }
-
-    //Modal pra seleção do cupom de desconto
-    promoModal() {
-        return (
-            <Modal
-                animationType="slide"
-                visible={this.state.promodalVisible}
-                onRequestClose={() => {
-                    this.setState({ promodalVisible: false })
-                }}>
-                <View style={styles.promoModalContainer}>
-                    <View style={styles.viewTopPromoModal}>
-                        <View style={styles.HeaderPromoModal}>
-                            <View style={{ marginLeft: 10 }}>
-                                <Text style={{ fontFamily: "Inter-Medium", fontSize: 23, opacity: 0.4 }}> Promoções </Text>
-                            </View>
-                            <View style={{ position: 'absolute', right: 0 }}>
-                                <TouchableOpacity style={{ marginRight: 15 }} onPress={() => this.setState({ promodalVisible: false })}>
-                                    <Icon
-                                        name='x'
-                                        type='feather'
-                                        color={colors.GREY1}
-                                        size={34}
-                                    />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
-                    <View style={{ marginHorizontal: 30 }}>
-                        <Input
-                            placeholder='Digite seu cupom...'
-                            leftIcon={{
-                                name: 'tag',
-                                type: 'octicon',
-                                color: colors.BLACK,
-                                size: 25,
-                                opacity: 0.4,
-                            }}
-                            containerStyle={{ marginTop: 20 }}
-                            inputStyle={{ marginLeft: 12 }}
-                            onChangeText={(text) => { this.setState({ promoCode: text }) }}
-                            value={this.state.promoCode}
-                            errorMessage={this.state.promoCodeValid ? null : languageJSON.first_name_blank_error}
-                        />
-                    </View>
-                    <TouchableOpacity style={styles.btnConfirmarPromoModal} disabled={this.state.checkPromoBtn} onPress={() => { this.checkPromo(), this.setState({ checkPromoBtn: true }) }}>
-                        {
-                            this.state.checkPromoBtn ?
-                                <ActivityIndicator
-                                    size={'small'}
-                                    color={colors.WHITE}
-                                />
-                                :
-                                <Text style={styles.textConfirmarPromoModal}> Confirmar </Text>
-                        }
-                    </TouchableOpacity>
-
-                    <View style={{ justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
-                        <Text style={{ fontFamily: 'Inter-Medium', fontSize: 15 }}> ou escolha uma das promoções abaixo. </Text>
-                    </View>
-                    {this.state.checkPromoBtn2 ?
-                        <View style={{ marginTop: 15, flexDirection: 'row', alignItems: 'center', alignSelf: 'center' }}>
-                            <ActivityIndicator
-                                size={'small'}
-                                color={colors.DEEPBLUE}
-                            />
-                            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 16 }}> Aplicando cupom... </Text>
-                        </View>
-                        :
-                        <PromoComp onPressButton={(item, index) => { this.checkPromo(item, index, false), this.setState({ checkPromoBtn2: true }) }}></PromoComp>
-                    }
-
-                </View>
-            </Modal>
-        )
-    }
 
     addCpf() {
         return (
@@ -846,6 +650,13 @@ export default class FareScreen extends React.Component {
         )
     }
 
+    onSucessPromo(newValue1, newValue2, payDetails, payment_mode) {
+        if (newValue1 != null && newValue2 != null) {
+            this.setState({ promodalVisible: false, estimatePrice1: newValue1, estimatePrice2: newValue2, payDetails: payDetails, metodoPagamento: payment_mode })
+        } else {
+            this.setState({ promodalVisible: false })
+        }
+    }
 
     //Enviar notificaçao
     sendPushNotification(customerUID, msg) {
@@ -925,6 +736,11 @@ export default class FareScreen extends React.Component {
     render() {
         return (
             <View style={styles.container}>
+                {this.state.promodalVisible ?
+                    <PromoModal onSucessPromo={(newValue1, newValue2, payDetails, payment_mode) => this.onSucessPromo(newValue1, newValue2, payDetails, payment_mode)}
+                        selected={this.state.selected} payDetails={this.state.payDetails ? true : false} estimateFare={[this.state.estimatePrice1, this.state.estimatePrice2]}
+                        closeModalPayment={() => { this.setState({ promodalVisible: false }) }} />
+                    : null}
                 <View style={[styles.mapcontainer, {
                     flex: this.state.payDetails ? 1.8 : 2
                 }]}>
@@ -991,7 +807,7 @@ export default class FareScreen extends React.Component {
 
                     {this.state.region && this.state.region.wherelatitude ?
                         <View style={styles.bordaIconeVoltar}>
-                            <TouchableOpacity onPress={() => this.state.buttonDisabled ? null : this.props.navigation.replace('Map')}>
+                            <TouchableOpacity onPress={() => this.state.buttonDisabled ? null : this.props.navigation.goBack()}>
                                 <Icon
                                     name='chevron-left'
                                     type='MaterialIcons'
@@ -1006,7 +822,7 @@ export default class FareScreen extends React.Component {
                         <TouchableOpacity style={[styles.btnAddPromo, {
                             borderColor: this.state.payDetails ? colors.GREEN.light : null,
                             borderWidth: this.state.payDetails ? 2 : 0
-                        }]} onPress={() => this.openPromoModal()} >
+                        }]} onPress={() => this.setState({ promodalVisible: true })}>
 
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Icon
@@ -1015,7 +831,12 @@ export default class FareScreen extends React.Component {
                                     size={20}
                                     containerStyle={{ opacity: 0.2, marginTop: 3 }}
                                 />
-                                <Text style={styles.txtCupom}> {this.state.payDetails ? "-R$" + (this.state.payDetails.promo_details.promo_discount_value).toFixed(2) : "Cupom"} </Text>
+                                <Text style={styles.txtCupom}> {this.state.payDetails ?
+                                    this.state.payDetails.promo_details.discount_type == 'flat' ?
+                                        "-R$" + (this.state.payDetails.promo_details.promo_discount_value).toFixed(2)
+                                        :
+                                        '-' + (this.state.payDetails.promo_details.promo_discount_value).toFixed(0) + '%'
+                                    : "Cupom"} </Text>
                             </View>
                         </TouchableOpacity>
                         : null}
@@ -1075,7 +896,7 @@ export default class FareScreen extends React.Component {
                                     color={colors.GREY2}
                                     containerStyle={{ opacity: .5, marginTop: 70 }}
                                 />
-                                <Text style={{ fontFamily: 'Inter-Medium', fontSize: 16, opacity: .5 }}> Ops, ainda não atendemos sua região. </Text>
+                                <Text style={{ fontFamily: 'Inter-Medium', fontSize: 16, opacity: .5, marginTop: 10 }}> Ops, ainda não atendemos sua região. </Text>
                             </View>
                             :
                             <Fragment>
@@ -1098,7 +919,7 @@ export default class FareScreen extends React.Component {
                                                 <ColtEconomicoCar />
                                                 <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[0].name}</Text>
 
-                                                {this.state.estimatePrice1 ?
+                                                {this.state.estimatePrice1 >= 0 ?
                                                     <Text style={styles.price1}>{this.state.settings.symbol}
                                                         <Text style={styles.price2}>
                                                             {this.state.metodoPagamento === "Dinheiro/Carteira" ? ((this.state.estimatePrice1 - this.state.walletBallance)).toFixed(2) : (parseFloat(this.state.estimatePrice1)).toFixed(2)}
@@ -1139,7 +960,7 @@ export default class FareScreen extends React.Component {
                                                 <ColtConfortCar />
                                                 <Text style={styles.textTypeCar}>{this.state.rateDetailsObjects[1].name}</Text>
 
-                                                {this.state.estimatePrice2 ?
+                                                {this.state.estimatePrice2 >= 0 ?
                                                     <Text style={styles.price1}>
                                                         {this.state.settings.symbol}
                                                         <Text style={styles.price2}>
@@ -1250,9 +1071,7 @@ export default class FareScreen extends React.Component {
                 {
                     this.addCpf()
                 }
-                {
-                    this.promoModal()
-                }
+
             </View>
         );
     }

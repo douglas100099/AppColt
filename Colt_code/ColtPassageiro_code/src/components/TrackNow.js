@@ -88,54 +88,65 @@ export default class TrackNow extends React.Component {
             }
         );
 
+        this.updateBooking(duid, alldata, paramData, bookingStatus)
+        this.setState({
+            intervalTrackNow:
+                setInterval(() => {
+                    if (this._isMounted) {
+                        this.updateBooking(duid, alldata, paramData, bookingStatus)
+                    }
+                }, 5000)
+        })
+    }
+
+    updateBooking(duid, alldata, paramData, bookingStatus) {
         if (duid && alldata) {
             const dat = firebase.database().ref('users/' + duid + '/');
 
-            this.setState({
-                intervalTrackNow:
-                    setInterval(() => {
-                        dat.once('value', snapshot => {
-                            if (snapshot.val() && snapshot.val().location) {
-                                var data = snapshot.val().location;
-                                if (data) {
-                                    this.setState({
-                                        allData: paramData,
-                                        destinationLoc: paramData.wherelatitude + ',' + paramData.wherelongitude,
-                                        startLoc: data.lat + ',' + data.lng,
-                                        latitude: data.lat,
-                                        longitude: data.lng,
-                                        angle: data.angle
-                                    }, () => {
-                                        if (bookingStatus == 'ACCEPTED') {
-                                            var location1 = [paramData.wherelatitude, paramData.wherelongitude];
-                                            var location2 = [data.lat, data.lng];
-                                            var distance = distanceCalc(location1, location2);
-                                            var originalDistance = distance * 1000;
+            dat.once('value', snapshot => {
+                if (snapshot.val() && snapshot.val().location) {
+                    var data = snapshot.val().location;
+                    if (data) {
+                        this.setState({
+                            allData: paramData,
+                            destinationLoc: paramData.wherelatitude + ',' + paramData.wherelongitude,
+                            startLoc: data.lat + ',' + data.lng,
+                            latitude: data.lat,
+                            longitude: data.lng,
+                            angle: data.angle
+                        }, () => {
+                            if (bookingStatus == 'ACCEPTED') {
+                                var location1 = [paramData.wherelatitude, paramData.wherelongitude];
+                                var location2 = [data.lat, data.lng];
+                                var distance = distanceCalc(location1, location2);
+                                var originalDistance = distance * 1000;
 
-                                            if (originalDistance && originalDistance < 100) {
-                                                if (!this.state.allData.flag) {
-                                                    this.setState({
-                                                        flag: false
-                                                    })
-                                                    const dat = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/');
-                                                    dat.once('value', snapshot => {
-                                                        if (snapshot.val() && snapshot.val().pushToken) {
-                                                            RequestPushMsg(snapshot.val().pushToken, languageJSON.driver_near)
-                                                            paramData.flag = true;
-                                                        }
-                                                    })
-                                                }
+                                if (originalDistance && originalDistance < 100) {
+                                    if (!this.state.allData.flag) {
+                                        this.setState({
+                                            flag: false
+                                        })
+                                        const dat = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/');
+                                        dat.once('value', snapshot => {
+                                            if (snapshot.val() && snapshot.val().pushToken) {
+                                                RequestPushMsg(snapshot.val().pushToken, languageJSON.driver_near)
+                                                paramData.flag = true;
                                             }
-                                        }
-                                        this.getDirections();
-                                    })
+                                        })
+                                    }
                                 }
                             }
+                            console.log("RODANDO")
+                            this.getDirections();
                         })
-                    }, 5000)
+                    }
+                }
             })
+
         }
     }
+
+
 
     componentWillUnmount() {
         this._isMounted = false
@@ -187,6 +198,13 @@ export default class TrackNow extends React.Component {
         }
     }
 
+    fitRoute() {
+        this.map.fitToCoordinates([{ latitude: this.state.latitude, longitude: this.state.longitude }, { latitude: this.state.allData.wherelatitude, longitude: this.state.allData.wherelongitude }], {
+            edgePadding: { top: getPixelSize(60), right: getPixelSize(60), bottom: getPixelSize(60), left: getPixelSize(60) },
+            animated: true,
+        })
+    }
+
     locationUser() {
         let region = {
             latitude: this.state.latitude,
@@ -197,9 +215,6 @@ export default class TrackNow extends React.Component {
         if (this.map) {
             this.map.animateToRegion(region, 500)
         }
-        setTimeout(() => {
-            this.setState({ showsMyLocationBtn: false })
-        }, 600)
     }
 
     _onMapChange = async () => {
@@ -255,8 +270,8 @@ export default class TrackNow extends React.Component {
                         showsMyLocationButton={false}
                         //region={this.getMapRegion()}
                         initialRegion={{
-                            latitude: (this.state.latitude),
-                            longitude: (this.state.longitude),
+                            latitude: this.state.latitude,
+                            longitude: this.state.longitude,
                             latitudeDelta: 0.0143,
                             longitudeDelta: 0.0134,
                         }}
@@ -296,17 +311,30 @@ export default class TrackNow extends React.Component {
                             : null}
                     </MapView.Animated>
                     : null}
-                {this.state.showsMyLocationBtn == true ?
-                    <TouchableOpacity style={styles.iconLocation} onPress={() => this.locationUser()}>
-                        <Icon
-                            name="car"
-                            type="material-community"
-                            // icon: 'chat', color: '#fff',
-                            size={25}
-                            color={colors.DEEPBLUE}
-                            containerStyle={{ opacity: .7 }}
-                        />
-                    </TouchableOpacity>
+                {this.state.showsMyLocationBtn ?
+                    <View>
+                        <TouchableOpacity style={styles.iconLocation} onPress={() => this.locationUser()}>
+                            <Icon
+                                name="car"
+                                type="material-community"
+                                // icon: 'chat', color: '#fff',
+                                size={25}
+                                color={colors.DEEPBLUE}
+                            //containerStyle={{ opacity: .7 }}
+                            />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.iconRoute} onPress={() => this.fitRoute()}>
+                            <Icon
+                                name='git-pull-request'
+                                type='feather'
+                                // icon: 'chat', color: '#fff',
+                                size={25}
+                                color={colors.DARK}
+                            //containerStyle={{ opacity: .7 }}
+                            />
+                        </TouchableOpacity>
+                    </View>
                     : null}
             </View>
         );
@@ -323,6 +351,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginTop: Platform.OS == 'ios' ? 50 : 30,
+        alignSelf: 'flex-end',
+        marginRight: 15,
+        backgroundColor: colors.WHITE,
+        width: 40,
+        height: 40,
+        borderRadius: 50
+    },
+    iconRoute: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 20,
         alignSelf: 'flex-end',
         marginRight: 15,
         backgroundColor: colors.WHITE,

@@ -109,7 +109,7 @@ export default class DriverTripAccept extends React.Component {
                 const checkarBlock = firebase.database().ref('users/' + this.state.curUid + '/');
                 checkarBlock.once('value', customerData => {
                     let checkBlock = customerData.val()
-                    if (checkBlock.blocked_by_payment || checkBlock.blocked) {
+                    if (checkBlock.blocked_by_payment || checkBlock.blocked || checkBlock.blocked_by_admin) {
                         if (checkBlock.blocked) {
                             if (this._isMounted) {
                                 this.setState({
@@ -132,7 +132,7 @@ export default class DriverTripAccept extends React.Component {
                                 )
                                 alert('Motorista desbloqueado, fique online novamente.')
                             }
-                        } else {
+                        } else if (checkBlock.blocked_by_payment) {
                             let dataFormatada = new Date(checkBlock.blocked_by_payment.date_blocked),
                                 dia = dataFormatada.getDate().toString().padStart(2, '0'),
                                 mes = (dataFormatada.getMonth() + 1).toString().padStart(2, '0'), //+1 pois no getMonth Janeiro começa com zero.
@@ -152,6 +152,20 @@ export default class DriverTripAccept extends React.Component {
                                     { cancelable: false }
                                 )
                             }
+                        } else if(checkBlock.blocked_by_admin) {
+                            Alert.alert(
+                                "Você está bloqueado",
+                                "Entre em contato com suporte. Motivo: " + checkBlock.blocked_by_admin.motivo,
+                                [
+                                    {
+                                        text: "Suporte",
+                                        onPress: () => Linking.openURL('https://wa.me/5532984536635'),
+                                        style: "cancel"
+                                    },
+                                    { text: "OK", onPress: () => console.log("OK Pressed") }
+                                ],
+                                { cancelable: false }
+                            )
                         }
                     } else {
                         if (this.state.statusDetails == true) {

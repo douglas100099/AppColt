@@ -20,6 +20,7 @@ import Earningreports from './views/Earningreports';
 import WaitingAproved from './views/WaitingAproved';
 import LivePreview from './views/LivePreview';
 import Settings from './views/Settings';
+import Test from './views/Test';
 
 function App() {
   store.dispatch(fetchUser());
@@ -29,6 +30,7 @@ function App() {
         <Router>
           <Switch>
             <ProtectedRoute exact component={Dashboard} path="/"/>
+            <ProtectedRoute exact component={Test} path="/test"/>
             <ProtectedRoute exact component={CarTypes} path="/cartypes"/>
             <ProtectedRoute exact component={AddBookings} path="/addBookings"/>
             <ProtectedRoute exact component={BookingHistory} path="/bookings"/>

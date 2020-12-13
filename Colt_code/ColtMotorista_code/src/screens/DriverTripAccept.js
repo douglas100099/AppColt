@@ -539,6 +539,10 @@ export default class DriverTripAccept extends React.Component {
             ref.on('value', (snapshot) => {
                 this.setState({ driverDetails: snapshot.val() })
                 var jobs = [];
+                /*if(snapshot.val().have_internet){
+                    console.log('ENTROU NO HAVE INTERNET')
+                    firebase.database().ref('users/' + curuid + '/have_internet/').set(true)
+                }*/
                 if (snapshot.val() && snapshot.val().waiting_riders_list) {
                     let waiting_riderData = snapshot.val().waiting_riders_list;
                     for (let key in waiting_riderData) {
@@ -573,6 +577,13 @@ export default class DriverTripAccept extends React.Component {
                 this.setState({ tasklist: jobs.reverse() });
                 this.jobs = jobs;
             });
+            let ref2 = firebase.database().ref('users/' + curuid + '/have_internet')
+            ref2.on('value', snap => {
+                if(snap.val() === false){
+                    firebase.database().ref('users/' + curuid + '/have_internet/').set(true)
+                    console.log('ENTROU NO HAVE')
+                }
+            })
         }
     }
 

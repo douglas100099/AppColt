@@ -71,6 +71,18 @@ export class AuthLoadingScreen extends React.Component {
             if (userData.val()) {
               if (userData.val().usertype == 'driver' && userData.val().approved == true) {
                 GetPushToken();
+                const refOnline = firebase.database().ref('.info/connected')
+                const refStatus = firebase.database().ref('users/' + user.uid + '/')
+                refOnline.on('value', function(snapshot) {
+                  if (snapshot.val()) {
+                    refStatus.onDisconnect().update({
+                      onlineStatus: false
+                    });
+                    refStatus.update({
+                      onlineStatus: true
+                    });
+                  }
+                });
                 firebase.database().ref('users/' + user.uid + '/driverActiveStatus').on('value', status => {
                   let activeStatus = status.val();
                   if (activeStatus) {

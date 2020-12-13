@@ -7,26 +7,21 @@ import {
     Text,
     TouchableOpacity,
     ScrollView,
-    TouchableWithoutFeedback,
     ActivityIndicator,
     Platform,
     Alert,
-    Switch
 } from 'react-native';
-import { Icon, Header } from 'react-native-elements';
-import { NavigationActions, StackActions } from 'react-navigation';
-import ActionSheet, { ActionSheetCustom } from 'react-native-actionsheet';
+import { Icon } from 'react-native-elements';
+import { ActionSheetCustom } from 'react-native-actionsheet';
 
 import { colors } from '../common/theme';
 
 import * as Permissions from 'expo-permissions';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera } from 'expo';
 var { width, height } = Dimensions.get('window');
 
 import * as firebase from 'firebase';
 import languageJSON from '../common/language';
-import { linear } from 'react-native/Libraries/Animated/src/Easing';
 
 export default class ProfileScreen extends React.Component {
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal, Image, Platform, Alert, ActivityIndicator, AsyncStorage } from 'react-native';
-import { Icon } from 'react-native-elements';
+import { Icon, Tooltip, Overlay, Button } from 'react-native-elements';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import { colors } from '../common/theme';
 import * as Location from 'expo-location';
@@ -72,6 +72,8 @@ export default class DriverTripAccept extends React.Component {
             batteryLevel: null,
             animatedGrana: true,
             duration: null,
+            loadStatus: false,
+            modalStatusVisible: false
         }
         this._getLocationAsync();
     }
@@ -108,7 +110,7 @@ export default class DriverTripAccept extends React.Component {
             let checkBlock = customerData.val()
             if (checkBlock.blocked_by_payment || checkBlock.blocked) {
                 if (checkBlock.blocked) {
-                    if(this._isMounted){
+                    if (this._isMounted) {
                         this.setState({
                             isBlocked: checkBlock.blocked.isBlocked,
                             reason: checkBlock.blocked.isBlocked
@@ -131,13 +133,13 @@ export default class DriverTripAccept extends React.Component {
                     }
                 } else {
                     let dataFormatada = new Date(checkBlock.blocked_by_payment.date_blocked),
-                    dia = dataFormatada.getDate().toString().padStart(2, '0'),
-                    mes = (dataFormatada.getMonth() + 1).toString().padStart(2, '0'), //+1 pois no getMonth Janeiro começa com zero.
-                    ano = dataFormatada.getFullYear();
+                        dia = dataFormatada.getDate().toString().padStart(2, '0'),
+                        mes = (dataFormatada.getMonth() + 1).toString().padStart(2, '0'), //+1 pois no getMonth Janeiro começa com zero.
+                        ano = dataFormatada.getFullYear();
                     if (checkBlock.blocked_by_payment) {
                         Alert.alert(
                             "Pagamento pendente",
-                            "Você foi bloqueado. Não identificamos seu pagamento da taxa da Colt com vencimento em: " +dia+'/'+mes+'/'+ano+ " , caso tenha realizado o pagamento entre em contato com o suporte.",
+                            "Você foi bloqueado. Não identificamos seu pagamento da taxa da Colt com vencimento em: " + dia + '/' + mes + '/' + ano + " , caso tenha realizado o pagamento entre em contato com o suporte.",
                             [
                                 {
                                     text: "Suporte",
@@ -166,7 +168,7 @@ export default class DriverTripAccept extends React.Component {
                             firebase.database().ref(`/users/` + this.state.curUid + '/').update({
                                 driverActiveStatus: true
                             }).then(() => {
-                                if(this._isMounted){
+                                if (this._isMounted) {
                                     this.setState({ alertIsOpen: false, requestPermission: false });
                                 }
                                 //clearInterval(this.state.intervalCheckGps);
@@ -186,7 +188,7 @@ export default class DriverTripAccept extends React.Component {
     }
 
     async requestPermission() {
-        if(this._isMounted){
+        if (this._isMounted) {
             this.setState({ requestPermission: true })
             await Location.requestPermissionsAsync();
         }
@@ -262,7 +264,7 @@ export default class DriverTripAccept extends React.Component {
 
 
     stopSound() {
-        if(this._isMounted){
+        if (this._isMounted) {
             this.setState({ isSound: false })
             this.sound.stopAsync();
             console.log('STOP SOUND')
@@ -288,7 +290,7 @@ export default class DriverTripAccept extends React.Component {
         const batteryLevel = await Battery.getBatteryLevelAsync();
         this.setState({ batteryLevel });
         this._subscription = Battery.addBatteryLevelListener(({ batteryLevel }) => {
-            if(this._isMounted){
+            if (this._isMounted) {
                 this.setState({ batteryLevel });
             }
         });
@@ -334,11 +336,11 @@ export default class DriverTripAccept extends React.Component {
             await AsyncStorage.getItem('onOffHide', (err, result) => {
                 if (result) {
                     if (result == 'ON') {
-                        if(this._isMounted){
+                        if (this._isMounted) {
                             this.setState({ hideGanhos: 'ON' })
                         }
                     } else {
-                        if(this._isMounted){
+                        if (this._isMounted) {
                             this.setState({ hideGanhos: 'OFF' })
                         }
                     }
@@ -412,7 +414,7 @@ export default class DriverTripAccept extends React.Component {
                         longitudeDelta: 0.045,
                         angle: coords.heading,
                     };
-                    if(this._isMounted){
+                    if (this._isMounted) {
                         this.setState({ region: region });
                         this.setLocationDB(region.latitude, region.longitude, region.angle)
                     }
@@ -433,7 +435,7 @@ export default class DriverTripAccept extends React.Component {
     setLocationDB(lat, lng, angle) {
         let uid = firebase.auth().currentUser.uid;
         var latlng = lat + ',' + lng;
-        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, {signal: this.myAbort.signal})
+        fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, { signal: this.myAbort.signal })
             .then((response) => response.json())
             .then((responseJson) => {
                 if (responseJson.results[0] && responseJson.results[0].formatted_address) {
@@ -503,7 +505,7 @@ export default class DriverTripAccept extends React.Component {
                         var location1 = [waiting_riderData[key].pickup.lat, waiting_riderData[key].pickup.lng];
                         var location2 = [this.state.region.latitude, this.state.region.longitude];
                         var distancee = distanceCalc(location1, location2);
-                        if(this._isMounted){
+                        if (this._isMounted) {
                             this.setState({ distance: distancee, acceptBtnDisable: false })
                         }
                     }
@@ -513,8 +515,8 @@ export default class DriverTripAccept extends React.Component {
                         //Linking.openURL('coltappmotorista://');
                     }
                 } else if (this.state.chegouCorrida == true) {
-                    if(this._isMounted){
-                    this.setState({ chegouCorrida: false })
+                    if (this._isMounted) {
+                        this.setState({ chegouCorrida: false })
                     }
                     if (this.state.isSound) {
                         this.stopSound()
@@ -717,6 +719,98 @@ export default class DriverTripAccept extends React.Component {
         this.map.animateToRegion(this.state.region, 500)
     }
 
+    iniciarTeste() {
+        this.setState({ loadStatus: true })
+        if (this.state.curUid) {
+
+        } else {
+
+        }
+    }
+
+    openAlertStatus() {
+        return (
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={this.state.modalStatusVisible}
+                //visible={true}
+                onRequestClose={() => {
+                    this.setState({ modalStatusVisible: false })
+                }}
+            >
+                <View style={{ flex: 1, backgroundColor: "rgba(22,22,22,0.8)", justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ width: '80%', backgroundColor: colors.WHITE, borderRadius: 10, height: 400 }}>
+                        <View style={{ marginTop: 15, alignItems: 'center' }}>
+                            <Text style={{ fontSize: 18, color: colors.BLACK, fontFamily: 'Inter-Bold' }}>Teste de status</Text>
+                            <Text style={{ fontSize: 14, color: colors.BLACK, fontFamily: 'Inter-Regular' }}>Iremos verificar os estados de conexão, aguarde.</Text>
+                        </View>
+                        <View style={{ marginTop: 20, flexDirection: 'column' }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 10, alignItems: 'center', backgroundColor: colors.GREY3, paddingVertical: 5, borderRadius: 10, marginHorizontal: 5 }}>
+                                <Icon
+                                    name='ios-checkmark'
+                                    type='ionicon'
+                                    size={35}
+                                    color={colors.GREEN.light}
+                                    iconStyle={{ marginLeft: 10 }}
+                                />
+                                <Text style={{ fontSize: 14, marginLeft: 5, color: colors.BLACK, fontFamily: 'Inter-Bold' }}>Internet ativa</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', marginBottom: 10, alignItems: 'center', backgroundColor: colors.GREY3, paddingVertical: 5, borderRadius: 10, marginHorizontal: 5 }}>
+                                <Icon
+                                    name='ios-checkmark'
+                                    type='ionicon'
+                                    size={35}
+                                    color={colors.GREEN.light}
+                                    iconStyle={{ marginLeft: 10 }}
+                                />
+                                <Text style={{ fontSize: 14, marginLeft: 5, color: colors.BLACK, fontFamily: 'Inter-Bold' }}>Aceitar corridas</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', marginBottom: 10, alignItems: 'center', backgroundColor: colors.GREY3, paddingVertical: 5, borderRadius: 10, marginHorizontal: 5 }}>
+                                <Icon
+                                    name='ios-checkmark'
+                                    type='ionicon'
+                                    size={35}
+                                    color={colors.GREEN.light}
+                                    iconStyle={{ marginLeft: 10 }}
+                                />
+                                <Text style={{ fontSize: 14, marginLeft: 5, color: colors.BLACK, fontFamily: 'Inter-Bold', }}>Conexão com o servidor</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', marginBottom: 10, alignItems: 'center', backgroundColor: colors.GREY3, paddingVertical: 5, borderRadius: 10, marginHorizontal: 5 }}>
+                                <Icon
+                                    name='ios-checkmark'
+                                    type='ionicon'
+                                    size={35}
+                                    color={colors.GREEN.light}
+                                    iconStyle={{ marginLeft: 10 }}
+                                />
+                                <Text style={{ fontSize: 14, marginLeft: 5, color: colors.BLACK, fontFamily: 'Inter-Bold' }}>Localização</Text>
+                            </View>
+                            <Button
+                                title='Iniciar Teste'
+                                titleStyle={{
+                                    fontFamily: 'Inter-Bold',
+                                    fontSize: 16,
+                                    color: colors.WHITE
+                                }}
+                                buttonStyle={{
+                                    marginHorizontal: 60,
+                                    borderRadius: 15,
+                                    backgroundColor: colors.DEEPBLUE,
+                                }}
+                                containerStyle={{
+                                    marginTop: 20,
+                                }}
+                                loading={this.state.loadStatus}
+                                onPress={() => { this.iniciarTeste() }}
+                            />
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+        )
+    }
+
     hideGanhos = async () => {
         this.setState({ loaderBtn: true })
         try {
@@ -724,13 +818,13 @@ export default class DriverTripAccept extends React.Component {
                 if (result) {
                     if (result == 'ON') {
                         AsyncStorage.setItem('onOffHide', 'OFF').then(() => {
-                            if(this._isMounted){
+                            if (this._isMounted) {
                                 this.setState({ hideGanhos: 'OFF' })
                             }
                         })
                     } else {
                         AsyncStorage.setItem('onOffHide', 'ON').then(() => {
-                            if(this._isMounted){
+                            if (this._isMounted) {
                                 this.setState({ hideGanhos: 'ON' })
                             }
                         })
@@ -1034,6 +1128,37 @@ export default class DriverTripAccept extends React.Component {
                                     </TouchableOpacity>
                                 </Animatable.View>
                                 : null}
+                            <View style={styles.touchaVoltar3}>
+                                <Tooltip
+                                    ref={this.toolTip}
+                                    closeOnlyOnBackdropPress={false}
+                                    height={55}
+                                    width={155}
+                                    containerStyle={{
+                                        elevation: 3
+                                    }}
+                                    popover={
+                                        <View>
+                                            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                                                <Text onPress={() => { this.setState({ modalStatusVisible: true }) }} style={{ fontSize: 12, color: colors.WHITE, fontFamily: 'Inter-Bold' }}>TESTE DE STATUS</Text>
+                                                <Icon
+                                                    name='arrow-forward'
+                                                    type='ionicons'
+                                                    size={20}
+                                                    color={colors.WHITE}
+                                                />
+                                            </View>
+                                        </View>
+                                    }
+                                >
+                                    <Icon
+                                        name='settings'
+                                        type='ionicons'
+                                        size={25}
+                                        color={colors.WHITE}
+                                    />
+                                </Tooltip>
+                            </View>
                         </View>
 
                         {/* BOTÃO LIGAR E DESLIGAR */}
@@ -1077,6 +1202,7 @@ export default class DriverTripAccept extends React.Component {
                         }
                     </View>
                 }
+                {this.openAlertStatus()}
             </View>
         )
     }
@@ -1110,6 +1236,19 @@ const styles = StyleSheet.create({
         elevation: 5,
         justifyContent: 'center',
         bottom: height / 4,
+        right: 20
+    },
+
+    touchaVoltar3: {
+        position: 'absolute',
+        alignItems: 'center',
+        width: 40,
+        height: 40,
+        borderRadius: 50,
+        backgroundColor: colors.BLACK,
+        elevation: 5,
+        justifyContent: 'center',
+        bottom: 45,
         right: 20
     },
 

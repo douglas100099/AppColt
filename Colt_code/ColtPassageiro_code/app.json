@@ -38,6 +38,7 @@
         "NSLocationWhenInUseUsageDescription": "This app uses the location to find the Cabs near you.",
         "NSCameraUsageDescription": "This app uses the camera to take your profile picture.",
         "NSPhotoLibraryUsageDescription": "This app uses Photo Library for uploading your profile picture.",
+        "NSMicrophoneUsageDescription ": "This app uses Michophone to send Audio for driver in the chat in trip",
         "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": [
           "location",
@@ -67,7 +68,8 @@
         "LOCATION",
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
-        "CAMERA_ROLL"
+        "CAMERA_ROLL",
+        "RECORD_AUDIO"
       ],
       "googleServicesFile": "./google-services.json",
       "config": {

@@ -8,7 +8,6 @@ import Container from '@material-ui/core/Container';
 import { useSelector, useDispatch } from "react-redux";
 import AlertDialog from '../components/AlertDialog';
 import CircularLoading from "../components/CircularLoading";
-import languageJson from "../config/language";
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import {isLive} from '../config/keys';
@@ -107,7 +106,7 @@ const Settings = (props) => {
         <div className={classes.paper}>
           <form className={classes.form} onSubmit={handleSubmit}>
             <Typography component="h1" variant="h5">
-              {languageJson.settings_title}
+              Configurações
             </Typography>
             <TextField
               variant="outlined"
@@ -115,7 +114,7 @@ const Settings = (props) => {
               required
               fullWidth
               id="symbol"
-              label={languageJson.currency_symbol}
+              label='R$'
               name="symbol"
               autoComplete="symbol"
               onChange={handleSymbolChange}
@@ -128,14 +127,14 @@ const Settings = (props) => {
               required
               fullWidth
               id="code"
-              label={languageJson.currency_code}
+              label='País'
               name="code"
               autoComplete="code"
               onChange={handleCodeChange}
               value={data.code}
             />
             <Typography component="h1" variant="h5" style={{ marginTop: '30px' }}>
-              {languageJson.payment_modes_title}
+                Métodos de pagamento
             </Typography>
             <FormControlLabel
               control={
@@ -146,7 +145,7 @@ const Settings = (props) => {
                   color="primary"
                 />
               }
-              label={languageJson.settings_label1}
+              label='Dinheiro'
             />
             <FormControlLabel
               control={
@@ -157,17 +156,17 @@ const Settings = (props) => {
                   color="primary"
                 />
               }
-              label={languageJson.settings_label2}
+              label='Cartão'
             />
             <Typography component="h1" variant="h5" style={{ marginTop: '30px' }}>
-              {languageJson.security_title}
+                Configurações de segurança
             </Typography>
             <TextField
               variant="outlined"
               margin="normal"
               fullWidth
               id="panic"
-              label={languageJson.panic_num}
+              label='Número de emergência'
               name="panic"
               autoComplete="panic"
               onChange={handlePanicChange}
@@ -182,7 +181,7 @@ const Settings = (props) => {
                   color="primary"
                 />
               }
-              label={languageJson.settings_label3}
+              label='Corrida OTP'
             />
             <FormControlLabel
               control={
@@ -193,7 +192,7 @@ const Settings = (props) => {
                   color="primary"
                 />
               }
-              label={languageJson.settings_label4}
+              label='Aprovar'
             />
             <FormControlLabel
               control={
@@ -204,7 +203,7 @@ const Settings = (props) => {
                   color="primary"
                 />
               }
-              label={languageJson.settings_label5}
+              label='Verificação de email obrigatória'
             />
             <Button
               type="submit"
@@ -213,11 +212,11 @@ const Settings = (props) => {
               color="primary"
               className={classes.submit}
             >
-              {languageJson.submit}
+              Salvar
             </Button>
           </form>
         </div>
-        <AlertDialog open={settingsdata.error.flag && clicked} onClose={handleClose}>{languageJson.update_failed}</AlertDialog>
+        <AlertDialog open={settingsdata.error.flag && clicked} onClose={handleClose}>Error</AlertDialog>
       </Container>
   );
 

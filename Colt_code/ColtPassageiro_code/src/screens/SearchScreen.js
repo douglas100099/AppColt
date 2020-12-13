@@ -18,6 +18,7 @@ import BtnVoltar from '../components/BtnVoltar';
 import { v4 as uuidv4 } from 'uuid';
 import { color } from 'react-native-reanimated';
 import { Pulse } from 'react-native-animated-spinkit'
+import { StatusBar } from 'react-native';
 
 
 export default class SearchScreen extends Component {
@@ -824,7 +825,7 @@ const styles = StyleSheet.create({
 
     },
     IconTextTop: {
-        marginTop: Platform.OS == "ios" ? 60 : 30,
+        marginTop: Platform.select({ ios: 60, android: StatusBar.currentHeight + 20 }) ,
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center'

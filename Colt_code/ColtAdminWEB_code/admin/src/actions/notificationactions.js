@@ -1,4 +1,4 @@
-import { notifyRef, notifyEditRef } from "../config/firebase";
+import { notifyRef, notifyEditRef, singleUserRef } from "../config/firebase";
 import {
   FETCH_NOTIFICATIONS,
   FETCH_NOTIFICATIONS_SUCCESS,
@@ -66,6 +66,56 @@ export const chunkArray = (myArray, chunk_size) => {
   return tempArray;
 };
 
+export const sendNotificationForDriver = (notification, driverId) => dispatch => {
+  console.log(notification)
+  dispatch({
+    type: SEND_NOTIFICATION,
+    payload: notification
+  });
+
+  singleUserRef(driverId).once('value', snap => {
+    if (snap.val()) {
+      const driverData = snap.val()
+
+      let obj = {
+        "to": driverData.pushToken,
+        "title": notification.title,
+        "body": notification.body,
+        "data": { "msg": notification.body, "title": notification.title },
+        "priority": "high",
+        "sound": "default",
+        "channelId": "messages",
+        "_displayInForeground": true
+      };
+      fetch('https://exp.host/--/api/v2/push/send', {
+        mode: 'no-cors',
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(obj),
+      })
+        .then((responseJson) => {
+          dispatch({
+            type: SEND_NOTIFICATION_SUCCESS,
+            payload: responseJson
+          });
+        })
+        .catch((error) => {
+          dispatch({
+            type: SEND_NOTIFICATION_FAILED,
+            payload: error,
+          });
+        });
+
+      alert("Notificação enviada com sucesso para " + driverData.firstName + ' ' + driverData.lastName);
+    }
+  })
+}
+
+
+
 export const sendNotification = (notification) => dispatch => {
   console.log(notification)
   dispatch({
@@ -82,10 +132,10 @@ export const sendNotification = (notification) => dispatch => {
       "title": notification.title,
       "body": notification.body,
       "data": { "msg": notification.body, "title": notification.title },
-      "priority": "high",            
-      "sound":"default",   
+      "priority": "high",
+      "sound": "default",
       "channelId": "messages",
-      "_displayInForeground": true  
+      "_displayInForeground": true
     };
     if (notification.usertype === 'All' && notification.devicetype === 'All') {
       if (usr.pushToken) {
@@ -121,18 +171,18 @@ export const sendNotification = (notification) => dispatch => {
         },
         body: JSON.stringify(arr[x]),
       })
-      .then((responseJson) => {
-        dispatch({
-          type: SEND_NOTIFICATION_SUCCESS,
-          payload: responseJson
+        .then((responseJson) => {
+          dispatch({
+            type: SEND_NOTIFICATION_SUCCESS,
+            payload: responseJson
+          });
+        })
+        .catch((error) => {
+          dispatch({
+            type: SEND_NOTIFICATION_FAILED,
+            payload: error,
+          });
         });
-      })
-      .catch((error) => {
-        dispatch({
-          type: SEND_NOTIFICATION_FAILED,
-          payload: error,
-        });
-      });
     }
 
     alert(arr.length + languageJson.notification_sent);

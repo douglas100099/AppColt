@@ -1,14 +1,15 @@
 import React from 'react';
 import {Route,Redirect} from 'react-router-dom';
 import { useSelector } from "react-redux";
-import ResponsiveDrawer from './ResponsiveDrawer';
+import AdminLayout from "../layouts/Admin/Admin";
+
 
 function ProtectedRoute({ component: Component, ...rest }) {
     const auth = useSelector(state => state.auth);
     return(
         <Route {...rest} render={props => (
             auth.info ?
-            <ResponsiveDrawer><Component {...props} /></ResponsiveDrawer>
+            <Route path="/admin" render={props => <AdminLayout {...props} />} />
             : <Redirect to="/login" />
         )} />
     )

@@ -5,6 +5,9 @@ export const USER_SIGN_IN = "USER_SIGN_IN";
 export const USER_SIGN_IN_FAILED = "SIGN_IN_FAILED";
 export const USER_SIGN_OUT = "USER_SIGN_OUT";
 export const CLEAR_LOGIN_ERROR = "CLEAR_LOGIN_ERROR";
+export const BLOCK_USER = "BLOCK_USER";
+export const DESBLOCK_USER = "DESBLOCK_USER";
+
 
 export const FETCH_CAR_TYPES = "FETCH_CAR_TYPES";
 export const FETCH_CAR_TYPES_SUCCESS = "FETCH_CAR_TYPES_SUCCESS";

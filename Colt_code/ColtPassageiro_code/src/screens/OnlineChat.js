@@ -327,7 +327,6 @@ export default class OnlineChat extends Component {
       let readInfo = readChat.val()
       if (readInfo == false && this.currentScreen && this._isMounted) {
 
-        console.log(this.currentScreen + " SCREEN")
         firebase.database().ref(`chat/` + this.getParamData.bokkingId + '/readed_rider').set(true)
       }
     })
@@ -582,7 +581,7 @@ export default class OnlineChat extends Component {
               />
               : null}
 
-            {/*this.state.isRecord ?
+            {this.state.isRecord ?
               <Text style={styles.input2}>Áudio gravado!</Text>
               :
               null}
@@ -620,7 +619,8 @@ export default class OnlineChat extends Component {
                 />
               </TouchableOpacity>
               :
-            */}
+              null
+            }
 
             <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 40, height: 40, borderRadius: 50 }} onPress={() => this.sendMessege(this.state.inputmessage)}>
               <Icon

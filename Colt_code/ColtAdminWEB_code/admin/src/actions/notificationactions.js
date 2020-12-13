@@ -77,31 +77,34 @@ export const sendNotificationForDriver = (notification, driverId) => dispatch =>
     if (snap.val()) {
       const driverData = snap.val()
 
-      let obj = {
-        "to": driverData.pushToken,
-        "title": notification.title,
-        "body": notification.body,
-        "data": { "msg": notification.body, "title": notification.title },
-        "priority": "high",
-        "sound": "default",
-        "channelId": "messages",
-        "_displayInForeground": true
-      };
       fetch('https://exp.host/--/api/v2/push/send', {
         mode: 'no-cors',
         method: 'POST',
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'Content-Type': 'application/json',
+          'accept-encoding': 'gzip, deflate',
+          'host': 'exp.host'
         },
-        body: JSON.stringify(obj),
+        body: JSON.stringify({
+          "to": driverData.pushToken,
+          "title": 'Colt',
+          "body": notification,
+          "data": {
+            "msg": notification,
+            "title": 'Colt'
+          },
+          "priority": "high",
+          "sound": "default",
+          "channelId": "messages",
+          "_displayInForeground": true
+        }),
+      }).then((responseJson) => {
+        dispatch({
+          type: SEND_NOTIFICATION_SUCCESS,
+          payload: responseJson
+        });
       })
-        .then((responseJson) => {
-          dispatch({
-            type: SEND_NOTIFICATION_SUCCESS,
-            payload: responseJson
-          });
-        })
         .catch((error) => {
           dispatch({
             type: SEND_NOTIFICATION_FAILED,

@@ -93,11 +93,7 @@ export default function Users() {
   }
 
   const onSendNotify = (driverId, index) => {
-    let notification = {}
-    notification = {
-      title: document.getElementById('ModalInputTitulo' + index).value,
-      body: document.getElementById('ModalInputDesc' + index).value
-    }
+    let notification = document.getElementById('ModalInputDesc' + index).value
 
     new Promise(resolve => {
       setTimeout(() => {
@@ -418,14 +414,6 @@ export default function Users() {
                                 <Modal isOpen={index === indexModal} backdrop={true} toggle={closeModal} id={"Modal" + index}>
                                   <ModalHeader toggle={closeModal}><span style={{ fontSize: 18 }}>Enviar notificação pro motorista <a style={{ fontSize: 18, fontWeight: 600 }}>{driver.firstName}</a></span></ModalHeader>
                                   <ModalBody>
-                                    <Label for={"Modal" + index}> Título da notificação </Label>
-                                    <Input
-                                      style={{ color: "#000", fontSize: 16 }}
-                                      defaultValue={""}
-                                      name="tituloNotificacao"
-                                      id={"ModalInputTitulo" + index}
-                                      placeholder='Digite o título'
-                                    />
                                     <Label for={"Modal" + index} style={{ marginTop: 10 }}> Descrição </Label>
                                     <Input
                                       style={{ color: "#000", fontSize: 16, }}

@@ -30,8 +30,6 @@ this.objetoPrincipal = {
   Sab: 0,
 };
 
-
-
 let chart1_2_options = {
   maintainAspectRatio: false,
   legend: {

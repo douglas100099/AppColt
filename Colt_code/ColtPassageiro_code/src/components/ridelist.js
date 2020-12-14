@@ -81,6 +81,7 @@ export default class RideList extends React.Component {
 
                         <View style={styles.textView2}>
                             <Text style={styles.dateStyle}>{item.status == 'NEW' ? item.status : null}</Text>
+                            <Text style={[styles.dateStyle, {fontSize: 16, color: colors.DEEPBLUE}]}>{item.status == 'ACCEPTED' ? "Em andamento" : null}</Text>
                             <Text style={styles.dateStyle}>{item.status == 'END' && item.pagamento.payment_status == 'PAID' ? item.pagamento.customer_paid ? this.state.settings.symbol + parseFloat(item.pagamento.customer_paid).toFixed(2) : this.state.settings.symbol + parseFloat(item.pagamento.estimate).toFixed(2) : null}</Text>
                         </View>
                     </View>

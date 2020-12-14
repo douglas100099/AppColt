@@ -241,7 +241,7 @@ export default class RideDetails extends React.Component {
                                 </View>
                                 {this.state.paramData ?
                                     <View style={{ marginLeft: 10 }}>
-                                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: width < 375 ? 17 : 19 }}> {this.state.paramData.driver_name} </Text>
+                                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: width < 375 ? 17 : 19 }}> {this.state.paramData.driver_firstName} </Text>
                                         <Text style={{ marginLeft: 3, paddingTop: 5, fontFamily: 'Inter-Medium' }}> {this.state.paramData.vehicleModelName} </Text>
 
                                         <View style={{ marginLeft: 3, flexDirection: 'row', alignItems: 'center' }}>

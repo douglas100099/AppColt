@@ -158,11 +158,10 @@ export default class OnlineChat extends Component {
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
-        playsInSilentModeIOS: true,
+        playsInSilentModeIOS: false,
         shouldDuckAndroid: true,
         interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
-        playThroughEarpieceAndroid: true,
-
+        playThroughEarpieceAndroid: false,
       });
       try {
         await this.recording.prepareToRecordAsync(recordingOptions);
@@ -379,7 +378,7 @@ export default class OnlineChat extends Component {
             })
           })
           audioURL ?
-            this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + " Áudio")
+            this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ' enviou um áudio')
             :
             this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + inputmessage)
         }
@@ -402,7 +401,7 @@ export default class OnlineChat extends Component {
             })
             this.setState({ readed_driver: false, showReaded: true })
             audioURL ?
-              this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + " Áudio")
+              this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ' enviou um áudio')
               :
               this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + inputmessage)
           })
@@ -427,7 +426,7 @@ export default class OnlineChat extends Component {
             })
             this.setState({ readed_driver: false, showReaded: true })
             audioURL ?
-              this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + " Áudio")
+              this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ' enviou um áudio')
               :
               this.sendPushNotification(this.state.carbookedInfo.driver, this.state.firstNameRider + ': ' + inputmessage)
           }

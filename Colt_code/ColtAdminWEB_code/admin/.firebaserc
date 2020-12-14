@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "colt-painel"
+    "default": "colt-painel",
+    "colt-painel": "app-colt"
   }
 }

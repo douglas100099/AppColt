@@ -45,7 +45,7 @@ export class AuthLoadingScreen extends React.Component {
       alert("Para acessar sua localização, é necessário sua permissão!");
     }
     else if (!gpsActived) {
-      alert("Ative seu GPS para permitir que a 'Colt' determine sua localização");
+      alert("Ative seu GPS para permitir que a Colt determine sua localização");
       await Location.requestPermissionsAsync();
     }
     else {

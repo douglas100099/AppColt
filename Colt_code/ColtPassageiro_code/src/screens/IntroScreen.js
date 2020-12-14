@@ -2,15 +2,13 @@ import React, { Component } from "react";
 import {
     StyleSheet,
     View,
-    Image,
-    ImageBackground,
     Text,
     Dimensions,
     Linking,
     Platform,
-    TextInput
+    TextInput,
+    Alert
 } from "react-native";
-import MaterialButtonDark from "../components/MaterialButtonDark";
 import { Icon } from 'react-native-elements';
 import * as firebase from 'firebase'
 import languageJSON from '../common/language';
@@ -19,14 +17,18 @@ import * as Crypto from "expo-crypto";
 import { colors } from '../common/theme';
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
-import RNPickerSelect from 'react-native-picker-select';
 var { width, height } = Dimensions.get('window');
 import {
     iosStandaloneAppClientId,
     androidStandaloneAppClientId
 } from '../common/key';
-import countries from '../common/countries';
 import * as Google from 'expo-google-app-auth';
+import distanceCalc from '../common/distanceCalc';
+
+import { google_map_key } from '../common/key';
+import * as Location from 'expo-location';
+import * as Permissions from 'expo-permissions';
+import Geocoder from 'react-native-geocoding';
 
 export default class IntroScreen extends Component {
     recaptchaVerifier = null;
@@ -34,14 +36,16 @@ export default class IntroScreen extends Component {
 
     constructor(props) {
         super(props);
-
+        Geocoder.init(google_map_key);
         this.state = {
             phoneNumber: null,
             verificationId: null,
             verificationCode: null,
             countryCode: null,
             btnConfirmar: false
-        }
+        },
+            this.dontCreateAccount = false,
+            this._getLocationAsync()
     }
 
     async googleLogin() {
@@ -78,29 +82,76 @@ export default class IntroScreen extends Component {
     }
 
     onPressLogin = async () => {
-        if (this.state.phoneNumber) {
-            let formattedNum = this.state.phoneNumber.replace(/ /g, '');
-            formattedNum = '+55' + formattedNum.replace(/-/g, '');
-            if (formattedNum.length > 8) {
-                try {
-                    const phoneProvider = new firebase.auth.PhoneAuthProvider();
-                    const verificationId = await phoneProvider.verifyPhoneNumber(
-                        formattedNum,
-                        this.recaptchaVerifier
-                    );
-                    this.props.navigation.navigate("MobileLogin", { verificationId: verificationId, phoneNumber: formattedNum });
-                    //this.setState({ verificationId: verificationId });
-                } catch (error) {
-                    alert(error.message);
+        if (this.dontCreateAccount) {
+            Alert.alert(
+                'Ops!',
+                'No momento, atendemos a cidade de Valença-RJ. Certifique-se de criar sua conta nessa região!',
+                [
+                    {
+                        style: 'default',
+                        text: 'Confirmar',
+                    },
+                ],
+                { cancelable: true },
+            );
+        } else {
+            if (this.state.phoneNumber) {
+                let formattedNum = this.state.phoneNumber.replace(/ /g, '');
+                formattedNum = '+55' + formattedNum.replace(/-/g, '');
+                if (formattedNum.length > 8) {
+                    try {
+                        const phoneProvider = new firebase.auth.PhoneAuthProvider();
+                        const verificationId = await phoneProvider.verifyPhoneNumber(
+                            formattedNum,
+                            this.recaptchaVerifier
+                        );
+                        this.props.navigation.navigate("MobileLogin", { verificationId: verificationId, phoneNumber: formattedNum });
+                        //this.setState({ verificationId: verificationId });
+                    } catch (error) {
+                        alert(error.message);
+                    }
+                } else {
+                    alert(languageJSON.mobile_no_blank_error);
                 }
             } else {
                 alert(languageJSON.mobile_no_blank_error);
             }
-        } else {
-            alert(languageJSON.mobile_no_blank_error);
         }
     }
 
+    _getLocationAsync = async () => {
+        await Location.requestPermissionsAsync();
+        let { status } = await Permissions.askAsync(Permissions.LOCATION);
+        let gpsActived = await Location.hasServicesEnabledAsync()
+
+        if (status !== 'granted') {
+            alert("Para acessar sua localização, é necessário sua permissão!");
+        }
+        else if (!gpsActived) {
+            alert("Ative seu GPS para permitir que a Colt determine sua localização");
+        }
+        else {
+            let location = Platform.OS === 'android' ? await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 20000, }) :
+                await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 2000, })
+            if (location) {
+                let distance = distanceCalc([-22.224650, -43.867618], [location.coords.latitude, location.coords.longitude])
+                if (distance > 50) {
+                    this.dontCreateAccount = true
+                    Alert.alert(
+                        'Ops!',
+                        'No momento, atendemos a cidade de Valença-RJ. Certifique-se de criar sua conta nessa região!',
+                        [
+                            {
+                                style: 'default',
+                                text: 'Confirmar',
+                            },
+                        ],
+                        { cancelable: true },
+                    );
+                }
+            }
+        }
+    }
 
     /*async FbLogin() {
 
@@ -183,7 +234,21 @@ export default class IntroScreen extends Component {
     }*/
 
     onPressLoginEmail = async () => {
-        this.props.navigation.navigate("EmailLogin");
+        if (this.dontCreateAccount) {
+            Alert.alert(
+                'Ops!',
+                'No momento, atendemos a cidade de Valença-RJ. Certifique-se de criar sua conta nessa região!',
+                [
+                    {
+                        style: 'default',
+                        text: 'Confirmar',
+                    },
+                ],
+                { cancelable: true },
+            );
+        } else {
+            this.props.navigation.navigate("EmailLogin");
+        }
     }
 
     /*onPressLoginMobile = async () => {
@@ -237,8 +302,8 @@ export default class IntroScreen extends Component {
                 <View style={{ flex: 1, }}>
                     <Text style={{ alignSelf: 'center', margin: 10, fontFamily: 'Inter-Medium', fontSize: 15, }}> ou se preferir </Text>
 
-                    <TouchableOpacity  onPress={() => this.onPressLoginEmail()}>
-                        <View style={{  borderRadius: 5, marginHorizontal: 80, backgroundColor: colors.GREY1, height: 45, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', alignItems: 'center' }}>
+                    <TouchableOpacity onPress={() => this.onPressLoginEmail()}>
+                        <View style={{ borderRadius: 5, marginHorizontal: 80, backgroundColor: colors.GREY1, height: 45, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', alignItems: 'center' }}>
                             <Icon
                                 name='ios-mail'
                                 type='ionicon'

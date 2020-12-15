@@ -60,7 +60,7 @@
         "backgroundColor": "#1152FD"
       },
       "package": "com.myth.appcolt",
-      "versionCode": 10,
+      "versionCode": 11,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",

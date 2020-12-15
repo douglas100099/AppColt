@@ -42,11 +42,10 @@ export class AuthLoadingScreen extends React.Component {
     let gpsActived = await Location.hasServicesEnabledAsync()
 
     if (status !== 'granted') {
-      alert("Para acessar sua localização, é necessário sua permissão!");
+      alert("Para acessar sua localização, é necessária sua permissão!");
     }
     else if (!gpsActived) {
       alert("Ative seu GPS para permitir que a Colt determine sua localização");
-      await Location.requestPermissionsAsync();
     }
     else {
       let location = Platform.OS === 'android' ? await Location.getCurrentPositionAsync({ enableHighAccuracy: true, maximumAge: 1000, timeout: 20000, }) :
@@ -98,6 +97,7 @@ export class AuthLoadingScreen extends React.Component {
 
   // Fetch the token from storage then navigate to our appropriate place
   bootstrapAsync = async () => {
+    await Location.requestPermissionsAsync();
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
         if (user.displayName) {

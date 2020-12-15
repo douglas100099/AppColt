@@ -264,9 +264,6 @@ const styles = StyleSheet.create({
         marginTop: 20,
         flex: 1,
     },
-    btnVoltar: {
-
-    },
     backButton: {
         height: 40,
         width: 40,

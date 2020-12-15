@@ -30,6 +30,8 @@ import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import Geocoder from 'react-native-geocoding';
 
+import { Swing, Pulse } from 'react-native-animated-spinkit'
+
 export default class IntroScreen extends Component {
     recaptchaVerifier = null;
     firebaseConfig = firebase.apps.length ? firebase.app().options : undefined;
@@ -333,7 +335,7 @@ export default class IntroScreen extends Component {
                     <Text style={{ alignSelf: 'center', margin: 10, fontFamily: 'Inter-Medium', fontSize: 15, }}> ou se preferir </Text>
 
                     <TouchableOpacity onPress={() => this.onPressLoginEmail()}>
-                        <View style={{ borderRadius: 5, marginHorizontal: 80, backgroundColor: colors.GREY1, height: 45, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', alignItems: 'center' }}>
+                        <View style={{ borderRadius: 5, marginHorizontal: 80, borderWidth: 2, borderColor: colors.GREY2, height: 45, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', alignItems: 'center' }}>
                             <Icon
                                 name='ios-mail'
                                 type='ionicon'
@@ -345,6 +347,16 @@ export default class IntroScreen extends Component {
                         </View>
                     </TouchableOpacity>
                 </View>
+                
+                {this.state.dontCreateAccount == null ? 
+                <View style={{ position: 'absolute', bottom: 40, alignSelf: "center", flexDirection: 'column' , justifyContent: 'center', alignItems: 'center'}}>
+                    <Swing
+                        size={50}
+                        color={colors.DEEPBLUE}
+                    />
+                    <Text style={{ fontFamily: "Inter-Medium", fontSize: 16 }}> Estamos preparando as configurações! </Text>
+                </View> 
+                : null}
             </View>
         );
     }

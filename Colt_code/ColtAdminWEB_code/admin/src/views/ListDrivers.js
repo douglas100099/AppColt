@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import MaterialTable from 'material-table';
 import { useSelector, useDispatch } from "react-redux";
 import CircularLoading from "../components/CircularLoading";
@@ -9,6 +9,8 @@ import {
 import {
   sendNotificationForDriver
 } from "../actions/notificationactions";
+
+import NotificationAlert from "react-notification-alert";
 
 import * as firebase from 'firebase'
 
@@ -42,6 +44,8 @@ export default function Users() {
   const cartypes = useSelector(state => state.cartypes);
   const dispatch = useDispatch();
 
+  const textInput = useRef(null);
+
   const setEditDrivers = (index) => {
     setEdit(index)
   }
@@ -71,7 +75,22 @@ export default function Users() {
         }, 600)
       }).then(() => {
         setIdModalBlock(-1)
-        alert('Motorista desbloqueado com sucesso!')
+        var options = {};
+        options = {
+          place: "tl",
+          message: (
+            <div>
+              <div>
+                Welcome to <b>Black Dashboard React</b> - a beautiful freebie for
+                every web developer.
+              </div>
+            </div>
+          ),
+          type: "primary",
+          icon: "tim-icons icon-bell-55",
+          autoDismiss: 7
+        };
+        this.textInput.current.notificationAlert(options);
       })
     }
     else {
@@ -176,16 +195,22 @@ export default function Users() {
     })
   }
 
+  
+
   return (
     usersdata.loading ? <CircularLoading /> :
       <>
         <div className="content">
+          <div className="react-notification-alert-container">
+            <NotificationAlert ref={textInput} />
+          </div>
           <Row>
             <Col md="12">
               <Card>
                 <CardHeader>
                   <CardTitle tag="h4">Todos os motoristas</CardTitle>
                 </CardHeader>
+
                 <CardBody>
                   <ListGroup horizontal style={{ flexDirection: 'row', overflowY: 'scroll' }}></ListGroup>
                   {data.map((driver, index) => (
@@ -434,7 +459,7 @@ export default function Users() {
                               {/* MODAL PRA BLOQUEAR MOTORISTA */}
                               <div>
                                 <Modal isOpen={index === indexModalBlock} backdrop={true} toggle={closeModalBlock} id={"ModalBlock" + index}>
-                                  
+
                                   {driver.blocked_by_admin ?
                                     <ModalHeader ><span style={{ fontSize: 18, marginTop: 20 }}>Deseja desbloquear o motorista
                                   <a style={{ fontSize: 18, fontWeight: 600 }}> {driver.firstName + ' ' + driver.lastName} </a>?</span></ModalHeader>

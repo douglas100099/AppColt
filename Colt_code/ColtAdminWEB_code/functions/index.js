@@ -774,7 +774,8 @@ exports.addDetailsToPromo = functions.region('southamerica-east1').database.ref(
 
                 if (user_avail) {
                     return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
-                        userId: dataBooking.customer
+                        userId: dataBooking.customer,
+                        deviceId: dataBooking.deviceId
                     })
                     .then(() => {
                         return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: user_avail.count + 1 })
@@ -784,7 +785,8 @@ exports.addDetailsToPromo = functions.region('southamerica-east1').database.ref(
                     })
                 } else {
                     return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
-                        userId: dataBooking.customer
+                        userId: dataBooking.customer,
+                        deviceId: dataBooking.deviceId
                     })
                     .then(() => {
                         return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: 1 })

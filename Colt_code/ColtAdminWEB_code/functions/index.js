@@ -825,10 +825,9 @@ exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref
                     });
 
                     let arrayRejected = []
-                    if (data.rejectedDrivers) {
-                        for (let key in data.rejectedDrivers) {
-                            data.rejectedDrivers[key]
-                            arrayRejected.push(data.rejectedDrivers[key])
+                    if (dataBooking.rejectedDrivers) {
+                        for (let key in dataBooking.rejectedDrivers) {
+                            arrayRejected.push(dataBooking.rejectedDrivers[key])
                         }
                         arrayRejected.push(requested)
                         admin.database().ref('bookings/' + bookingId).update({

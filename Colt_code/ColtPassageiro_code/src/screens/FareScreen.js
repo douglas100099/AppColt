@@ -255,6 +255,7 @@ export default class FareScreen extends React.Component {
             cashPaymentAmount: cashPayment,
             usedWalletMoney: this.state.usedWalletMoney,
             discount_amount: this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value : 0,
+            discount_type: this.state.payDetails ? this.state.payDetails.promo_details.discount_type : "",
             promoCodeApplied: this.state.payDetails ? this.state.payDetails.promo_details.promo_code : "",
             promoKey: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : "",
             cancellValue: this.state.cancellValue ? this.state.cancellValue : 0

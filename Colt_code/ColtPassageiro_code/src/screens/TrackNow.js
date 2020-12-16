@@ -34,6 +34,7 @@ import ColtConfortCar from '../../assets/svg/ColtConfortCar';
 import AvatarUser from '../../assets/svg/AvatarUser';
 import IconCarMap from '../../assets/svg/IconCarMap';
 import CircleLineTriangle from '../../assets/svg/CircleLineTriangle';
+import { StatusBar } from 'react-native';
 
 export default class TrackNow extends React.Component {
 
@@ -75,9 +76,9 @@ export default class TrackNow extends React.Component {
             this.setState({
                 allData: paramData,
                 destinationLoc: paramData.drop.lat + ',' + paramData.drop.lng
-            }, () => {
+            }/*, () => {
                 this.getDirections(this.state.startLoc)
-            })
+            }*/)
         }
 
         const coordinate = new AnimatedRegion({
@@ -175,6 +176,18 @@ export default class TrackNow extends React.Component {
         }, () => {
             this.setState({ dontGetRegion: false })
         })
+    }
+
+    locationUser() {
+        let region = {
+            latitude: this.state.latitudeDriver,
+            longitude: this.state.longitudeDriver,
+            latitudeDelta: 0.0043,
+            longitudeDelta: 0.0034
+        }
+        if (this.map) {
+            this.map.animateToRegion(region, 500)
+        }
     }
 
     alertPanic() {
@@ -316,6 +329,18 @@ export default class TrackNow extends React.Component {
                             color={colors.DEEPBLUE}
                         />
                     </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.iconLocation} onPress={() => this.locationUser()}>
+                        <Icon
+                            name="car"
+                            type="material-community"
+                            // icon: 'chat', color: '#fff',
+                            size={25}
+                            color={colors.DEEPBLUE}
+                        //containerStyle={{ opacity: .7 }}
+                        />
+                    </TouchableOpacity>
+
                 </View>
 
                 <View style={{ backgroundColor: colors.DEEPBLUE, height: 30, justifyContent: 'center', alignItems: 'center' }}>
@@ -373,7 +398,7 @@ export default class TrackNow extends React.Component {
                         </View>
 
                     </View>
-                    <View style={{ flex: 1.6, marginLeft: 15 }}>
+                    <View style={{ flex: 1.8, marginLeft: 20 }}>
                         <View style={{ flexDirection: 'row', marginTop: 20 }}>
                             <CircleLineTriangle style={{}} />
                             <View style={{ justifyContent: 'space-around' }}>
@@ -448,6 +473,17 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 10,
     },
+    iconLocation: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: 'flex-end',
+        right: 20,
+        backgroundColor: colors.WHITE,
+        width: 40,
+        height: 40,
+        borderRadius: 50,
+        bottom: 80,
+    },
     locationBoxDestino: {
         flexWrap: "wrap",
         maxWidth: 200,
@@ -465,10 +501,10 @@ const styles = StyleSheet.create({
         width: 45,
         height: 45,
         borderRadius: 50,
-        bottom: 70,
-        right: 17,
+        left: 17,
         elevation: 5,
         marginTop: 40,
+        top: Platform.OS == 'ios' ? 15 : StatusBar.currentHeight + 15,
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',

@@ -116,7 +116,7 @@ export default class FareScreen extends React.Component {
                 if (distance > 100) {
                     this.setState({ longDistance: true })
                 } else {
-                    this.getWalletBalance();
+                    this.getDetailsRider();
                     this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
                     const userData = firebase.database().ref('users/' + this.state.curUID.uid);
                     userData.once('value', userData => {
@@ -224,11 +224,11 @@ export default class FareScreen extends React.Component {
         }
     }
 
-    //Carrega o valor que o usuario tem na carteira
-    getWalletBalance() {
-        const userData = firebase.database().ref('users/' + this.state.curUID.uid + "/walletBalance");
+    //Carrega o valor que o usuario tem na carteira e o id do dispositivo dele
+    getDetailsRider() {
+        const userData = firebase.database().ref('users/' + this.state.curUID.uid + "/");
         userData.once('value', userData => {
-            this.setState({ walletBallance: userData.val() });
+            this.setState({ walletBallance: userData.val().walletBalance, deviceId: userData.val().deviceId  });
         })
     }
 
@@ -739,7 +739,7 @@ export default class FareScreen extends React.Component {
                 {this.state.promodalVisible ?
                     <PromoModal onSucessPromo={(newValue1, newValue2, payDetails, payment_mode) => this.onSucessPromo(newValue1, newValue2, payDetails, payment_mode)}
                         selected={this.state.selected} payDetails={this.state.payDetails ? true : false} estimateFare={[this.state.estimatePrice1, this.state.estimatePrice2]}
-                        closeModalPayment={() => { this.setState({ promodalVisible: false }) }} />
+                        deviceId={this.state.deviceId} closeModalPayment={() => { this.setState({ promodalVisible: false }) }} />
                     : null}
                 <View style={[styles.mapcontainer, {
                     flex: this.state.payDetails ? 1.8 : 2

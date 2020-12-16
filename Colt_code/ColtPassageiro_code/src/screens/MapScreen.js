@@ -590,7 +590,7 @@ export default class MapScreen extends React.Component {
 
                     {this.state.statusCorrida ?
                         <View style={styles.viewCorrida}>
-                            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }} onPress={() => { this.animateToRegion() }} onPress={() => { this.redirectRider() }}>
+                            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }} onPress={() => { this.redirectRider() }}>
                                 <Icon
                                     name='car'
                                     type='material-community'

@@ -76,9 +76,9 @@ export default class TrackNow extends React.Component {
             this.setState({
                 allData: paramData,
                 destinationLoc: paramData.drop.lat + ',' + paramData.drop.lng
-            }/*, () => {
+            }, () => {
                 this.getDirections(this.state.startLoc)
-            }*/)
+            })
         }
 
         const coordinate = new AnimatedRegion({

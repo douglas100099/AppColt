@@ -77,7 +77,9 @@ export default class TrackNow extends React.Component {
                 allData: paramData,
                 destinationLoc: paramData.drop.lat + ',' + paramData.drop.lng
             }, () => {
-                this.getDirections(this.state.startLoc)
+                if (this.state.startLoc && this.state.destinationLoc) {
+                    this.getDirections()
+                }
             })
         }
 
@@ -109,7 +111,7 @@ export default class TrackNow extends React.Component {
                     distanceTravelled: this.state.distanceTravelled + this.calcDistance(newCoordinate),
                     prevLatLng: newCoordinate
                 }, () => {
-                    this.getDirections(this.state.startLoc);
+                    this.getDirections();
                 });
             },
             error => console.log(error),
@@ -139,9 +141,12 @@ export default class TrackNow extends React.Component {
         longitudeDelta: 0.0134
     });
 
-    async getDirections(startLoc) {
+    async getDirections() {
+        console.log("CHAMOU GET DIRECTIONS COM START " + this.state.startLoc)
+        console.log("destinationLoc  " + this.state.destinationLoc)
+
         try {
-            let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${this.state.destinationLoc}&key=${google_map_key}`)
+            let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${this.state.startLoc}&destination=${this.state.destinationLoc}&key=${google_map_key}`)
             let respJson = await resp.json();
             let points = Polyline.decode(respJson.routes[0].overview_polyline.points);
             let coords = points.map((point, index) => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal, Image, Platform, Alert, ActivityIndicator, AsyncStorage } from 'react-native';
-import { Icon } from 'react-native-elements';
+import { Icon, Tooltip, Button } from 'react-native-elements';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import { colors } from '../common/theme';
 import * as Location from 'expo-location';
@@ -73,6 +73,14 @@ export default class DriverTripAccept extends React.Component {
             batteryLevel: null,
             animatedGrana: true,
             duration: null,
+            loadStatus: false,
+            statusNet: false,
+            statusLoc: false,
+            statusFailed: false,
+            modalStatusVisible: false,
+            statusCorrida: false,
+            statusServer: false,
+            iniciouTeste: false,
         }
         this._getLocationAsync();
     }
@@ -152,7 +160,7 @@ export default class DriverTripAccept extends React.Component {
                                     { cancelable: false }
                                 )
                             }
-                        } else if(checkBlock.blocked_by_admin) {
+                        } else if (checkBlock.blocked_by_admin) {
                             Alert.alert(
                                 "Você está bloqueado",
                                 "Entre em contato com suporte. Motivo: " + checkBlock.blocked_by_admin.motivo,
@@ -573,7 +581,7 @@ export default class DriverTripAccept extends React.Component {
                     this.setState({ chegouCorrida: true })
                     if (this.state.isSound == false) {
                         this.playSound()
-                        Linking.openURL('coltappmotorista://');
+                        //Linking.openURL('coltappmotorista://');
                     }
                 } else if (this.state.chegouCorrida == true) {
                     if (this._isMounted) {
@@ -593,7 +601,7 @@ export default class DriverTripAccept extends React.Component {
             });
             let ref2 = firebase.database().ref('users/' + curuid + '/have_internet')
             ref2.on('value', snap => {
-                if(snap.val() === false){
+                if (snap.val() === false) {
                     firebase.database().ref('users/' + curuid + '/have_internet/').set(true)
                     console.log('ENTROU NO HAVE')
                 }
@@ -785,6 +793,194 @@ export default class DriverTripAccept extends React.Component {
 
     centerFollowMap() {
         this.map.animateToRegion(this.state.region, 500)
+    }
+
+    iniciarTeste = async () => {
+        this.setState({ iniciouTeste: true, loadStatus: true, statusNet: false, statusCorrida: false, statusServer: false, statusLoc: false, statusFailed: false, })
+        let ref = firebase.database().ref('users/' + this.state.curUid)
+        let verificarGPS = await Location.hasServicesEnabledAsync();
+        const { status } = await Permissions.askAsync(Permissions.LOCATION);
+        ref.once('value', snap => {
+            if (snap.val()) {
+                this.setState({ statusServer: true })
+                const dataUser = snap.val()
+                NetInfo.fetch().then(state => {
+                    if (state.isConnected) {
+                        this.setState({ statusNet: true })
+                    } else {
+                        this.setState({ statusNet: false })
+                    }
+                    if (dataUser.driverActiveStatus && dataUser.approved && !dataUser.queue && state.isConnected) {
+                        this.setState({ statusCorrida: true })
+                    } else {
+                        this.setState({ statusCorrida: false })
+                    }
+                })
+                if (status === 'granted' && verificarGPS) {
+                    this.setState({ statusLoc: true })
+                } else {
+                    this.setState({ statusLoc: false })
+                }
+            } else {
+                this.setState({ statusFailed: true })
+            }
+        })
+        this.setState({ loadStatus: false, iniciarTeste: false })
+    }
+
+    openAlertStatus() {
+        return (
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={this.state.modalStatusVisible}
+                //visible={true}
+                onRequestClose={() => {
+                    this.setState({ modalStatusVisible: false })
+                }}
+            >
+                <View style={{ flex: 1, backgroundColor: "rgba(22,22,22,0.8)", justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ width: '80%', backgroundColor: colors.WHITE, borderRadius: 10, height: 400 }}>
+                        <View style={{ position: 'absolute',right: 20, top: 10, justifyContent: 'center', alignItems: 'center' }}>
+                            <TouchableOpacity
+                            onPress={() => this.setState({ modalStatusVisible: false })} 
+                            style={{
+                                height: 35,
+                                width: 35,
+                                borderRadius: 50,
+                                backgroundColor: colors.WHITE,
+                                elevation: 3,
+                                justifyContent: 'center',
+                                alignItems: 'center'
+                            }}>
+                                <Icon
+                                    name='ios-close'
+                                    type='ionicon'
+                                    size={40}
+                                    color={colors.RED}
+                                />
+                            </TouchableOpacity>
+                        </View>
+                        <View style={{ marginTop: 20, alignItems: 'center' }}>
+                            <Text style={{ fontSize: 18, color: colors.BLACK, fontFamily: 'Inter-Bold' }}>Teste de status</Text>
+                            <Text style={{ fontSize: 14, color: colors.BLACK, fontFamily: 'Inter-Regular' }}>Iremos verificar os estados de conexão, aguarde.</Text>
+                        </View>
+                        <View style={{ marginTop: 20, flexDirection: 'column' }}>
+                            <View style={{ flexDirection: 'row', marginBottom: 10, alignItems: 'center', backgroundColor: colors.GREY3, paddingVertical: 5, borderRadius: 10, marginHorizontal: 5 }}>
+                                {this.state.loadStatus ?
+                                    <ActivityIndicator size="small" color="#0000ff" />
+                                    :
+                                    (this.state.statusNet ?
+                                        <Icon
+                                            name='ios-checkmark'
+                                            type='ionicon'
+                                            size={35}
+                                            color={colors.GREEN.light}
+                                            iconStyle={{ marginLeft: 10 }}
+                                        />
+                                        :
+                                        <Icon
+                                            name='ios-close'
+                                            type='ionicon'
+                                            size={35}
+                                            color={colors.RED}
+                                            iconStyle={{ marginLeft: 10 }}
+                                        />)
+                                }
+                                <Text style={{ fontSize: 14, marginLeft: 5, color: colors.BLACK, fontFamily: 'Inter-Bold' }}>Internet ativa</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', marginBottom: 10, alignItems: 'center', backgroundColor: colors.GREY3, paddingVertical: 5, borderRadius: 10, marginHorizontal: 5 }}>
+                                {this.state.loadStatus ?
+                                    <ActivityIndicator size="small" color="#0000ff" />
+                                    :
+                                    (this.state.statusCorrida ?
+                                        <Icon
+                                            name='ios-checkmark'
+                                            type='ionicon'
+                                            size={35}
+                                            color={colors.GREEN.light}
+                                            iconStyle={{ marginLeft: 10 }}
+                                        />
+                                        :
+                                        <Icon
+                                            name='ios-close'
+                                            type='ionicon'
+                                            size={35}
+                                            color={colors.RED}
+                                            iconStyle={{ marginLeft: 10 }}
+                                        />)
+                                }
+                                <Text style={{ fontSize: 14, marginLeft: 5, color: colors.BLACK, fontFamily: 'Inter-Bold' }}>Aceitar corridas</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', marginBottom: 10, alignItems: 'center', backgroundColor: colors.GREY3, paddingVertical: 5, borderRadius: 10, marginHorizontal: 5 }}>
+                                {this.state.loadStatus ?
+                                    <ActivityIndicator size="small" color="#0000ff" />
+                                    :
+                                    (this.state.statusServer ?
+                                        <Icon
+                                            name='ios-checkmark'
+                                            type='ionicon'
+                                            size={35}
+                                            color={colors.GREEN.light}
+                                            iconStyle={{ marginLeft: 10 }}
+                                        />
+                                        :
+                                        <Icon
+                                            name='ios-close'
+                                            type='ionicon'
+                                            size={35}
+                                            color={colors.RED}
+                                            iconStyle={{ marginLeft: 10 }}
+                                        />)
+                                }
+                                <Text style={{ fontSize: 14, marginLeft: 5, color: colors.BLACK, fontFamily: 'Inter-Bold', }}>Conexão com o servidor</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', marginBottom: 10, alignItems: 'center', backgroundColor: colors.GREY3, paddingVertical: 5, borderRadius: 10, marginHorizontal: 5 }}>
+                                {this.state.loadStatus ?
+                                    <ActivityIndicator size="small" color="#0000ff" />
+                                    :
+                                    (this.state.statusLoc ?
+                                        <Icon
+                                            name='ios-checkmark'
+                                            type='ionicon'
+                                            size={35}
+                                            color={colors.GREEN.light}
+                                            iconStyle={{ marginLeft: 10 }}
+                                        />
+                                        :
+                                        <Icon
+                                            name='ios-close'
+                                            type='ionicon'
+                                            size={35}
+                                            color={colors.RED}
+                                            iconStyle={{ marginLeft: 10 }}
+                                        />)
+                                }
+                                <Text style={{ fontSize: 14, marginLeft: 5, color: colors.BLACK, fontFamily: 'Inter-Bold' }}>Localização</Text>
+                            </View>
+                            <Button
+                                title='Iniciar Teste'
+                                titleStyle={{
+                                    fontFamily: 'Inter-Bold',
+                                    fontSize: 16,
+                                    color: colors.WHITE
+                                }}
+                                buttonStyle={{
+                                    marginHorizontal: 60,
+                                    borderRadius: 15,
+                                    backgroundColor: colors.DEEPBLUE,
+                                }}
+                                containerStyle={{
+                                    marginTop: 20,
+                                }}
+                                loading={this.state.loadStatus}
+                                onPress={() => { this.iniciarTeste() }}
+                            />
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+        )
     }
 
     hideGanhos = async () => {
@@ -1104,6 +1300,36 @@ export default class DriverTripAccept extends React.Component {
                                     </TouchableOpacity>
                                 </Animatable.View>
                                 : null}
+                            <View style={styles.touchaVoltar3}>
+                                <Tooltip
+                                    closeOnlyOnBackdropPress={false}
+                                    height={55}
+                                    width={155}
+                                    containerStyle={{
+                                        elevation: 3
+                                    }}
+                                    popover={
+                                        <View>
+                                            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                                                <Text onPress={() => { this.setState({ modalStatusVisible: true }) }} style={{ fontSize: 12, color: colors.WHITE, fontFamily: 'Inter-Bold' }}>TESTE DE STATUS</Text>
+                                                <Icon
+                                                    name='arrow-forward'
+                                                    type='ionicons'
+                                                    size={20}
+                                                    color={colors.WHITE}
+                                                />
+                                            </View>
+                                        </View>
+                                    }
+                                >
+                                    <Icon
+                                        name='settings'
+                                        type='ionicons'
+                                        size={25}
+                                        color={colors.WHITE}
+                                    />
+                                </Tooltip>
+                            </View>
                         </View>
 
                         {/* BOTÃO LIGAR E DESLIGAR */}
@@ -1145,6 +1371,7 @@ export default class DriverTripAccept extends React.Component {
                             :
                             null
                         }
+                        {this.openAlertStatus()}
                     </View>
                 }
             </View>
@@ -1180,6 +1407,19 @@ const styles = StyleSheet.create({
         elevation: 5,
         justifyContent: 'center',
         bottom: height / 4,
+        right: 20
+    },
+
+    touchaVoltar3: {
+        position: 'absolute',
+        alignItems: 'center',
+        width: 40,
+        height: 40,
+        borderRadius: 50,
+        backgroundColor: colors.BLACK,
+        elevation: 5,
+        justifyContent: 'center',
+        bottom: 45,
         right: 20
     },
 

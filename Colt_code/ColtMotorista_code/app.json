@@ -44,18 +44,18 @@
       "config": {
         "googleMapsApiKey": "AIzaSyDALefKQ3xFjRRvw56_mRdPClMap41XAbM"
       },
-      "buildNumber": "1.0.1"
+      "buildNumber": "1.2"
     },
     "android": {
       "package": "com.myth.appcoltmotorista",
-      "versionCode": 11,
+      "versionCode": 12,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptativeIcon.png",
         "backgroundColor": "#1152FD"
       },
       "permissions": [
         "CAMERA",
-        "AUDIO_RECORDING",
+        "RECORD_AUDIO",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
         "LOCATION",

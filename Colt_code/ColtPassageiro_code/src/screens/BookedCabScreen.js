@@ -99,6 +99,7 @@ export default class BookedCabScreen extends React.Component {
                 }
                 this.setState({
                     firstNameRider: currUserBooking.firstNameRider,
+                    driver_firstName: currUserBooking.driver_firstName,
                     coords: this.getParamData.coords,
                     region: region,
                     currentBookingId: this.getParamData.bokkingId,
@@ -728,7 +729,7 @@ export default class BookedCabScreen extends React.Component {
                                         containerStyle={{ paddingEnd: 7 }}
                                     />
                                 </View>
-                                <Text style={styles.nameDriver}> {this.state.driverName ? this.state.driverName.split(" ")[0] : null} </Text>
+                                <Text style={styles.nameDriver}> {this.state.driver_firstName ? this.state.driver_firstName : null} </Text>
                             </View>
 
                             <View style={styles.containerCarDetails}>

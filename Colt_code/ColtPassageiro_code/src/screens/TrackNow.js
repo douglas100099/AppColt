@@ -34,7 +34,6 @@ import ColtConfortCar from '../../assets/svg/ColtConfortCar';
 import AvatarUser from '../../assets/svg/AvatarUser';
 import IconCarMap from '../../assets/svg/IconCarMap';
 import CircleLineTriangle from '../../assets/svg/CircleLineTriangle';
-import { StatusBar } from 'react-native';
 
 export default class TrackNow extends React.Component {
 
@@ -53,10 +52,17 @@ export default class TrackNow extends React.Component {
         };
     }
 
+    async UNSAFE_componentWillMount() {
+        let bookingKey = this.props.navigation.getParam('bId');
+        let paramData = this.props.navigation.getParam('data');
+        if (bookingKey && paramData)
+            this.setState({ bookingKey: bookingKey, allData: paramData, destinationLoc: paramData.drop.lat + ',' + paramData.drop.lng })
+    }
+
     async componentDidMount() {
         this._isMounted = true
-        let keys = this.props.navigation.getParam('bId');
-        const dat = firebase.database().ref('bookings/' + keys + '/current');
+
+        const dat = firebase.database().ref('bookings/' + this.state.bookingKey + '/current');
         dat.on('value', snapshot => {
             var data = snapshot.val()
             if (data) {
@@ -66,26 +72,18 @@ export default class TrackNow extends React.Component {
                     latitudeDriver: data.lat,
                     longitudeDriver: data.lng,
                     startLoc: data.lat + ',' + data.lng,
+                }, () => {
+                    if( !this.state.dontGetDirections ){
+                        this.setState({ dontGetDirections: true })
+                        this.getDirections()
+                    }
                 })
             }
         })
 
-        let paramData = await this.props.navigation.getParam('data');
-
-        if (paramData) {
-            this.setState({
-                allData: paramData,
-                destinationLoc: paramData.drop.lat + ',' + paramData.drop.lng
-            }, () => {
-                if (this.state.startLoc && this.state.destinationLoc) {
-                    this.getDirections()
-                }
-            })
-        }
-
         const coordinate = new AnimatedRegion({
-            latitude: paramData.pickup.lat,
-            longitude: paramData.pickup.lng,
+            latitude: this.state.allData.pickup.lat,
+            longitude: this.state.allData.pickup.lng,
             latitudeDelta: 0.009,
             longitudeDelta: 0.009
         });
@@ -142,9 +140,6 @@ export default class TrackNow extends React.Component {
     });
 
     async getDirections() {
-        console.log("CHAMOU GET DIRECTIONS COM START " + this.state.startLoc)
-        console.log("destinationLoc  " + this.state.destinationLoc)
-
         try {
             let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${this.state.startLoc}&destination=${this.state.destinationLoc}&key=${google_map_key}`)
             let respJson = await resp.json();
@@ -178,21 +173,7 @@ export default class TrackNow extends React.Component {
         this.map.fitToCoordinates([{ latitude: this.state.latitudeDriver, longitude: this.state.longitudeDriver }, { latitude: this.state.allData.drop.lat, longitude: this.state.allData.drop.lng }], {
             edgePadding: { top: getPixelSize(60), right: getPixelSize(60), bottom: getPixelSize(60), left: getPixelSize(60) },
             animated: true,
-        }, () => {
-            this.setState({ dontGetRegion: false })
         })
-    }
-
-    locationUser() {
-        let region = {
-            latitude: this.state.latitudeDriver,
-            longitude: this.state.longitudeDriver,
-            latitudeDelta: 0.0043,
-            longitudeDelta: 0.0034
-        }
-        if (this.map) {
-            this.map.animateToRegion(region, 500)
-        }
     }
 
     alertPanic() {
@@ -207,16 +188,6 @@ export default class TrackNow extends React.Component {
                 },
                 {
                     text: 'OK', onPress: async () => {
-                        /*const value = await AsyncStorage.getItem('settings');
-                        if (value !== null) {
-                            let settings = JSON.parse(value);
-                            if (Platform.OS === 'android') {
-                                phoneNumber = `tel:${settings.panic}`;
-                            } else {
-                                phoneNumber = `telprompt:${settings.panic}`;
-                            }
-                            Linking.openURL(phoneNumber);
-                        }*/
                         if (Platform.OS === 'android') {
                             phoneNumber = `tel:190`;
                         } else {
@@ -244,9 +215,8 @@ export default class TrackNow extends React.Component {
                             showUserLocation
                             followUserLocation
                             loadingEnabled
-                            //region={this.state.dontGetRegion ? null : this.getMapRegion()}
                             initialRegion={this.getMapRegion()}
-                            onRegionChange={() => this.setState({ dontGetRegion: true })}
+                            //onRegionChange={() => this.setState({ dontGetRegion: true })}
                             showsCompass={false}
                             showsScale={false}
                             customMapStyle={mapStyleAndroid}
@@ -260,21 +230,23 @@ export default class TrackNow extends React.Component {
                                     strokeColor={colors.DEEPBLUE}
                                 />
                                 : null}
-                            {/*this.state.routeCoordinates ?
-                                <MapView.Polyline coordinates={this.state.routeCoordinates} strokeColor={colors.RED} strokeWidth={3} />
-                            : null*/}
 
                             <Marker.Animated
                                 ref={marker => {
                                     this.marker = marker;
                                 }}
                                 useNativeDriver={false}
-                                coordinate={new AnimatedRegion({
-                                    latitude: this.state.latitudeDriver,
-                                    longitude: this.state.longitudeDriver,
-                                    latitudeDelta: 0.009,
-                                    longitudeDelta: 0.009
-                                })}
+                                coordinate={
+                                    this.state.latitudeDriver && this.state.longitudeDriver ?
+                                        new AnimatedRegion({
+                                            latitude: this.state.latitudeDriver,
+                                            longitude: this.state.longitudeDriver,
+                                            latitudeDelta: 0.009,
+                                            longitudeDelta: 0.009
+                                        })
+                                        :
+                                        null
+                                }
                                 anchor={{ x: 0.5, y: 0.5 }}
                             >
                                 <IconCarMap
@@ -334,18 +306,6 @@ export default class TrackNow extends React.Component {
                             color={colors.DEEPBLUE}
                         />
                     </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.iconLocation} onPress={() => this.locationUser()}>
-                        <Icon
-                            name="car"
-                            type="material-community"
-                            // icon: 'chat', color: '#fff',
-                            size={25}
-                            color={colors.DEEPBLUE}
-                        //containerStyle={{ opacity: .7 }}
-                        />
-                    </TouchableOpacity>
-
                 </View>
 
                 <View style={{ backgroundColor: colors.DEEPBLUE, height: 30, justifyContent: 'center', alignItems: 'center' }}>
@@ -403,7 +363,7 @@ export default class TrackNow extends React.Component {
                         </View>
 
                     </View>
-                    <View style={{ flex: 1.8, marginLeft: 20 }}>
+                    <View style={{ flex: 1.6, marginLeft: 15 }}>
                         <View style={{ flexDirection: 'row', marginTop: 20 }}>
                             <CircleLineTriangle style={{}} />
                             <View style={{ justifyContent: 'space-around' }}>
@@ -478,17 +438,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 10,
     },
-    iconLocation: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        alignSelf: 'flex-end',
-        right: 20,
-        backgroundColor: colors.WHITE,
-        width: 40,
-        height: 40,
-        borderRadius: 50,
-        bottom: 80,
-    },
     locationBoxDestino: {
         flexWrap: "wrap",
         maxWidth: 200,
@@ -506,10 +455,10 @@ const styles = StyleSheet.create({
         width: 45,
         height: 45,
         borderRadius: 50,
-        left: 17,
+        bottom: 70,
+        right: 17,
         elevation: 5,
         marginTop: 40,
-        top: Platform.OS == 'ios' ? 15 : StatusBar.currentHeight + 15,
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',

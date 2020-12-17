@@ -435,7 +435,7 @@ export default class MapScreen extends React.Component {
                 }))
         }
         else if (this.state.statusCorrida == 'START') {
-            this.props.navigation.replace('trackRide', { data: this.state.bookingParam, bId: this.state.bookingParam.bookingKey, });
+            this.props.navigation.replace('trackRide', { data: this.state.bookingParam, bId: this.state.keyBooking });
         }
     }
 
@@ -452,19 +452,22 @@ export default class MapScreen extends React.Component {
                         if (bookingData[key].status == "ACCEPTED") {
                             this.setState({
                                 statusCorrida: "ACCEPTED",
-                                bookingParam: bookingData[key]
+                                bookingParam: bookingData[key],
+                                keyBooking: key
                             })
                         }
                         else if (bookingData[key].status == "EMBARQUE") {
                             this.setState({
                                 statusCorrida: "EMBARQUE",
-                                bookingParam: bookingData[key]
+                                bookingParam: bookingData[key],
+                                keyBooking: key
                             })
                         }
                         else if (bookingData[key].status == "START") {
                             this.setState({
                                 statusCorrida: "START",
-                                bookingParam: bookingData[key]
+                                bookingParam: bookingData[key],
+                                keyBooking: key
                             })
                         }
                     }

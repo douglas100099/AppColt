@@ -12,6 +12,7 @@ import {
     Dimensions,
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
+import NetInfo from '@react-native-community/netinfo';
 import { colors } from '../common/theme';
 import * as firebase from 'firebase'
 import { farehelper } from '../common/fareCalculator';
@@ -37,6 +38,7 @@ import Directions from "../components/Directions";
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import { getPixelSize } from '../constants/utils';
 import customMapStyle from "../../mapstyle.json";
+import customMapStyleDark from "../../mapstyleDark.json";
 var { width, height } = Dimensions.get('window');
 
 const LATITUDE = 0;
@@ -75,6 +77,7 @@ export default class DriverCompleteTrip extends React.Component {
             recalculou: false,
             objectQueue: false,
             timeoutCenter: null,
+            statusConexao: false,
         }
     }
 
@@ -152,7 +155,7 @@ export default class DriverCompleteTrip extends React.Component {
     }
 
     playSound() {
-        if(this._isMounted){
+        if (this._isMounted) {
             this.setState({ isSound: true })
             this.sound.playAsync().then((result) => {
                 if (result.isLoaded) {
@@ -168,7 +171,7 @@ export default class DriverCompleteTrip extends React.Component {
     }
 
     stopSound() {
-        if(this._isMounted){
+        if (this._isMounted) {
             this.setState({ isSound: false })
             this.sound.stopAsync();
             console.log('STOP SOUND')
@@ -184,8 +187,8 @@ export default class DriverCompleteTrip extends React.Component {
     }
 
     chat() {
-        if(this.state.driverDetails){
-            if(this._isMounted){
+        if (this.state.driverDetails) {
+            if (this._isMounted) {
                 this.setState({ viewInfos: false })
             }
             this.props.navigation.navigate("Chat", { passData: this.state.driverDetails });
@@ -209,7 +212,7 @@ export default class DriverCompleteTrip extends React.Component {
         if (startTime && this._isMounted) {
             let time = startTime.toString()
             AsyncStorage.setItem('startTime', time)
-            if(this._isMounted){
+            if (this._isMounted) {
                 this.setState({ startTime: startTime })
             }
         }
@@ -220,7 +223,7 @@ export default class DriverCompleteTrip extends React.Component {
                 for (var i = 0; i < carTypeWiseRate.car_type.length; i++) {
                     if (carTypeWiseRate.car_type[i].name == allDetails.carType) {
                         var rates = carTypeWiseRate.car_type[i];
-                        if(this._isMounted){
+                        if (this._isMounted) {
                             this.setState({
                                 rateDetails: rates
                             })
@@ -243,7 +246,7 @@ export default class DriverCompleteTrip extends React.Component {
             this.location.remove()
         }
         console.log('DESMONTOU A TELA COMPLETE TRIP')
-        if(this.state.timeoutCenter != null){
+        if (this.state.timeoutCenter != null) {
             clearInterval(this.state.timeoutCenter)
         }
     }
@@ -283,7 +286,7 @@ export default class DriverCompleteTrip extends React.Component {
                     longitudeDelta: 0.0034,
                     angle: coords.heading,
                 };
-                if(this._isMounted){
+                if (this._isMounted) {
                     this.setState({ region: region });
                     this.setLocationDB(region.latitude, region.longitude, region.angle);
                     this.checkDistKM();
@@ -346,13 +349,13 @@ export default class DriverCompleteTrip extends React.Component {
         var location2 = [this.state.rideDetails.drop.lat, this.state.rideDetails.drop.lng];   //Driver lat and lang
         //calculate the distance of two locations
         var distance = distanceCalc(location1, location2);
-        if(this._isMounted){
+        if (this._isMounted) {
             this.setState({ kmRestante: distance })
         }
     }
 
     checkDist(item) {
-        if(this._isMounted){
+        if (this._isMounted) {
             this.setState({ rideDetails: item },
                 () => {
                     var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
@@ -377,58 +380,90 @@ export default class DriverCompleteTrip extends React.Component {
         this.RefActionSheet.show()
     }
 
+    // checkar internet
+    onPressEndTrip = async (item) => {
+        let location = await Location.getCurrentPositionAsync({});
+        var pos = {
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+        };
+        AsyncStorage.getItem('statusCorrida', (err, result) => {
+            if (result) {
+                console.log('FINALIZAR CORRIDA: VOCE JA TENTOU FINALIZAR')
+                this.setState({ loadingModal: true })
+                let convenienceFee = (this.state.rideDetails.pagamento.estimate * this.state.rateDetails.convenience_fees / 100);
+                this.finalCostStore(item, this.state.rideDetails.pagamento.estimate, pos, 0, convenienceFee,
+                    this.state.rideDetails.pagamento.discount_amount ? this.state.rideDetails.pagamento.discount_amount : 0,
+                    this.state.rideDetails.pagamento.usedWalletMoney ? this.state.rideDetails.pagamento.usedWalletMoney : 0, false, false)
+                console.log('FINALIZAR CORRIDA ESTIMADO: ' + this.state.rideDetails.pagamento.estimate)
+                console.log('FINALIZAR CORRIDA POSIÇÃO: ' + pos)
+                console.log('FINALIZAR CORRIDA DISTANCE: ' + 0)
+                console.log('FINALIZAR CORRIDA DESCONTO: ' + this.state.rideDetails.pagamento.discount_amount ? this.state.rideDetails.pagamento.discount_amount : 0)
+                console.log('FINALIZAR CORRIDA USEDWALLETMONEY: ' + this.state.rideDetails.pagamento.usedWalletMoney ? this.state.rideDetails.pagamento.usedWalletMoney : 0)
+            } else {
+                AsyncStorage.setItem('statusCorrida', "finalizada").then(() => {
+                    NetInfo.fetch().then(state => {
+                        if (state.isConnected) {
+                            console.log('FINALIZAR CORRIDA: VOCÊ POSSUI INTERNET')
+                            this.endFinal(pos, item)
+                        } else {
+                            console.log('FINALIZAR CORRIDA: VOCÊ NÃO POSSUI INTERNET')
+                            this.setState({ statusConexao: false, loadingModal: true })
+                            this.setQueueAvailable(false)
+                            let convenienceFee = (this.state.rideDetails.pagamento.estimate * this.state.rateDetails.convenience_fees / 100);
+                            this.finalCostStore(item, this.state.rideDetails.pagamento.estimate, pos, 0, convenienceFee,
+                                this.state.rideDetails.pagamento.discount_amount ? this.state.rideDetails.pagamento.discount_amount : 0,
+                                this.state.rideDetails.pagamento.usedWalletMoney ? this.state.rideDetails.pagamento.usedWalletMoney : 0, false, false)
+                            console.log('FINALIZAR CORRIDA ESTIMADO: ' + this.state.rideDetails.pagamento.estimate)
+                            console.log('FINALIZAR CORRIDA POSIÇÃO: ' + pos)
+                            console.log('FINALIZAR CORRIDA DISTANCE: ' + 0)
+                        }
+                    })
+                })
+            }
+        })
+    }
 
     //End trip and fare calculation function
-    async onPressEndTrip(item) {
+    // 1 ETAPA DE CALCULO
+    async endFinal(pos, item) {
         this.setQueueAvailable(false)
         this.setState({ loadingModal: true })
-        let location = await Location.getCurrentPositionAsync({});
-        if (location) {
-            var diff = ((this.state.startTime) - (new Date().getTime())) / 1000;
-            diff /= (60 * 1);
-            var totalTimeTaken = Math.abs(Math.round(diff));
-            console.log(totalTimeTaken + 'Start Time da tela Comple trip')
-
-            var pos = {
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-            };
-
-            let startLoc = '"' + this.state.rideDetails.pickup.lat + ', ' + this.state.rideDetails.pickup.lng + '"';
-            let destLoc = '"' + pos.latitude + ', ' + pos.longitude + '"';
-
-            var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destLoc}&key=${google_map_key}`)
-            var respJson = await resp.json();
-            var location1 = [this.state.rideDetails.drop.lat, this.state.rideDetails.drop.lng];    //Rider Lat and Lang
-            var location2 = [pos.latitude, pos.longitude];   //Driver lat and lang
-            //calculate the distance of two locations
-            var distance = distanceCalc(location1, location2);
-            var originalDistance = (distance);
-            if (originalDistance <= 0.8) {
-                let convenienceFee = (this.state.rideDetails.pagamento.estimate * this.state.rateDetails.convenience_fees / 100);
-                this.finalCostStore(item, this.state.rideDetails.pagamento.estimate, pos, respJson.routes[0].legs[0].distance.value, convenienceFee,
-                    this.state.rideDetails.pagamento.discount_amount ? this.state.rideDetails.pagamento.discount_amount : 0,
-                    this.state.rideDetails.pagamento.usedWalletMoney ? this.state.rideDetails.pagamento.usedWalletMoney : 0)
-            } else {
-                var fareCalculation = farehelper(respJson.routes[0].legs[0].distance.value, totalTimeTaken, this.state.rateDetails ? this.state.rateDetails : 1, this.state.rideDetails.pagamento.cancellValue);
-                if (fareCalculation) {
-                    this.finalCostStore(item, fareCalculation.grandTotal, pos, respJson.routes[0].legs[0].distance.value, fareCalculation.convenience_fees,
-                        this.state.rideDetails.pagamento.discount_amount ? this.state.rideDetails.pagamento.discount_amount : 0,
-                        this.state.rideDetails.pagamento.usedWalletMoney ? this.state.rideDetails.pagamento.usedWalletMoney : 0)
-                }
-            }
+        var diff = ((this.state.startTime) - (new Date().getTime())) / 1000;
+        diff /= (60 * 1);
+        var totalTimeTaken = Math.abs(Math.round(diff));
+        console.log(totalTimeTaken + 'Start Time da tela Comple trip')
+        let startLoc = '"' + this.state.rideDetails.pickup.lat + ', ' + this.state.rideDetails.pickup.lng + '"';
+        let destLoc = '"' + pos.latitude + ', ' + pos.longitude + '"';
+        var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destLoc}&key=${google_map_key}`)
+        var respJson = await resp.json();
+        var location1 = [this.state.rideDetails.drop.lat, this.state.rideDetails.drop.lng];    //Rider Lat and Lang
+        var location2 = [pos.latitude, pos.longitude];   //Driver lat and lang
+        //calculate the distance of two locations
+        var distance = distanceCalc(location1, location2);
+        var originalDistance = (distance);
+        if (originalDistance <= 0.8) {
+            let convenienceFee = (this.state.rideDetails.pagamento.estimate * this.state.rateDetails.convenience_fees / 100);
+            this.finalCostStore(item, this.state.rideDetails.pagamento.estimate, pos, respJson.routes[0].legs[0].distance.value, convenienceFee,
+                this.state.rideDetails.pagamento.discount_amount ? this.state.rideDetails.pagamento.discount_amount : 0,
+                this.state.rideDetails.pagamento.usedWalletMoney ? this.state.rideDetails.pagamento.usedWalletMoney : 0, false, true)
         } else {
-            this.openAlert();
+            var fareCalculation = farehelper(respJson.routes[0].legs[0].distance.value, totalTimeTaken, this.state.rateDetails ? this.state.rateDetails : 1, this.state.rideDetails.pagamento.cancellValue);
+            if (fareCalculation) {
+                this.finalCostStore(item, fareCalculation.grandTotal, pos, respJson.routes[0].legs[0].distance.value, fareCalculation.convenience_fees,
+                    this.state.rideDetails.pagamento.discount_amount ? this.state.rideDetails.pagamento.discount_amount : 0,
+                    this.state.rideDetails.pagamento.usedWalletMoney ? this.state.rideDetails.pagamento.usedWalletMoney : 0, true, true)
+            }
         }
     }
 
     locationAdd(pos) {
         var latlng = pos.latitude + ',' + pos.longitude;
-        return fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, {signal: this.myAbort.signal})
+        return fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng + '&key=' + google_map_key, { signal: this.myAbort.signal })
     }
 
     //driver current location fetching
-    finalCostStore(item, finalFare, pos, distance, convenience_fees, discount, wallet) {
+    finalCostStore(item, finalFare, pos, distance, convenience_fees, discount, wallet, recalculo, possuiNet) {
         let tripCost = finalFare;
         let customerPaid = (finalFare - discount);
         let cashPaymentAmount = (finalFare - discount - wallet);
@@ -449,6 +484,8 @@ export default class DriverCompleteTrip extends React.Component {
             promoCodeApplied: item.pagamento.promoCodeApplied,
             promoKey: item.pagamento.promoKey,
             cancellValue: item.pagamento.cancellValue,
+            recalculo: recalculo,
+            possuiNet: possuiNet,
         }
         var data = {
             status: "END",
@@ -478,7 +515,6 @@ export default class DriverCompleteTrip extends React.Component {
                 this.updateDriverLocation(data.drop)
             }
         });
-        AsyncStorage.removeItem('startTime');
     }
 
     //Final cost and status set to database
@@ -501,9 +537,11 @@ export default class DriverCompleteTrip extends React.Component {
             let statusDetail = statusDetails.val()
             if (statusDetail) {
                 if (statusDetail.status === 'END' && statusDetail.pagamento.payment_status === 'PAID') {
-                    if(this._isMounted){
+                    if (this._isMounted) {
                         this.setState({ loadingModal: false })
                     }
+                    AsyncStorage.removeItem('startTime');
+                    AsyncStorage.removeItem('statusCorrida');
                     this.props.navigation.replace('DriverFare', { allDetails: item, trip_cost: data.pagamento.trip_cost, trip_end_time: data.trip_end_time })
                 }
             }
@@ -682,7 +720,31 @@ export default class DriverCompleteTrip extends React.Component {
                                 source={require('../../assets/images/loaderCar.gif')}
                             />
                             <View style={{ flex: 1 }}>
-                                <Text style={{ color: colors.BLACK, fontSize: 20, fontFamily: 'Inter-Bold' }}>Calculando preço, aguarde.</Text>
+                                <Text style={{ color: colors.BLACK, fontSize: 20, fontFamily: 'Inter-Bold', textAlign: 'center' }}>Calculando preço, aguarde.</Text>
+                                {this.state.statusConexao === true ?
+                                    <View style={{ justifyContent: 'center',marginTop: 15, alignItems: 'center', flexDirection: 'column' }}>
+                                        <View style={{ flexDirection: 'row' }}>
+                                            <Icon
+                                                name='warning'
+                                                type='Ionicons'
+                                                color={colors.RED}
+                                                iconStyle={{ marginRight: 5 }}
+                                            />
+                                            <Text style={{ color: colors.RED, fontSize: 16, fontFamily: 'Inter-Bold', textAlign: 'center' }}>Sem conexão com a internet.</Text>
+                                        </View>
+                                        <View>
+                                            {this.state.rideDetails.pagamento.payment_mode === 'Dinheiro' ?
+                                            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 15, color: colors.BLACK, textAlign: 'center' }}>Valor estimado: R$ {parseFloat(this.state.rideDetails.pagamento.estimate).toFixed(2)}</Text>
+                                            : null}
+                                            {this.state.rideDetails.pagamento.payment_mode === 'Carteira' ?
+                                            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 15, color: colors.BLACK, textAlign: 'center' }}>Valor estimado: R$ {parseFloat(this.state.rideDetails.pagamento.estimate).toFixed(2)}</Text>
+                                            : null}
+                                            {this.state.rideDetails.pagamento.payment_mode === 'Dinheiro/Carteira' ?
+                                            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 15, color: colors.BLACK, textAlign: 'center' }}>Valor a cobrar: R$ {parseFloat(this.state.rideDetails.pagamento.cashPaymentAmount).toFixed(2)}</Text>
+                                            : null}
+                                        </View>
+                                    </View>
+                                : null}
                             </View>
                         </View>
                     </View>
@@ -725,7 +787,7 @@ export default class DriverCompleteTrip extends React.Component {
 
     centerFollowMap() {
         this.map.animateToRegion(this.state.region, 500)
-        this.setState({ timeoutCenter: setTimeout(() => { this.setState({ followMap: true, fitCordinates: false }) }, 1100)})
+        this.setState({ timeoutCenter: setTimeout(() => { this.setState({ followMap: true, fitCordinates: false }) }, 1100) })
     }
 
     animateToDestination() {
@@ -738,6 +800,14 @@ export default class DriverCompleteTrip extends React.Component {
         }, 200);
     }
 
+    mapStyle(){
+        var dataAgr = new Date()
+        if(dataAgr >= 0 && dataAgr <= 5 || dataAgr >= 18 && dataAgr <= 23){
+            return customMapStyle
+        } else {
+            return customMapStyleDark
+        }
+    }
 
     render() {
         return (
@@ -756,7 +826,7 @@ export default class DriverCompleteTrip extends React.Component {
                                     showsUserLocation={false}
                                     showsCompass={false}
                                     showsScale={false}
-                                    customMapStyle={customMapStyle}
+                                    customMapStyle={this.mapStyle()}
                                     loadingEnabled
                                     showsMyLocationButton={false}
                                     region={this.checkMap()}
@@ -856,14 +926,22 @@ export default class DriverCompleteTrip extends React.Component {
                             </View>
                         </View>
                         <View style={styles.buttonViewStyle}>
-                            <Button
+                            <TouchableOpacity
                                 title='Finalizar corrida'
                                 onPress={() => {
                                     this.checkDist(this.state.rideDetails)
                                 }}
-                                titleStyle={styles.titleViewStyle}
-                                buttonStyle={styles.buttonStyleView}
-                            />
+                                style={styles.buttonStyleView}
+                            >
+                                <View style={{ flexDirection: 'row' }}>
+                                    <View style={{ alignItems: 'center', justifyContent: 'center', marginRight: 5 }}>
+                                        <Text style={{ color: colors.WHITE, fontSize: 16, fontFamily: 'Inter-Bold' }}>Finalizar corrida</Text>
+                                    </View>
+                                    <View style={{ paddingHorizontal: 4, paddingVertical: 2, backgroundColor: colors.WHITE, borderRadius: 10}}>
+                                        <Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Bold'}}>{this.state.rideDetails.pagamento.payment_mode}</Text>
+                                    </View>
+                                </View>
+                            </TouchableOpacity>
                         </View>
                     </View>
 
@@ -912,7 +990,7 @@ export default class DriverCompleteTrip extends React.Component {
                                                 zoomEnabled={false}
                                                 scrollEnabled={false}
                                                 showsCompass={false}
-                                                customMapStyle={customMapStyle}
+                                                customMapStyle={this.mapStyle()}
                                                 showsScale={false}
                                                 showsMyLocationButton={false}
                                                 region={this.checkMap()}

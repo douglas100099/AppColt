@@ -51,15 +51,10 @@ export default class ProfileScreen extends React.Component {
         this.setState({ currentUser: curuser }, () => {
             const userData = firebase.database().ref('users/' + this.state.currentUser.uid);
             userData.once('value', userData => {
-                if (userData.val() && userData.val().location && userData.val().location.add) {
-                    var str = userData.val().location.add
-                    if (userData.val().location.add)
-                        var tempAdd = str.split(",")[0] + "," + str.split(",")[1] + ',' + str.split(",")[3] + ',' + str.split(",")[4];
-                    this.setState({ tempAddress: tempAdd });
-                    this.setState(userData.val(), (res) => {
-                    });
-                }
-
+                if (userData.val() && userData.val().location)
+                //var tempAdd = str.split(",")[0] + "," + str.split(",")[1] + ',' + str.split(",")[3] + ',' + str.split(",")[4];
+                this.setState(userData.val(), (res) => {
+                });
             })
         })
         this.prepareInfos()
@@ -233,7 +228,7 @@ export default class ProfileScreen extends React.Component {
 
     }
 
-    openAlertt(){
+    openAlertt() {
         Alert.alert(
             "Editar informações",
             "Entre em contato com o suporte para alterar suas informações.",
@@ -288,7 +283,7 @@ export default class ProfileScreen extends React.Component {
                                         type='ionicon'
                                         color={colors.BLACK}
                                     />
-                                    <Text style={{ fontSize: 12, fontFamily: 'Inter-Bold', color: colors.BLACK }}>{this.state.ratings.userrating == 0 ? " 5.0" : this.state.ratings.userrating }</Text>
+                                    <Text style={{ fontSize: 12, fontFamily: 'Inter-Bold', color: colors.BLACK }}>{this.state.ratings.userrating == 0 ? " 5.0" : this.state.ratings.userrating}</Text>
                                 </View>
                             </View>
                             <View style={{ flex: 0.8, alignItems: 'center', justifyContent: 'flex-start' }}>
@@ -299,7 +294,7 @@ export default class ProfileScreen extends React.Component {
                             </View>
                             <View style={styles.detaisDriver}>
                                 <View style={styles.viewCorridas}>
-                                    <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK }}>{this.state.myBooking  ? this.state.myBooking.length : '0'}</Text>
+                                    <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK }}>{this.state.myBooking ? this.state.myBooking.length : '0'}</Text>
                                     <Text style={{ fontSize: 14, fontFamily: 'Inter-Regular', color: colors.BLACK }}>Total de corridas</Text>
                                 </View>
                                 <View style={{ width: 1, height: '50%', backgroundColor: colors.GREY1 }}></View>

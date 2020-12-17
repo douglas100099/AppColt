@@ -44,11 +44,11 @@
       "config": {
         "googleMapsApiKey": "AIzaSyDALefKQ3xFjRRvw56_mRdPClMap41XAbM"
       },
-      "buildNumber": "1.2"
+      "buildNumber": "1.2.2"
     },
     "android": {
       "package": "com.myth.appcoltmotorista",
-      "versionCode": 12,
+      "versionCode": 14,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptativeIcon.png",
         "backgroundColor": "#1152FD"
@@ -62,6 +62,7 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
         "SYSTEM_ALERT_WINDOW",
+        "WAKE_LOCK",
         "ACCESS_COARSE_LOCATION",
         "CAMERA_ROLL"
       ],

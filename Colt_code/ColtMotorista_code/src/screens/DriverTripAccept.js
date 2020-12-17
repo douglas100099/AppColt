@@ -23,7 +23,9 @@ import * as Linking from 'expo-linking';
 import { getPixelSize } from '../constants/utils';
 import Directions from "../components/Directions";
 import customMapStyle from "../../mapstyle.json";
+import customMapStyleDark from "../../mapstyleDark.json";
 import NetInfo from '@react-native-community/netinfo';
+import Constants from 'expo-constants'
 
 import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
@@ -581,7 +583,7 @@ export default class DriverTripAccept extends React.Component {
                     this.setState({ chegouCorrida: true })
                     if (this.state.isSound == false) {
                         this.playSound()
-                        //Linking.openURL('coltappmotorista://');
+                        Linking.openURL('coltappmotorista://');
                     }
                 } else if (this.state.chegouCorrida == true) {
                     if (this._isMounted) {
@@ -1011,6 +1013,15 @@ export default class DriverTripAccept extends React.Component {
         this.setState({ loaderBtn: false })
     }
 
+    mapStyle(){
+        var dataAgr = new Date()
+        if(dataAgr >= 0 && dataAgr <= 5 || dataAgr >= 18 && dataAgr <= 23){
+            return customMapStyle
+        } else {
+            return customMapStyleDark
+        }
+    }
+
     render() {
         const { region } = this.state;
         return (
@@ -1064,7 +1075,7 @@ export default class DriverTripAccept extends React.Component {
                                                 scrollEnabled={false}
                                                 showsCompass={false}
                                                 showsScale={false}
-                                                customMapStyle={customMapStyle}
+                                                customMapStyle={this.mapStyle()}
                                                 showsMyLocationButton={false}
                                                 Region={{
                                                     latitude: this.state.region.latitude,
@@ -1235,7 +1246,7 @@ export default class DriverTripAccept extends React.Component {
                                 showsUserLocation={false}
                                 showsCompass={false}
                                 showsScale={false}
-                                customMapStyle={customMapStyle}
+                                customMapStyle={this.mapStyle()}
                                 showsMyLocationButton={false}
                                 region={this.state.region ? this.state.region : null}
                             >
@@ -1256,7 +1267,7 @@ export default class DriverTripAccept extends React.Component {
                                     </Marker.Animated>
                                     : null}
                             </MapView>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: Platform.select({ ios: 60, android: 16 }) }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: Constants.statusBarHeight }}>
                                 {/* BOTÃO MENU VOLTAR */}
                                 <TouchableOpacity style={styles.touchaVoltar} onPress={() => { this.props.navigation.toggleDrawer(); }}>
                                     <IconMenuSVG height={28} width={28} />

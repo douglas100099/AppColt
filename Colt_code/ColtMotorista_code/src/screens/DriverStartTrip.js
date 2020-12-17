@@ -10,9 +10,11 @@ import {
     Linking,
     ActivityIndicator,
     TouchableOpacity,
-    Alert
+    Alert,
+    Platform,
 } from 'react-native';
 import { Icon, Button } from 'react-native-elements';
+import Constants from 'expo-constants'
 import ActionSheet from 'react-native-actionsheet';
 import { colors } from '../common/theme';
 import getDirections from 'react-native-google-maps-directions'
@@ -35,6 +37,7 @@ import RadioForm from 'react-native-simple-radio-button';
 import * as Animatable from 'react-native-animatable';
 import Directions from "../components/Directions";
 import customMapStyle from "../../mapstyle.json";
+import customMapStyleDark from "../../mapstyleDark.json";
 
 const LATITUDE = 0;
 const LONGITUDE = 0;
@@ -571,6 +574,15 @@ export default class DriverStartTrip extends React.Component {
         this.setState({ modalCancel: false })
     }
 
+    mapStyle(){
+        var dataAgr = new Date()
+        if(dataAgr >= 0 && dataAgr <= 5 || dataAgr >= 18 && dataAgr <= 23){
+            return customMapStyle
+        } else {
+            return customMapStyleDark
+        }
+    }
+
     viewInfos() {
         return (
             <Modal
@@ -750,7 +762,7 @@ export default class DriverStartTrip extends React.Component {
                         provider={PROVIDER_GOOGLE}
                         showsUserLocation={false}
                         showsCompass={false}
-                        customMapStyle={customMapStyle}
+                        customMapStyle={this.mapStyle()}
                         showsScale={false}
                         loadingEnabled
                         showsMyLocationButton={false}
@@ -781,6 +793,25 @@ export default class DriverStartTrip extends React.Component {
                             destination={{ latitude: this.state.rideDetails.pickup.lat, longitude: this.state.rideDetails.pickup.lng }}
                         />
                     </MapView>
+                    <View style={{ position: 'absolute', alignSelf: 'center',top: Constants.statusBarHeight + 3, height: 70, width: width/1.2, backgroundColor: colors.WHITE, elevation: 4, borderRadius: 15}}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+                            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                                <Text style={{ textAlign: 'center', color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Regular' }}>{this.state.rideDetails.pickup.add}</Text>
+                            </View>
+                            <View style={{ borderWidth: 0.6, borderColor: colors.GREY1, height: 70, width: 1 }}></View>
+                            <View style={{ flex: 0.2, justifyContent: 'center', alignItems: 'center' }}>
+                                <TouchableOpacity onPress={() => { this.handleGetDirections() }}>
+                                <Icon
+                                    name="navigation"
+                                    type="feather"
+                                    size={30}
+                                    color={colors.BLACK}
+                                    iconStyle={{ marginTop: 2, marginRight: 2 }}
+                                />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
                     <TouchableOpacity style={styles.iconeMap} onPress={() => { this.centerFollowMap() }}>
                         <Icon
                             name="crosshair"
@@ -792,14 +823,6 @@ export default class DriverStartTrip extends React.Component {
                     <TouchableOpacity style={styles.iconeFit} onPress={() => { this.animateToDestination() }}>
                         <Icon
                             name="map-pin"
-                            type="feather"
-                            size={30}
-                            color={colors.BLACK}
-                        />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.iconeNav} onPress={() => { this.handleGetDirections() }}>
-                        <Icon
-                            name="navigation"
                             type="feather"
                             size={30}
                             color={colors.BLACK}

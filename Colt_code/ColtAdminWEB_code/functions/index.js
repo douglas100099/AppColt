@@ -739,7 +739,8 @@ exports.cancelSearchDriver = functions.region('southamerica-east1').database.ref
             if (dataBooking.status === 'NEW') {
                 admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + context.params.bookingsId).update({ status: 'TIMEOUT' })
                 return admin.database().ref('bookings/' + context.params.bookingsId).update({ status: 'TIMEOUT' })
-            } else {
+            } 
+            else {
                 return false
             }
         })
@@ -813,13 +814,15 @@ exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref
             if (dataBooking) {
                 if (requested === dataBooking['requestedDriver'] && dataBooking.status === 'NEW') {
 
-                    admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove();
-                    admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove();
+                    admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove()
+                    admin.database().ref("users/" + requested + "/waiting_queue_riders/" + bookingId).remove()
+
+                    admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove()
 
                     admin.database().ref("users/" + requested + "/in_reject_progress").update({
                         punido: false
                     });
-                    admin.database().ref("users/" + requested).update({
+                    admin.database().ref("users/" + requested + '/').update({
                         driverActiveStatus: false,
                         queue: false
                     });

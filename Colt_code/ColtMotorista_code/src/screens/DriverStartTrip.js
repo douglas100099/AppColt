@@ -26,7 +26,8 @@ import * as Location from 'expo-location';
 import * as firebase from 'firebase';
 import distanceCalc from '../common/distanceCalc';
 import languageJSON from '../common/language';
-import CellphoneSVG from '../SVG/CellphoneSVG'
+import CellphoneSVG from '../SVG/CellphoneSVG';
+import NetInfo from '@react-native-community/netinfo';
 import MarkerPicSVG from '../SVG/MarkerPicSVG';
 var { width, height } = Dimensions.get('window');
 import { google_map_key } from '../common/key';
@@ -76,6 +77,7 @@ export default class DriverStartTrip extends React.Component {
             kmRestante: 0,
             isAtrasado: false,
         }
+        this.checkInternet();
     }
 
     _activate = () => {
@@ -85,6 +87,19 @@ export default class DriverStartTrip extends React.Component {
     _deactivate = () => {
         deactivateKeepAwake();
     };
+
+    checkInternet() {
+        this.unsubscribe = NetInfo.addEventListener(state => {
+            if (state.isConnected) {
+                firebase.database().goOnline()
+                this.setState({ isConnected: state.isConnected })
+                
+            } else {
+                firebase.database().goOffline()
+                this.setState({ isConnected: state.isConnected })
+            }
+        });
+    }
 
     async UNSAFE_componentWillMount() {
         console.log('ENTROU NA TELA START TRIP')
@@ -120,6 +135,7 @@ export default class DriverStartTrip extends React.Component {
             console.log('REMOVEU O WATCH STARTTRIP')
             this.location.remove()
         }
+        this.unsubscribe();
         console.log('DESMONTOU A TELA START TRIP')
     }
 
@@ -575,11 +591,11 @@ export default class DriverStartTrip extends React.Component {
     }
 
     mapStyle(){
-        var dataAgr = new Date()
+        var dataAgr = new Date().getHours()
         if(dataAgr >= 0 && dataAgr <= 5 || dataAgr >= 18 && dataAgr <= 23){
-            return customMapStyle
-        } else {
             return customMapStyleDark
+        } else {
+            return customMapStyle
         }
     }
 

@@ -16,6 +16,7 @@ import languageJSON from '../common/language';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import Easing from 'react-native-reanimated';
 import * as Linking from 'expo-linking';
+import Constants from 'expo-constants';
 import * as Permissions from 'expo-permissions';
 
 
@@ -130,7 +131,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 25,
-        marginTop: Platform.select({ ios: 55, android: 45 })
+        marginTop: Constants.statusBarHeight + 3
     },
     headerStyle: {
         backgroundColor: colors.WHITE,

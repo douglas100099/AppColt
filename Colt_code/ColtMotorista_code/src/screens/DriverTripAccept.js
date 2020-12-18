@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal, Image, Platform, Alert, ActivityIndicator, AsyncStorage } from 'react-native';
-import { Icon, Tooltip, Button } from 'react-native-elements';
+import { Icon, Tooltip, Button, Badge } from 'react-native-elements';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import { colors } from '../common/theme';
 import * as Location from 'expo-location';
@@ -83,8 +83,10 @@ export default class DriverTripAccept extends React.Component {
             statusCorrida: false,
             statusServer: false,
             iniciouTeste: false,
+            isConnected: null,
         }
         this._getLocationAsync();
+        this.checkInternet();
     }
 
     _activate = () => {
@@ -94,6 +96,19 @@ export default class DriverTripAccept extends React.Component {
     _deactivate = () => {
         deactivateKeepAwake();
     };
+
+    checkInternet() {
+        this.unsubscribe = NetInfo.addEventListener(state => {
+            if (state.isConnected) {
+                firebase.database().goOnline()
+                this.setState({ isConnected: state.isConnected })
+                
+            } else {
+                firebase.database().goOffline()
+                this.setState({ isConnected: state.isConnected })
+            }
+        });
+    }
 
     // ESSE .ON AI PEGA E LER O VALOR DO BANCO QUANDO CHAMADO, E FICA ATUALIZANDO
     _getStatusDetails = async () => {
@@ -321,6 +336,7 @@ export default class DriverTripAccept extends React.Component {
         }
         this._unsubscribe();
         this.sound.unloadAsync();
+        this.unsubscribe();
     }
 
     // VERIFICAR BATERIA
@@ -843,18 +859,18 @@ export default class DriverTripAccept extends React.Component {
             >
                 <View style={{ flex: 1, backgroundColor: "rgba(22,22,22,0.8)", justifyContent: 'center', alignItems: 'center' }}>
                     <View style={{ width: '80%', backgroundColor: colors.WHITE, borderRadius: 10, height: 400 }}>
-                        <View style={{ position: 'absolute',right: 20, top: 10, justifyContent: 'center', alignItems: 'center' }}>
+                        <View style={{ position: 'absolute', right: 20, top: 10, justifyContent: 'center', alignItems: 'center' }}>
                             <TouchableOpacity
-                            onPress={() => this.setState({ modalStatusVisible: false })} 
-                            style={{
-                                height: 35,
-                                width: 35,
-                                borderRadius: 50,
-                                backgroundColor: colors.WHITE,
-                                elevation: 3,
-                                justifyContent: 'center',
-                                alignItems: 'center'
-                            }}>
+                                onPress={() => this.setState({ modalStatusVisible: false })}
+                                style={{
+                                    height: 35,
+                                    width: 35,
+                                    borderRadius: 50,
+                                    backgroundColor: colors.WHITE,
+                                    elevation: 3,
+                                    justifyContent: 'center',
+                                    alignItems: 'center'
+                                }}>
                                 <Icon
                                     name='ios-close'
                                     type='ionicon'
@@ -1013,12 +1029,12 @@ export default class DriverTripAccept extends React.Component {
         this.setState({ loaderBtn: false })
     }
 
-    mapStyle(){
-        var dataAgr = new Date()
-        if(dataAgr >= 0 && dataAgr <= 5 || dataAgr >= 18 && dataAgr <= 23){
-            return customMapStyle
-        } else {
+    mapStyle() {
+        var dataAgr = new Date().getHours()
+        if (dataAgr >= 0 && dataAgr <= 5 || dataAgr >= 18 && dataAgr <= 23) {
             return customMapStyleDark
+        } else {
+            return customMapStyle
         }
     }
 
@@ -1267,7 +1283,7 @@ export default class DriverTripAccept extends React.Component {
                                     </Marker.Animated>
                                     : null}
                             </MapView>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: Constants.statusBarHeight }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                                 {/* BOTÃO MENU VOLTAR */}
                                 <TouchableOpacity style={styles.touchaVoltar} onPress={() => { this.props.navigation.toggleDrawer(); }}>
                                     <IconMenuSVG height={28} width={28} />
@@ -1293,6 +1309,8 @@ export default class DriverTripAccept extends React.Component {
                                         />
                                     </TouchableOpacity>
                                 }
+
+                                
 
                                 {/* BOTÃO FOTOS */}
                                 <TouchableOpacity style={styles.touchaFoto} disabled={this.state.loaderBtn} onPress={() => { this.photoPerfil() }}>
@@ -1404,7 +1422,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.WHITE,
         elevation: 5,
         justifyContent: 'center',
-        top: Platform.select({ ios: 40, android: 30 }),
+        top: Constants.statusBarHeight + 3,
         left: 12,
 
     },
@@ -1446,7 +1464,21 @@ const styles = StyleSheet.create({
         backgroundColor: colors.DEEPBLUE,
         borderColor: colors.WHITE,
         elevation: 5,
-        top: Platform.select({ ios: 40, android: 30 }),
+        top: Constants.statusBarHeight + 3,
+    },
+    touchaGanhos2: {
+        position: 'absolute',
+        flexDirection: 'row',
+        borderWidth: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: width / 2,
+        height: 50,
+        borderRadius: 15,
+        backgroundColor: colors.DEEPBLUE,
+        borderColor: colors.WHITE,
+        elevation: 5,
+        top: 60,
     },
     touchaValor: {
         fontFamily: 'Inter-Bold',
@@ -1479,7 +1511,7 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         backgroundColor: colors.WHITE,
         elevation: 5,
-        top: Platform.select({ ios: 40, android: 30 }),
+        top: Constants.statusBarHeight + 3,
         right: 12,
     },
 

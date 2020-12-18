@@ -16,6 +16,7 @@ var { height, width } = Dimensions.get('window');
 import { Icon, Input } from 'react-native-elements';
 import * as firebase from 'firebase';
 import { colors } from '../common/theme';
+import Constants from 'expo-constants';
 import ProfileSVG from '../SVG/ProfileSVG';
 
 export default class RideDetails extends React.Component {
@@ -355,7 +356,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 25,
-        marginTop: Platform.select({ ios: 55, android: 45 })
+        marginTop: Constants.statusBarHeight + 3
     },
 
     viewMap: {

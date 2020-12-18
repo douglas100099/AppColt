@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 var { width } = Dimensions.get('window');
 import * as firebase from 'firebase';
+import Constants from 'expo-constants';
 
 export default class Reports extends React.Component {
     constructor(props) {
@@ -142,6 +143,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 25,
-        marginTop: Platform.select({ ios: 55, android: 45 })
+        marginTop: Constants.statusBarHeight + 3
     },
 })

@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
+import Constants from 'expo-constants';
 import RadioForm from 'react-native-simple-radio-button';
 import {
     BarChart,
@@ -812,7 +813,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.DEEPBLUE,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: Platform.select({ ios: 55, android: 45 })
+        marginTop: Constants.statusBarHeight + 3
     },
 
     txtHeader: {

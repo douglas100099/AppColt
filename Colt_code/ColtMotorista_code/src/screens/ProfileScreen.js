@@ -19,6 +19,7 @@ import { colors } from '../common/theme';
 import * as Permissions from 'expo-permissions';
 import * as ImagePicker from 'expo-image-picker';
 var { width, height } = Dimensions.get('window');
+import Constants from 'expo-constants'
 
 import * as firebase from 'firebase';
 import languageJSON from '../common/language';
@@ -249,7 +250,7 @@ export default class ProfileScreen extends React.Component {
         return (
             <View style={styles.mainView}>
                 <View style={styles.header}>
-                    <View style={{ position: 'absolute', marginTop: Platform.select({ ios: 55, android: 45 }), zIndex: 999, left: 20, }}>
+                    <View style={{ position: 'absolute', marginTop: Constants.statusBarHeight + 3, zIndex: 999, left: 20, }}>
                         <TouchableOpacity disabled={this.state.loaderBtn} onPress={() => { this.resetarPilha(); }}>
                             <Icon
                                 name='ios-arrow-dropleft-circle'
@@ -259,7 +260,7 @@ export default class ProfileScreen extends React.Component {
                             />
                         </TouchableOpacity>
                     </View>
-                    <View style={{ position: 'absolute', marginTop: Platform.select({ ios: 55, android: 45 }), zIndex: 999, right: 20, }}>
+                    <View style={{ position: 'absolute', marginTop: Constants.statusBarHeight + 3, zIndex: 999, right: 20, }}>
                         <TouchableOpacity
                             onPress={() => this.openAlertt()}
                             disabled={this.state.loaderBtn}

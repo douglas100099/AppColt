@@ -89,6 +89,19 @@ export default class DriverCompleteTrip extends React.Component {
         deactivateKeepAwake();
     };
 
+    checkInternet() {
+        this.unsubscribe = NetInfo.addEventListener(state => {
+            if (state.isConnected) {
+                firebase.database().goOnline()
+                this.setState({ isConnected: state.isConnected })
+                
+            } else {
+                firebase.database().goOffline()
+                this.setState({ isConnected: state.isConnected })
+            }
+        });
+    }
+
     async UNSAFE_componentWillMount() {
         const allDetails = this.props.navigation.getParam('allDetails')
         const regionUser = this.props.navigation.getParam('regionUser') ? this.props.navigation.getParam('regionUser') : null
@@ -801,11 +814,11 @@ export default class DriverCompleteTrip extends React.Component {
     }
 
     mapStyle(){
-        var dataAgr = new Date()
+        var dataAgr = new Date().getHours()
         if(dataAgr >= 0 && dataAgr <= 5 || dataAgr >= 18 && dataAgr <= 23){
-            return customMapStyle
-        } else {
             return customMapStyleDark
+        } else {
+            return customMapStyle
         }
     }
 

@@ -262,6 +262,7 @@ export default class DriverCompleteTrip extends React.Component {
         if (this.state.timeoutCenter != null) {
             clearInterval(this.state.timeoutCenter)
         }
+        this.unsubscribe();
     }
 
 

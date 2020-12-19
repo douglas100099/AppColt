@@ -167,10 +167,15 @@ export default class TrackNow extends React.Component {
     });
 
     async getDirections() {
+        const { setTimeEstimate } = this.props
         try {
             let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${this.state.startLoc}&destination=${this.state.destinationLoc}&key=${google_map_key}`)
             let respJson = await resp.json();
-            let points = Polyline.decode(respJson.routes[0].overview_polyline.points);
+            let points = Polyline.decode(respJson.routes[0].overview_polyline.points)
+
+            setTimeEstimate(respJson.routes[0].legs[0].duration.text)
+            //console.log(respJson.routes[0].legs[0].duration.text)
+
             let coords = points.map((point, index) => {
                 return {
                     latitude: point[0],

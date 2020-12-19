@@ -988,7 +988,7 @@ export default class FareScreen extends React.Component {
 
                                 <View style={styles.estimatedTimeBooking}>
                                     <View style={styles.containerTempo}>
-                                        <Text style={styles.textEstimatedTime}>Tempo estimado </Text>
+                                        <Text style={styles.textEstimatedTime}> Duração estimada </Text>
                                         <Text style={styles.estimatedTimeNumber}>{parseInt(this.state.estimatedTimeBooking / 60)} min</Text>
                                     </View>
                                     {this.state.metodoPagamento === 'Dinheiro' ?
@@ -1057,7 +1057,7 @@ export default class FareScreen extends React.Component {
                                     </TouchableOpacity>
                                 </View>
                                 {this.state.buttonDisabled ?
-                                    <Text style={{ textAlign: 'center', fontFamily: 'Inter-SemiBold' }} > Preparando corrida... </Text>
+                                    <Text style={{ paddingBottom: width < 375 ? 5 : 35, textAlign: 'center', fontFamily: 'Inter-SemiBold' }} > Preparando corrida... </Text>
                                     : null}
                             </Fragment>
                         }

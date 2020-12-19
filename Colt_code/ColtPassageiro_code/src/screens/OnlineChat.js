@@ -600,16 +600,16 @@ export default class OnlineChat extends Component {
               : null}
 
             {!this.state.isRecord ?
-              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 30, borderWidth: 2, borderColor: colors.GREEN.light, width: 45, height: 45, borderRadius: 50 }} onPressIn={() => this.startRecording()} onPressOut={() => this.stopRecording()}>
+              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 20, width: 45, height: 45, }} onPressIn={() => this.startRecording()} onPressOut={() => this.stopRecording()}>
                 <Icon
                   name='ios-mic'
                   type='ionicon'
-                  color={colors.GREEN.light}
-                  size={25}
+                  color={colors.DARK}
+                  size={35}
                 />
               </TouchableOpacity>
               :
-              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 30, backgroundColor: colors.WHITE, borderWidth: 1, borderColor: colors.BLACK, width: 45, height: 45, borderRadius: 50 }} onPressIn={() => this.setState({ isRecording: false })} onPressOut={() => this.setState({ isRecord: false })}>
+              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 30, backgroundColor: colors.WHITE, borderWidth: 1, borderColor: colors.RED, width: 45, height: 45, borderRadius: 50 }} onPressIn={() => this.setState({ isRecording: false })} onPressOut={() => this.setState({ isRecord: false })}>
                 <Icon
                   name='ios-trash'
                   type='ionicon'
@@ -638,17 +638,6 @@ export default class OnlineChat extends Component {
                 />
               </TouchableOpacity>
             }
-
-            {/*
-            <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 40, height: 40, borderRadius: 50 }} onPress={() => this.sendMessege(this.state.inputmessage)}>
-              <Icon
-                name='ios-paper-plane'
-                type='ionicon'
-                color={colors.WHITE}
-                size={25}
-                containerStyle={{ paddingEnd: 3 }}
-              />
-            </TouchableOpacity>*/}
 
           </View>
         </KeyboardAvoidingView>

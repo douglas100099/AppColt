@@ -62,26 +62,26 @@ export default class BookedCabScreen extends React.Component {
             searchDisabled: false,
             showBtnCancel: false
         }
-        this.searchDriverQueue = false,
-            this.currentRejected = false,
-            this.driverUidSelected = 0
+        this.searchDriverQueue = false
+        this.currentRejected = false
+        this.driverUidSelected = 0
     }
 
-    UNSAFE_componentWillMount() {
+    /*UNSAFE_componentWillMount() {
         let param = this.props.navigation.getParam('byMapScreen')
         if (!param) {
             this.setState({ driverSerach: true })
             this.searchDriver()
         }
-    }
+    }*/
 
     componentDidMount() {
         this._isMounted = true;
         this.state.bookingDataState == null ? this.getParamData = this.props.navigation.getParam('passData') : this.getParamData = this.state.bookingDataState
-        let param = this.props.navigation.getParam('byMapScreen')
-        if (!param) {
+        let param = this.props.navigation.getParam('byMapScreen') ? this.props.navigation.getParam('byMapScreen') : null
+        if (param == null) {
             this.searchDriver()
-            this.setState({ showBtnCancel: true })
+            this.setState({ driverSerach: true, showBtnCancel: true })
         }
 
         var curuser = firebase.auth().currentUser;
@@ -247,22 +247,6 @@ export default class BookedCabScreen extends React.Component {
                     this.searchDriverQueue ? this.setBookingDriver("waiting_queue_riders", this.state.currentBookingId, bookingData, this.driverUidSelected)
                         : this.setBookingDriver("waiting_riders_list", this.state.currentBookingId, bookingData, this.driverUidSelected)
                 }
-                /*if (this.driverUidSelected != 0) {
-                    firebase.database().ref('users/' + this.driverUidSelected + '/have_internet/').set(false).then(() => {
-                        setTimeout(() => {
-                            firebase.database().ref('users/' + this.driverUidSelected + '/').once('value', data => {
-                                if (data.val().have_internet) {
-                                    this.searchDriverQueue ? this.setBookingDriver("waiting_queue_riders", this.state.currentBookingId, bookingData, this.driverUidSelected)
-                                        : this.setBookingDriver("waiting_riders_list", this.state.currentBookingId, bookingData, this.driverUidSelected)
-                                }
-                                else {
-                                    this.driverUidSelected = 0
-                                    this.searchDriver()
-                                }
-                            })
-                        }, 3000)
-                    })
-                }*/
                 else {
                     this.searchDriverQueue = !this.searchDriverQueue
                     this.driverUidSelected = 0
@@ -338,11 +322,11 @@ export default class BookedCabScreen extends React.Component {
                         style: 'default',
                         text: 'Voltar',
                     },
-                    { 
+                    {
                         style: 'destructive',
-                        text: 'Continuar', 
-                        onPress: () => this.onCancellBookingQueue() 
-                },
+                        text: 'Continuar',
+                        onPress: () => this.onCancellBookingQueue()
+                    },
                 ],
                 { cancelable: true },
             );
@@ -351,7 +335,7 @@ export default class BookedCabScreen extends React.Component {
                 if (this.state.data_accept != null) {
                     const timeCurrent = new Date().getTime();
 
-                    if (timeCurrent - this.state.data_accept >= 30000) {
+                    if (timeCurrent - this.state.data_accept >= 60000) {
                         this.setState({ modalInfoVisible: true })
                     } else {
                         Alert.alert(
@@ -578,7 +562,7 @@ export default class BookedCabScreen extends React.Component {
                             <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20 }}> Cuidado! </Text>
                         </View>
                         <View style={{ flex: 3, flexDirection: 'column', }}>
-                            <Text style={{ marginHorizontal: 10, fontSize: 15, textAlign: 'center', fontFamily: 'Inter-Medium' }}> Essa corrida já está em andamento e você já ultrapassou o tempo máximo de cancelamento. </Text>
+                            <Text style={{ marginHorizontal: 10, fontSize: 15, textAlign: 'center', fontFamily: 'Inter-Medium' }}> Essa corrida já está em andamento e você já ultrapassou o tempo máximo de cancelamento (1 min). </Text>
                             <Text style={{ marginHorizontal: 10, fontSize: 15, marginTop: 10, textAlign: 'center', fontFamily: 'Inter-Medium' }}> Ao cancelar, será cobrada uma taxa no valor de R$3,00 na próxima corrida! </Text>
                         </View>
 
@@ -657,7 +641,7 @@ export default class BookedCabScreen extends React.Component {
             <View style={styles.mainContainer}>
                 <View style={styles.mapcontainer}>
                     {this.state.driverUID && this.state.region && this.state.bookingStatus && this.state.driverSerach == false ?
-                        <TrackNow duid={this.state.driverUID} alldata={this.state.region} bookingStatus={this.state.bookingStatus} />
+                        <TrackNow setTimeEstimate={(timeEstimate) => { this.setState({ timeDriverEstimate: timeEstimate }) }} duid={this.state.driverUID} alldata={this.state.region} bookingStatus={this.state.bookingStatus} />
                         :
                         <View style={{ marginTop: Platform.OS == 'ios' ? 130 : 90, alignSelf: 'center', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <ActivityIndicator
@@ -761,6 +745,20 @@ export default class BookedCabScreen extends React.Component {
                                     <Text style={styles.marcaCarro}> {this.state.carModel ? this.state.carModel : null} </Text>
                                 </View>
                             </View>
+                        </View>
+
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <View style={{ backgroundColor: colors.DEEPBLUE, height: 50, width: 70, marginLeft: 25, marginBottom: 10, alignItems: 'center', justifyContent: 'center' }}>
+                                {this.state.timeDriverEstimate ?
+                                    <Text style={{ fontFamily: 'Inter-Bold', paddingHorizontal: 5, color: '#fff', fontSize: 17 }}> {this.state.timeDriverEstimate} </Text>
+                                    :
+                                    <ActivityIndicator
+                                        size={'small'}
+                                        color={colors.WHITE}
+                                    />
+                                }
+                            </View>
+                            <Text style={{ fontFamily: 'Inter-Bold', color: colors.GREY2, fontSize: 17, marginLeft: 10 }}> Tempo estimado do motorista </Text>
                         </View>
 
                         <View style={{ justifyContent: 'center', alignItems: 'center', flex: .1, alignSelf: 'center' }}>
@@ -1065,8 +1063,8 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     viewInfo: {
-        backgroundColor: colors.GREY1,
-        height: 25,
+        backgroundColor: colors.GREY2,
+        height: 30,
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',
@@ -1186,6 +1184,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         opacity: 0.5,
+        height: 30,
         marginTop: 0,
     },
     placaCarro: {

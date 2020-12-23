@@ -119,10 +119,31 @@ export default class BookedCabScreen extends React.Component {
 
                 //Checando o status da corrida 
                 if (currUserBooking.status == "ACCEPTED") {
+                    /*firebase.database().ref('users/' + this.driverUidSelected).once('value', snap => {
+                        const data = snap.val()
+                        if (data) {
+                            if (data.queue == true && data.queueAvailable == true && data.driverActiveStatus == true) {
+                                this.setState({
+                                    data_accept: currUserBooking.data_accept ? currUserBooking.data_accept : null,
+                                    bookingStatus: currUserBooking.status,
+                                    driverSerach: false,
+                                    searchDriverQueue: true,
+                                })
+                            }
+                            else if (data.queue == false && data.driverActiveStatus == true) {
+                                this.setState({
+                                    data_accept: currUserBooking.data_accept ? currUserBooking.data_accept : null,
+                                    bookingStatus: currUserBooking.status,
+                                    driverSerach: false,
+                                    searchDriverQueue: false,
+                                })
+                            }
+                        }
+                    })*/
                     this.setState({
                         data_accept: currUserBooking.data_accept ? currUserBooking.data_accept : null,
                         bookingStatus: currUserBooking.status,
-                        driverSerach: false
+                        driverSerach: false,
                     })
                 }
                 else if (currUserBooking.status == "CANCELLED") {
@@ -243,15 +264,14 @@ export default class BookedCabScreen extends React.Component {
                     bokkingId: this.state.currentBookingId,
                     coords: this.state.coords
                 }
-                if (this.driverUidSelected != 0 && this.state.driverSerach) {
-                    this.setState({ driverSerach: false })
+                if (this.driverUidSelected != 0) {
                     firebase.database().ref('users/' + this.driverUidSelected).once('value', snap => {
                         const data = snap.val()
                         if (data) {
-                            if (data.queue == true && data.queueAvailable == true && data.driverActiveStatus == true && this.state.driverSerach == false) {
+                            if (data.queue == true && data.queueAvailable == true && data.driverActiveStatus == true) {
                                 this.setBookingDriver("waiting_queue_riders", this.state.currentBookingId, bookingData, this.driverUidSelected)
                             }
-                            else if (data.queue == false && data.driverActiveStatus == true && this.state.driverSerach == false) {
+                            else if (data.queue == false && data.driverActiveStatus == true) {
                                 this.setBookingDriver("waiting_riders_list", this.state.currentBookingId, bookingData, this.driverUidSelected)
                             }
                         }
@@ -271,25 +291,20 @@ export default class BookedCabScreen extends React.Component {
     }
 
     setBookingDriver(name, bookingId, bookingData, driverUID) {
-        if (this.state.driverSerach) {
-            this.setState({ driverSerach: false })
-        }
         setTimeout(() => {
-            if (this.state.driverSerach == false) {
-                firebase.database().ref('users/' + driverUID + '/' + name + '/' + bookingId + '/').set(this.state.bookingdataDetails)
-                    .then(() => {
-                        firebase.database().ref(`users/` + this.state.currentUser + '/my-booking/' + this.getParamData.bokkingId).update({ status: "NEW" })
-                            .then(() => {
-                                firebase.database().ref('bookings/' + bookingId + '/').update({
-                                    status: "NEW",
-                                    requestedDriver: driverUID
-                                }).then(() => {
-                                    this.setState({ bookingDataState: bookingData })
-                                })
-                                this.sendPushNotification(driverUID, languageJSON.new_booking_request_push_notification)
+            firebase.database().ref('users/' + driverUID + '/' + name + '/' + bookingId + '/').set(this.state.bookingdataDetails)
+                .then(() => {
+                    firebase.database().ref(`users/` + this.state.currentUser + '/my-booking/' + this.getParamData.bokkingId).update({ status: "NEW" })
+                        .then(() => {
+                            firebase.database().ref('bookings/' + bookingId + '/').update({
+                                status: "NEW",
+                                requestedDriver: driverUID
+                            }).then(() => {
+                                this.setState({ bookingDataState: bookingData })
                             })
-                    })
-            }
+                            this.sendPushNotification(driverUID, languageJSON.new_booking_request_push_notification)
+                        })
+                })
         }, 500)
     }
 

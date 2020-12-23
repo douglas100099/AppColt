@@ -84,8 +84,8 @@ export default class BookedCabScreen extends React.Component {
             this.setState({ driverSerach: true, showBtnCancel: true })
         }
 
-        var curuser = firebase.auth().currentUser;
-        let bookingResponse = firebase.database().ref(`users/` + curuser.uid + '/my-booking/' + this.getParamData.bokkingId);
+        let curuser = firebase.auth().currentUser;
+        const bookingResponse = firebase.database().ref(`users/` + curuser.uid + '/my-booking/' + this.getParamData.bokkingId);
         bookingResponse.on('value', currUserBookings => {
             if (currUserBookings.val()) {
                 let currUserBooking = currUserBookings.val()
@@ -150,7 +150,7 @@ export default class BookedCabScreen extends React.Component {
                     this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
                 } else if (currUserBooking.status == "REJECTED") {
                     this.driverUidSelected = 0
-                    this.searchDriver();
+                    this.searchDriver()
                 }
             }
         })
@@ -158,7 +158,7 @@ export default class BookedCabScreen extends React.Component {
     }
 
     componentWillUnmount() {
-        this._isMounted = false;
+        this._isMounted = false
     }
 
     _retrieveSettings = async () => {
@@ -168,9 +168,9 @@ export default class BookedCabScreen extends React.Component {
                 this.setState({ settings: JSON.parse(value) });
             }
         } catch (error) {
-            console.log("Asyncstorage issue 8 ");
+            console.log("Asyncstorage issue 8 ")
         }
-    };
+    }
 
     async searchDriver() {
         if (this._isMounted) {
@@ -243,12 +243,23 @@ export default class BookedCabScreen extends React.Component {
                     bokkingId: this.state.currentBookingId,
                     coords: this.state.coords
                 }
-                if (this.driverUidSelected != 0) {
-                    this.searchDriverQueue ? this.setBookingDriver("waiting_queue_riders", this.state.currentBookingId, bookingData, this.driverUidSelected)
-                        : this.setBookingDriver("waiting_riders_list", this.state.currentBookingId, bookingData, this.driverUidSelected)
+                if (this.driverUidSelected != 0 && this.state.driverSerach) {
+                    this.setState({ driverSerach: false })
+                    firebase.database().ref('users/' + this.driverUidSelected).once('value', snap => {
+                        const data = snap.val()
+                        if (data) {
+                            if (data.queue == true && data.queueAvailable == true && data.driverActiveStatus == true && this.state.driverSerach == false) {
+                                this.setBookingDriver("waiting_queue_riders", this.state.currentBookingId, bookingData, this.driverUidSelected)
+                            }
+                            else if (data.queue == false && data.driverActiveStatus == true && this.state.driverSerach == false) {
+                                this.setBookingDriver("waiting_riders_list", this.state.currentBookingId, bookingData, this.driverUidSelected)
+                            }
+                        }
+                    })
                 }
                 else {
                     this.searchDriverQueue = !this.searchDriverQueue
+
                     this.driverUidSelected = 0
                     setTimeout(() => {
                         if (this.state.driverSerach)
@@ -260,20 +271,25 @@ export default class BookedCabScreen extends React.Component {
     }
 
     setBookingDriver(name, bookingId, bookingData, driverUID) {
+        if (this.state.driverSerach) {
+            this.setState({ driverSerach: false })
+        }
         setTimeout(() => {
-            firebase.database().ref('users/' + driverUID + '/' + name + '/' + bookingId + '/').set(this.state.bookingdataDetails)
-                .then(() => {
-                    firebase.database().ref(`users/` + this.state.currentUser + '/my-booking/' + this.getParamData.bokkingId).update({ status: "NEW" })
-                        .then(() => {
-                            firebase.database().ref('bookings/' + bookingId + '/').update({
-                                status: "NEW",
-                                requestedDriver: driverUID
-                            }).then(() => {
-                                this.setState({ bookingDataState: bookingData })
+            if (this.state.driverSerach == false) {
+                firebase.database().ref('users/' + driverUID + '/' + name + '/' + bookingId + '/').set(this.state.bookingdataDetails)
+                    .then(() => {
+                        firebase.database().ref(`users/` + this.state.currentUser + '/my-booking/' + this.getParamData.bokkingId).update({ status: "NEW" })
+                            .then(() => {
+                                firebase.database().ref('bookings/' + bookingId + '/').update({
+                                    status: "NEW",
+                                    requestedDriver: driverUID
+                                }).then(() => {
+                                    this.setState({ bookingDataState: bookingData })
+                                })
+                                this.sendPushNotification(driverUID, languageJSON.new_booking_request_push_notification)
                             })
-                            this.sendPushNotification(driverUID, languageJSON.new_booking_request_push_notification)
-                        })
-                })
+                    })
+            }
         }, 500)
     }
 
@@ -331,7 +347,10 @@ export default class BookedCabScreen extends React.Component {
                 { cancelable: true },
             );
         } else {
-            if (this.state.bookingStatus == 'ACCEPTED') {
+            if (this.state.bookingStatus == 'NEW' || this.state.bookingStatus == 'REJECTED') {
+                this.onCancellSearchBooking(true)
+            }
+            else if (this.state.bookingStatus == 'ACCEPTED') {
                 if (this.state.data_accept != null) {
                     const timeCurrent = new Date().getTime();
 
@@ -357,9 +376,6 @@ export default class BookedCabScreen extends React.Component {
             }
             else if (this.state.bookingStatus == 'EMBARQUE') {
                 this.setState({ modalInfoVisible: true })
-            }
-            else if (this.state.bookingStatus == 'NEW' || this.state.bookingStatus == 'REJECTED') {
-                this.onCancellSearchBooking(true)
             }
         }
     }
@@ -401,6 +417,12 @@ export default class BookedCabScreen extends React.Component {
 
     //Cancelar corrida antes do motorista ter aceito
     onCancellSearchBooking(params) {
+        if (params) {
+            //Atualiza o status da corrida em "bookings" no firebase
+            firebase.database().ref(`bookings/` + this.state.currentBookingId + '/').update({
+                status: 'CANCELLED',
+            })
+        }
         //Remove a corrida do perfil do passageiro
         firebase.database().ref(`/users/` + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').remove()
             .then(() => {
@@ -415,18 +437,12 @@ export default class BookedCabScreen extends React.Component {
                             firebase.database().ref('users/' + requestedDriver + '/waiting_riders_list/' + this.state.currentBookingId + '/').remove()
                     }
                 }).then(() => {
-                    firebase.database().ref('bookings/' + this.state.currentBookingId + '/requestedDriver/').remove();
+                    firebase.database().ref('bookings/' + this.state.currentBookingId + '/requestedDriver/').remove()
                 })
             })
-        if (params) {
-            //Atualiza o status da corrida em "bookings" no firebase
-            firebase.database().ref(`bookings/` + this.state.currentBookingId + '/').update({
-                status: 'CANCELLED',
-            })
-        }
 
         this.setState({ driverSerach: false })
-        this.props.navigation.replace('FareDetails', { data: this.state.region });
+        this.props.navigation.replace('FareDetails', { data: this.state.region })
     }
 
     onCancelConfirm() {

@@ -809,11 +809,11 @@ exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref
     const requested = snap.val()
 
     setTimeout(() => {
-        admin.database().ref('bookings/' + bookingId).once("value", (data) => {
+        admin.database().ref('bookings/' + bookingId + '/').once("value", (data) => {
             let dataBooking = data.val()
             if (dataBooking) {
                 if (requested === dataBooking['requestedDriver'] && dataBooking.status === 'NEW') {
-                    admin.database().ref("users/" + requested + "/").on('value', snap => {
+                    admin.database().ref("users/" + requested + "/").once('value', snap => {
                         const data = snap.val()
                         if (data.waiting_queue_riders) {
 

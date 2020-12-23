@@ -483,9 +483,7 @@ export default class FareScreen extends React.Component {
                                 format: 'DD/MM/YYYY'
                             }}
                             value={this.state.dateInput}
-                            onChangeText={(maskedText) => {
-                                this.setState({ dateInput: maskedText })
-                            }}
+                            onChangeText={(maskedText) => { this.setState({ dateInput: maskedText }) }}
                             style={{ fontSize: 20, marginLeft: 12, height: 40 }}
                             maxLength={10}
                             ref={(ref) => this.dateInputRef = ref}
@@ -518,7 +516,7 @@ export default class FareScreen extends React.Component {
                     <View style={styles.backgroundModalPayment}>
                         <View>
                             <View style={{ marginLeft: 20, marginTop: 20 }}>
-                                <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', fontWeight: "700" }}> Método de pagamento</Text>
+                                <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold' }}> Método de pagamento</Text>
                             </View>
                             <TouchableOpacity style={styles.boxMoney} onPress={() => this.onPressPayment("Dinheiro")}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>

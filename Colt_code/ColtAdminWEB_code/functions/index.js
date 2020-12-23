@@ -875,7 +875,7 @@ exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref
                 }
             }
         })
-    }, 15000)
+    }, 60000)
 })
 
 /*exports.bookingScheduler = functions.pubsub.schedule('every 5 minutes').onRun((context) => {

@@ -10,7 +10,8 @@ import {
   Image,
   Keyboard,
   TextInput,
-  Platform
+  Platform,
+  StatusBar
 } from "react-native";
 import { colors } from "../common/theme";
 import * as Permissions from 'expo-permissions';
@@ -20,6 +21,7 @@ import { Audio, AVPlaybackStatus } from 'expo-av';
 import languageJSON from '../common/language';
 var { height, width } = Dimensions.get('window');
 import { RequestPushMsg } from '../common/RequestPushMsg';
+import Constants from 'expo-constants';
 import ProfileSVG from "../SVG/ProfileSVG";
 import { withNavigation } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
@@ -425,6 +427,7 @@ export default class OnlineChat extends Component {
   render() {
     return (
       <View style={styles.container}>
+      <StatusBar barStyle='dark-content' translucent backgroundColor={colors.TRANSPARENT}/>
         <View style={styles.viewHeader}>
           <View style={styles.bordaIconeVoltar}>
             <TouchableOpacity onPress={() => { this.currentScreen = false, this.props.navigation.goBack() }}>
@@ -629,7 +632,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-around',
-    height: Platform.OS == 'ios' ? 100 : 85,
+    marginTop: Constants.statusBarHeight + 3,
+    height: Platform.OS == 'ios' ? 100 : 60,
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { x: 0, y: 5 },

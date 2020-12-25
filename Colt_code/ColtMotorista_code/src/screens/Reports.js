@@ -10,6 +10,7 @@ import {
     Dimensions,
     ActivityIndicator,
     FlatList,
+    StatusBar,
 } from 'react-native';
 var { width } = Dimensions.get('window');
 import * as firebase from 'firebase';
@@ -70,6 +71,7 @@ export default class Reports extends React.Component {
     render() {
         return (
             <View style={styles.mainView}>
+            <StatusBar barStyle='dark-content' translucent backgroundColor={colors.TRANSPARENT}/>
                 <View style={styles.header}>
                     <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK, textAlign: 'center' }}>Relatórios</Text>
                     <View style={{ position: 'absolute', zIndex: 999, left: 20 }}>

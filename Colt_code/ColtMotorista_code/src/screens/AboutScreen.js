@@ -8,16 +8,13 @@ import {
     ScrollView,
     TouchableOpacity,
     Dimensions,
-    Pressable,
+    StatusBar,
 } from 'react-native';
 var { width } = Dimensions.get('window');
 import * as firebase from 'firebase';
 import languageJSON from '../common/language';
-import { AnimatedCircularProgress } from 'react-native-circular-progress';
-import Easing from 'react-native-reanimated';
 import * as Linking from 'expo-linking';
 import Constants from 'expo-constants';
-import * as Permissions from 'expo-permissions';
 
 
 export default class AboutPage extends React.Component {
@@ -48,6 +45,7 @@ export default class AboutPage extends React.Component {
     render() {
         return (
             <View style={styles.mainView}>
+            <StatusBar barStyle='dark-content' translucent backgroundColor={colors.TRANSPARENT}/>
                 <View style={styles.header}>
                     <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK, textAlign: 'center' }}>Suporte</Text>
                     <View style={{ position: 'absolute', zIndex: 999, left: 20 }}>

@@ -9,9 +9,12 @@ import {
     ActivityIndicator,
     TouchableOpacity,
     Dimensions,
-    AsyncStorage
+    Alert,
+    AsyncStorage,
+    StatusBar
 } from 'react-native';
 import { Icon } from 'react-native-elements';
+import NetInfo from '@react-native-community/netinfo';
 import StarRating from 'react-native-star-rating';
 import { colors } from '../common/theme';
 import languageJSON from '../common/language';
@@ -185,35 +188,49 @@ export default class DriverTripComplete extends React.Component {
 
     submitNow() {
         this.setState({ loader: true })
-        firebase.database().ref('users/' + this.state.rideDetails.customer + '/ratings/details').push({
-            user: this.state.curUid,
-            rate: this.state.starCount > 0 ? this.state.starCount : 5,
-        }).then((res) => {
-            let path = firebase.database().ref('users/' + this.state.rideDetails.customer + '/ratings/');
-            path.once('value', snapVal => {
-                if (snapVal.val()) {
-                    // rating calculation
-                    let ratings = snapVal.val().details;
-                    var total = 0;
-                    var count = 0;
-                    for (let key in ratings) {
-                        count = count + 1;
-                        total = total + ratings[key].rate;
-                    }
-                    let fRating = total / count;
-                    if (fRating) {
-                        //avarage Rating submission
-                        firebase.database().ref('users/' + this.state.rideDetails.customer + '/ratings/').update({ userrating: parseFloat(fRating).toFixed(1) }).then(() => {
-                            //Rating for perticular booking 
-                            firebase.database().ref('users/' + this.state.rideDetails.customer + '/my-booking/' + this.state.bookingId + '/').update({
-                                rating: this.state.starCount > 0 ? this.state.starCount : 5,
-                            })
-                        })
-                    }
-                }
-            })
-        }).then(() => {
-            this.onPressDone(this.state.rideDetails)
+        NetInfo.fetch().then(state => {
+            if(state.isConnected){
+                firebase.database().ref('users/' + this.state.rideDetails.customer + '/ratings/details').push({
+                    user: this.state.curUid,
+                    rate: this.state.starCount > 0 ? this.state.starCount : 5,
+                }).then((res) => {
+                    let path = firebase.database().ref('users/' + this.state.rideDetails.customer + '/ratings/');
+                    path.once('value', snapVal => {
+                        if (snapVal.val()) {
+                            // rating calculation
+                            let ratings = snapVal.val().details;
+                            var total = 0;
+                            var count = 0;
+                            for (let key in ratings) {
+                                count = count + 1;
+                                total = total + ratings[key].rate;
+                            }
+                            let fRating = total / count;
+                            if (fRating) {
+                                //avarage Rating submission
+                                firebase.database().ref('users/' + this.state.rideDetails.customer + '/ratings/').update({ userrating: parseFloat(fRating).toFixed(1) }).then(() => {
+                                    //Rating for perticular booking 
+                                    firebase.database().ref('users/' + this.state.rideDetails.customer + '/my-booking/' + this.state.bookingId + '/').update({
+                                        rating: this.state.starCount > 0 ? this.state.starCount : 5,
+                                    })
+                                })
+                            }
+                        }
+                    })
+                }).then(() => {
+                    this.onPressDone(this.state.rideDetails)
+                })
+            } else {
+                this.setState({ loader: false })
+                Alert.alert(
+                    "Problema ao finalizar corrida",
+                    "Houve um problema ao finalizar sua corrida, verifique o status de conexão com a internet.",
+                    [
+                        { text: "OK", onPress: () => console.log("OK Pressed") }
+                    ],
+                    { cancelable: false }
+                )
+            }
         })
 
     }
@@ -221,6 +238,7 @@ export default class DriverTripComplete extends React.Component {
     render() {
         return (
             <SafeAreaView style={styles.mainView}>
+            <StatusBar barStyle='dark-content' translucent backgroundColor={colors.TRANSPARENT}/>
                 <View style={styles.subView}>
                     <Animatable.View animation='fadeInDownBig' useNativeDriver={true} style={styles.viewIcon}>
                         <View style={styles.Icon}>
@@ -308,7 +326,7 @@ export default class DriverTripComplete extends React.Component {
                                     <Text style={styles.nomePassageiro}>{this.state.rideDetails.firstNameRider}</Text>
                                 </View>
                                 <View style={styles.footerPgt3}>
-                                    <Text style={styles.txtFormapgt3}>{this.state.rideDetails.pagamento ? this.state.rideDetails.pagamento.payment_mode : 'Dinheiro'}</Text>
+                                    <Text style={styles.txtFormapgt3}>Dinheiro/Carteira</Text>
                                     <View style={{ flexDirection: 'row', alignItems: 'center', }}>
                                         <Icon
                                             name='dollar-sign'

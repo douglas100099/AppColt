@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal, Image, Platform, Alert, ActivityIndicator, AsyncStorage } from 'react-native';
+import { Text, StatusBar, View, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal, Image, Platform, Alert, ActivityIndicator, AsyncStorage } from 'react-native';
 import { Icon, Tooltip, Button, Badge } from 'react-native-elements';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import { colors } from '../common/theme';
@@ -83,10 +83,10 @@ export default class DriverTripAccept extends React.Component {
             statusCorrida: false,
             statusServer: false,
             iniciouTeste: false,
-            isConnected: null,
+            //isConnected: null,
         }
         this._getLocationAsync();
-        this.checkInternet();
+        //this.checkInternet();
     }
 
     _activate = () => {
@@ -97,7 +97,7 @@ export default class DriverTripAccept extends React.Component {
         deactivateKeepAwake();
     };
 
-    checkInternet() {
+    /*checkInternet() {
         this.unsubscribe = NetInfo.addEventListener(state => {
             if (state.isConnected) {
                 firebase.database().goOnline()
@@ -108,7 +108,7 @@ export default class DriverTripAccept extends React.Component {
                 this.setState({ isConnected: state.isConnected })
             }
         });
-    }
+    }*/
 
     // ESSE .ON AI PEGA E LER O VALOR DO BANCO QUANDO CHAMADO, E FICA ATUALIZANDO
     _getStatusDetails = async () => {
@@ -303,14 +303,19 @@ export default class DriverTripAccept extends React.Component {
 
     playSound() {
         this.setState({ isSound: true })
-        this.sound.playAsync().then((result) => {
-            if (result.isLoaded) {
-                this.sound.setIsLoopingAsync(true)
-                this.sound.setVolumeAsync(1)
+        this.sound.getStatusAsync().then((result) => {
+            if (result.isLoaded && !result.isPlaying) {
+                this.sound.playAsync().then((result) => {
+                    if (result.isLoaded) {
+                        this.sound.setIsLoopingAsync(true)
+                        this.sound.setVolumeAsync(1)
+                    }
+                }).catch((err) => {
+                    console.log(err)
+                })
             }
         }).catch((err) => {
             console.log(err)
-            alert('Tivemos um problema com o som.')
         })
         console.log('PLAY SOUND')
     }
@@ -319,7 +324,13 @@ export default class DriverTripAccept extends React.Component {
     stopSound() {
         if (this._isMounted) {
             this.setState({ isSound: false })
-            this.sound.stopAsync();
+            this.sound.getStatusAsync().then((result) => {
+                if(result.isPlaying){
+                    this.sound.stopAsync()
+                }
+            }).catch((err) => {
+                console.log(err)
+            })
             console.log('STOP SOUND')
         }
     }
@@ -336,7 +347,6 @@ export default class DriverTripAccept extends React.Component {
         }
         this._unsubscribe();
         this.sound.unloadAsync();
-        this.unsubscribe();
     }
 
     // VERIFICAR BATERIA
@@ -722,7 +732,6 @@ export default class DriverTripAccept extends React.Component {
                     this.sendPushNotification(item.customer, this.state.driverDetails.firstName + ' aceitou seu chamado, aguarde.')
                 }).catch((error) => {
                     console.log(error)
-                    alert('Ops, tivemos um problema.')
                 })
 
 
@@ -1032,8 +1041,10 @@ export default class DriverTripAccept extends React.Component {
     mapStyle() {
         var dataAgr = new Date().getHours()
         if (dataAgr >= 0 && dataAgr <= 5 || dataAgr >= 18 && dataAgr <= 23) {
+            this.colorStatus = 'light-content'
             return customMapStyleDark
         } else {
+            this.colorStatus = 'dark-content'
             return customMapStyle
         }
     }
@@ -1042,7 +1053,7 @@ export default class DriverTripAccept extends React.Component {
         const { region } = this.state;
         return (
             <View style={styles.mainViewStyle}>
-                {/*<StatusBar barStyle='dark-content' backgroundColor={colors.DEEPBLUE} />*/}
+                <StatusBar barStyle={this.colorStatus ? this.colorStatus : 'default'} translucent backgroundColor={colors.TRANSPARENT} />
                 {/* AQUI ENTRA TODOS OS BOTÕES FLUTUANTES DO MENU */}
 
                 {/* MODAL ACEITAR E REJEITAR */}
@@ -1310,7 +1321,7 @@ export default class DriverTripAccept extends React.Component {
                                     </TouchableOpacity>
                                 }
 
-                                
+
 
                                 {/* BOTÃO FOTOS */}
                                 <TouchableOpacity style={styles.touchaFoto} disabled={this.state.loaderBtn} onPress={() => { this.photoPerfil() }}>

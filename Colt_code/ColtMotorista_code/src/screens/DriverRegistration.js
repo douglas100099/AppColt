@@ -41,7 +41,7 @@ export default class DriverRegistrationPage extends React.Component {
       usertype: 'driver',
       approved: false,
       queue: false,
-      queueAvailable: true,
+      queueAvailable: false,
       carType: CarType,
       createdAt: new Date().toISOString(),
       cpfNum: cpfNum,

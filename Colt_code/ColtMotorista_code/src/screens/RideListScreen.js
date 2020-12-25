@@ -5,6 +5,7 @@ import {
     View,
     Text,
     TouchableOpacity,
+    StatusBar,
   } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { colors } from '../common/theme';
@@ -54,6 +55,7 @@ export default class RideListPage extends React.Component {
     render() {
         return (
             <View style={styles.mainView}>
+            <StatusBar barStyle='dark-content' translucent backgroundColor={colors.TRANSPARENT}/>
                 <View style={styles.header}>
                     <Text style={{fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK, textAlign: 'center'}}>Histórico de corridas</Text>
                     <View style={{position: 'absolute', zIndex: 999, left: 20}}>

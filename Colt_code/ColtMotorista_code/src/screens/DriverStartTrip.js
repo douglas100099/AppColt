@@ -12,6 +12,7 @@ import {
     TouchableOpacity,
     Alert,
     Platform,
+    StatusBar,
 } from 'react-native';
 import { Icon, Button } from 'react-native-elements';
 import Constants from 'expo-constants'
@@ -75,9 +76,10 @@ export default class DriverStartTrip extends React.Component {
             viewInfos: false,
             loaderCancel: false,
             kmRestante: 0,
+            tempoRestante: 0,
             isAtrasado: false,
         }
-        this.checkInternet();
+        /*this.checkInternet();*/
     }
 
     _activate = () => {
@@ -88,7 +90,7 @@ export default class DriverStartTrip extends React.Component {
         deactivateKeepAwake();
     };
 
-    checkInternet() {
+    /*checkInternet() {
         this.unsubscribe = NetInfo.addEventListener(state => {
             if (state.isConnected) {
                 firebase.database().goOnline()
@@ -99,7 +101,7 @@ export default class DriverStartTrip extends React.Component {
                 this.setState({ isConnected: state.isConnected })
             }
         });
-    }
+    }*/
 
     async UNSAFE_componentWillMount() {
         console.log('ENTROU NA TELA START TRIP')
@@ -135,7 +137,7 @@ export default class DriverStartTrip extends React.Component {
             console.log('REMOVEU O WATCH STARTTRIP')
             this.location.remove()
         }
-        this.unsubscribe();
+        //this.unsubscribe();
         console.log('DESMONTOU A TELA START TRIP')
     }
 
@@ -173,7 +175,7 @@ export default class DriverStartTrip extends React.Component {
                 if(this._isMounted){
                     this.setState({ region: region });
                     this.setLocationDB(region.latitude, region.longitude, region.angle);
-                    this.checkDistKM();
+                    //this.checkDistKM();
                 }
             },
             error => console.log(error)
@@ -182,14 +184,14 @@ export default class DriverStartTrip extends React.Component {
         return this.location
     };
 
-    checkDistKM() {
+    /*checkDistKM() {
         var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
         var location2 = [this.state.rideDetails.pickup.lat, this.state.rideDetails.pickup.lng];   //Driver lat and lang
         var distance = distanceCalc(location1, location2);
         if(this._isMounted){
             this.setState({ kmRestante: distance })
         }
-    }
+    }*/
 
     updateAdress(lat, lng) {
         let uid = firebase.auth().currentUser.uid;
@@ -315,17 +317,30 @@ export default class DriverStartTrip extends React.Component {
 
     //start trip button press function
     onPressStartTrip(item) {
-        if(this._isMounted){
-            this.setState({ allData: item }, () => {
-                console.log(this.state.allData);
-                if (this.state.allData.otp) {
-                    this.setState({ mediaSelectModal: true })
-                } else {
-                    this.codeEnter(false, this.state.allData.otp);
+        NetInfo.fetch().then(state => {
+            if(state.isConnected){
+                if(this._isMounted){
+                    this.setState({ allData: item }, () => {
+                        console.log(this.state.allData);
+                        if (this.state.allData.otp) {
+                            this.setState({ mediaSelectModal: true })
+                        } else {
+                            this.codeEnter(false, this.state.allData.otp);
+                        }
+                        //this.setState({mediaSelectModal:true})
+                    });
                 }
-                //this.setState({mediaSelectModal:true})
-            });
-        }
+            } else {
+                Alert.alert(
+                    "Problema ao iniciar corrida",
+                    "Houve um problema ao iniciar sua corrida, verifique o status de conexão com a internet.",
+                    [
+                        { text: "OK", onPress: () => console.log("OK Pressed") }
+                    ],
+                    { cancelable: false }
+                )
+            }
+        })
     }
 
     showActionSheet = () => {
@@ -388,8 +403,6 @@ export default class DriverStartTrip extends React.Component {
                             promoKey: this.state.allData.pagamento.promoKey,
                             payment_status: 'DUE',
                             cancellValue: this.state.allData.pagamento.cancellValue,
-                            finalCalcBooking: true,
-                            manageMoney: true,
                         },
                         trip_start_time: new Date().toLocaleTimeString(dateStyle),
                     }
@@ -497,21 +510,35 @@ export default class DriverStartTrip extends React.Component {
     }
 
     embarque() {
-        // ATUALIZANDO STATUS BOOKINGS
-        firebase.database().ref(`bookings/` + this.state.allData.bookingId + '/').update({
-            status: 'EMBARQUE',
-        }).then(() => {
-            // ATUALIZANDO STATUS DRIVER
-            firebase.database().ref(`/users/` + this.state.curUid + '/my_bookings/' + this.state.allData.bookingId + '/').update({
-                status: 'EMBARQUE',
-            })
-        }).then(() => {
-            // ATUALIZANDO STATUS RIDER
-            firebase.database().ref(`/users/` + this.state.rideDetails.customer + '/my-booking/' + this.state.allData.bookingId + '/').update({
-                status: 'EMBARQUE',
-            })
-            this.sendPushNotification2(this.state.rideDetails.customer, 'O motorista chegou ao local de embarque.')
-            if(this._isMounted){
+        NetInfo.fetch().then(state => {
+            if(state.isConnected){
+                // ATUALIZANDO STATUS BOOKINGS
+                firebase.database().ref(`bookings/` + this.state.allData.bookingId + '/').update({
+                    status: 'EMBARQUE',
+                }).then(() => {
+                    // ATUALIZANDO STATUS DRIVER
+                    firebase.database().ref(`/users/` + this.state.curUid + '/my_bookings/' + this.state.allData.bookingId + '/').update({
+                        status: 'EMBARQUE',
+                    })
+                }).then(() => {
+                    // ATUALIZANDO STATUS RIDER
+                    firebase.database().ref(`/users/` + this.state.rideDetails.customer + '/my-booking/' + this.state.allData.bookingId + '/').update({
+                        status: 'EMBARQUE',
+                    })
+                    this.sendPushNotification2(this.state.rideDetails.customer, 'O motorista chegou ao local de embarque.')
+                    if(this._isMounted){
+                        this.setState({ loader: false })
+                    }
+                })
+            } else {
+                Alert.alert(
+                    "Problema ao sinalizar embarque",
+                    "Houve um problema ao sinalizar seu embarque, verifique o status de conexão com a internet.",
+                    [
+                        { text: "OK", onPress: () => console.log("OK Pressed") }
+                    ],
+                    { cancelable: false }
+                )
                 this.setState({ loader: false })
             }
         })
@@ -593,8 +620,10 @@ export default class DriverStartTrip extends React.Component {
     mapStyle(){
         var dataAgr = new Date().getHours()
         if(dataAgr >= 0 && dataAgr <= 5 || dataAgr >= 18 && dataAgr <= 23){
+            this.colorStatus = 'light-content'
             return customMapStyleDark
         } else {
+            this.colorStatus = 'dark-content'
             return customMapStyle
         }
     }
@@ -630,6 +659,7 @@ export default class DriverStartTrip extends React.Component {
                                 <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.RED, marginRight: 5, marginLeft: 5 }}></View>
                                 <Text style={styles.TxtEnderecoDestino}>{this.state.rideDetails.drop.add}</Text>
                             </View>
+                            <Text style={{ color: colors.WHITE, fontFamily: 'Inter-Bold', fontSize: 14, textAlign: 'center', backgroundColor: colors.DEEPBLUE, borderBottomLeftRadius: 10,borderBottomRightRadius: 10, padding: 3 }}>Valor estimado: R$ {this.state.rideDetails.pagamento.estimate}</Text>
                         </View>
                         <View style={styles.viewIcones}>
                             <View style={{ flex: 1 }}>
@@ -749,6 +779,7 @@ export default class DriverStartTrip extends React.Component {
     render() {
         return (
             <View style={styles.containerView}>
+            <StatusBar barStyle={this.colorStatus ? this.colorStatus : 'default'} translucent backgroundColor={colors.TRANSPARENT}/>
                 <View>
                     <ActionSheet
                         ref={o => this.ActionSheet = o}
@@ -807,10 +838,11 @@ export default class DriverStartTrip extends React.Component {
                         <Directions
                             origin={{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }}
                             destination={{ latitude: this.state.rideDetails.pickup.lat, longitude: this.state.rideDetails.pickup.lng }}
+                            onReady={result => {this.setState({ kmRestante: result.distance, tempoRestante: result.duration })}}
                         />
                     </MapView>
-                    <View style={{ position: 'absolute', alignSelf: 'center',top: Constants.statusBarHeight + 3, height: 70, width: width/1.2, backgroundColor: colors.WHITE, elevation: 4, borderRadius: 15}}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+                    <View style={{ position: 'absolute', alignSelf: 'center',top: Constants.statusBarHeight + 3, height: 70, width: width/1.2, backgroundColor: colors.WHITE, elevation: 4, borderTopLeftRadius: 15, borderTopRightRadius: 15}}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
                             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                                 <Text style={{ textAlign: 'center', color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Regular' }}>{this.state.rideDetails.pickup.add}</Text>
                             </View>
@@ -825,6 +857,17 @@ export default class DriverStartTrip extends React.Component {
                                     iconStyle={{ marginTop: 2, marginRight: 2 }}
                                 />
                                 </TouchableOpacity>
+                            </View>
+                        </View>
+                        <View style={{ justifyContent: 'center', alignItems: 'center', backgroundColor: colors.WHITE, borderBottomLeftRadius: 15, borderBottomRightRadius: 15, borderTopWidth: 1, borderTopColor: colors.DEEPBLUE,height: 30  }}>
+                            <View style={{ flex: 1, flexDirection: 'row' }}>
+                                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                                    <Text style={{ fontFamily: 'Inter-Bold', fontSize: 15, color: colors.DEEPBLUE }}>{parseInt(this.state.tempoRestante)} Min.</Text>
+                                </View>
+                                <View style={{ borderWidth: 0.6, borderColor: colors.GREY1, height: 29, width: 1 }}></View>
+                                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                                    <Text style={{ fontFamily: 'Inter-Bold', fontSize: 15, color: colors.DEEPBLUE }}>{parseFloat(this.state.kmRestante).toFixed(2)} KM</Text>
+                                </View>
                             </View>
                         </View>
                     </View>
@@ -890,9 +933,6 @@ export default class DriverStartTrip extends React.Component {
                                     </TouchableOpacity>
                                 }
                             </View>
-                        </View>
-                        <View style={{ marginRight: 10, justifyContent: 'center', backgroundColor: colors.GREY1, height: 25, paddingHorizontal: 15, borderRadius: 15 }}>
-                            <Animatable.Text animation='fadeIn' useNativeDriver={true} style={{ fontFamily: 'Inter-Bold', fontSize: 14, color: colors.BLACK }}>{parseFloat(this.state.kmRestante).toFixed(2)} KM</Animatable.Text>
                         </View>
                     </View>
 

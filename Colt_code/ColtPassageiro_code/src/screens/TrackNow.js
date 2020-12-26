@@ -117,7 +117,7 @@ export default class TrackNow extends React.Component {
                 enableHighAccuracy: true,
                 timeout: 20000,
                 maximumAge: 1000,
-                distanceFilter: 10
+                distanceFilter: 100
             }
         );
     }

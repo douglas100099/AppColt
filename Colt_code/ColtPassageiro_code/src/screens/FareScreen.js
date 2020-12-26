@@ -113,7 +113,7 @@ export default class FareScreen extends React.Component {
         }).then(() => {
             if (this._isMounted = true) {
                 let distance = distanceCalc([-22.224650, -43.867618], [this.state.region.wherelatitude, this.state.region.wherelongitude])
-                if (distance > 100) {
+                if (distance > 50) {
                     this.setState({ longDistance: true })
                 } else {
                     this.getDetailsRider();
@@ -899,7 +899,7 @@ export default class FareScreen extends React.Component {
                             </View>
                             :
                             <Fragment>
-                                <ScrollView contentContainerStyle={{ justifyContent: 'center' }} horizontal={true} showsHorizontalScrollIndicator={false}>
+                                <View contentContainerStyle={{ justifyContent: 'center' }} horizontal={true} showsHorizontalScrollIndicator={false}>
                                     <View style={styles.cards}>
                                         <View style={[styles.cardInfo,
                                         {
@@ -982,7 +982,7 @@ export default class FareScreen extends React.Component {
                                             </TouchableOpacity>
                                         </View>
                                     </View>
-                                </ScrollView>
+                                </View>
 
                                 <View style={styles.estimatedTimeBooking}>
                                     <View style={styles.containerTempo}>
@@ -1055,7 +1055,9 @@ export default class FareScreen extends React.Component {
                                     </TouchableOpacity>
                                 </View>
                                 {this.state.buttonDisabled ?
-                                    <Text style={{ paddingBottom: width < 375 ? 5 : 35, textAlign: 'center', fontFamily: 'Inter-SemiBold' }} > Preparando corrida... </Text>
+                                <View style={{ alignSelf: 'center', position: 'absolute', bottom: width < 375 ? 5 : 30 }}>
+                                    <Text style={{ textAlign: 'center', fontFamily: 'Inter-SemiBold' }} > Preparando corrida... </Text>
+                                </View>
                                     : null}
                             </Fragment>
                         }

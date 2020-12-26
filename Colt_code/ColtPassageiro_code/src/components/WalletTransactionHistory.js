@@ -6,6 +6,7 @@ const devWidth = Dimensions.get("window").width;
 import * as firebase from 'firebase';
 import languageJSON from '../common/language';
 import dateStyle from '../common/dateStyle';
+import { Platform } from 'react-native';
 
 export default class WTransactionHistory extends React.Component {
 
@@ -86,11 +87,21 @@ export default class WTransactionHistory extends React.Component {
                             }
                             <View style={styles.statusView}>
                                 {item.type == 'Debit' ?
-                                <Text style={styles.historyamounttextStyle}>Você usou {this.state.settings.symbol + parseFloat(item.amount).toFixed(2)}</Text>      
-                                :
-                                <Text style={styles.historyamounttextStyle}>Você depositou {this.state.settings.symbol + parseFloat(item.amount).toFixed(2)}</Text>      
-                                }      
-                                <Text style={styles.textStyle2}> {new Date(item.date).toLocaleDateString('pt-BR') + ' - ' + new Date(item.date).getHours() + ':' + new Date(item.date).getMinutes() + 'h'}</Text>
+                                    <View>
+                                        <Text style={styles.historyamounttextStyle}>Você usou {this.state.settings.symbol + parseFloat(item.amount).toFixed(2)}</Text>
+                                        {Platform.OS == 'ios' ?
+                                            <Text style={styles.textStyle2}> {(item.date)}</Text>
+                                            :
+                                            <Text style={styles.textStyle2}> {new Date(item.date).getDay()}</Text>
+                                        }
+
+                                    </View>
+                                    :
+                                    <View>
+                                        <Text style={styles.historyamounttextStyle}>Você depositou {this.state.settings.symbol + parseFloat(item.amount).toFixed(2)}</Text>
+                                        <Text style={styles.textStyle2}> {new Date(item.date).toLocaleDateString('pt-BR') + ' - ' + new Date(item.date).getHours() + ':' + new Date(item.date).getMinutes() + 'h'}</Text>
+                                    </View>
+                                }
                             </View>
                         </View>
                     </View>

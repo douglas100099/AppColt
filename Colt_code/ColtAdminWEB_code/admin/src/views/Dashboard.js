@@ -60,6 +60,7 @@ const Dashboard = () => {
   const bookinglistdata = useSelector(state => state.bookinglistdata);
   const settingsdata = useSelector(state => state.settingsdata);
 
+
   const columns = [
     { title: 'Foto', field: 'imageRider', render: rowData => rowData.imageRider ? <img alt='Profile' height={32} width={32} src={rowData.imageRider} /> : <img alt='Profile' height={32} width={32} src={require("../assets/img/profilePic.png")} /> },
     { title: 'Nome', field: 'customer_name', editable: 'never' },
@@ -335,8 +336,8 @@ const Dashboard = () => {
               <CardBody>
                 <div className="chart-area">
                   <Line
-                    data={chartExample4.data}
-                    options={chartExample4.options}
+                    data={chartExample2.data}
+                    options={chartExample2.options}
                   />
                 </div>
               </CardBody>
@@ -353,8 +354,8 @@ const Dashboard = () => {
               <CardBody>
                 <div className="chart-area">
                   <Line
-                    data={chartExample4.data}
-                    options={chartExample4.options}
+                    data={chartExample3.data}
+                    options={chartExample3.options}
                   />
                 </div>
               </CardBody>

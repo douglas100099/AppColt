@@ -80,8 +80,11 @@ export default class RideList extends React.Component {
                         </View>
 
                         <View style={styles.textView2}>
-                            <Text style={styles.dateStyle}>{item.status == 'NEW' ? item.status : null}</Text>
-                            <Text style={styles.dateStyle}>{item.status == 'END' && item.pagamento.payment_status == 'PAID' ? item.pagamento.customer_paid ? this.state.settings.symbol + parseFloat(item.pagamento.customer_paid).toFixed(2) : this.state.settings.symbol + parseFloat(item.pagamento.estimate).toFixed(2) : null}</Text>
+                            <Text style={styles.dateStyleNew}>{item.status == 'NEW' ? item.status : null}</Text>
+                            <Text style={[styles.dateStyleAccepted, {fontSize: 16, color: colors.DEEPBLUE}]}>{item.status == 'ACCEPTED' ? "Em andamento" : null}</Text>
+                            <Text style={[styles.dateStyleAccepted, {fontSize: 16, color: colors.DEEPBLUE}]}>{item.status == 'START' ? "Em andamento" : null}</Text>
+                            <Text style={styles.dateStyleEndPaid}>{item.status == 'END' && item.pagamento.payment_status == 'PAID' ? item.pagamento.customer_paid ? this.state.settings.symbol + parseFloat(item.pagamento.customer_paid).toFixed(2) : this.state.settings.symbol + parseFloat(item.pagamento.estimate).toFixed(2) : null}</Text>
+                            <Text style={styles.dateStyleEndProgress}>{item.status == 'END' && item.pagamento.payment_status == 'IN_PROGRESS' ? "Processando" : null}</Text>
                         </View>
                     </View>
                     <View style={{ backgroundColor: colors.GREY1, height: 1, marginHorizontal: 15 }} />
@@ -174,11 +177,33 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 10,
     },
-    dateStyle: {
+    
+    dateStyleEndProgress: {
         fontFamily: 'Inter-Bold',
         color: colors.BLACK,
         marginLeft: 20,
-        marginTop: 5,
+        fontSize: 16,
+        bottom: 10
+    },
+    dateStyleEndPaid: {
+        fontFamily: 'Inter-Bold',
+        color: colors.BLACK,
+        marginLeft: 20,
+        marginTop: 0,
+        fontSize: 20,
+    },
+    dateStyleAccepted: {
+        fontFamily: 'Inter-Bold',
+        color: colors.BLACK,
+        marginLeft: 20,
+        marginTop: 0,
+        fontSize: 20,
+    },
+    dateStyleNew: {
+        fontFamily: 'Inter-Bold',
+        color: colors.BLACK,
+        marginLeft: 20,
+        marginTop: 0,
         fontSize: 20,
     },
     dateRide: {
@@ -230,7 +255,9 @@ const styles = StyleSheet.create({
     textView2: {
         height: 50,
         backgroundColor: colors.TRANSPARENT,
-        paddingRight: 20
+        paddingRight: 20,
+        alignItems: 'center',
+         justifyContent: 'center'
     },
     textView3: {
         flex: 6,

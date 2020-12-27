@@ -52,10 +52,17 @@ export default class TrackNow extends React.Component {
         };
     }
 
+    async UNSAFE_componentWillMount() {
+        let bookingKey = this.props.navigation.getParam('bId');
+        let paramData = this.props.navigation.getParam('data');
+        if (bookingKey && paramData)
+            this.setState({ bookingKey: bookingKey, allData: paramData, destinationLoc: paramData.drop.lat + ',' + paramData.drop.lng })
+    }
+
     async componentDidMount() {
         this._isMounted = true
-        let keys = this.props.navigation.getParam('bId');
-        const dat = firebase.database().ref('bookings/' + keys + '/current');
+
+        const dat = firebase.database().ref('bookings/' + this.state.bookingKey + '/current');
         dat.on('value', snapshot => {
             var data = snapshot.val()
             if (data) {
@@ -65,24 +72,18 @@ export default class TrackNow extends React.Component {
                     latitudeDriver: data.lat,
                     longitudeDriver: data.lng,
                     startLoc: data.lat + ',' + data.lng,
+                }, () => {
+                    if( !this.state.dontGetDirections ){
+                        this.setState({ dontGetDirections: true })
+                        this.getDirections()
+                    }
                 })
             }
         })
 
-        let paramData = await this.props.navigation.getParam('data');
-
-        if (paramData) {
-            this.setState({
-                allData: paramData,
-                destinationLoc: paramData.drop.lat + ',' + paramData.drop.lng
-            }, () => {
-                this.getDirections(this.state.startLoc)
-            })
-        }
-
         const coordinate = new AnimatedRegion({
-            latitude: paramData.pickup.lat,
-            longitude: paramData.pickup.lng,
+            latitude: this.state.allData.pickup.lat,
+            longitude: this.state.allData.pickup.lng,
             latitudeDelta: 0.009,
             longitudeDelta: 0.009
         });
@@ -108,7 +109,7 @@ export default class TrackNow extends React.Component {
                     distanceTravelled: this.state.distanceTravelled + this.calcDistance(newCoordinate),
                     prevLatLng: newCoordinate
                 }, () => {
-                    this.getDirections(this.state.startLoc);
+                    this.getDirections();
                 });
             },
             error => console.log(error),
@@ -116,7 +117,7 @@ export default class TrackNow extends React.Component {
                 enableHighAccuracy: true,
                 timeout: 20000,
                 maximumAge: 1000,
-                distanceFilter: 10
+                distanceFilter: 100
             }
         );
     }
@@ -138,9 +139,9 @@ export default class TrackNow extends React.Component {
         longitudeDelta: 0.0134
     });
 
-    async getDirections(startLoc) {
+    async getDirections() {
         try {
-            let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${this.state.destinationLoc}&key=${google_map_key}`)
+            let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${this.state.startLoc}&destination=${this.state.destinationLoc}&key=${google_map_key}`)
             let respJson = await resp.json();
             let points = Polyline.decode(respJson.routes[0].overview_polyline.points);
             let coords = points.map((point, index) => {
@@ -172,8 +173,6 @@ export default class TrackNow extends React.Component {
         this.map.fitToCoordinates([{ latitude: this.state.latitudeDriver, longitude: this.state.longitudeDriver }, { latitude: this.state.allData.drop.lat, longitude: this.state.allData.drop.lng }], {
             edgePadding: { top: getPixelSize(60), right: getPixelSize(60), bottom: getPixelSize(60), left: getPixelSize(60) },
             animated: true,
-        }, () => {
-            this.setState({ dontGetRegion: false })
         })
     }
 
@@ -189,16 +188,6 @@ export default class TrackNow extends React.Component {
                 },
                 {
                     text: 'OK', onPress: async () => {
-                        /*const value = await AsyncStorage.getItem('settings');
-                        if (value !== null) {
-                            let settings = JSON.parse(value);
-                            if (Platform.OS === 'android') {
-                                phoneNumber = `tel:${settings.panic}`;
-                            } else {
-                                phoneNumber = `telprompt:${settings.panic}`;
-                            }
-                            Linking.openURL(phoneNumber);
-                        }*/
                         if (Platform.OS === 'android') {
                             phoneNumber = `tel:190`;
                         } else {
@@ -226,9 +215,8 @@ export default class TrackNow extends React.Component {
                             showUserLocation
                             followUserLocation
                             loadingEnabled
-                            //region={this.state.dontGetRegion ? null : this.getMapRegion()}
                             initialRegion={this.getMapRegion()}
-                            onRegionChange={() => this.setState({ dontGetRegion: true })}
+                            //onRegionChange={() => this.setState({ dontGetRegion: true })}
                             showsCompass={false}
                             showsScale={false}
                             customMapStyle={mapStyleAndroid}
@@ -242,21 +230,23 @@ export default class TrackNow extends React.Component {
                                     strokeColor={colors.DEEPBLUE}
                                 />
                                 : null}
-                            {/*this.state.routeCoordinates ?
-                                <MapView.Polyline coordinates={this.state.routeCoordinates} strokeColor={colors.RED} strokeWidth={3} />
-                            : null*/}
 
                             <Marker.Animated
                                 ref={marker => {
                                     this.marker = marker;
                                 }}
                                 useNativeDriver={false}
-                                coordinate={new AnimatedRegion({
-                                    latitude: this.state.latitudeDriver,
-                                    longitude: this.state.longitudeDriver,
-                                    latitudeDelta: 0.009,
-                                    longitudeDelta: 0.009
-                                })}
+                                coordinate={
+                                    this.state.latitudeDriver && this.state.longitudeDriver ?
+                                        new AnimatedRegion({
+                                            latitude: this.state.latitudeDriver,
+                                            longitude: this.state.longitudeDriver,
+                                            latitudeDelta: 0.009,
+                                            longitudeDelta: 0.009
+                                        })
+                                        :
+                                        null
+                                }
                                 anchor={{ x: 0.5, y: 0.5 }}
                             >
                                 <IconCarMap

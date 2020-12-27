@@ -113,10 +113,10 @@ export default class FareScreen extends React.Component {
         }).then(() => {
             if (this._isMounted = true) {
                 let distance = distanceCalc([-22.224650, -43.867618], [this.state.region.wherelatitude, this.state.region.wherelongitude])
-                if (distance > 100) {
+                if (distance > 50) {
                     this.setState({ longDistance: true })
                 } else {
-                    this.getWalletBalance();
+                    this.getDetailsRider();
                     this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
                     const userData = firebase.database().ref('users/' + this.state.curUID.uid);
                     userData.once('value', userData => {
@@ -224,11 +224,11 @@ export default class FareScreen extends React.Component {
         }
     }
 
-    //Carrega o valor que o usuario tem na carteira
-    getWalletBalance() {
-        const userData = firebase.database().ref('users/' + this.state.curUID.uid + "/walletBalance");
+    //Carrega o valor que o usuario tem na carteira e o id do dispositivo dele
+    getDetailsRider() {
+        const userData = firebase.database().ref('users/' + this.state.curUID.uid + "/");
         userData.once('value', userData => {
-            this.setState({ walletBallance: userData.val() });
+            this.setState({ walletBallance: userData.val().walletBalance, deviceId: userData.val().deviceId  });
         })
     }
 
@@ -255,6 +255,7 @@ export default class FareScreen extends React.Component {
             cashPaymentAmount: cashPayment,
             usedWalletMoney: this.state.usedWalletMoney,
             discount_amount: this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value : 0,
+            discount_type: this.state.payDetails ? this.state.payDetails.promo_details.discount_type : "",
             promoCodeApplied: this.state.payDetails ? this.state.payDetails.promo_details.promo_code : "",
             promoKey: this.state.payDetails ? this.state.payDetails.promo_details.promo_key : "",
             cancellValue: this.state.cancellValue ? this.state.cancellValue : 0
@@ -482,9 +483,7 @@ export default class FareScreen extends React.Component {
                                 format: 'DD/MM/YYYY'
                             }}
                             value={this.state.dateInput}
-                            onChangeText={(maskedText) => {
-                                this.setState({ dateInput: maskedText })
-                            }}
+                            onChangeText={(maskedText) => { this.setState({ dateInput: maskedText }) }}
                             style={{ fontSize: 20, marginLeft: 12, height: 40 }}
                             maxLength={10}
                             ref={(ref) => this.dateInputRef = ref}
@@ -517,7 +516,7 @@ export default class FareScreen extends React.Component {
                     <View style={styles.backgroundModalPayment}>
                         <View>
                             <View style={{ marginLeft: 20, marginTop: 20 }}>
-                                <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', fontWeight: "700" }}> Método de pagamento</Text>
+                                <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold' }}> Método de pagamento</Text>
                             </View>
                             <TouchableOpacity style={styles.boxMoney} onPress={() => this.onPressPayment("Dinheiro")}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -739,7 +738,7 @@ export default class FareScreen extends React.Component {
                 {this.state.promodalVisible ?
                     <PromoModal onSucessPromo={(newValue1, newValue2, payDetails, payment_mode) => this.onSucessPromo(newValue1, newValue2, payDetails, payment_mode)}
                         selected={this.state.selected} payDetails={this.state.payDetails ? true : false} estimateFare={[this.state.estimatePrice1, this.state.estimatePrice2]}
-                        closeModalPayment={() => { this.setState({ promodalVisible: false }) }} />
+                        deviceId={this.state.deviceId} closeModalPayment={() => { this.setState({ promodalVisible: false }) }} />
                     : null}
                 <View style={[styles.mapcontainer, {
                     flex: this.state.payDetails ? 1.8 : 2
@@ -900,7 +899,7 @@ export default class FareScreen extends React.Component {
                             </View>
                             :
                             <Fragment>
-                                <ScrollView contentContainerStyle={{ justifyContent: 'center' }} horizontal={true} showsHorizontalScrollIndicator={false}>
+                                <View contentContainerStyle={{ justifyContent: 'center' }} horizontal={true} showsHorizontalScrollIndicator={false}>
                                     <View style={styles.cards}>
                                         <View style={[styles.cardInfo,
                                         {
@@ -983,11 +982,11 @@ export default class FareScreen extends React.Component {
                                             </TouchableOpacity>
                                         </View>
                                     </View>
-                                </ScrollView>
+                                </View>
 
                                 <View style={styles.estimatedTimeBooking}>
                                     <View style={styles.containerTempo}>
-                                        <Text style={styles.textEstimatedTime}>Tempo estimado </Text>
+                                        <Text style={styles.textEstimatedTime}> Duração estimada </Text>
                                         <Text style={styles.estimatedTimeNumber}>{parseInt(this.state.estimatedTimeBooking / 60)} min</Text>
                                     </View>
                                     {this.state.metodoPagamento === 'Dinheiro' ?
@@ -1056,7 +1055,9 @@ export default class FareScreen extends React.Component {
                                     </TouchableOpacity>
                                 </View>
                                 {this.state.buttonDisabled ?
+                                <View style={{ alignSelf: 'center', position: 'absolute', bottom: width < 375 ? 5 : 30 }}>
                                     <Text style={{ textAlign: 'center', fontFamily: 'Inter-SemiBold' }} > Preparando corrida... </Text>
+                                </View>
                                     : null}
                             </Fragment>
                         }

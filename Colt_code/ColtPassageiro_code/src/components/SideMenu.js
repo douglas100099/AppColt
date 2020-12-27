@@ -32,8 +32,9 @@ export default class SideMenu extends React.Component {
                 cash: false,
                 wallet: false
             },
-            disableSigOut: false
+            disableSigOut: false,
         }
+        this.bookingActive = false
     }
 
     _retrieveSettings = async () => {
@@ -90,9 +91,18 @@ export default class SideMenu extends React.Component {
 
     //sign out and clear all async storage
     async signOut() {
-        firebase.database().ref('/bookings').orderByChild("status").equalTo('START' || 'ACCEPTED').once("value", (snapshot) => {
-            if (snapshot.val()) {
-                alert("Você possui uma corrida em andamento!")
+        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my-booking/').once("value", (snapshot) => {
+            if( snapshot.val() ){
+                const data = snapshot.val()
+                for(let key in data){
+                    if(data[key].status === "START" || data[key].status === "ACCEPTED" || data[key].status === "EMBARQUE"){
+                        this.bookingActive = true
+                    }
+                }
+            }
+        }).then(() => {
+            if (this.bookingActive) {
+                alert("Você não pode sair da sua conta pois possui uma corrida em andamento!")
             } else {
                 firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/pushToken').remove();
                 firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/userPlatform').remove();

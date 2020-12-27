@@ -84,7 +84,11 @@ exports.cancel = functions.https.onRequest((request, response) => {
     `);
 });
 
-const getDistance = (lat1, lon1, lat2, lon2) => {
+const getDistance = (location1, location2) => {
+    let lat1 = location1[0];
+    let lon1 = location1[1];
+    let lat2 = location2[0];
+    let lon2 = location2[1];
     if ((lat1 === lat2) && (lon1 === lon2)) {
         return 0;
     }
@@ -249,6 +253,196 @@ const checkPaymentAsaas = async (custumer) => {
         })
 }
 
+/*
+const searchDriver = (bookingId, carType) => {
+    const userData = admin.database().ref('users/').orderByChild("usertype").equalTo('driver')
+    const bookingRef = admin.database().ref('bookings/' + bookingId + '/')
+
+    let distanciaValue = 10
+    let distTotal = 50
+    let currentRejected = false
+    let searchDriverQueue = false
+    let driverUidSelected = 0
+
+    userData.once('value', driverData => {
+        let allUsers = driverData.val()
+        for (let key in allUsers) {
+            if (allUsers[key].driverActiveStatus === true && allUsers[key].carType === carType && !allUsers[key].waiting_queue_riders && !allUsers[key].waiting_riders_list) {
+                //Verifica se o motorista rejeitou a corrida
+                bookingRef.once('value', data => {
+                    if (data.val()) {
+                        let rejectedDrivers = []
+                        if (data.val().rejectedDrivers) {
+                            rejectedDrivers = data.val().rejectedDrivers
+                            for (let i = 0; i < rejectedDrivers.length; i++) {
+                                if (rejectedDrivers[i] === key) {
+                                    currentRejected = true
+                                }
+                            }
+                        }
+                    } else {
+                        currentRejected = false
+                    }
+                }).then(() => {
+                    if (currentRejected === false) {
+                        if (searchDriverQueue ? allUsers[key].queue === true : allUsers[key].queue === false) {
+                            if (searchDriverQueue ? allUsers[key].queueAvailable === true : true) {
+                                bookingRef.once('value', snap => {
+                                    const booking = snap.val()
+                                    if (booking) {
+                                        let location1 = [booking.pickup.lat, booking.pickup.lng];    //Rider Lat and Lang
+                                        let location2 = null
+                                        let locationDriver = null
+
+                                        if (searchDriverQueue) {
+                                            admin.database().ref('bookings/' + allUsers[key].emCorrida + '/').once('value', snapshot => {
+                                                let dataBooking = snapshot.val()
+                                                location2 = [dataBooking.drop.lat, dataBooking.drop.lng]
+                                                locationDriver = [dataBooking.current.lat, dataBooking.current.lng]
+                                            }).then(() => {
+                                                let distanceDrop = getDistance(location1, location2)
+                                                let distanceTotal = distanceDrop + getDistance(location2, locationDriver)
+
+                                                if (distanceDrop <= 4 && distanceTotal < distTotal) {
+                                                    distTotal = distanceTotal
+                                                    driverUidSelected = key
+                                                }
+                                                return true
+                                            })
+                                                .catch(error => {
+                                                    throw new Error("Erro ao chamar a funçao de calculo de distancia")
+                                                })
+                                        }
+                                        else {
+                                            location2 = [allUsers[key].location.lat, allUsers[key].location.lng]  //Driver lat and lang
+                                            //Calcula a distancia entre dois pontos
+                                            let distance = getDistance(location1, location2)
+                                            let originalDistance = distance
+                                            if (originalDistance <= 4) { //4KM
+                                                //Salva sempre o mais proximo
+                                                if (distance < distanciaValue) {
+                                                    distanciaValue = distance
+                                                    driverUidSelected = key
+                                                }
+                                            }
+                                        }
+                                    }
+                                })
+                            }
+                        }
+                    }
+                    return true
+                })
+                    .catch(error => {
+                        throw new Error("Erro ao fazer as verificaçoes de distancia")
+                    })
+            }
+        }
+    }).then(() => {
+        if (driverUidSelected !== 0) {
+            const driverRef = admin.database().ref('users/' + driverUidSelected + '/')
+            driverRef.update({
+                have_internet: false
+            }).then(() => {
+                setTimeout(() => {
+                    driverRef.once('value', snap => {
+                        const data = snap.val()
+                        if (data && data.have_internet === true) {
+                            if (data.queue === true && data.queueAvailable === true && data.driverActiveStatus === true) {
+
+                                bookingRef.once('value', bookingData => {
+                                    admin.database().ref('users/' + driverUidSelected + '/' + "waiting_queue_riders" + '/' + bookingId + '/').set(bookingData.val())
+                                        .then(() => {
+                                            admin.database().ref(`users/` + bookingData.val().customer + '/my-booking/' + bookingId).update({ status: "NEW" })
+                                                .then(() => {
+                                                    admin.database().ref('bookings/' + bookingId + '/').update({
+                                                        status: "NEW",
+                                                        requestedDriver: driverUidSelected
+                                                    })
+                                                    RequestPushMsg(data.pushToken, "Você possui uma nova corrida!")
+                                                    return true
+                                                })
+                                                .catch(error => {
+                                                    throw new Error("Erro setando status da corrida pra NEW e enviando notify")
+                                                })
+                                            return true
+                                        })
+                                        .catch(error => {
+                                            throw new Error("Erro depois do waiting queue riders")
+                                        })
+                                })
+
+                                //this.setBookingDriver("waiting_queue_riders", bookingId, driverUidSelected)
+                            }
+                            else if (data.queue === false && data.driverActiveStatus === true) {
+
+                                bookingRef.once('value', bookingData => {
+                                    admin.database().ref('users/' + driverUidSelected + '/' + "waiting_riders_list" + '/' + bookingId + '/').set(bookingData.val())
+                                        .then(() => {
+                                            admin.database().ref('users/' + bookingData.val().customer + '/my-booking/' + bookingId + '/').update({ status: "NEW" })
+                                                .then(() => {
+                                                    admin.database().ref('bookings/' + bookingId + '/').update({
+                                                        status: "NEW",
+                                                        requestedDriver: driverUidSelected
+                                                    })
+                                                    RequestPushMsg(data.pushToken, "Você possui uma nova corrida!")
+                                                    return true
+                                                })
+                                                .catch(error => {
+                                                    throw new Error("Erro setando status da corrida pra NEW e enviando notify")
+                                                })
+                                            return true
+                                        })
+                                        .catch(error => {
+                                            throw new Error("Erro depois do waiting riders list")
+                                        })
+                                })
+
+                                //this.setBookingDriver("waiting_riders_list", bookingId, driverUidSelected)
+                            }
+                        }
+                        else {
+                            searchDriverQueue = !searchDriverQueue
+                            driverUidSelected = 0
+                            searchDriver(bookingId)
+                        }
+                    })
+                }, 4000)
+                return true
+            })
+                .catch(error => {
+                    throw new Error("Erro ao setar corrida no perfil do motorista")
+                })
+        }
+        else {
+            searchDriverQueue = !searchDriverQueue
+            driverUidSelected = 0
+            searchDriver(bookingId)
+        }
+        return true
+    })
+        .catch(error => {
+            throw new Error("Erro ao preparar a setagem de corrida do motorista")
+        })
+}
+
+exports.newBooking = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}').onCreate((snap, context) => {
+    const bookingId = context.params.bookingsId
+
+    return admin.database().ref('bookings/' + bookingId + '/').on('value', snap => {
+        const data = snap.val()
+        searchDriver(bookingId, data.carType)
+
+        if (data.status === 'REJECTED') {
+            searchDriver(bookingId)
+        }
+        else if (data.status === 'ACCEPTED' || data.status === 'CANCELLED') {
+            return true
+        }
+    })
+})
+*/
+
 exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.schedule('30 19 1 * *').timeZone('America/Sao_Paulo').onRun((context) => {
     //'30 19 15 * *'
     return admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
@@ -280,7 +474,7 @@ exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.
                                             vencimento_boleto: resultToAsaas
                                         }
                                     })
-                                    RequestPushMsg(dataUsers[key].pushToken, 'Seu boleto no valor de R$' + newValue + ' referente à taxa quinzenal do aplicativo Colt, já está disponível para pagamento!' )
+                                    RequestPushMsg(dataUsers[key].pushToken, 'Seu boleto no valor de R$' + newValue + ' referente à taxa quinzenal do aplicativo Colt, já está disponível para pagamento!')
                                     return null
                                 }).catch(error => {
                                     throw new Error("Erro ao Enviar boleto Asaas - Função principal")
@@ -360,7 +554,7 @@ exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub
                                             vencimento_boleto: resultToAsaas
                                         }
                                     })
-                                    RequestPushMsg(dataUsers[key].pushToken, 'Seu boleto no valor de R$' + newValue + ' referente à taxa quinzenal do aplicativo Colt, já está disponível para pagamento!' )
+                                    RequestPushMsg(dataUsers[key].pushToken, 'Seu boleto no valor de R$' + newValue + ' referente à taxa quinzenal do aplicativo Colt, já está disponível para pagamento!')
                                     return null
                                 }).catch(error => {
                                     throw new Error("Erro ao Enviar boleto Asaas - Função principal")
@@ -510,6 +704,12 @@ exports.manageMoney = functions.region('southamerica-east1').database.ref('booki
                                 saldo: newSaldo
                             })
                         }
+
+                        if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
+                        }
+
                     })
                     return true
                 }).catch(error => {
@@ -539,6 +739,12 @@ exports.manageMoney = functions.region('southamerica-east1').database.ref('booki
                                 saldo: driverShare
                             })
                         }
+
+                        if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
+                        }
+
                     })
                     return true
                 }).catch(error => {
@@ -581,6 +787,11 @@ exports.manageMoney = functions.region('southamerica-east1').database.ref('booki
                                 })
                             }
                         }
+
+                        if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
+                        }
                     })
                     return true
                 }).catch(error => {
@@ -592,9 +803,9 @@ exports.manageMoney = functions.region('southamerica-east1').database.ref('booki
 })
 
 exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/finalCalcBooking').onCreate((snap, context) => {
-    const bookingId = context.params.bookingsId;
+    const bookingId = context.params.bookingsId
     admin.database().ref('bookings/' + bookingId).on("value", (data) => {
-        let dataBooking = data.val();
+        let dataBooking = data.val()
         let paymentMode = dataBooking.pagamento.payment_mode
 
         if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'IN_PROGRESS') {
@@ -632,7 +843,7 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                                 admin.database().ref('users/' + dataBooking.customer + '/walletHistory').push({
                                                     type: 'Debit',
                                                     amount: dataBooking.pagamento.customer_paid,
-                                                    date: new Date().toLocaleDateString('pt-BR'),
+                                                    date: new Date().toString(),
                                                     booking_ref: bookingId,
                                                 })
                                                 return true
@@ -680,11 +891,11 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                             //ATUALIZA A CARTEIRA DO PASSAGEIRO RERTIRANDO O VALOR USADO 
                                             admin.database().ref('users/' + dataBooking.customer + '/').update({
                                                 walletBalance: 0
-                                            }).then(() => { 
+                                            }).then(() => {
                                                 admin.database().ref('users/' + dataBooking.customer + '/walletHistory').push({
                                                     type: 'Debit',
                                                     amount: walletBalance,
-                                                    date: new Date().toLocaleDateString('pt-BR'),
+                                                    date: new Date().toString(),
                                                     booking_ref: bookingId,
                                                 })
                                                 return true
@@ -739,7 +950,8 @@ exports.cancelSearchDriver = functions.region('southamerica-east1').database.ref
             if (dataBooking.status === 'NEW') {
                 admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + context.params.bookingsId).update({ status: 'TIMEOUT' })
                 return admin.database().ref('bookings/' + context.params.bookingsId).update({ status: 'TIMEOUT' })
-            } else {
+            }
+            else {
                 return false
             }
         })
@@ -774,24 +986,26 @@ exports.addDetailsToPromo = functions.region('southamerica-east1').database.ref(
 
                 if (user_avail) {
                     return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
-                        userId: dataBooking.customer
+                        userId: dataBooking.customer,
+                        deviceId: dataBooking.deviceId
                     })
-                    .then(() => {
-                        return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: user_avail.count + 1 })
-                    })
-                    .catch(error => {
-                        return error
-                    })
+                        .then(() => {
+                            return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: user_avail.count + 1 })
+                        })
+                        .catch(error => {
+                            return error
+                        })
                 } else {
                     return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/details').push({
-                        userId: dataBooking.customer
+                        userId: dataBooking.customer,
+                        deviceId: dataBooking.deviceId
                     })
-                    .then(() => {
-                        return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: 1 })
-                    })
-                    .catch(error => {
-                        return error
-                    })
+                        .then(() => {
+                            return admin.database().ref('offers/' + dataBooking.pagamento.promoKey + '/user_avail/').update({ count: 1 })
+                        })
+                        .catch(error => {
+                            return error
+                        })
                 }
             })
         }
@@ -806,45 +1020,73 @@ exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref
     const requested = snap.val()
 
     setTimeout(() => {
-        admin.database().ref('bookings/' + bookingId).once("value", (data) => {
+        admin.database().ref('bookings/' + bookingId + '/').once("value", (data) => {
             let dataBooking = data.val()
             if (dataBooking) {
                 if (requested === dataBooking['requestedDriver'] && dataBooking.status === 'NEW') {
+                    admin.database().ref("users/" + requested + "/").once('value', snap => {
+                        const data = snap.val()
+                        if (data.waiting_queue_riders) {
 
-                    admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove();
-                    admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove();
+                            //Corrida em espera
+                            admin.database().ref("users/" + requested + "/waiting_queue_riders/" + bookingId).remove()
+                            admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove()
 
-                    admin.database().ref("users/" + requested + "/in_reject_progress").update({
-                        punido: false
-                    });
-                    admin.database().ref("users/" + requested).update({
-                        driverActiveStatus: false,
-                        queue: false
-                    });
-
-                    let arrayRejected = []
-                    if (data.rejectedDrivers) {
-                        for (let key in data.rejectedDrivers) {
-                            data.rejectedDrivers[key]
-                            arrayRejected.push(data.rejectedDrivers[key])
+                            let arrayRejected = []
+                            if (dataBooking.rejectedDrivers) {
+                                for (let key in dataBooking.rejectedDrivers) {
+                                    arrayRejected.push(dataBooking.rejectedDrivers[key])
+                                }
+                                arrayRejected.push(requested)
+                                admin.database().ref('bookings/' + bookingId).update({
+                                    rejectedDrivers: arrayRejected,
+                                    status: 'REJECTED'
+                                })
+                            } else {
+                                arrayRejected.push(requested)
+                                admin.database().ref('bookings/' + bookingId).update({
+                                    rejectedDrivers: arrayRejected,
+                                    status: 'REJECTED'
+                                })
+                            }
                         }
-                        arrayRejected.push(requested)
-                        admin.database().ref('bookings/' + bookingId).update({
-                            rejectedDrivers: arrayRejected
-                        })
-                    } else {
-                        arrayRejected.push(requested)
-                        admin.database().ref('bookings/' + bookingId).update({
-                            rejectedDrivers: arrayRejected
-                        })
-                    }
+                        else if (data.waiting_riders_list) {
+                            admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove()
+                            admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove()
 
-                    admin.database().ref('bookings/' + bookingId).update({ status: 'REJECTED' })
+                            /*admin.database().ref("users/" + requested + "/in_reject_progress").update({
+                                punido: false
+                            });*/
+                            admin.database().ref("users/" + requested + '/').update({
+                                driverActiveStatus: false,
+                                queue: false
+                            });
+
+                            let arrayRejected = []
+                            if (dataBooking.rejectedDrivers) {
+                                for (let key in dataBooking.rejectedDrivers) {
+                                    arrayRejected.push(dataBooking.rejectedDrivers[key])
+                                }
+                                arrayRejected.push(requested)
+                                admin.database().ref('bookings/' + bookingId).update({
+                                    rejectedDrivers: arrayRejected,
+                                    status: 'REJECTED'
+                                })
+                            } else {
+                                arrayRejected.push(requested)
+                                admin.database().ref('bookings/' + bookingId).update({
+                                    rejectedDrivers: arrayRejected,
+                                    status: 'REJECTED'
+                                })
+                            }
+                        }
+                    })
+
                     admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + bookingId + '/').update({ status: 'REJECTED' })
                 }
             }
         })
-    }, 15000)
+    }, 60000)
 })
 
 /*exports.bookingScheduler = functions.pubsub.schedule('every 5 minutes').onRun((context) => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import MaterialTable from 'material-table';
 import { useSelector, useDispatch } from "react-redux";
 import CircularLoading from "../components/CircularLoading";
@@ -9,6 +9,8 @@ import {
 import {
   sendNotificationForDriver
 } from "../actions/notificationactions";
+
+import NotificationAlert from "react-notification-alert";
 
 import * as firebase from 'firebase'
 
@@ -41,6 +43,8 @@ export default function Users() {
   const usersdata = useSelector(state => state.usersdata);
   const cartypes = useSelector(state => state.cartypes);
   const dispatch = useDispatch();
+
+  const textInput = useRef(null);
 
   const setEditDrivers = (index) => {
     setEdit(index)
@@ -83,7 +87,22 @@ export default function Users() {
         }, 600)
       }).then(() => {
         setIdModalBlock(-1)
-        alert('Motorista desbloqueado com sucesso!')
+        var options = {};
+        options = {
+          place: "tl",
+          message: (
+            <div>
+              <div>
+                Welcome to <b>Black Dashboard React</b> - a beautiful freebie for
+                every web developer.
+              </div>
+            </div>
+          ),
+          type: "primary",
+          icon: "tim-icons icon-bell-55",
+          autoDismiss: 7
+        };
+        this.textInput.current.notificationAlert(options);
       })
     }
     else {
@@ -105,11 +124,7 @@ export default function Users() {
   }
 
   const onSendNotify = (driverId, index) => {
-    let notification = {}
-    notification = {
-      title: document.getElementById('ModalInputTitulo' + index).value,
-      body: document.getElementById('ModalInputDesc' + index).value
-    }
+    let notification = document.getElementById('ModalInputDesc' + index).value
 
     new Promise(resolve => {
       setTimeout(() => {
@@ -192,16 +207,22 @@ export default function Users() {
     })
   }
 
+  
+
   return (
     usersdata.loading ? <CircularLoading /> :
       <>
         <div className="content">
+          <div className="react-notification-alert-container">
+            <NotificationAlert ref={textInput} />
+          </div>
           <Row>
             <Col md="12">
               <Card>
                 <CardHeader>
                   <CardTitle tag="h4">Todos os motoristas</CardTitle>
                 </CardHeader>
+
                 <CardBody>
                   <ListGroup horizontal style={{ flexDirection: 'row', overflowY: 'scroll' }}></ListGroup>
                   {data.map((driver, index) => (
@@ -473,14 +494,6 @@ export default function Users() {
                                 <Modal isOpen={index === indexModal} backdrop={true} toggle={closeModal} id={"Modal" + index}>
                                   <ModalHeader toggle={closeModal}><span style={{ fontSize: 18 }}>Enviar notificação pro motorista <a style={{ fontSize: 18, fontWeight: 600 }}>{driver.firstName}</a></span></ModalHeader>
                                   <ModalBody>
-                                    <Label for={"Modal" + index}> Título da notificação </Label>
-                                    <Input
-                                      style={{ color: "#000", fontSize: 16 }}
-                                      defaultValue={""}
-                                      name="tituloNotificacao"
-                                      id={"ModalInputTitulo" + index}
-                                      placeholder='Digite o título'
-                                    />
                                     <Label for={"Modal" + index} style={{ marginTop: 10 }}> Descrição </Label>
                                     <Input
                                       style={{ color: "#000", fontSize: 16, }}

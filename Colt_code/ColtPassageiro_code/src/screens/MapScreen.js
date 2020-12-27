@@ -76,8 +76,8 @@ export default class MapScreen extends React.Component {
             geolocationFetchComplete: false,
             haveBooking: false
         }
-        this.viewWidth = 30,
-            this.viewHeight = 30
+        this.viewWidth = 30
+        this.viewHeight = 30
     }
 
     async UNSAFE_componentWillMount() {
@@ -138,8 +138,25 @@ export default class MapScreen extends React.Component {
                     this.getDrivers()
                 })
             }
-            
+
         })
+        setTimeout(() => {
+            if (!this.state.geolocationFetchComplete && this._isMounted) {
+                Alert.alert(
+                    'Alerta!',
+                    'Não foi possível obter sua localização atual!\nCertifique-se de ativar sua localização e GPS!',
+                    [
+                        {
+                            style: 'default',
+                            text: 'Confirmar',
+                            onPress: () => this.setState({ geolocationFetchComplete: true })
+                        },
+                    ],
+                    { cancelable: true },
+                );
+                //this.setState({ geolocationFetchComplete: true })
+            }
+        }, 12000)
     }
 
     getSavedLocations() {
@@ -166,9 +183,6 @@ export default class MapScreen extends React.Component {
         this._retrieveSettings();
         this.tripSatusCheck()
 
-        const data = this.props.navigation.getParam('fromSearch') ? this.props.navigation.getParam('fromSearch')  : null
-        console.log("TESTE")
-
         this.intervalGetDrivers = setInterval(() => {
             if (this._isMounted) {
                 if (this.state.passData && this.state.passData.wherelatitude) {
@@ -194,7 +208,7 @@ export default class MapScreen extends React.Component {
         let freeCars = [];
         for (let key in allUsers) {
             let driver = allUsers[key];
-            if ( driver.approved == true && driver.queue == false && driver.driverActiveStatus == true) {
+            if (driver.approved == true && driver.queue == false && driver.driverActiveStatus == true) {
                 if (driver.location) {
                     freeCars.push(driver);
                 }
@@ -421,7 +435,7 @@ export default class MapScreen extends React.Component {
                 }))
         }
         else if (this.state.statusCorrida == 'START') {
-            this.props.navigation.replace('trackRide', { data: this.state.bookingParam, bId: this.state.bookingParam.bookingKey, });
+            this.props.navigation.replace('trackRide', { data: this.state.bookingParam, bId: this.state.keyBooking });
         }
     }
 
@@ -438,19 +452,22 @@ export default class MapScreen extends React.Component {
                         if (bookingData[key].status == "ACCEPTED") {
                             this.setState({
                                 statusCorrida: "ACCEPTED",
-                                bookingParam: bookingData[key]
+                                bookingParam: bookingData[key],
+                                keyBooking: key
                             })
                         }
                         else if (bookingData[key].status == "EMBARQUE") {
                             this.setState({
                                 statusCorrida: "EMBARQUE",
-                                bookingParam: bookingData[key]
+                                bookingParam: bookingData[key],
+                                keyBooking: key
                             })
                         }
                         else if (bookingData[key].status == "START") {
                             this.setState({
                                 statusCorrida: "START",
-                                bookingParam: bookingData[key]
+                                bookingParam: bookingData[key],
+                                keyBooking: key
                             })
                         }
                     }
@@ -576,7 +593,7 @@ export default class MapScreen extends React.Component {
 
                     {this.state.statusCorrida ?
                         <View style={styles.viewCorrida}>
-                            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }} onPress={() => { this.animateToRegion() }} onPress={() => { this.redirectRider() }}>
+                            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }} onPress={() => { this.redirectRider() }}>
                                 <Icon
                                     name='car'
                                     type='material-community'
@@ -618,19 +635,19 @@ export default class MapScreen extends React.Component {
                             {this.state.locationCasa != null ?
                                 <TouchableOpacity onPress={() => this.goToFareByMap()}>
                                     <View style={{ flexDirection: 'row', alignItems: 'center', height: width < 375 ? 50 : 60, width: width }}>
-                                        <View style={{ marginLeft: 20, marginRight: 0, width:40, height:40, justifyContent: 'center', alignItems: 'center', borderRadius: 50, backgroundColor: colors.DEEPBLUE,  }}>
+                                        <View style={{ marginLeft: 20, marginRight: 0, width: 40, height: 40, justifyContent: 'center', alignItems: 'center', borderRadius: 50, backgroundColor: colors.DEEPBLUE, }}>
                                             <Icon
                                                 name='ios-home'
                                                 type='ionicon'
                                                 color={colors.WHITE}
                                                 size={23}
-                                                //containerStyle={{ opacity: 0.4 }}
+                                            //containerStyle={{ opacity: 0.4 }}
                                             />
                                         </View>
                                         <View style={{ left: 12, flex: 2 }}>
                                             <Text style={{ fontFamily: 'Inter-Medium', fontSize: width < 375 ? 17 : 19 }}> Endereço salvo </Text>
                                             <Text numberOfLines={1} style={{ paddingTop: 3, opacity: 0.4, maxWidth: width - 100, fontFamily: 'Inter-Medium', fontSize: width < 375 ? 13 : 14 }}>
-                                                 {this.state.locationCasa.add.split('-')[0] + '-' + this.state.locationCasa.add.split('-')[1]} 
+                                                {this.state.locationCasa.add.split('-')[0] + '-' + this.state.locationCasa.add.split('-')[1]}
                                             </Text>
                                         </View>
                                     </View>
@@ -741,7 +758,7 @@ const styles = StyleSheet.create({
     bordaIconeMenu: {
         width: 45,
         height: 45,
-        left: width < 375 ? 5 : 20,
+        left: width < 375 ? 15 : 20,
         top: Platform.OS == 'ios' ? 55 : 40,
         position: 'absolute',
         alignItems: 'center',

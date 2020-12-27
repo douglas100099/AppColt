@@ -29,13 +29,14 @@ export default class PromoModal extends React.Component {
     }
 
     async checkUserPromo(param) {
+        const { deviceId } = this.props
         let obj = {}
         
         if (param && param.user_avail != undefined) {
             obj = param.user_avail.details
             for (let key in obj) {
-                if (obj[key].userId == this.state.curUID.uid) {
-                    return true
+                if (obj[key].userId == this.state.curUID.uid || obj[key].deviceId == deviceId) {
+                    return true 
                 }
             }
         } else {

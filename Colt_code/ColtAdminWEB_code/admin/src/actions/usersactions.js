@@ -10,7 +10,8 @@ import {
   DELETE_USER_SUCCESS,
   DELETE_USER_FAILED,
   BLOCK_USER,
-  DESBLOCK_USER
+  DESBLOCK_USER,
+  CHANGE_STATUS
 } from "./types";
 
 export const fetchUsers = () => dispatch => {
@@ -37,6 +38,14 @@ export const fetchUsers = () => dispatch => {
     }
   });
 };
+
+export const changeStatus = (idDriver, status, child) => dispatch => {
+  dispatch({
+    type: CHANGE_STATUS,
+    payload: null
+  });
+  refUserChild(idDriver, child).set(!status)
+}
 
 export const desblockUser = (idDriver) => dispatch => {
   dispatch({

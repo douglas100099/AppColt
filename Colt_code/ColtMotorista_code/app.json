@@ -62,6 +62,8 @@
         "ACCESS_BACKGROUND_LOCATION",
         "SYSTEM_ALERT_WINDOW",
         "ACCESS_COARSE_LOCATION",
+        "RECORD_AUDIO",
+        "WAKE_LOCK",
         "CAMERA_ROLL"
       ],
       "googleServicesFile": "./google-services.json",

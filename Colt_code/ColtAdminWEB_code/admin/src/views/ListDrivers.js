@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import CircularLoading from "../components/CircularLoading";
 import { isLive } from '../config/keys';
 import {
-  editUser, deleteUser, editDriver, blockUser, desblockUser
+  editUser, deleteUser, editDriver, blockUser, desblockUser, changeStatus
 } from "../actions/usersactions";
 import {
   sendNotificationForDriver
@@ -34,7 +34,7 @@ import {
 import Admin from 'layouts/Admin/Admin';
 
 export default function Users() {
-
+  
   const [indexModal, setModal] = useState(-1);
   const [indexModalBlock, setIdModalBlock] = useState(-1);
   const [edit, setEdit] = useState(-1);
@@ -64,6 +64,18 @@ export default function Users() {
 
   const closeModalBlock = () => {
     setIdModalBlock(-1)
+  }
+
+  const changeStatusDriver = (driverId, status, child) => {
+    console.log("CHILD " + child + " STATUS " + status)
+    new Promise(resolve => {
+      setTimeout(() => {
+        resolve();
+        dispatch(changeStatus(driverId, status, child));
+      }, 600)
+    }).then(() => {
+      alert('Status alterado com sucesso!')
+    })
   }
 
   const blockDriver = (driverData, index) => {
@@ -221,19 +233,36 @@ export default function Users() {
                             <CardHeader className='text-center'>
                               <img alt='Profile' height={120} width={120} style={{ marginBottom: 10 }} src={driver.driver_image ? driver.driver_image : "https://i.imgur.com/8lteruf.png"} />
                               <CardTitle tag='h4' className='text-center' style={{ fontWeight: 500 }}>{driver.firstName + ' ' + driver.lastName}</CardTitle>
+                              <p className="h6 text-center">{new Date(driver.createdAt).toLocaleDateString('pt-BR') + ' - '
+                                + new Date(driver.createdAt).toLocaleTimeString('pt-BR').split(':')[0] + ':' + new Date(driver.createdAt).toLocaleTimeString('pt-BR').split(':')[1]}</p>
                               {driver.approved === true ?
                                 <p className="h6 text-center text-success">APROVADO</p>
                                 :
                                 <p className="h6 text-center text-warning">AGUARANDO</p>
                               }
+                              <div style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <a className="text-center">OCIOSO? </a>
+                                {
+                                  driver.onlineStatus ?
+                                    <a className="h4 text-center text-success">NÃO</a>
+                                    :
+                                    <a className="h4 text-center text-danger">SIM</a>
+                                }
+                              </div>
                               {driver.blocked_by_payment != null ?
-                                <p className="h6 text-center text-danger">BLOQUEADO POR PGT</p> : null}
-                              <p className="h6 text-center">{new Date(driver.createdAt).toLocaleDateString('pt-BR') + ' - '
-                                + new Date(driver.createdAt).toLocaleTimeString('pt-BR').split(':')[0] + ':' + new Date(driver.createdAt).toLocaleTimeString('pt-BR').split(':')[1]}</p>
+                                <p className="h6 text-center text-danger">BLOQUEADO POR PGT</p>
+                                : null}
+
                               <div className='text-center' style={{ flexDirection: 'row' }}>
                                 {
                                   driver.blocked_by_admin ?
-                                    <CardText style={{ fontSize: 18 }} className="h6 text-center text-danger"> BLOQUEADO </CardText>
+                                    <CardText style={{ fontSize: 18 }} className="h6 text-center text-danger"> BLOQUEADO PELO ADM </CardText>
+                                    : null
+                                }
+
+                                {
+                                  driver.blocked ?
+                                    <CardText style={{ fontSize: 18 }} className="h6 text-center text-danger"> BLOQUEADO POR CANCELAMENTOS </CardText>
                                     : null
                                 }
 
@@ -246,6 +275,32 @@ export default function Users() {
                                 <Button className="btn-round btn-icon" color={driver.blocked_by_admin ? "success" : "danger"} onClick={() => toggleModalBlock(index)}>
                                   <i className={driver.blocked_by_admin ? "tim-icons icon-simple-add" : "tim-icons icon-simple-remove"} />
                                 </Button>
+                                <div>
+                                  <FormGroup check>
+                                    <Label check>
+                                      <Input defaultChecked={driver.driverActiveStatus ? true : false} color="primary" type="checkbox" /> Online
+                                      <span onClick={() => changeStatusDriver(driver.id, driver.driverActiveStatus, "driverActiveStatus")} className="form-check-sign">
+                                        <span className="check" />
+                                      </span>
+                                    </Label>
+                                  </FormGroup>
+                                  <FormGroup check>
+                                    <Label check>
+                                      <Input defaultChecked={driver.queue ? true : false} color="primary" type="checkbox" /> Ocupado
+                                      <span onClick={() => changeStatusDriver(driver.id, driver.queue, "queue")} className="form-check-sign">
+                                        <span className="check" />
+                                      </span>
+                                    </Label>
+                                  </FormGroup>
+                                  <FormGroup check>
+                                    <Label check>
+                                      <Input defaultChecked={driver.queueAvailable ? true : false} color="primary" type="checkbox" /> Disponível pra viagem espera
+                                      <span onClick={() => changeStatusDriver(driver.id, driver.queueAvailable, "queueAvailable")} className="form-check-sign">
+                                        <span className="check" />
+                                      </span>
+                                    </Label>
+                                  </FormGroup>
+                                </div>
                               </div>
                             </CardHeader>
                           </Col>

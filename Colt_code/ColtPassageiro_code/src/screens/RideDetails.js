@@ -11,6 +11,7 @@ import {
     Image,
     AsyncStorage,
     Modal,
+    Alert,
     TextInput,
     KeyboardAvoidingView,
     TouchableWithoutFeedback,
@@ -124,25 +125,36 @@ export default class RideDetails extends React.Component {
         this.setState({ loaderTick: true })
 
         let dbRef = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my-booking/' + this.state.paramData.bookingId + '/');
-        dbRef.once('value',(snap)=> {
+        dbRef.once('value', (snap) => {
             let checkTick = snap.val()
-            if(checkTick && !checkTick.ticket){
-                if( this.state.ticket && this.state.ticket.length > 5 ){
+            if (checkTick && !checkTick.ticket) {
+                if (this.state.ticket && this.state.ticket.length > 5) {
                     firebase.database().ref('tickets/' + 'corridas/').push({
-                        id: this.state.paramData ? this.state.paramData.bookingId : null, 
+                        id: this.state.paramData ? this.state.paramData.bookingId : null,
                         msg: this.state.ticket ? this.state.ticket : null,
-                    }).then(() =>
-                        { firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my-booking/' + this.state.paramData.bookingId + '/' ).update({ ticket: true })
-                    }).then(
-                        () => {this.setState({inputModal: false, loaderTick: false})}
-                    )
+                    }).then(() => {
+                        firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my-booking/' + this.state.paramData.bookingId + '/').update({ ticket: true })
+                    }).then(() => {
+                        Alert.alert(
+                            'Tudo certo!',
+                            'Ticket enviado com sucesso! Em breve entraremos em contato com você!',
+                            [
+                                {
+                                    style: 'default',
+                                    text: 'Continuar',
+                                    onPress: () => this.setState({ inputModal: false, loaderTick: false })
+                                },
+                            ],
+                            { cancelable: true },
+                        )
+                    })
                 } else {
                     alert('Digite corretamente o problema.')
-                    this.setState({loaderTick: false})
+                    this.setState({ loaderTick: false })
                 }
             } else {
                 alert('Você já possuí um ticket aberto para essa corrida, aguarde seu ticket ser resolvido.')
-                this.setState({loaderTick: false})
+                this.setState({ loaderTick: false })
             }
         })
     }
@@ -178,7 +190,7 @@ export default class RideDetails extends React.Component {
                                     numberOfLines={6}
                                 />
 
-                                <TouchableOpacity disabled={this.state.loaderTick} onPress={() => {this.sendTicket()}} style={{
+                                <TouchableOpacity disabled={this.state.loaderTick} onPress={() => { this.sendTicket() }} style={{
                                     position: 'absolute', bottom: 15, backgroundColor: colors.DEEPBLUE,
                                     width: 200, borderRadius: 5, height: 40, justifyContent: 'center', alignItems: 'center'
                                 }}>

@@ -64,7 +64,7 @@ export default class RideList extends React.Component {
                                 <Text style={[styles.textStyle, styles.dateRide]}>
                                     {item.bookingDate ?
                                         Platform.OS == 'ios' ?
-                                            item.bookingDate.split(' ')[0] + ' - ' + item.'bookingDate'.split(' ')[1].split(':')[0] + ':' + item.bookingDate.split(' ')[1].split(':')[1]
+                                            item.bookingDate.split(' ')[0] + ' - ' + item.bookingDate.split(' ')[1].split(':')[0] + ':' + item.bookingDate.split(' ')[1].split(':')[1]
                                             : this.dataAtualFormatada(item) + ' - ' + item.trip_end_time
                                         : ''
                                     }

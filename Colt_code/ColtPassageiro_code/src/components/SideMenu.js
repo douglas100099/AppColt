@@ -95,7 +95,7 @@ export default class SideMenu extends React.Component {
             if( snapshot.val() ){
                 const data = snapshot.val()
                 for(let key in data){
-                    if(data[key].status === "START" || data[key].status === "ACCEPTED"){
+                    if(data[key].status === "START" || data[key].status === "ACCEPTED" || data[key].status === "EMBARQUE"){
                         this.bookingActive = true
                     }
                 }

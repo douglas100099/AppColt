@@ -83,56 +83,57 @@ export default class DriverTripComplete extends React.Component {
 
     submitNow() {
         this.setState({ btnSubmit: true })
-        firebase.database().ref('users/' + this.state.getDetails.driver + '/ratings/details').push({
-            user: firebase.auth().currentUser.uid,
-            rate: this.state.starCount > 0 ? this.state.starCount : 5
-        }).then((res) => {
-            let path = firebase.database().ref('users/' + this.state.getDetails.driver + '/ratings/');
-            path.once('value', snapVal => {
-                if (snapVal.val()) {
-                    // rating calculation
-                    let ratings = snapVal.val().details;
-                    var total = 0;
-                    var count = 0;
-                    let fRating = 0;
-                    for (let key in ratings) {
-                        count = count + 1;
-                        total = total + ratings[key].rate;
-                    }
-                    if (count < 10) {
-                        fRating = 5.00
-                    } else {
-                        fRating = total / count;
-                    }
-                    if (fRating) {
+
+        let path = firebase.database().ref('users/' + this.state.getDetails.driver + '/ratings/');
+        path.once('value', snapVal => {
+            if (snapVal.val()) {
+                // rating calculation
+                let ratings = snapVal.val().details;
+                var total = 0;
+                var count = 0;
+                let fRating = 0;
+                for (let key in ratings) {
+                    count = count + 1;
+                    total = total + ratings[key].rate;
+                }
+                if (count < 50) {
+                    fRating = 5.00
+                } else {
+                    fRating = total / count;
+                }
+                if (fRating) {
+                    firebase.database().ref('users/' + this.state.getDetails.driver + '/ratings/details').push({
+                        user: firebase.auth().currentUser.uid,
+                        rate: this.state.starCount > 0 ? this.state.starCount : 5
+                    }).then(() => {
                         //avarage Rating submission
                         firebase.database().ref('users/' + this.state.getDetails.driver + '/ratings/').update({ userrating: parseFloat(fRating).toFixed(2) }).then(() => {
                             //Rating for perticular booking 
                             firebase.database().ref('users/' + this.state.getDetails.driver + '/my_bookings/' + this.state.getDetails.bookingKey + '/').update({
                                 rating: this.state.starCount > 0 ? this.state.starCount : 5,
                             }).then(() => {
-                                firebase.database().ref('users/' + firebase.auth().currentUser.uid  + '/my-booking/' + this.state.getDetails.bookingKey + '/').update({
+                                firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my-booking/' + this.state.getDetails.bookingKey + '/').update({
                                     rated_by_rider: true,
                                 }).then(() => {
-                                        this.setState({ alertModalVisible: false, currentBookingId: null },
-                                            () => {
-                                                this.props
-                                                    .navigation
-                                                    .dispatch(StackActions.reset({
-                                                        index: 0,
-                                                        actions: [
-                                                            NavigationActions.navigate({
-                                                                routeName: 'Map',
-                                                            }),
-                                                        ],
-                                                    }))
-                                            })
-                                    })
+                                    this.setState({ alertModalVisible: false, currentBookingId: null },
+                                        () => {
+                                            this.props
+                                                .navigation
+                                                .dispatch(StackActions.reset({
+                                                    index: 0,
+                                                    actions: [
+                                                        NavigationActions.navigate({
+                                                            routeName: 'Map',
+                                                        }),
+                                                    ],
+                                                }))
+                                        })
+                                })
                             })
                         })
-                    }
+                    })
                 }
-            })
+            }
         })
     }
 

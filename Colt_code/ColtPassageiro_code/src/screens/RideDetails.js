@@ -9,11 +9,16 @@ import {
     Platform,
     Linking,
     Image,
-    AsyncStorage
+    AsyncStorage,
+    Modal,
+    TextInput,
+    KeyboardAvoidingView,
+    TouchableWithoutFeedback,
+    Keyboard
 } from 'react-native';
 import Polyline from '@mapbox/polyline';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
-import { Header, Icon, } from 'react-native-elements';
+import { Header, Icon, Input } from 'react-native-elements';
 import { colors } from '../common/theme';
 var { width } = Dimensions.get('window');
 import * as firebase from 'firebase'; //Database
@@ -26,6 +31,7 @@ import LocationDrop from '../../assets/svg/LocationDrop';
 import CircleLineTriangle from '../../assets/svg/CircleLineTriangle';
 import AvatarUser from '../../assets/svg/AvatarUser';
 import { color } from 'react-native-reanimated';
+import { ActivityIndicator } from 'react-native';
 
 export default class RideDetails extends React.Component {
     _isMounted = false;
@@ -40,8 +46,11 @@ export default class RideDetails extends React.Component {
                 symbol: '',
                 cash: false,
                 wallet: false
-            }
+            },
+            inputModal: false,
+            loaderTick: false
         }
+        this.refInput
         this.getRideDetails = this.props.navigation.getParam('data');
     }
 
@@ -69,7 +78,7 @@ export default class RideDetails extends React.Component {
                 paramData: this.getRideDetails,
             }, () => {
                 if (this._isMounted) {
-                    this.getDirections('"' + this.state.paramData.pickup.lat + ',' + this.state.paramData.pickup.lng + '"', '"' + this.state.paramData.drop.lat + ',' + this.state.paramData.drop.lng + '"');
+                    //this.getDirections('"' + this.state.paramData.pickup.lat + ',' + this.state.paramData.pickup.lng + '"', '"' + this.state.paramData.drop.lat + ',' + this.state.paramData.drop.lng + '"');
                     this.forceUpdate();
                 }
             })
@@ -78,7 +87,7 @@ export default class RideDetails extends React.Component {
     }
 
     componentWillUnmount() {
-        this._isMounted = false
+        this._isMounted = true
     }
 
     // find your origin and destination point coordinates and pass it to our method.
@@ -111,20 +120,101 @@ export default class RideDetails extends React.Component {
         }
     }
 
+    sendTicket() {
+        this.setState({ loaderTick: true })
+
+        let dbRef = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my-booking/' + this.state.paramData.bookingId + '/');
+        dbRef.once('value',(snap)=> {
+            let checkTick = snap.val()
+            if(checkTick && !checkTick.ticket){
+                if( this.state.ticket && this.state.ticket.length > 5 ){
+                    firebase.database().ref('tickets/' + 'corridas/').push({
+                        id: this.state.paramData ? this.state.paramData.bookingId : null, 
+                        msg: this.state.ticket ? this.state.ticket : null,
+                    }).then(() =>
+                        { firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/my-booking/' + this.state.paramData.bookingId + '/' ).update({ ticket: true })
+                    }).then(
+                        () => {this.setState({inputModal: false, loaderTick: false})}
+                    )
+                } else {
+                    alert('Digite corretamente o problema.')
+                    this.setState({loaderTick: false})
+                }
+            } else {
+                alert('Você já possuí um ticket aberto para essa corrida, aguarde seu ticket ser resolvido.')
+                this.setState({loaderTick: false})
+            }
+        })
+    }
+
+    inputModal() {
+        return (
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={this.state.inputModal}
+            >
+                <View style={{ flex: 1, backgroundColor: "rgba(22,22,22,0.2)", justifyContent: 'center', alignItems: 'center' }}>
+                    <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? 'position' : 'height'}>
+                        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                            <View style={{ justifyContent: 'center', alignItems: 'center', height: 350, width: width - 50, borderRadius: 15, backgroundColor: colors.WHITE }}>
+                                <Text style={{ fontFamily: 'Inter-Bold', fontSize: 16, position: 'absolute', top: 15, left: 10 }} > Conte mais sobre seu problema </Text>
+                                <Icon
+                                    name='md-close'
+                                    type='ionicon'
+                                    color={colors.BLACK}
+                                    size={35}
+                                    containerStyle={{ position: 'absolute', top: 5, right: 15 }}
+                                    onPress={() => { this.setState({ inputModal: false }) }}
+                                />
+
+                                <TextInput
+                                    ref={(ref) => this.refInput = ref}
+                                    style={{ position: 'absolute', top: 50, borderWidth: 1, borderColor: colors.GREY1, borderRadius: 10, width: width - 60, height: 200, textAlignVertical: 'top', fontSize: 16, color: colors.BLACK, fontFamily: 'Inter-Regular' }}
+                                    maxLength={150}
+                                    onChangeText={(text) => this.setState({ ticket: text })}
+                                    editable={!this.state.loaderTick}
+                                    multiline={true}
+                                    numberOfLines={6}
+                                />
+
+                                <TouchableOpacity disabled={this.state.loaderTick} onPress={() => {this.sendTicket()}} style={{
+                                    position: 'absolute', bottom: 15, backgroundColor: colors.DEEPBLUE,
+                                    width: 200, borderRadius: 5, height: 40, justifyContent: 'center', alignItems: 'center'
+                                }}>
+                                    {!this.state.loaderTick ?
+
+                                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: 16, color: colors.WHITE }}> Enviar </Text>
+                                        :
+                                        <ActivityIndicator
+                                            size={'small'}
+                                            color={colors.WHITE}
+                                        />
+                                    }
+                                </TouchableOpacity>
+                            </View>
+                        </TouchableWithoutFeedback>
+                    </KeyboardAvoidingView>
+                </View>
+            </Modal>
+        )
+    }
+
 
     //call driver button press
     onPressCall(phoneNumber) {
+
         Linking.canOpenURL(phoneNumber).then(supported => {
             if (!supported) {
-                console.log('Can\'t handle Phone Number: ' + phoneNumber);
+                console.log('Can\'t handle Phone Number: ' + phoneNumber)
             } else {
-                return Linking.openURL(phoneNumber);
+                return Linking.openURL(phoneNumber)
             }
-        }).catch(err => console.error('An error occurred', err));
+        }).catch(err => console.error('An error occurred', err))
     }
     //go back
     goBack() {
-        this.props.navigation.goBack();
+        this.props.navigation.goBack()
     }
 
     render() {
@@ -255,34 +345,59 @@ export default class RideDetails extends React.Component {
                                         </View>
                                     </View>
                                     : null}
+
+                                <TouchableOpacity style={{ position: 'absolute', right: 30 }} onPress={() => { this.onPressCall('tel: ' + this.state.paramData.driver_contact) }}>
+                                    <Icon
+                                        name='ios-call'
+                                        type='ionicon'
+                                        color={colors.DEEPBLUE}
+                                        size={30}
+                                    //containerStyle={{ opacity: .5 }}
+                                    />
+                                </TouchableOpacity>
                             </View>
                         </View>
 
 
-                        <Text style={{ marginTop: 10, marginBottom: 10, marginLeft: 25, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 15 : 17 }}>Pagamento</Text>
+                        <Text style={{ marginTop: 10, marginBottom: 0, marginLeft: 25, fontFamily: 'Inter-Bold', fontSize: width < 375 ? 15 : 17 }}>Pagamento</Text>
                         {this.state.paramData ?
-                            <View style={styles.cardPagamento}>
-                                <View style={{ marginLeft: 10, flexDirection: 'row', alignItems: 'center' }}>
-                                    <Icon
-                                        name='ios-cash'
-                                        type='ionicon'
-                                        color={colors.GREEN.light}
-                                        size={22}
-                                        containerStyle={{ opacity: .5 }}
-                                    />
-                                    <Text style={{ fontFamily: 'Inter-Medium', marginLeft: 3, fontSize: width < 375 ? 17 : 19 }}> {this.state.paramData.pagamento.payment_mode} </Text>
-                                </View>
-                                {this.state.paramData.pagamento.customer_paid ?
-                                    <Text style={{ fontFamily: 'Inter-Bold', fontSize: width < 375 ? 17 : 21, position: 'absolute', right: 20 }}>
-                                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: 13 }}>R$</Text>
-                                        {parseFloat(this.state.paramData.pagamento.customer_paid).toFixed(2)}
-                                    </Text>
+                            <View>
+                                {this.state.paramData.pagamento.discount_amount > 0 ?
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 25 }}>
+                                        <Icon
+                                            name="ios-bookmark"
+                                            type="ionicon"
+                                            color={colors.DEEPBLUE}
+                                            size={22}
+                                        />
+                                        <Text style={{ color: colors.DEEPBLUE, fontFamily: 'Inter-Medium', marginLeft: 5, paddingVertical: 10, fontSize: width < 375 ? 13 : 15 }}>Você usou um cupom de desconto nessa corrida!</Text>
+                                    </View>
                                     : null}
+                                <View>
+                                </View>
+                                <View style={styles.cardPagamento}>
+                                    <View style={{ marginLeft: 10, flexDirection: 'row', alignItems: 'center' }}>
+                                        <Icon
+                                            name='ios-cash'
+                                            type='ionicon'
+                                            color={colors.GREEN.light}
+                                            size={22}
+                                            containerStyle={{ opacity: .5 }}
+                                        />
+                                        <Text style={{ fontFamily: 'Inter-Medium', marginLeft: 3, fontSize: width < 375 ? 17 : 19 }}> {this.state.paramData.pagamento.payment_mode} </Text>
+                                    </View>
+                                    {this.state.paramData.pagamento.customer_paid >= 0 ?
+                                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: width < 375 ? 17 : 21, position: 'absolute', right: 20 }}>
+                                            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 13 }}>R$</Text>
+                                            {parseFloat(this.state.paramData.pagamento.customer_paid).toFixed(2)}
+                                        </Text>
+                                        : null}
+                                </View>
                             </View>
                             : null}
 
-                        <TouchableOpacity >
-                            <View style={styles.btnProblem}>
+                        <TouchableOpacity onPress={() => { this.setState({ inputModal: true }) }} >
+                            <View style={styles.btnProblem} >
                                 <Text style={{ fontFamily: "Inter-Bold", color: colors.RED, fontSize: width < 375 ? 17 : 19 }}> Relatar problema </Text>
                             </View>
                         </TouchableOpacity>
@@ -290,6 +405,9 @@ export default class RideDetails extends React.Component {
                     </View>
 
                 </ScrollView>
+                {
+                    this.inputModal()
+                }
             </View>
         )
     }
@@ -381,7 +499,7 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
         marginVertical: 6
     },
- 
+
     mainView: {
         flex: 1,
         backgroundColor: colors.WHITE,

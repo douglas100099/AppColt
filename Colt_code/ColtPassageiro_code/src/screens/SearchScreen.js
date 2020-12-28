@@ -12,6 +12,7 @@ import * as firebase from 'firebase'
 import LocationIconSearch from '../../assets/svg/LocationIconSearch';
 import LocationUser from '../../assets/svg/LocationUser';
 import LocationDrop from '../../assets/svg/LocationDrop';
+import IconWayPoint from '../../assets/svg/IconWayPoint';
 import SelectLocationPickup from '../../assets/svg/SelectLocationPickup';
 import SelectLocationDrop from '../../assets/svg/SelectLocationDrop';
 import BtnVoltar from '../components/BtnVoltar';
@@ -20,6 +21,7 @@ import { color } from 'react-native-reanimated';
 import { Pulse } from 'react-native-animated-spinkit'
 import { StatusBar } from 'react-native';
 
+import SearchAutoComplete from '../components/SearchAutoComplete';
 
 export default class SearchScreen extends Component {
     constructor(props) {
@@ -38,6 +40,7 @@ export default class SearchScreen extends Component {
             region: null,
             searchFocused2: false,
             selectOnMap: false,
+            showBtnWaypoint: false
         }
         this.sessionToken = '';
         this.searchDrop = null,
@@ -170,10 +173,72 @@ export default class SearchScreen extends Component {
                             name='ios-home'
                             type='ionicon'
                             color={colors.BLACK}
-                            size={25}
-                            containerStyle={{ position: 'absolute', left: 22 }}
+                            raised={true}
+                            size={20}
+                            containerStyle={{ position: 'absolute', left: 3 }}
                         />
 
+                        <SearchAutoComplete
+                            locationCasa={this.state.locationCasa}
+                            showBtnDelete={true}
+                            modalFocused={this.state.modalFocused}
+                            onPressSearch={(data, detalhes) => { this.saveAddress(data, detalhes) }}
+                            DefaultValue={this.state.locationCasa ? this.state.locationCasa.add : ''}
+                            locationUser={[this.state.locationUser.wherelatitude, this.state.locationUser.wherelongitude]}
+                            sessionToken={this.sessionToken}
+                            stylesProps={{
+                                container: {
+                                    width: width,
+                                },
+                                textInputContainer: {
+                                    backgroundColor: colors.GREY.background,
+                                    //backgroundColor: colors.RED,
+                                    marginRight: 45,
+                                    paddingLeft: 10,
+                                    fontSize: 18,
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    borderRadius: 5,
+                                    marginHorizontal: 45,
+                                    left: 20
+                                },
+                                textInput: {
+                                    //backgroundColor: colors.BLACK,
+                                    height: 35,
+                                    fontFamily: 'Inter-Medium',
+                                    fontSize: width < 375 ? 14 : 16,
+                                    paddingTop: 4,
+                                    paddingBottom: 4,
+                                    paddingRight: Platform.OS == "ios" ? 7 : 32,
+                                    flex: 1
+                                },
+                                listView: {
+                                    position: 'absolute',
+                                    top: Platform.OS == 'ios' ? 75 : 75,
+                                    backgroundColor: colors.WHITE,
+                                },
+                                description: {
+                                    paddingLeft: 20,
+                                    paddingRight: 20,
+                                },
+                                row: {
+                                    paddingLeft: 10,
+                                    paddingRight: 10,
+                                    height: 50,
+                                    justifyContent: 'center',
+                                    borderBottomWidth: 2,
+                                    borderBottomColor: colors.GREY.background,
+                                    opacity: 0.8,
+                                },
+                                loader: {
+                                    flexDirection: 'row',
+                                    justifyContent: 'flex-end',
+                                    height: 20,
+                                },
+                            }}
+                        />
+
+                        {/*
                         <GooglePlacesAutocomplete
                             ref={(ref) => { this.searchModal = ref; }}
                             placeholder='Procurar'
@@ -320,14 +385,16 @@ export default class SearchScreen extends Component {
 
                             debounce={50} // debounce the requests in ms. Set to 0 to remove debounce. By default 0ms.
                         >
-
                         </GooglePlacesAutocomplete>
+                        */}
                     </View>
+                    {/*
                     {this.state.locationCasa != null ?
                         <TouchableOpacity style={{ top: Platform.OS == 'ios' ? 30 : 25, alignSelf: 'center' }} onPress={() => { this.deleteSavedLocation() }}>
                             <Text style={{ fontFamily: 'Inter-Bold', color: colors.RED, fontSize: width < 375 ? 15 : 16 }}> Excluir </Text>
                         </TouchableOpacity>
                         : null}
+                    */}
                 </View>
             </Modal>
         )
@@ -449,13 +516,152 @@ export default class SearchScreen extends Component {
                             </TouchableOpacity>
                         </View>
 
-                        <View style={{ position: 'absolute', left: 20, top: Platform.OS == 'ios' ? 102 : 75, flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                        <View style={{ position: 'absolute', left: 13, top: Platform.OS == 'ios' ? 102 : 75, flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                             <LocationUser width={25} height={25} />
-                            <View style={{ backgroundColor: colors.DEEPBLUE, height: 40, width: 2 }} />
-                            <LocationDrop style={{ top: -5 }} width={23} height={23} />
+                            <View style={{ backgroundColor: colors.DEEPBLUE, height: this.state.showBtnWaypoint ? 90 : 40, width: 2 }} />
+                            {this.state.showBtnWaypoint ?
+                                <IconWayPoint
+                                    width={17}
+                                    height={16}
+                                    style={{ position: 'absolute' }}
+                                />
+                                : null}
+                            <LocationDrop style={{ top: -5 }} width={this.state.showBtnWaypoint ? 28 : 23} height={this.state.showBtnWaypoint ? 28 : 23} />
                         </View>
-                        <View style={{ justifyContent: 'center', alignSelf: 'center', width: width, height: 1, backgroundColor: colors.GREY1, position: 'absolute', top: Platform.OS == 'ios' ? 200 : 180 }} />
+                        <View style={{
+                            justifyContent: 'center',
+                            alignSelf: 'center',
+                            width: width,
+                            height: 1,
+                            backgroundColor: colors.GREY1,
+                            position: 'absolute',
+                            top: Platform.OS == 'ios' ? this.state.showBtnWaypoint ? 260 : 200 : this.state.showBtnWaypoint ? 240 : 180
+                        }}
+                        />
 
+                        <SearchAutoComplete
+                            placeholder={'Local de partida'}
+                            locationCasa={this.state.locationCasa}
+                            showBtnDelete={false}
+                            modalFocused={this.state.searchFocused}
+                            onPressSearch={(data, detalhes) => { this.setState({ searchFocused: false }), this.pickupLocation(detalhes) }}
+                            DefaultValue={this.state.pickupData ? this.state.pickupData.whereText : this.state.locationUser.whereText}
+                            locationUser={[this.state.locationUser.wherelatitude, this.state.locationUser.wherelongitude]}
+                            sessionToken={this.sessionToken}
+                            onFocus={() => { this.setState({ searchFocused: true }) }}
+                            onBlur={() => { this.setState({ searchFocused: false }) }}
+                            stylesProps={{
+                                container: {
+                                    position: 'absolute',
+                                    width: width,
+                                    top: Platform.OS == "ios" ? 37 : 25
+                                },
+                                textInputContainer: {
+                                    justifyContent: 'center',
+                                    marginHorizontal: 40,
+                                    backgroundColor: colors.GREY.background,
+                                    marginRight: 45,
+                                    paddingBottom: Platform.OS == "ios" ? 8 : 4,
+                                    paddingTop: Platform.OS == "ios" ? 8 : 4,
+                                    paddingLeft: 8,
+                                    borderRadius: 5,
+                                    left: 5,
+                                    zIndex: 2
+                                },
+                                textInput: {
+                                    fontFamily: 'Inter-Medium',
+                                    fontSize: width < 375 ? 14 : 16,
+                                    paddingTop: 2,
+                                    paddingBottom: 2,
+                                    paddingRight: Platform.OS == "ios" ? 7 : 32,
+                                },
+                                listView: {
+                                    backgroundColor: colors.WHITE,
+                                    width: width,
+                                    marginTop: this.state.showBtnWaypoint ? 140 : 80,
+                                },
+                                description: {
+                                    fontSize: 20,
+                                    paddingLeft: 20,
+                                    paddingRight: 20,
+                                },
+                                row: {
+                                    paddingLeft: 10,
+                                    paddingRight: 10,
+                                    height: 50,
+                                    justifyContent: 'center',
+                                    fontFamily: 'Inter-Bold',
+                                    borderBottomWidth: 2,
+                                    borderBottomColor: colors.GREY.background,
+                                    opacity: 0.8,
+                                },
+                            }}
+                        />
+
+                        {
+                            this.state.showBtnWaypoint ?
+
+                                <SearchAutoComplete
+                                    placeholder={'Local de parada'}
+                                    showBtnDelete={false}
+                                    modalFocused={this.state.searchFocused3}
+                                    onPressSearch={(data, detalhes) => { this.setState({ searchFocused3: false }), this.pickupLocation(detalhes) }}
+                                    DefaultValue={''}
+                                    locationUser={[this.state.locationUser.wherelatitude, this.state.locationUser.wherelongitude]}
+                                    sessionToken={this.sessionToken}
+                                    onFocus={() => { this.setState({ searchFocused3: true }) }}
+                                    onBlur={() => { this.setState({ searchFocused3: false }) }}
+                                    stylesProps={{
+                                        container: {
+                                            position: 'absolute',
+                                            width: width,
+                                            top: Platform.OS == "ios" ? 95 : 80
+                                        },
+                                        textInputContainer: {
+                                            justifyContent: 'center',
+                                            marginHorizontal: 40,
+                                            backgroundColor: colors.GREY.background,
+                                            marginRight: 45,
+                                            paddingBottom: Platform.OS == "ios" ? 8 : 4,
+                                            paddingTop: Platform.OS == "ios" ? 8 : 4,
+                                            paddingLeft: 8,
+                                            borderRadius: 5,
+                                            left: 5,
+                                            zIndex: 2
+                                        },
+                                        textInput: {
+                                            fontFamily: 'Inter-Medium',
+                                            fontSize: width < 375 ? 14 : 16,
+                                            paddingTop: 2,
+                                            paddingBottom: 2,
+                                            paddingRight: Platform.OS == "ios" ? 7 : 32,
+                                        },
+                                        listView: {
+                                            backgroundColor: colors.WHITE,
+                                            width: width,
+                                            marginTop: 80,
+                                        },
+                                        description: {
+                                            fontSize: 20,
+                                            paddingLeft: 20,
+                                            paddingRight: 20,
+                                        },
+                                        row: {
+                                            paddingLeft: 10,
+                                            paddingRight: 10,
+                                            height: 50,
+                                            justifyContent: 'center',
+                                            fontFamily: 'Inter-Bold',
+                                            borderBottomWidth: 2,
+                                            borderBottomColor: colors.GREY.background,
+                                            opacity: 0.8,
+                                        },
+                                    }}
+                                />
+                                : null
+                        }
+
+                        {/*
                         <GooglePlacesAutocomplete
                             ref={(ref) => { this.searchPickup = ref; }}
                             placeholder='Local de partida'
@@ -594,96 +800,27 @@ export default class SearchScreen extends Component {
                         >
 
                         </GooglePlacesAutocomplete>
+                        */}
 
-                        <GooglePlacesAutocomplete
-                            ref={(ref) => { this.searchDrop = ref; }}
-                            placeholder='Local de destino'
-                            enablePoweredByContainer={false}
-                            minLength={2}
-                            autoFocus={this.state.searchFocused2}
-                            returnKeyType={'search'} // Can be left out for default return key https://facebook.github.io/react-native/docs/textinput.html#returnkeytype
-                            listViewDisplayed={this.state.searchFocused2}
-                            fetchDetails={true}
-                            numberOfLines={1}
-                            suppressDefaultStyles={true}
-                            enableHighAccuracyLocation={true}
-
-                            /*listEmptyComponent={
-                                <View style={{ backgroundColor: colors.WHITE }}>
-                                    <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                                        <Text style={{ fontFamily: 'Inter-Bold', fontSize: 18, color: colors.GREY1 }}> Nenhum resultado encontrado. </Text>
-                                    </View>
-                                </View>
-                            }*/
-
-                            renderRightButton={() => {
-                                return (
-                                    Platform.OS == "android" ?
-                                        this.state.searchFocused2 ?
-                                            <TouchableOpacity style={{ position: 'absolute', alignItems: 'center', right: 10 }} onPress={() => { this.clearInput(this.searchDrop) }}>
-                                                <Icon
-                                                    name='ios-close-circle'
-                                                    type='ionicon'
-                                                    size={20}
-                                                    containerStyle={{ opacity: 0.2 }}
-                                                />
-                                            </TouchableOpacity>
-                                            : null
-                                        : null
-                                )
-                            }
-                            }
-
-                            textInputProps={{
-                                onFocus: () => { this.setState({ searchFocused2: true }) },
-                                onBlur: () => { this.setState({ searchFocused2: false }) },
-                                autoCapitalize: "none",
-                                autoCorrect: false,
+                        <SearchAutoComplete
+                            placeholder={'Local de destino'}
+                            locationCasa={this.state.locationCasa}
+                            showBtnDelete={false}
+                            modalFocused={this.state.searchFocused2}
+                            onPressSearch={(data, detalhes) => {
+                                this.setState({ searchFocused2: false }),
+                                    this.goMap(detalhes, false, false)
                             }}
-
-                            onPress={(data, details = null) => { // 'details' is provided when fetchDetails = true
-                                this.setState({ searchFocused2: false })
-                                this.goMap(details, false, false);
-                            }}
-
-                            //renderDescription={(row) => row.formatted_address || row.description || row.name}
-
-                            renderRow={(row) =>
-                                <View style={{ paddingTop: 7, paddingBottom: 7, flexDirection: 'row', alignItems: 'center' }}>
-                                    <Icon
-                                        name='ios-pin'
-                                        type='ionicon'
-                                        size={15}
-                                        containerStyle={{ marginLeft: 10, opacity: 0.5 }}
-                                    />
-                                    <View style={{ flexDirection: 'column' }}>
-                                        <Text numberOfLines={1} style={{ marginLeft: 8, fontFamily: 'Inter-Medium', fontSize: 18, color: colors.BLACK }}> {row.description.split("-", 2)[0]} </Text>
-                                        <Text numberOfLines={1} style={{ marginLeft: 8, opacity: 0.5, fontFamily: 'Inter-Regular', fontSize: 14 }}> {row.description}</Text>
-                                    </View>
-                                </View>
-                            }
-
-                            getDefaultValue={() => ''}
-                            query={{
-                                // available options: https://developers.google.com/places/web-service/autocomplete
-                                key: google_map_key,
-                                language: 'pt-BR', // language of the results
-                                type: ['(regions)'],
-                                rankby: 'distance',
-                                components: "country:br", // country name
-                                location: this.state.locationUser.wherelatitude + ',' + this.state.locationUser.wherelongitude,
-                                //strictbounds : true,
-                                radius: 15000,
-                                sessiontoken: this.sessionToken,
-                            }}
-                            //predefinedPlaces={[homePlace, workPlace]}
-                            //predefinedPlacesAlwaysVisible={false}
-
-                            styles={{
+                            DefaultValue={''}
+                            locationUser={[this.state.locationUser.wherelatitude, this.state.locationUser.wherelongitude]}
+                            sessionToken={this.sessionToken}
+                            onFocus={() => { this.setState({ searchFocused2: true }) }}
+                            onBlur={() => { this.setState({ searchFocused2: false }) }}
+                            stylesProps={{
                                 container: {
                                     position: 'absolute',
                                     width: width,
-                                    top: Platform.OS == "ios" ? 155 : 130,
+                                    top: Platform.OS == "ios" ? this.state.showBtnWaypoint ? 150 : 95 : this.state.showBtnWaypoint ? 139 : 86,
                                 },
                                 textInputContainer: {
                                     justifyContent: 'center',
@@ -694,7 +831,7 @@ export default class SearchScreen extends Component {
                                     paddingLeft: 8,
                                     borderRadius: 5,
                                     marginHorizontal: 40,
-                                    left: 15
+                                    left: 5
                                 },
                                 textInput: {
                                     fontFamily: 'Inter-Medium',
@@ -734,36 +871,21 @@ export default class SearchScreen extends Component {
                                     height: 20,
                                 },
                             }}
+                        />
 
-                            //currentLocation={true} // Will add a 'Current location' button at the top of the predefined places list
-                            //currentLocationLabel="Localização atual"
+                        {
+                            <TouchableOpacity onPress={() => this.setState({ showBtnWaypoint: !this.state.showBtnWaypoint })} style={{ position: 'absolute', right: 20, top: Platform.OS == "ios" ? 152 : 130, }}>
+                                <Icon
+                                    name={ this.state.showBtnWaypoint ? 'ios-close' : 'ios-add'}
+                                    type='ionicon'
+                                    color={ this.state.showBtnWaypoint ? colors.RED : colors.DEEPBLUE}
+                                    size={40}
+                                    containerStyle={{ left: 8 }}
+                                />
+                            </TouchableOpacity>
+                        }
 
-                            nearbyPlacesAPI='GooglePlacesSearch' // Which API to use: GoogleReverseGeocoding or GooglePlacesSearch
-                            GoogleReverseGeocodingQuery={{
-                                // available options for GoogleReverseGeocoding API : https://developers.google.com/maps/documentation/geocoding/intro
-                                key: google_map_key,
-                                language: 'pt-BR',
-                                region: '.br',
-                            }}
-                            GooglePlacesSearchQuery={{
-                                // available options for GooglePlacesSearch API : https://developers.google.com/places/web-service/search
-                                rankby: 'distance',
-                                key: google_map_key,
-                                radius: 15000,
-                                location: this.state.locationUser.wherelatitude + ',' + this.state.locationUser.wherelongitude,
-
-
-                                language: 'pt-BR', // language of the results
-                                type: ['(regions)'],
-                                sessiontoken: this.sessionToken,
-                            }}
-
-                            debounce={50} // debounce the requests in ms. Set to 0 to remove debounce. By default 0ms.
-                        >
-
-                        </GooglePlacesAutocomplete>
-
-                        {!this.state.searchFocused2 && !this.state.searchFocused ?
+                        {!this.state.searchFocused2 && !this.state.searchFocused && !this.state.searchFocused3 && !this.state.showBtnWaypoint ?
                             <View style={styles.viewPrincipal}>
                                 <TouchableOpacity onPress={() => this.state.locationCasa != null ? this.goMap(null, true, false) : this.setState({ showSetAddress: true })}>
                                     <View style={styles.addCasa}>
@@ -825,7 +947,7 @@ const styles = StyleSheet.create({
 
     },
     IconTextTop: {
-        marginTop: Platform.select({ ios: 60, android: StatusBar.currentHeight + 20 }) ,
+        marginTop: Platform.select({ ios: 60, android: StatusBar.currentHeight + 20 }),
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center'

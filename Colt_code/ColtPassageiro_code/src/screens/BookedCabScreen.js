@@ -252,6 +252,13 @@ export default class BookedCabScreen extends React.Component {
                                     }
                                 }
                                 else {
+                                    driverRef.update({
+                                        driverActiveStatus: false
+                                    }).then(() => {
+                                        this.sendPushNotification(this.driverUidSelected,
+                                            'Você recebeu um chamado mas verificamos que sua conexão está fraca ou inexistente. Seu status foi alterado para OFFLINE por conta disso. '
+                                        )
+                                    })
                                     this.searchDriverQueue = !this.searchDriverQueue
 
                                     this.driverUidSelected = 0

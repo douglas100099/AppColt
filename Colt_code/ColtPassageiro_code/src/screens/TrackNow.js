@@ -117,7 +117,7 @@ export default class TrackNow extends React.Component {
                 enableHighAccuracy: true,
                 timeout: 20000,
                 maximumAge: 1000,
-                distanceFilter: 100
+                distanceFilter: 150
             }
         );
     }
@@ -189,17 +189,16 @@ export default class TrackNow extends React.Component {
                 {
                     text: 'OK', onPress: async () => {
                         if (Platform.OS === 'android') {
-                            phoneNumber = `tel:190`;
+                            phoneNumber = `tel:190`
                         } else {
-                            phoneNumber = `telprompt:190`;
+                            phoneNumber = `telprompt:190`
                         }
-                        Linking.openURL(phoneNumber);
-
+                        Linking.openURL(phoneNumber)
                     }
                 }
             ],
             { cancelable: false }
-        );
+        )
     }
 
     render() {

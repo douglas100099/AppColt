@@ -21,3 +21,5 @@
 [1213/130540.843:ERROR:directory_reader_win.cc(43)] FindFirstFile: O sistema n√£o pode encontrar o caminho especificado. (0x3)
 [1213/152732.855:ERROR:directory_reader_win.cc(43)] FindFirstFile: O sistema n√£o pode encontrar o caminho especificado. (0x3)
 [1213/224132.888:ERROR:directory_reader_win.cc(43)] FindFirstFile: O sistema n√£o pode encontrar o caminho especificado. (0x3)
+[1228/165323.466:ERROR:directory_reader_win.cc(43)] FindFirstFile: O sistema n„o pode encontrar o caminho especificado. (0x3)
+[1229/110417.201:ERROR:directory_reader_win.cc(43)] FindFirstFile: O sistema n„o pode encontrar o caminho especificado. (0x3)

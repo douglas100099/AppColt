@@ -29,6 +29,7 @@ import languageJSON from '../common/language';
 
 import LocationUser from '../../assets/svg/LocationUser';
 import LocationDrop from '../../assets/svg/LocationDrop';
+import LocationWaypoint from '../../assets/svg/LocationWaypoint';
 import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
 import ColtConfortCar from '../../assets/svg/ColtConfortCar';
 import { VerifyCupom } from '../common/VerifyCupom';
@@ -59,8 +60,6 @@ export default class FareScreen extends React.Component {
                 otp_secure: false
             },
             buttonDisabled: false,
-            carType: '',
-            carImage: '',
             metodoPagamento: 'Dinheiro',
             openModalPayment: false,
             walletBallance: null,
@@ -76,15 +75,17 @@ export default class FareScreen extends React.Component {
             cancellValue: 0,
             longDistance: false,
         },
-        this.fadeAnim = new Animated.Value(0)
+            this.fadeAnim = new Animated.Value(0)
     }
 
     async componentDidMount() {
-        this._isMounted = true;
-        var getCroods = await this.props.navigation.getParam('data') ? await this.props.navigation.getParam('data') : null;
-        var arrayRates = [];
+        this._isMounted = true
+        let getCroods = await this.props.navigation.getParam('data') ? await this.props.navigation.getParam('data') : null
+        let waypoint = this.props.navigation.getParam('waypoint') ? this.props.navigation.getParam('waypoint') : null
+        let arrayRates = []
 
         this.setState({
+            waypoint: waypoint,
             intervalDriversTime: setInterval(() => {
                 if (this._isMounted) {
                     this.getDrivers()
@@ -116,17 +117,29 @@ export default class FareScreen extends React.Component {
                 if (distance > 50) {
                     this.setState({ longDistance: true })
                 } else {
-                    this.getDetailsRider();
-                    this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
-                    const userData = firebase.database().ref('users/' + this.state.curUID.uid);
+                    this.getDetailsRider()
+
+                    if (waypoint == null) {
+                        this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', null , '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
+                    } else {
+                        /*let waypointObj = [{
+                            location: '"' + this.state.region.waypointLat + ',' + this.state.region.waypointLng + '"',
+                            stopover: true
+                        }]*/
+                        this.getDirections(
+                            '"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"',
+                            '"' + this.state.region.waypointLat + ',' + this.state.region.waypointLng + '"',
+                            '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
+                    }
+                    const userData = firebase.database().ref('users/' + this.state.curUID.uid)
                     userData.once('value', userData => {
-                        this.setState({ userDetails: userData.val() });
+                        this.setState({ userDetails: userData.val() })
                     })
                 }
             }
         })
 
-        this._retrieveSettings();
+        this._retrieveSettings()
     }
 
     fadeIn(params) {
@@ -164,15 +177,27 @@ export default class FareScreen extends React.Component {
     }
 
     //Pega a direção e detalhes da corrida 
-    async getDirections(startLoc, destLoc) {
+    async getDirections(startLoc, waypoint, destLoc) {
         try {
-            var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destLoc}&key=${google_map_key}`, { signal: this.myAbort.signal })
+            if (waypoint) {
+                var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destLoc}&waypoints=${waypoint}&key=${google_map_key}`, { signal: this.myAbort.signal })
+            } else {
+                var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destLoc}&key=${google_map_key}`, { signal: this.myAbort.signal })
+            }
             var respJson = await resp.json();
-
             var arrayDetails = []
+
             for (let i = 0; i < this.state.rateDetailsObjects.length; i++) {
-                var fareCalculation = farehelper(respJson.routes[0].legs[0].distance.value, respJson.routes[0].legs[0].duration.value, this.state.rateDetailsObjects[i] ? this.state.rateDetailsObjects[i] : 1)
-                var detailsBooking = {
+                let fareCalculation = null
+                if (waypoint) {
+                    let newDistance = respJson.routes[0].legs[0].distance.value + respJson.routes[0].legs[1].distance.value
+                    let newDuration = respJson.routes[0].legs[0].duration.value + respJson.routes[0].legs[1].duration.value
+                    fareCalculation = farehelper(newDistance, newDuration, this.state.rateDetailsObjects[i] ? this.state.rateDetailsObjects[i] : 1)
+                } else {
+                    fareCalculation = farehelper(respJson.routes[0].legs[0].distance.value, respJson.routes[0].legs[0].duration.value, this.state.rateDetailsObjects[i] ? this.state.rateDetailsObjects[i] : 1)
+                }
+
+                let detailsBooking = {
                     distance: respJson.routes[0].legs[0].distance.value,
                     fareCost: fareCalculation ? parseFloat(fareCalculation.totalCost).toFixed(2) : 0,
                     estimateFare: fareCalculation ? parseFloat(fareCalculation.grandTotal).toFixed(2) : 0,
@@ -183,6 +208,7 @@ export default class FareScreen extends React.Component {
                 i == 0 ? this.setState({ estimatePrice1: detailsBooking.estimateFare, estimatedTimeBooking: detailsBooking.estimateTime })
                     : this.setState({ estimatePrice2: detailsBooking.estimateFare, estimatedTimeBooking: detailsBooking.estimateTime })
             }
+
             this.setState({
                 detailsBooking: arrayDetails,
                 selected: 0,
@@ -206,7 +232,7 @@ export default class FareScreen extends React.Component {
                         edgePadding: { top: getPixelSize(50), right: getPixelSize(50), bottom: getPixelSize(50), left: getPixelSize(50) },
                         animated: true,
                     })
-                }, 500);
+                }, 500)
             })
 
             return coords
@@ -228,7 +254,7 @@ export default class FareScreen extends React.Component {
     getDetailsRider() {
         const userData = firebase.database().ref('users/' + this.state.curUID.uid + "/");
         userData.once('value', userData => {
-            this.setState({ walletBallance: userData.val().walletBalance, deviceId: userData.val().deviceId  });
+            this.setState({ walletBallance: userData.val().walletBalance, deviceId: userData.val().deviceId });
         })
     }
 
@@ -417,8 +443,8 @@ export default class FareScreen extends React.Component {
                 )
                 .catch(error => {
                     reject(error);
-                });
-        });
+                })
+        })
     }
 
     //Seleciona o tipo de carro que vai ser a corrida
@@ -793,11 +819,30 @@ export default class FareScreen extends React.Component {
                                 </View>
                             </Marker>
 
+                            {
+                                this.state.waypoint ?
+                                    <Marker
+                                        coordinate={{ latitude: (this.state.region.waypointLat), longitude: (this.state.region.waypointLng) }}
+                                        centerOffset={{ x: 0.5, y: 0.5 }}
+                                        anchor={{ x: 0.5, y: 0.5 }}
+                                        //onPress={() => this.state.buttonDisabled ? null : this.props.navigation.replace('Search', { old: this.state.region })}
+                                    >
+                                        <LocationWaypoint
+                                            width={18}
+                                            height={17}
+                                        />
+                                        {/*<View style={styles.locationBoxDestino}>
+                                            <Text numberOfLines={1} style={styles.locationText}> {this.state.region.droptext.split(",", 2)} </Text>
+                                        </View>*/}
+                                    </Marker>
+                                    : null
+                            }
+
 
                             {this.state.coords ?
                                 <MapView.Polyline
                                     coordinates={this.state.coords}
-                                    strokeWidth={2.5}
+                                    strokeWidth={3}
                                     strokeColor={colors.DEEPBLUE}
                                 />
                                 : null}
@@ -1055,9 +1100,9 @@ export default class FareScreen extends React.Component {
                                     </TouchableOpacity>
                                 </View>
                                 {this.state.buttonDisabled ?
-                                <View style={{ alignSelf: 'center', position: 'absolute', bottom: width < 375 ? 5 : 30 }}>
-                                    <Text style={{ textAlign: 'center', fontFamily: 'Inter-SemiBold' }} > Preparando corrida... </Text>
-                                </View>
+                                    <View style={{ alignSelf: 'center', position: 'absolute', bottom: width < 375 ? 5 : 30 }}>
+                                        <Text style={{ textAlign: 'center', fontFamily: 'Inter-SemiBold' }} > Preparando corrida... </Text>
+                                    </View>
                                     : null}
                             </Fragment>
                         }

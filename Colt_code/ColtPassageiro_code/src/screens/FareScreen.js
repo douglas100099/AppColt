@@ -38,6 +38,7 @@ import PromoModal from '../components/PromoModal';
 
 import { TextInputMask } from 'react-native-masked-text'
 import { ScrollView } from 'react-native-gesture-handler';
+import { TouchableWithoutFeedback } from 'react-native';
 
 export default class FareScreen extends React.Component {
     myAbort = new AbortController()
@@ -69,13 +70,15 @@ export default class FareScreen extends React.Component {
             usedWalletMoney: 0,
             infoModal: false,
             showViewInfo: true,
+            showInfoWaypoint: true,
             cpfModalVisible: false,
             dateInput: '',
             txtCPF: '',
             cancellValue: 0,
             longDistance: false,
         },
-            this.fadeAnim = new Animated.Value(0)
+        this.fadeAnim = new Animated.Value(0)
+        this.fadeAnimWaypoint = new Animated.Value(0)
     }
 
     async componentDidMount() {
@@ -120,16 +123,12 @@ export default class FareScreen extends React.Component {
                     this.getDetailsRider()
 
                     if (waypoint == null) {
-                        this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', null , '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
+                        this.getDirections('"' + this.state.region.wherelatitude + ',' + this.state.region.wherelongitude + '"', null, '"' + this.state.region.droplatitude + ',' + this.state.region.droplongitude + '"')
                     } else {
-                        /*let waypointObj = [{
-                            location: '"' + this.state.region.waypointLat + ',' + this.state.region.waypointLng + '"',
-                            stopover: true
-                        }]*/
                         this.getDirections(
-                            '"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"',
+                            '"' + this.state.region.wherelatitude + ',' + this.state.region.wherelongitude + '"',
                             '"' + this.state.region.waypointLat + ',' + this.state.region.waypointLng + '"',
-                            '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
+                            '"' + this.state.region.droplatitude + ',' + this.state.region.droplongitude + '"')
                     }
                     const userData = firebase.database().ref('users/' + this.state.curUID.uid)
                     userData.once('value', userData => {
@@ -157,23 +156,40 @@ export default class FareScreen extends React.Component {
                 useNativeDriver: false,
             }).start();
         }
-    };
+    }
+
+    fadeInWaypoint(params) {
+        this.setState({ showInfoWaypoint: !this.state.showInfoWaypoint })
+        if (params) {
+            Animated.timing(this.fadeAnimWaypoint, {
+                toValue: 1,
+                duration: 500,
+                useNativeDriver: false,
+            }).start();
+        } else {
+            Animated.timing(this.fadeAnimWaypoint, {
+                toValue: 0,
+                duration: 500,
+                useNativeDriver: false,
+            }).start();
+        }
+    }
 
 
     _retrieveSettings = async () => {
         try {
-            const value = await AsyncStorage.getItem('settings');
+            const value = await AsyncStorage.getItem('settings')
             if (value !== null) {
-                this.setState({ settings: JSON.parse(value) });
+                this.setState({ settings: JSON.parse(value) })
             }
         } catch (error) {
-            console.log("Asyncstorage issue 8 ");
+            console.log("Asyncstorage issue 8 ")
         }
     };
 
     componentWillUnmount() {
         this.myAbort.abort()
-        this._isMounted = false;
+        this._isMounted = false
     }
 
     //Pega a direção e detalhes da corrida 
@@ -184,7 +200,7 @@ export default class FareScreen extends React.Component {
             } else {
                 var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destLoc}&key=${google_map_key}`, { signal: this.myAbort.signal })
             }
-            var respJson = await resp.json();
+            var respJson = await resp.json()
             var arrayDetails = []
 
             for (let i = 0; i < this.state.rateDetailsObjects.length; i++) {
@@ -193,7 +209,10 @@ export default class FareScreen extends React.Component {
                     let newDistance = respJson.routes[0].legs[0].distance.value + respJson.routes[0].legs[1].distance.value
                     let newDuration = respJson.routes[0].legs[0].duration.value + respJson.routes[0].legs[1].duration.value
                     fareCalculation = farehelper(newDistance, newDuration, this.state.rateDetailsObjects[i] ? this.state.rateDetailsObjects[i] : 1)
-                } else {
+                    //Valor acrescentado ao valor total da corrida com parada - 1R$
+                    fareCalculation.grandTotal += 1
+                }
+                else {
                     fareCalculation = farehelper(respJson.routes[0].legs[0].distance.value, respJson.routes[0].legs[0].duration.value, this.state.rateDetailsObjects[i] ? this.state.rateDetailsObjects[i] : 1)
                 }
 
@@ -204,12 +223,13 @@ export default class FareScreen extends React.Component {
                     estimateTime: respJson.routes[0].legs[0].duration.value,
                     convenience_fees: fareCalculation ? parseFloat(fareCalculation.convenience_fees).toFixed(2) : 0
                 }
-                arrayDetails.push(detailsBooking);
-                i == 0 ? this.setState({ estimatePrice1: detailsBooking.estimateFare, estimatedTimeBooking: detailsBooking.estimateTime })
-                    : this.setState({ estimatePrice2: detailsBooking.estimateFare, estimatedTimeBooking: detailsBooking.estimateTime })
+                arrayDetails.push(detailsBooking)
             }
 
             this.setState({
+                estimatePrice1: arrayDetails[0].estimateFare,
+                estimatePrice2: arrayDetails[1].estimateFare,
+                estimatedTimeBooking: arrayDetails[0].estimateTime,
                 detailsBooking: arrayDetails,
                 selected: 0,
                 estimateFare: arrayDetails[0].estimateFare,
@@ -735,7 +755,7 @@ export default class FareScreen extends React.Component {
         if (!this.state.userDetails.cpfNum) {
             Alert.alert(
                 'Alerta!',
-                'Você ainda não possui cpf cadastrado, deseja adicionar?',
+                'Você ainda não possui cpf cadastrado, deseja adicionar agora?',
                 [
                     {
                         style: 'destructive',
@@ -822,10 +842,10 @@ export default class FareScreen extends React.Component {
                             {
                                 this.state.waypoint ?
                                     <Marker
-                                        coordinate={{ latitude: (this.state.region.waypointLat), longitude: (this.state.region.waypointLng) }}
+                                        coordinate={{ latitude: this.state.region.waypointLat, longitude: this.state.region.waypointLng }}
                                         centerOffset={{ x: 0.5, y: 0.5 }}
                                         anchor={{ x: 0.5, y: 0.5 }}
-                                        //onPress={() => this.state.buttonDisabled ? null : this.props.navigation.replace('Search', { old: this.state.region })}
+                                    //onPress={() => this.state.buttonDisabled ? null : this.props.navigation.replace('Search', { old: this.state.region })}
                                     >
                                         <LocationWaypoint
                                             width={18}
@@ -896,6 +916,17 @@ export default class FareScreen extends React.Component {
                         <Text style={styles.fadingText}>Você está pagando R$ {this.state.settings.cancell_value},00 a mais por conta da taxa de cancelamento!</Text>
                     </Animated.View>
 
+                    <Animated.View
+                        style={[
+                            styles.fadingContainer2,
+                            {
+                                opacity: this.fadeAnimWaypoint
+                            }
+                        ]}
+                    >
+                        <Text style={styles.fadingText2}>Essa corrida possui um ponto de parada em {this.state.region ? this.state.region.waypointText : null}!</Text>
+                    </Animated.View>
+
                     {this.state.cancellValue != 0 ?
                         <TouchableOpacity style={styles.btnCancellRate} onPress={() => this.fadeIn(this.state.showViewInfo)}>
                             <Icon
@@ -917,6 +948,18 @@ export default class FareScreen extends React.Component {
                                 />
                             </TouchableOpacity>
                         </View>
+                        : null}
+
+                    {this.state.waypoint && this.state.region.wherelatitude ?
+                        <TouchableOpacity style={styles.btnWaypoint} onPress={() => this.fadeInWaypoint(this.state.showInfoWaypoint)}>
+                            <Icon
+                                name='ios-alarm'
+                                type='ionicon'
+                                size={25}
+                                color={colors.YELLOW.primary}
+                            //containerStyle={{alignSelf: 'center'}}
+                            />
+                        </TouchableOpacity>
                         : null}
 
                 </View>
@@ -1133,11 +1176,28 @@ const styles = StyleSheet.create({
         backgroundColor: colors.REDCLEAN,
         opacity: 0.7
     },
+    fadingContainer2:{
+        position: 'absolute',
+        left: 25,
+        borderTopLeftRadius: 10,
+        borderTopRightRadius: 10,
+        borderBottomRightRadius: 10,
+        bottom: 115,
+        backgroundColor: colors.YELLOW.primary,
+        opacity: 0.7
+    },
     fadingText: {
         fontSize: 10,
         margin: 10,
         color: colors.WHITE,
         fontFamily: 'Inter-Bold'
+    },
+    fadingText2:{
+        fontSize: 10,
+        margin: 10,
+        color: colors.WHITE,
+        fontFamily: 'Inter-Bold',
+        paddingHorizontal: 5
     },
     container: {
         flex: 1,
@@ -1294,6 +1354,20 @@ const styles = StyleSheet.create({
         shadowRadius: 10,
         elevation: 5,
         opacity: 0.9,
+    },
+    btnWaypoint: {
+        backgroundColor: colors.WHITE,
+        borderWidth: 3,
+        borderColor: colors.YELLOW.primary,
+        width: 40,
+        height: 40,
+        borderRadius: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'absolute',
+        left: 10,
+        bottom: 70,
+
     },
     btnCancellRate: {
         justifyContent: 'center',

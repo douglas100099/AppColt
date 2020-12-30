@@ -80,7 +80,7 @@ export default class SearchScreen extends Component {
         let wayPointData = {
             wayPointLat: details.geometry.location.lat,
             wayPointLng: details.geometry.location.lng,
-            wayPointText: details.formatted_address
+            wayPointText: details.formatted_address.split(',')[0] + details.formatted_address.split(',')[1]
         }
 
         this.setState({ wayPointData: wayPointData })
@@ -829,7 +829,7 @@ export default class SearchScreen extends Component {
                             }}
                         />
 
-                        {/*<TouchableOpacity onPress={() => this.setState({ showBtnConfirmar: true, showBtnWaypoint: !this.state.showBtnWaypoint })} style={{ position: 'absolute', right: 20, top: Platform.OS == "ios" ? 152 : 130, }}>
+                        <TouchableOpacity onPress={() => this.setState({ showBtnConfirmar: true, showBtnWaypoint: !this.state.showBtnWaypoint })} style={{ position: 'absolute', right: 20, top: Platform.OS == "ios" ? 152 : 130, }}>
                             <Icon
                                 name={this.state.showBtnWaypoint ? 'ios-close' : 'ios-add'}
                                 type='ionicon'
@@ -838,7 +838,7 @@ export default class SearchScreen extends Component {
                                 containerStyle={{ left: 8 }}
                             />
                         </TouchableOpacity>
-                        */}
+                        
 
 
                         {!this.state.searchFocused && !this.state.searchFocused2 && !this.state.searchFocused3 && !this.state.showBtnWaypoint ?

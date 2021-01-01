@@ -29,6 +29,8 @@ import languageJSON from '../common/language';
 
 import LocationUser from '../../assets/svg/LocationUser';
 import LocationDrop from '../../assets/svg/LocationDrop';
+import LocationWaypoint from '../../assets/svg/LocationWaypoint';
+
 import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
 import ColtConfortCar from '../../assets/svg/ColtConfortCar';
 import AvatarUser from '../../assets/svg/AvatarUser';
@@ -73,7 +75,7 @@ export default class TrackNow extends React.Component {
                     longitudeDriver: data.lng,
                     startLoc: data.lat + ',' + data.lng,
                 }, () => {
-                    if( !this.state.dontGetDirections ){
+                    if (!this.state.dontGetDirections) {
                         this.setState({ dontGetDirections: true })
                         this.getDirections()
                     }
@@ -141,7 +143,12 @@ export default class TrackNow extends React.Component {
 
     async getDirections() {
         try {
-            let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${this.state.startLoc}&destination=${this.state.destinationLoc}&key=${google_map_key}`)
+            if (this.state.allData.have_waypoint) {
+                let waypoint = '"' + this.state.allData.have_waypoint.lat + ',' + this.state.allData.waypoint.lng + '"'
+                var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destLoc}&waypoints=${waypoint}&key=${google_map_key}`, { signal: this.myAbort.signal })
+            } else {
+                var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${this.state.startLoc}&destination=${this.state.destinationLoc}&key=${google_map_key}`)
+            }
             let respJson = await resp.json();
             let points = Polyline.decode(respJson.routes[0].overview_polyline.points);
             let coords = points.map((point, index) => {
@@ -284,6 +291,22 @@ export default class TrackNow extends React.Component {
                                     </View>
                                 </Marker>
                                 : null}
+
+                            {
+                                this.state.allData.have_waypoint ?
+                                    <Marker
+                                        coordinate={{ latitude: this.state.allData.have_waypoint.lat, longitude: this.state.allData.have_waypoint.lng }}
+                                        centerOffset={{ x: 0.5, y: 0.5 }}
+                                        anchor={{ x: 0.5, y: 0.5 }}
+                                    >
+                                        <LocationWaypoint />
+
+                                        <View style={styles.locationBoxDestino}>
+                                            <Text numberOfLines={1} style={styles.locationText}> {this.state.allData.have_waypoint.add} </Text>
+                                        </View>
+                                    </Marker>
+                                    : null
+                            }
                         </MapView>
                         : null}
 

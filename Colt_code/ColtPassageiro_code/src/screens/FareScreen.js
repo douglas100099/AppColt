@@ -77,7 +77,7 @@ export default class FareScreen extends React.Component {
             cancellValue: 0,
             longDistance: false,
         },
-        this.fadeAnim = new Animated.Value(0)
+            this.fadeAnim = new Animated.Value(0)
         this.fadeAnimWaypoint = new Animated.Value(0)
     }
 
@@ -334,6 +334,12 @@ export default class FareScreen extends React.Component {
             otp: otp,
             bookingDate: today,
 
+            have_waypoint: this.state.waypoint ? {
+                add: this.state.region.waypointText,
+                lat: this.state.region.waypointLat,
+                lng: this.state.region.waypointLng,
+            }
+                : null,
             imageRider: this.state.userDetails.profile_image ? this.state.userDetails.profile_image : null,
             ratingRider: this.state.userDetails.ratings ? this.state.userDetails.ratings.userrating : '5.0',
         }
@@ -358,6 +364,12 @@ export default class FareScreen extends React.Component {
             otp: otp,
             bookingDate: today,
             pagamento: pagamentoObj,
+            have_waypoint: this.state.waypoint ? {
+                add: this.state.region.waypointText,
+                lat: this.state.region.waypointLat,
+                lng: this.state.region.waypointLng,
+            }
+                : null,
         }
 
         firebase.database().ref('bookings/').push(data).then((res) => {
@@ -1176,7 +1188,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.REDCLEAN,
         opacity: 0.7
     },
-    fadingContainer2:{
+    fadingContainer2: {
         position: 'absolute',
         left: 25,
         borderTopLeftRadius: 10,
@@ -1192,7 +1204,7 @@ const styles = StyleSheet.create({
         color: colors.WHITE,
         fontFamily: 'Inter-Bold'
     },
-    fadingText2:{
+    fadingText2: {
         fontSize: 10,
         margin: 10,
         color: colors.WHITE,

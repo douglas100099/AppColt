@@ -245,6 +245,7 @@ export default class BookedCabScreen extends React.Component {
                                 const data = snap.val()
                                 if (data && data.have_internet == true) {
                                     if (data.queue == true && data.queueAvailable == true && data.driverActiveStatus == true) {
+                                        this.setState({ searchDriverQueue: true })
                                         this.setBookingDriver("waiting_queue_riders", this.state.currentBookingId, bookingData, this.driverUidSelected)
                                     }
                                     else if (data.queue == false && data.driverActiveStatus == true) {

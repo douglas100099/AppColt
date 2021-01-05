@@ -482,10 +482,14 @@ exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.
                             }
                             //user n existe no Asaas
                             else {
+                                let newNumber = dataUsers[key].mobile
+                                if( newNumber.length > 11 ){
+                                    newNumber = newNumber.substring(3)
+                                }
                                 let body = {
                                     'name': dataUsers[key].firstName,
                                     'email': dataUsers[key].email,
-                                    'mobilePhone': dataUsers[key].mobile,
+                                    'mobilePhone': newNumber,
                                     'cpfCnpj': dataUsers[key].cpfNum,
                                     'externalReference': key,
                                     'notificationDisabled': false,
@@ -562,10 +566,14 @@ exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub
                             }
                             //user n existe no Asaas
                             else {
+                                let newNumber = dataUsers[key].mobile
+                                if( newNumber.length > 11 ){
+                                    newNumber = newNumber.substring(3)
+                                }
                                 let body = {
                                     'name': dataUsers[key].firstName,
                                     'email': dataUsers[key].email,
-                                    'mobilePhone': dataUsers[key].mobile,
+                                    'mobilePhone': newNumber,
                                     'cpfCnpj': dataUsers[key].cpfNum,
                                     'externalReference': key,
                                     'notificationDisabled': false,

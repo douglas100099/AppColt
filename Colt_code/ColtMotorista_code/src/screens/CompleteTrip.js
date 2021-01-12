@@ -520,8 +520,8 @@ export default class DriverCompleteTrip extends React.Component {
                     cancellValue: item.pagamento.cancellValue,
                     recalculo: recalculo,
                     possuiNet: possuiNet,
-                    finalCalcBooking: true,
-                    manageMoney: true,
+                    //finalCalcBooking: true,
+                    //manageMoney: true,
                 }
                 var data = {
                     status: "END",
@@ -535,6 +535,10 @@ export default class DriverCompleteTrip extends React.Component {
                     finaldistance: distance,
                     pagamento: pagamentoObj,
                 }
+
+                firebase.database().ref('bookings/' + item.bookingId + '/pagamento').update({
+
+                })
 
                 console.log('Distancia Final: ' + data.finaldistance)
                 console.log('Trip cost: ' + pagamentoObj.trip_cost)
@@ -569,9 +573,11 @@ export default class DriverCompleteTrip extends React.Component {
     saveData(item, data, riderData) {
         let dbRef = firebase.database().ref('users/' + this.state.curUid + '/my_bookings/' + item.bookingId + '/');
         dbRef.update(data).then(() => {
-            firebase.database().ref('bookings/' + item.bookingId + '/').update(data).then(() => {
-                let userDbRef = firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/');
-                userDbRef.update(riderData).then(() => {
+            firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/').update(riderData).then(() => {
+                let bookingDbRef = firebase.database().ref('bookings/' + item.bookingId + '/');
+                data.pagamento.finalCalcBooking = true
+                data.pagamento.manageMoney = true
+                bookingDbRef.update(data).then(() => {
                     this.sendPushNotification(item.customer)
                     this.navegaFinal(item, data, riderData);
                 })
@@ -584,7 +590,14 @@ export default class DriverCompleteTrip extends React.Component {
         userData.on('value', statusDetails => {
             let statusDetail = statusDetails.val()
             if (statusDetail) {
-                if (statusDetail.status === 'END' && statusDetail.pagamento.payment_status === 'PAID') {
+                if (statusDetail.pagamento.payment_mode === 'Dinheiro') {
+                    if (this._isMounted) {
+                        this.setState({ loadingModal: false, statusConexao: false })
+                    }
+                    AsyncStorage.removeItem('startTime');
+                    AsyncStorage.removeItem('statusCorrida');
+                    this.props.navigation.replace('DriverFare', { allDetails: item, trip_cost: data.pagamento.trip_cost, trip_end_time: data.trip_end_time })
+                } else if (statusDetail.status === 'END' && statusDetail.pagamento.payment_status === 'PAID') {
                     if (this._isMounted) {
                         this.setState({ loadingModal: false, statusConexao: false })
                     }
@@ -790,6 +803,26 @@ export default class DriverCompleteTrip extends React.Component {
         )
     }
 
+    choiceNavigation(allDetails) {
+        Alert.alert(
+            'Escolha o app para navegação',
+            '',
+            [
+                {
+                    text: "Waze",
+                    onPress: () => this.openWaze(allDetails),
+                    style: "cancel"
+                },
+                { text: "Google Maps", onPress: () => this.handleGetDirections(allDetails) }
+            ],
+            { cancelable: true }
+        );
+    }
+
+    openWaze(allDetails) {
+        Linking.openURL('https://www.waze.com/ul?q=' + allDetails.drop.lat + ',' + allDetails.drop.lng + '&navigate=yes');
+    }
+
     // google navigations now it not implemented in client side
     handleGetDirections(allDetails) {
         const data = {
@@ -816,14 +849,23 @@ export default class DriverCompleteTrip extends React.Component {
         getDirections(data)
     }
 
-    checkMap() {
+    /*checkMap() {
         if (this.state.followMap && this.state.region) {
             return this.state.region;
         }
-    }
+    }*/
 
     centerFollowMap() {
-        this.map.animateToRegion(this.state.region, 500)
+        this.map.animateCamera({
+            center: {
+                latitude: this.state.region.latitude,
+                longitude: this.state.region.longitude,
+            },
+            altitude: 0,
+            heading: this.state.region.angle,
+            pitch: 0,
+            zoom: 17
+        }, 200)
         this.setState({ timeoutCenter: setTimeout(() => { this.setState({ followMap: true, fitCordinates: false }) }, 1100) })
     }
 
@@ -869,11 +911,21 @@ export default class DriverCompleteTrip extends React.Component {
                                     customMapStyle={this.mapStyle()}
                                     loadingEnabled
                                     showsMyLocationButton={false}
-                                    region={this.checkMap()}
+                                    //region={this.checkMap()}
+                                    camera={{
+                                        center: {
+                                            latitude: this.state.region.latitude,
+                                            longitude: this.state.region.longitude
+                                        },
+                                        altitude: 0,
+                                        heading: this.state.region.angle,
+                                        pitch: 0,
+                                        zoom: 17
+                                    }}
                                 >
                                     <Marker.Animated
                                         coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
-                                        style={{ transform: [{ rotate: this.state.region.angle ? this.state.region.angle + "deg" : '0' + "deg" }] }}
+                                        //style={{ transform: [{ rotate: this.state.region.angle ? this.state.region.angle + "deg" : '0' + "deg" }] }}
                                         anchor={{ x: 0.5, y: 0.5 }}
                                     >
                                         <CellphoneSVG
@@ -968,7 +1020,7 @@ export default class DriverCompleteTrip extends React.Component {
                                     </View>
                                     <View style={{ borderWidth: 0.6, borderColor: colors.GREY1, height: 70, width: 1 }}></View>
                                     <View style={{ flex: 0.2, justifyContent: 'center', alignItems: 'center' }}>
-                                        <TouchableOpacity onPress={() => { this.handleGetDirections() }}>
+                                        <TouchableOpacity onPress={() => { this.choiceNavigation(this.state.rideDetails) }}>
                                             <Icon
                                                 name="navigation"
                                                 type="feather"

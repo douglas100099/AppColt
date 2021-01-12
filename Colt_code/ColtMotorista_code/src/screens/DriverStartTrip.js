@@ -473,15 +473,44 @@ export default class DriverStartTrip extends React.Component {
 
     centerFollowMap() {
         if(this._isMounted){
-            this.map.animateToRegion(this.state.region, 500)
+            this.map.animateCamera({
+                center: {
+                    latitude: this.state.region.latitude,
+                    longitude: this.state.region.longitude,
+                },
+                altitude: 0,
+                heading: this.state.region.angle,
+                pitch: 0,
+                zoom: 17
+            }, 200)
             setTimeout(() => { this.setState({ followMap: true, fitCordinates: false }) }, 1100)
         }
     }
 
-    checkMap() {
+    /*checkMap() {
         if (this.state.followMap) {
             return this.state.region;
         }
+    }*/
+    
+    choiceNavigation(){
+        Alert.alert(
+            'Escolha o app para navegação',
+            '',
+            [
+                {
+                    text: "Waze",
+                    onPress: () => this.openWaze(),
+                    style: "cancel"
+                },
+                { text: "Google Maps", onPress: () => this.handleGetDirections() }
+            ],
+            { cancelable: true }
+        );
+    } 
+
+    openWaze(){
+        Linking.openURL('https://www.waze.com/ul?q=' + this.state.rideDetails.pickup.lat + ',' + this.state.rideDetails.pickup.lng + '&navigate=yes');
     }
 
     handleGetDirections() {
@@ -813,12 +842,22 @@ export default class DriverStartTrip extends React.Component {
                         showsScale={false}
                         loadingEnabled
                         showsMyLocationButton={false}
-                        region={this.checkMap()}
+                        //region={this.checkMap()}
+                        camera={{
+                            center: {
+                                latitude: this.state.region.latitude,
+                                longitude: this.state.region.longitude
+                            },
+                            altitude: 0,
+                            heading: this.state.region.angle,
+                            pitch: 0,
+                            zoom: 17
+                        }}
                     >
                         {/* O RABO DE SETA ESTAVA AQUI, PROBLEMA ENCONTRADO DO MODO PRODUÇÃO, MARKER NO AIRMAP */}
                         <Marker.Animated
                             coordinate={{ latitude: this.state.region ? this.state.region.latitude : 0.00, longitude: this.state.region ? this.state.region.longitude : 0.00 }}
-                            style={{ transform: [{ rotate: this.state.region.angle ? this.state.region.angle + "deg" : '0' + "deg"}] }}
+                            //style={{ transform: [{ rotate: this.state.region.angle ? this.state.region.angle + "deg" : '0' + "deg"}] }}
                             anchor={{ x: 0.5, y: 0.5 }}
                         >
                             <CellphoneSVG
@@ -848,7 +887,7 @@ export default class DriverStartTrip extends React.Component {
                             </View>
                             <View style={{ borderWidth: 0.6, borderColor: colors.GREY1, height: 70, width: 1 }}></View>
                             <View style={{ flex: 0.2, justifyContent: 'center', alignItems: 'center' }}>
-                                <TouchableOpacity onPress={() => { this.handleGetDirections() }}>
+                                <TouchableOpacity onPress={() => { this.choiceNavigation() }}>
                                 <Icon
                                     name="navigation"
                                     type="feather"

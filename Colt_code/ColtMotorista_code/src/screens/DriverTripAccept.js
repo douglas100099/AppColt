@@ -83,6 +83,7 @@ export default class DriverTripAccept extends React.Component {
             statusCorrida: false,
             statusServer: false,
             iniciouTeste: false,
+            onRegionChange: false
             //isConnected: null,
         }
         this._getLocationAsync();
@@ -325,7 +326,7 @@ export default class DriverTripAccept extends React.Component {
         if (this._isMounted) {
             this.setState({ isSound: false })
             this.sound.getStatusAsync().then((result) => {
-                if(result.isPlaying){
+                if (result.isPlaying) {
                     this.sound.stopAsync()
                 }
             }).catch((err) => {
@@ -820,6 +821,9 @@ export default class DriverTripAccept extends React.Component {
 
     centerFollowMap() {
         this.map.animateToRegion(this.state.region, 500)
+        setTimeout(() => {
+            this.setState({ onRegionChange: false })
+        }, 600)
     }
 
     iniciarTeste = async () => {
@@ -1275,7 +1279,8 @@ export default class DriverTripAccept extends React.Component {
                                 showsScale={false}
                                 customMapStyle={this.mapStyle()}
                                 showsMyLocationButton={false}
-                                region={this.state.region ? this.state.region : null}
+                                onRegionChangeComplete={() => this.setState({ onRegionChange: true })}
+                                region={this.state.region && !this.state.onRegionChange ? this.state.region : null}
                             >
                                 {region ?
                                     <Marker.Animated
@@ -1328,7 +1333,7 @@ export default class DriverTripAccept extends React.Component {
                                     <Animatable.Image useNativeDriver={true} animation="fadeIn" source={this.state.photoDriver ? { uri: this.state.photoDriver } : require('../../assets/images/profilePic.png')} style={styles.imagemPerfil} />
                                 </TouchableOpacity>
                             </View>
-                            {region ?
+                            {region && this.state.onRegionChange ?
                                 <Animatable.View useNativeDriver={true} animation="fadeIn" style={styles.touchaVoltar2}>
                                     <TouchableOpacity onPress={() => { this.centerFollowMap() }}>
                                         <Icon

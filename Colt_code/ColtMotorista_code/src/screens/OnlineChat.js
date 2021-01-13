@@ -10,7 +10,8 @@ import {
   Image,
   Keyboard,
   TextInput,
-  Platform
+  Platform,
+  StatusBar
 } from "react-native";
 import { colors } from "../common/theme";
 import * as Permissions from 'expo-permissions';
@@ -20,6 +21,7 @@ import { Audio, AVPlaybackStatus } from 'expo-av';
 import languageJSON from '../common/language';
 var { height, width } = Dimensions.get('window');
 import { RequestPushMsg } from '../common/RequestPushMsg';
+import Constants from 'expo-constants';
 import ProfileSVG from "../SVG/ProfileSVG";
 import { withNavigation } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
@@ -89,7 +91,7 @@ export default class OnlineChat extends Component {
   componentDidMount() {
     this._isMounted = true
     this.currentScreen = true
-    //this.checkPermissions()
+    this.checkPermissions()
     this.getParamData = this.props.navigation.getParam('passData');
     let bookingData = firebase.database().ref('bookings/' + this.getParamData.bookingId)
     bookingData.on('value', response => {
@@ -132,17 +134,17 @@ export default class OnlineChat extends Component {
     this._isMounted = false;
     this.keyboardDidShowListener.remove();
     this.keyboardDidHideListener.remove();
-    /*if(this.sound && this.state.isloaded){
+    if(this.sound && this.state.isloaded){
       this.sound.unloadAsync()
       console.log('STOP AUDIO')
     }
     if(this.state.timeTimeout != null){
       clearTimeout(this.state.timeTimeout)
-    }*/
+    }
   }
 
   // NOVA FUNCÇÕES RECORDING AUDIO
-  /*startRecording = async () => {
+  startRecording = async () => {
     if(this.state.statusPermi){
       this.recording = new Audio.Recording();
   
@@ -156,8 +158,7 @@ export default class OnlineChat extends Component {
         playsInSilentModeIOS: false,
         shouldDuckAndroid: true,
         interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
-        playThroughEarpieceAndroid: true,
-  
+        playThroughEarpieceAndroid: false,
       });
       try {
         await this.recording.prepareToRecordAsync(recordingOptions);
@@ -179,7 +180,6 @@ export default class OnlineChat extends Component {
       console.log(this.recording.getURI())
       await this.recording.stopAndUnloadAsync().then((result) => {
         if(this._isMounted){
-
           this.setState({ duration: result.durationMillis })
         }
       });
@@ -230,7 +230,7 @@ export default class OnlineChat extends Component {
         this.setState({ statusPermi: true })
       }
     }
-  }*/
+  }
 
   listenerReaded() {
     let read = firebase.database().ref(`chat/` + this.getParamData.bookingId + '/readed_driver');
@@ -269,7 +269,7 @@ export default class OnlineChat extends Component {
     }
   }
 
-  /*async convertAudioDB() {
+  async convertAudioDB() {
     this.setState({ loading: true })
     const blob = await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -304,7 +304,7 @@ export default class OnlineChat extends Component {
         alert('Ops, tivemos um problema.');
       });
     }
-  }*/
+  }
 
   verifyMessage(inputmessage, audio) {
     if (inputmessage == '' || inputmessage == undefined || inputmessage == null) {
@@ -357,6 +357,9 @@ export default class OnlineChat extends Component {
               readed_rider: false
             })
           })
+          inputmessage === null ?
+          this.sendPushNotification(this.state.carbookedInfo.customer, this.state.carbookedInfo.driver_firstName + ' enviou um áudio')
+          :
           this.sendPushNotification(this.state.carbookedInfo.customer, this.state.carbookedInfo.driver_firstName + ': ' + inputmessage)
         }
         else {
@@ -376,6 +379,9 @@ export default class OnlineChat extends Component {
               source: "driver"
             })
             this.setState({ readed_rider: false, showReaded: true, loading: false })
+            inputmessage === null ?
+            this.sendPushNotification(this.state.carbookedInfo.customer, this.state.carbookedInfo.driver_firstName + ' enviou um áudio')
+            :
             this.sendPushNotification(this.state.carbookedInfo.customer, this.state.carbookedInfo.driver_firstName + ': ' + inputmessage)
           })
         }
@@ -397,6 +403,9 @@ export default class OnlineChat extends Component {
               source: "driver"
             })
             this.setState({ readed_rider: false, showReaded: true, loading: false })
+            inputmessage === null ?
+            this.sendPushNotification(this.state.carbookedInfo.customer, this.state.carbookedInfo.driver_firstName + ' enviou um áudio')
+            :
             this.sendPushNotification(this.state.carbookedInfo.customer, this.state.carbookedInfo.driver_firstName + ': ' + inputmessage)
           }
         })
@@ -418,6 +427,7 @@ export default class OnlineChat extends Component {
   render() {
     return (
       <View style={styles.container}>
+      <StatusBar barStyle='dark-content' translucent backgroundColor={colors.TRANSPARENT}/>
         <View style={styles.viewHeader}>
           <View style={styles.bordaIconeVoltar}>
             <TouchableOpacity onPress={() => { this.currentScreen = false, this.props.navigation.goBack() }}>
@@ -532,33 +542,32 @@ export default class OnlineChat extends Component {
           )
           : null}
         <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? 'padding' : 'height'}>
-          <View style={styles.footer}>
+        <View style={styles.footer}>
+            {!this.state.isRecording && this.state.isRecord === false ?
               <TextInput
                 value={this.state.inputmessage}
                 style={styles.input}
-                //autoFocus={true}
+                autoFocus={false}
                 underlineColorAndroid="transparent"
-                placeholder="Converse com o passageiro"
+                placeholder='Converse com o passageiro...'
                 onChangeText={text => this.setState({ inputmessage: text })}
               />
+              : null}
 
-            {/*
             {this.state.isRecord ?
               <Text style={styles.input2}>Áudio gravado!</Text>
               :
               null}
             {this.state.isRecord == false && this.state.isRecording ?
-              <Animatable.Text animation='flash' iterationCount="infinite" useNativeDriver={true} style={styles.input2}>Gravando audio ...</Animatable.Text>
+              <Animatable.Text animation='flash' iterationCount="infinite" useNativeDriver={true} style={styles.input2}>Gravando áudio ...</Animatable.Text>
               : null}
-            */}
 
-            {/*
             {!this.state.isRecord ?
-              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 30, backgroundColor: colors.DEEPBLUE, width: 45, height: 45, borderRadius: 50 }} onPressIn={() => this.startRecording()} onPressOut={() => this.stopRecording()}>
+              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 30, borderWidth: 2, borderColor: colors.GREEN.light, width: 45, height: 45, borderRadius: 50 }} onPressIn={() => this.startRecording()} onPressOut={() => this.stopRecording()}>
                 <Icon
                   name='ios-mic'
                   type='ionicon'
-                  color={colors.WHITE}
+                  color={colors.GREEN.light}
                   size={25}
                 />
               </TouchableOpacity>
@@ -571,8 +580,9 @@ export default class OnlineChat extends Component {
                   size={25}
                 />
               </TouchableOpacity>}
-              */}
-              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 45, height: 45, borderRadius: 50 }} onPress={() => this.verifyMessage(this.state.inputmessage, null)}>
+
+            {!this.state.isRecording && !this.state.isRecord ?
+              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 45, height: 45, borderRadius: 50 }} disabled={this.state.loading} onPress={() => this.verifyMessage(this.state.inputmessage, null)}>
                 <Icon
                   name='ios-paper-plane'
                   type='ionicon'
@@ -581,6 +591,28 @@ export default class OnlineChat extends Component {
                   containerStyle={{ paddingEnd: 3 }}
                 />
               </TouchableOpacity>
+              :
+              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 45, height: 45, borderRadius: 50 }} disabled={this.state.loading} onPress={() => this.convertAudioDB()}>
+                <Icon
+                  name='ios-checkmark'
+                  type='ionicon'
+                  color={colors.WHITE}
+                  size={45}
+                />
+              </TouchableOpacity>
+            }
+
+            {/*
+            <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', top: 5, right: 10, backgroundColor: colors.DEEPBLUE, width: 40, height: 40, borderRadius: 50 }} onPress={() => this.sendMessege(this.state.inputmessage)}>
+              <Icon
+                name='ios-paper-plane'
+                type='ionicon'
+                color={colors.WHITE}
+                size={25}
+                containerStyle={{ paddingEnd: 3 }}
+              />
+            </TouchableOpacity>*/}
+
           </View>
         </KeyboardAvoidingView>
       </View>
@@ -600,7 +632,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-around',
-    height: Platform.OS == 'ios' ? 100 : 85,
+    marginTop: Constants.statusBarHeight + 3,
+    height: Platform.OS == 'ios' ? 100 : 60,
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { x: 0, y: 5 },
@@ -775,10 +808,10 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
 
     maxWidth: width - 20,
-    borderBottomLeftRadius: 50,
-    borderBottomRightRadius: 50,
-    borderTopLeftRadius: 50,
-    borderTopRightRadius: 50,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     elevation: 3,
     shadowOpacity: 0.3,
     shadowRadius: 5,

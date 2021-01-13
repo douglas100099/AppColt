@@ -44,6 +44,12 @@ function AppMenu() {
           </ListItemIcon>
           <Typography variant="inherit">{languageJson.dashboard_text}</Typography>
         </MenuItem>
+        <MenuItem component={Link} to="/test">
+          <ListItemIcon>
+            <DashboardIcon />
+          </ListItemIcon>
+          <Typography variant="inherit">Test</Typography>
+        </MenuItem>
         <MenuItem component={Link} to="/addBookings">
           <ListItemIcon>
             <ListIcon />

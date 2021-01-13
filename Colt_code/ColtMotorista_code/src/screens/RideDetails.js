@@ -9,6 +9,7 @@ import {
     Image,
     Platform,
     TextInput,
+    StatusBar,
     Modal,
     AsyncStorage
 } from 'react-native';
@@ -16,6 +17,7 @@ var { height, width } = Dimensions.get('window');
 import { Icon, Input } from 'react-native-elements';
 import * as firebase from 'firebase';
 import { colors } from '../common/theme';
+import Constants from 'expo-constants';
 import ProfileSVG from '../SVG/ProfileSVG';
 
 export default class RideDetails extends React.Component {
@@ -200,6 +202,7 @@ export default class RideDetails extends React.Component {
     render() {
         return (
             <View style={styles.mainView}>
+            <StatusBar barStyle='dark-content' translucent backgroundColor={colors.TRANSPARENT}/>
                 <View style={styles.header}>
                     <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK, textAlign: 'center' }}>Detalhes da corrida</Text>
                     <View style={{ position: 'absolute', zIndex: 999, left: 20 }}>
@@ -355,7 +358,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 25,
-        marginTop: Platform.select({ ios: 55, android: 45 })
+        marginTop: Constants.statusBarHeight + 3
     },
 
     viewMap: {

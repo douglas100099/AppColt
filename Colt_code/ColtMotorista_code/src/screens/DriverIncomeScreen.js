@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, Input } from 'react-native-elements';
+import { Icon, Input, ButtonGroup, Button } from 'react-native-elements';
 import { colors } from '../common/theme';
 import {
     StyleSheet,
@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
+import Constants from 'expo-constants';
 import RadioForm from 'react-native-simple-radio-button';
 import {
     BarChart,
@@ -51,6 +52,7 @@ export default class DriverIncomePage extends React.Component {
             semBanco: false,
             saqueNum: '',
             saqueNumValid: true,
+            selectedIndex: 0
 
         };
         this.objetoPrincipal = {
@@ -64,6 +66,7 @@ export default class DriverIncomePage extends React.Component {
         };
         this.valorSemana = 0,
         this._retrieveCurrency();
+        this.updateIndex = this.updateIndex.bind(this);
     }
 
     _retrieveCurrency = async () => {
@@ -77,6 +80,10 @@ export default class DriverIncomePage extends React.Component {
             alert('Ops, tivemos um problema.');
         }
     };
+
+    updateIndex (selectedIndex) {
+        this.setState({selectedIndex})
+    }
 
     componentDidMount() {
         let userUid = firebase.auth().currentUser.uid;
@@ -206,17 +213,17 @@ export default class DriverIncomePage extends React.Component {
         const { saqueNum } = this.state
         const saqueNumValidNum = saqueNum.length >= 0
         LayoutAnimation.easeInEaseOut()
-        if(saqueNumValidNum){
+        if (saqueNumValidNum) {
             let curid = firebase.auth().currentUser.uid
             firebase.database().ref('users/' + curid + '/saldo/').once('value', saldoDetails => {
-                if(saldoDetails.val()){
+                if (saldoDetails.val()) {
                     let saldo = parseFloat(saldoDetails.val())
                     let numSaque = parseFloat(saqueNum)
-                    console.log(numSaque  + ' < ' + saldo)
-                    if(numSaque <= saldo){
+                    console.log(numSaque + ' < ' + saldo)
+                    if (numSaque <= saldo) {
                         this.setState({ saqueNumValid: true, saldoSaque: saldoDetails.val() })
                         return true
-                    } else{
+                    } else {
                         this.setState({ saqueNumValid: false })
                         return false
                     }
@@ -231,14 +238,14 @@ export default class DriverIncomePage extends React.Component {
         }
     }
 
-    async validarSaque(){
+    async validarSaque() {
         this.setState({ loaderBtn: true })
         this.validateSaque().then(() => {
-            if(this.state.saqueNumValid){
+            if (this.state.saqueNumValid) {
                 this.sacarFinal(this.state.saqueNum)
             } else {
                 this.setState({ loaderBtn: false })
-            }  
+            }
         }).catch((err) => {
             alert('Ops, tivemos um erro ao requesitar o saque.')
             this.setState({ loaderBtn: false })
@@ -248,7 +255,7 @@ export default class DriverIncomePage extends React.Component {
     sacarFinal(valor) {
         let curid = firebase.auth().currentUser.uid
         firebase.database().ref('users/' + curid + '/contaBancaria/').once('value', snap => {
-            if(snap.val().requestPayment){
+            if (snap.val().requestPayment) {
                 alert('Você ja possui uma requisição de saque em andamento.')
             } else {
                 firebase.database().ref('users/' + curid + '/contaBancaria/').update({
@@ -259,16 +266,16 @@ export default class DriverIncomePage extends React.Component {
                         status: 'SOLICITADO',
                     }
                 }).catch((err) => {
-                    alert('Ops, tivemos um erro ao requesitar o saque.')  
+                    alert('Ops, tivemos um erro ao requesitar o saque.')
                 })
-                alert('Requisição de saque realizada com sucesso!')  
+                alert('Requisição de saque realizada com sucesso!')
             }
         })
-        this.setState({ loaderBtn: false, modalBanco: false })    
+        this.setState({ loaderBtn: false, modalBanco: false })
     }
 
     removeBanco() {
-        this.setState({ loaderBtn: true})
+        this.setState({ loaderBtn: true })
         let curid = firebase.auth().currentUser.uid
         firebase.database().ref('users/' + curid + '/contaBancaria/').remove().then(() => {
             this.setState({ modalBanco: false, semBanco: true, loaderBtn: false })
@@ -285,7 +292,7 @@ export default class DriverIncomePage extends React.Component {
         const contaNumValid = this.validateConta();
 
         if (fbancoValid && fnameValid && cpfNumValid && AgenNumValid && contaNumValid) {
-            this.onPressRegistrarConta(this.state.fbanco, this.state.fname, this.state.cpfMotorista? this.state.cpfMotorista : this.state.cpfNum, this.state.valueRadio, this.state.AgenNum, this.state.contaNum);
+            this.onPressRegistrarConta(this.state.fbanco, this.state.fname, this.state.cpfMotorista ? this.state.cpfMotorista : this.state.cpfNum, this.state.valueRadio, this.state.AgenNum, this.state.contaNum);
         }
         this.setState({ loaderBtn: false })
     }
@@ -460,77 +467,77 @@ export default class DriverIncomePage extends React.Component {
                         :
                         <View style={{ width: '90%', backgroundColor: colors.WHITE, borderRadius: 10, flex: 1, maxHeight: height / 1.8 }}>
                             {this.state.bancoDetails ?
-                            <View style={{ flex: 1 }}>
-                                <View style={{ marginTop: 25, justifyContent: 'center', alignItems: 'center' }}>
-                                    <Text style={{ fontFamily: 'Inter-Bold', color: colors.BLACK, fontSize: 16 }}>Sua conta bancária</Text>
-                                </View>
-                                <View style={{ height: 50, marginTop: 15, backgroundColor: colors.GREY1, borderRadius: 15, marginHorizontal: 15, flexDirection: 'row', alignItems: 'center',}}>
-                                    <View style={{ marginLeft: 15,paddingRight: 10, borderRightWidth: 1}}>
-                                        <Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Bold'}}>Agência: {this.state.bancoDetails.agencia}</Text>
+                                <View style={{ flex: 1 }}>
+                                    <View style={{ marginTop: 25, justifyContent: 'center', alignItems: 'center' }}>
+                                        <Text style={{ fontFamily: 'Inter-Bold', color: colors.BLACK, fontSize: 16 }}>Sua conta bancária</Text>
                                     </View>
-                                    <View style={{ marginLeft: 10}}>
-                                        <Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Bold' }}>Conta: {this.state.bancoDetails.conta}</Text>
+                                    <View style={{ height: 50, marginTop: 15, backgroundColor: colors.GREY1, borderRadius: 15, marginHorizontal: 15, flexDirection: 'row', alignItems: 'center', }}>
+                                        <View style={{ marginLeft: 15, paddingRight: 10, borderRightWidth: 1 }}>
+                                            <Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Bold' }}>Agência: {this.state.bancoDetails.agencia}</Text>
+                                        </View>
+                                        <View style={{ marginLeft: 10 }}>
+                                            <Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Bold' }}>Conta: {this.state.bancoDetails.conta}</Text>
+                                        </View>
+                                        <View style={{ position: 'absolute', right: 5, height: 45, width: 45, alignItems: 'center', justifyContent: 'center' }}>
+                                            <TouchableOpacity
+                                                onPress={() => { this.removeBanco() }}
+                                                style={{ height: 45, width: 45, alignItems: 'center', justifyContent: 'center' }}
+                                            >
+                                                <Icon
+                                                    name='trash-2'
+                                                    type='feather'
+                                                    color={colors.RED}
+                                                />
+                                            </TouchableOpacity>
+                                        </View>
                                     </View>
-                                    <View style={{ position: 'absolute', right: 5, height: 45, width: 45, alignItems: 'center', justifyContent: 'center'}}>
-                                        <TouchableOpacity
-                                            onPress={() => {this.removeBanco()}}
-                                            style={{ height: 45, width: 45, alignItems: 'center', justifyContent: 'center' }}
-                                        >
-                                            <Icon
-                                                name='trash-2'
-                                                type='feather'
-                                                color={colors.RED}
-                                            />
-                                        </TouchableOpacity>
+                                    <View style={{ marginTop: 25 }}>
+                                        <Text style={{ fontFamily: 'Inter-Bold', color: colors.BLACK, fontSize: 16, textAlign: 'center', marginBottom: 10 }}>Insira o valor do saque:</Text>
+                                        <Input
+                                            ref={input => (this.saqueNumInput = input)}
+                                            editable={true}
+                                            returnKeyType={'next'}
+                                            underlineColorAndroid={colors.TRANSPARENT}
+                                            value={this.state.saqueNum}
+                                            keyboardType={'numeric'}
+                                            inputStyle={styles.inputTextStyle}
+                                            onChangeText={(text) => { this.setState({ saqueNum: text }) }}
+                                            errorMessage={this.state.saqueNumValid ? null : 'Você não pussuí esse valor para saque, tente de novo.'}
+                                            secureTextEntry={false}
+                                            maxLength={11}
+                                            blurOnSubmit={true}
+                                            onSubmitEditing={() => { this.validateSaque() }}
+                                            errorStyle={styles.errorMessageStyle}
+                                            inputContainerStyle={styles.inputContainerStyle}
+                                            containerStyle={styles.textInputStyle}
+                                        />
+                                    </View>
+                                    <View style={{ marginTop: 15, alignItems: 'center', justifyContent: 'center', marginHorizontal: 15, }}>
+                                        <Text style={{ color: colors.BLACK, fontSize: 12, fontFamily: 'Inter-Bold', textAlign: 'center' }}>Os saques são realizados na quarta-feira, confira os dados de sua conta corretamente</Text>
+                                    </View>
+                                    <View style={{ flex: 1, justifyContent: 'flex-end', paddingBottom: 10 }}>
+                                        <View style={{ height: 80, marginTop: 30, marginBottom: 5 }}>
+                                            <TouchableOpacity
+                                                onPress={() => { this.validarSaque() }}
+                                                disabled={this.state.loaderBtn}
+                                                style={{ height: 60, backgroundColor: colors.DEEPBLUE, marginHorizontal: 30, borderRadius: 15, justifyContent: 'center', alignItems: 'center' }}
+                                            >
+                                                <Text style={{ color: colors.WHITE, fontSize: 16, fontFamily: 'Inter-Bold' }}>Sacar</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                        <View style={{ height: 50 }}>
+                                            <TouchableOpacity
+                                                onPress={() => { this.setState({ modalBanco: false }) }}
+                                                disabled={this.state.loaderBtn}
+                                                style={{ height: 50, backgroundColor: colors.WHITE, marginHorizontal: 30, borderRadius: 15, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.RED }}
+                                            >
+                                                <Text style={{ color: colors.RED, fontSize: 16, fontFamily: 'Inter-Bold' }}>Voltar</Text>
+                                            </TouchableOpacity>
+                                        </View>
                                     </View>
                                 </View>
-                                <View style={{ marginTop: 25 }}>
-                                    <Text style={{ fontFamily: 'Inter-Bold', color: colors.BLACK, fontSize: 16, textAlign: 'center', marginBottom: 10 }}>Insira o valor do saque:</Text>
-                                    <Input
-                                    ref={input => (this.saqueNumInput = input)}
-                                    editable={true}
-                                    returnKeyType={'next'}
-                                    underlineColorAndroid={colors.TRANSPARENT}
-                                    value={this.state.saqueNum}
-                                    keyboardType={'numeric'}
-                                    inputStyle={styles.inputTextStyle}
-                                    onChangeText={(text) => { this.setState({ saqueNum: text }) }}
-                                    errorMessage={this.state.saqueNumValid ? null : 'Você não pussuí esse valor para saque, tente de novo.'}
-                                    secureTextEntry={false}
-                                    maxLength={11}
-                                    blurOnSubmit={true}
-                                    onSubmitEditing={() => { this.validateSaque() }}
-                                    errorStyle={styles.errorMessageStyle}
-                                    inputContainerStyle={styles.inputContainerStyle}
-                                    containerStyle={styles.textInputStyle}
-                                />
-                                </View>
-                                <View style={{ marginTop: 15, alignItems: 'center', justifyContent: 'center', marginHorizontal: 15, }}>
-                                    <Text style={{ color: colors.BLACK, fontSize: 12, fontFamily: 'Inter-Bold', textAlign: 'center' }}>Os saques são realizados na quarta-feira, confira os dados de sua conta corretamente</Text>
-                                </View>
-                                <View style={{ flex: 1, justifyContent: 'flex-end', paddingBottom: 10 }}>
-                                    <View style={{ height: 80, marginTop: 30, marginBottom: 5}}>
-                                        <TouchableOpacity
-                                            onPress={() => {this.validarSaque()}}
-                                            disabled={this.state.loaderBtn}
-                                            style={{ height: 60, backgroundColor: colors.DEEPBLUE, marginHorizontal: 30, borderRadius: 15, justifyContent: 'center', alignItems: 'center' }}
-                                        >
-                                            <Text style={{ color: colors.WHITE, fontSize: 16, fontFamily: 'Inter-Bold' }}>Sacar</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                    <View style={{ height: 50}}>
-                                        <TouchableOpacity
-                                            onPress={() => {this.setState({ modalBanco: false })}}
-                                            disabled={this.state.loaderBtn}
-                                            style={{ height: 50, backgroundColor: colors.WHITE, marginHorizontal: 30 ,borderRadius: 15, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.RED}}
-                                        >
-                                            <Text style={{ color: colors.RED, fontSize: 16, fontFamily: 'Inter-Bold' }}>Voltar</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-                            </View>
-                            :
-                            null}
+                                :
+                                null}
                         </View>
                     }
                 </View>
@@ -582,7 +589,7 @@ export default class DriverIncomePage extends React.Component {
             let corridaRecente = new Date(arrayCorridas[i].data)
 
             //Verifica se o dia corrida é mesmo do dia atual
-            if(tempIndex < 0) {
+            if (tempIndex < 0) {
                 break
             } else {
                 if (corridaRecente.getDate() == tempDate) {
@@ -605,9 +612,9 @@ export default class DriverIncomePage extends React.Component {
         this.somarSemana()
     }
 
-    somarSemana(){
+    somarSemana() {
         const { Dom, Seg, Ter, Qua, Qui, Sex, Sab } = this.objetoPrincipal
-        if(this.objetoPrincipal){
+        if (this.objetoPrincipal) {
             this.valorSemana = Dom + Seg + Ter + Qua + Qui + Sex + Sab
         }
     }
@@ -650,6 +657,9 @@ export default class DriverIncomePage extends React.Component {
     }
 
     render() {
+        const buttons = ['Hoje', 'Semana', 'Mês']
+        const { selectedIndex } = this.state
+
         return (
 
             <View style={styles.mainView}>
@@ -671,27 +681,34 @@ export default class DriverIncomePage extends React.Component {
                     </View>
                     <View style={styles.viewEstatisticas}>
                         <View style={styles.viewGanhos}>
-                            <View style={{ flex: 1, alignItems: 'center' }}>
-                                <View style={{ flex: 1, alignItems: 'center', flexDirection: 'row', justifyContent: 'space-around' }}>
-                                    <View style={{ flex: 2, alignItems: 'center', justifyContent: 'center' }}>
-                                        <Text style={styles.tituloMensal2}>Ganhos esse mês</Text>
-                                        <Text style={styles.txtMensal2}>R$ {this.state.thisMothh ? parseFloat(this.state.thisMothh).toFixed(2) : '0'}</Text>
-                                    </View>
-                                    <View style={{ flex: 2, alignItems: 'center', justifyContent: 'center' }}>
-                                        <Text style={styles.tituloMensal2}>Ganhos essa semana</Text>
-                                        <Text style={styles.txtMensal2}>R$ {this.valorSemana ? parseFloat(this.valorSemana).toFixed(2) : '0'}</Text>
-                                    </View>
-                                </View>
+                            <View style={{ flex: 0.8, justifyContent: 'center' }}>
+                                <ButtonGroup
+                                    onPress={this.updateIndex}
+                                    selectedIndex={selectedIndex}
+                                    buttons={buttons}
+                                    containerStyle={styles.btnGroup}
+                                    buttonStyle={{ backgroundColor: colors.WHITE }}
+                                    selectedButtonStyle={{ backgroundColor: colors.DEEPBLUE }}
+                                    textStyle={{ fontSize: 14, fontFamily: 'Inter-Bold', color: colors.BLACK }}
+                                />
                             </View>
                             <View style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'row' }}>
                                 <View style={{ flex: 1, alignItems: 'center' }}>
-                                    <Text style={styles.tituloMensal}>Ganhos hoje</Text>
-                                    <Text style={styles.txtMensal}>R$ {this.state.today ? parseFloat(this.state.today).toFixed(2) : '0'}</Text>
+                                    <Text style={styles.tituloMensal}>Ganho</Text>
+                                    {selectedIndex === 0 ?
+                                        <Text style={styles.txtMensal}>R$ {this.state.today ? parseFloat(this.state.today).toFixed(2) : '0'}</Text>
+                                    : null}
+                                    {selectedIndex === 1 ?
+                                        <Text style={styles.txtMensal}>R$ {this.valorSemana ? parseFloat(this.valorSemana).toFixed(2) : '0'}</Text>
+                                    : null}
+                                    {selectedIndex === 2 ?
+                                        <Text style={styles.txtMensal}>R$ {this.state.thisMothh ? parseFloat(this.state.thisMothh).toFixed(2) : '0'}</Text>
+                                    : null}
                                 </View>
                                 <View style={{ width: 1, height: 60, backgroundColor: colors.GREY1, justifyContent: 'center' }}></View>
                                 <View style={{ flex: 1, alignItems: 'center' }}>
                                     <Text style={styles.tituloMensal}>Saldo</Text>
-                                    <Text style={[styles.txtMensal3, {color: this.state.saldo >= 0 ? '#32db64' : colors.RED}]}>R$ {this.state.saldo ? parseFloat(this.state.saldo).toFixed(2) : '0'}</Text>
+                                    <Text style={[styles.txtMensal3, { color: this.state.saldo >= 0 ? '#32db64' : colors.RED }]}>R$ {this.state.saldo ? parseFloat(this.state.saldo).toFixed(2) : '0'}</Text>
                                 </View>
                             </View>
                         </View>
@@ -700,7 +717,7 @@ export default class DriverIncomePage extends React.Component {
 
                 {/* EXIBIÇÃO DO CHARTS, FLEX: 1 */}
 
-                <View style={{ flex: 1 }}>
+                <ScrollView>
                     <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 20, marginBottom: 5 }}>
                         <Text style={{ color: colors.BLACK, fontFamily: 'Inter-Bold', fontSize: 18 }}>Histórico da semana</Text>
                     </View>
@@ -733,12 +750,7 @@ export default class DriverIncomePage extends React.Component {
                         }}
                     />
 
-                </View>
-
-                {/* SCROLLVIEW, FLEX: 1 */}
-
-                <ScrollView style={{ flex: 0.5 }}>
-                    <View style={{ justifyContent: 'center' }}>
+                    <View style={{ justifyContent: 'center', marginTop: 20 }}>
                         <View style={{ alignItems: 'center', marginHorizontal: 25 }}>
                             <TouchableOpacity style={{ flexDirection: 'row', width: width / 2, height: 40, backgroundColor: colors.DEEPBLUE, borderRadius: 15, justifyContent: 'center', alignItems: 'center' }}
                                 onPress={() => this.sacarSaldo()}
@@ -767,12 +779,12 @@ const chartConfig = {
     fillShadowGradient: colors.DEEPBLUE,
     fillShadowGradientOpacity: 1,
     useShadowColorFromDataset: false,
-    propsForLabels:{
+    propsForLabels: {
         fontSize: 13,
         fontWeight: 500,
     },
-    propsForBackgroundLines:{
-        
+    propsForBackgroundLines: {
+
     }
 };
 
@@ -783,7 +795,7 @@ const styles = StyleSheet.create({
     },
 
     view1: {
-        flex: 1,
+        height: 250,
         backgroundColor: colors.DEEPBLUE,
         borderBottomLeftRadius: 40,
         borderBottomRightRadius: 40,
@@ -801,7 +813,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.DEEPBLUE,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: Platform.select({ ios: 55, android: 45 })
+        marginTop: Constants.statusBarHeight + 3
     },
 
     txtHeader: {
@@ -1009,5 +1021,10 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
         color: colors.BLACK,
+    },
+    btnGroup: {
+        height: 35,
+        width: width/1.5,
+        borderColor: colors.GREY1,
     },
 })

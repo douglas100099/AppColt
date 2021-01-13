@@ -5,7 +5,6 @@ import MapComponent from './MapComponent';
 import DiverReg from './driverRegComponent';
 import EditUser from './EditUser';
 import TripStartModal from './TripStartModal';
-
 export {
     Background,
     Button,
@@ -13,5 +12,5 @@ export {
     MapComponent,
     DiverReg,
     EditUser,
-    TripStartModal
+    TripStartModal,
 };

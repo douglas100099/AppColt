@@ -7,26 +7,22 @@ import {
     Text,
     TouchableOpacity,
     ScrollView,
-    TouchableWithoutFeedback,
     ActivityIndicator,
     Platform,
     Alert,
-    Switch
 } from 'react-native';
-import { Icon, Header } from 'react-native-elements';
-import { NavigationActions, StackActions } from 'react-navigation';
-import ActionSheet, { ActionSheetCustom } from 'react-native-actionsheet';
+import { Icon } from 'react-native-elements';
+import { ActionSheetCustom } from 'react-native-actionsheet';
 
 import { colors } from '../common/theme';
 
 import * as Permissions from 'expo-permissions';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera } from 'expo';
 var { width, height } = Dimensions.get('window');
+import Constants from 'expo-constants'
 
 import * as firebase from 'firebase';
 import languageJSON from '../common/language';
-import { linear } from 'react-native/Libraries/Animated/src/Easing';
 
 export default class ProfileScreen extends React.Component {
 
@@ -56,15 +52,10 @@ export default class ProfileScreen extends React.Component {
         this.setState({ currentUser: curuser }, () => {
             const userData = firebase.database().ref('users/' + this.state.currentUser.uid);
             userData.once('value', userData => {
-                if (userData.val() && userData.val().location && userData.val().location.add) {
-                    var str = userData.val().location.add
-                    if (userData.val().location.add)
-                        var tempAdd = str.split(",")[0] + "," + str.split(",")[1] + ',' + str.split(",")[3] + ',' + str.split(",")[4];
-                    this.setState({ tempAddress: tempAdd });
-                    this.setState(userData.val(), (res) => {
-                    });
-                }
-
+                if (userData.val() && userData.val().location)
+                //var tempAdd = str.split(",")[0] + "," + str.split(",")[1] + ',' + str.split(",")[3] + ',' + str.split(",")[4];
+                this.setState(userData.val(), (res) => {
+                });
             })
         })
         this.prepareInfos()
@@ -238,7 +229,7 @@ export default class ProfileScreen extends React.Component {
 
     }
 
-    openAlertt(){
+    openAlertt() {
         Alert.alert(
             "Editar informações",
             "Entre em contato com o suporte para alterar suas informações.",
@@ -259,7 +250,7 @@ export default class ProfileScreen extends React.Component {
         return (
             <View style={styles.mainView}>
                 <View style={styles.header}>
-                    <View style={{ position: 'absolute', marginTop: Platform.select({ ios: 55, android: 45 }), zIndex: 999, left: 20, }}>
+                    <View style={{ position: 'absolute', marginTop: Constants.statusBarHeight + 3, zIndex: 999, left: 20, }}>
                         <TouchableOpacity disabled={this.state.loaderBtn} onPress={() => { this.resetarPilha(); }}>
                             <Icon
                                 name='ios-arrow-dropleft-circle'
@@ -269,7 +260,7 @@ export default class ProfileScreen extends React.Component {
                             />
                         </TouchableOpacity>
                     </View>
-                    <View style={{ position: 'absolute', marginTop: Platform.select({ ios: 55, android: 45 }), zIndex: 999, right: 20, }}>
+                    <View style={{ position: 'absolute', marginTop: Constants.statusBarHeight + 3, zIndex: 999, right: 20, }}>
                         <TouchableOpacity
                             onPress={() => this.openAlertt()}
                             disabled={this.state.loaderBtn}
@@ -293,7 +284,7 @@ export default class ProfileScreen extends React.Component {
                                         type='ionicon'
                                         color={colors.BLACK}
                                     />
-                                    <Text style={{ fontSize: 12, fontFamily: 'Inter-Bold', color: colors.BLACK }}>{this.state.ratings.userrating == 0 ? " 5.0" : this.state.ratings.userrating }</Text>
+                                    <Text style={{ fontSize: 12, fontFamily: 'Inter-Bold', color: colors.BLACK }}>{this.state.ratings.userrating == 0 ? " 5.0" : this.state.ratings.userrating}</Text>
                                 </View>
                             </View>
                             <View style={{ flex: 0.8, alignItems: 'center', justifyContent: 'flex-start' }}>
@@ -304,7 +295,7 @@ export default class ProfileScreen extends React.Component {
                             </View>
                             <View style={styles.detaisDriver}>
                                 <View style={styles.viewCorridas}>
-                                    <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK }}>{this.state.myBooking  ? this.state.myBooking.length : '0'}</Text>
+                                    <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK }}>{this.state.myBooking ? this.state.myBooking.length : '0'}</Text>
                                     <Text style={{ fontSize: 14, fontFamily: 'Inter-Regular', color: colors.BLACK }}>Total de corridas</Text>
                                 </View>
                                 <View style={{ width: 1, height: '50%', backgroundColor: colors.GREY1 }}></View>

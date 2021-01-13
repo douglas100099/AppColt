@@ -10,9 +10,11 @@ import {
     Dimensions,
     ActivityIndicator,
     FlatList,
+    StatusBar,
 } from 'react-native';
 var { width } = Dimensions.get('window');
 import * as firebase from 'firebase';
+import Constants from 'expo-constants';
 
 export default class Reports extends React.Component {
     constructor(props) {
@@ -69,6 +71,7 @@ export default class Reports extends React.Component {
     render() {
         return (
             <View style={styles.mainView}>
+            <StatusBar barStyle='dark-content' translucent backgroundColor={colors.TRANSPARENT}/>
                 <View style={styles.header}>
                     <Text style={{ fontSize: 20, fontFamily: 'Inter-Bold', color: colors.BLACK, textAlign: 'center' }}>Relatórios</Text>
                     <View style={{ position: 'absolute', zIndex: 999, left: 20 }}>
@@ -142,6 +145,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 25,
-        marginTop: Platform.select({ ios: 55, android: 45 })
+        marginTop: Constants.statusBarHeight + 3
     },
 })

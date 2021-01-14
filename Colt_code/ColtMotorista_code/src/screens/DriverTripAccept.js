@@ -1280,6 +1280,7 @@ export default class DriverTripAccept extends React.Component {
                                 customMapStyle={this.mapStyle()}
                                 showsMyLocationButton={false}
                                 onRegionChangeComplete={() => this.setState({ onRegionChange: true })}
+                                initialRegion={this.state.region ? this.state.region : null}
                                 region={this.state.region && !this.state.onRegionChange ? this.state.region : null}
                             >
                                 {region ?

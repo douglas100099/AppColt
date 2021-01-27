@@ -237,39 +237,17 @@ export default class BookedCabScreen extends React.Component {
                 }
                 if (this.driverUidSelected != 0) {
                     const driverRef = firebase.database().ref('users/' + this.driverUidSelected + '/')
-                    driverRef.update({
-                        have_internet: false
-                    }).then(() => {
-                        setTimeout(() => {
-                            driverRef.once('value', snap => {
-                                const data = snap.val()
-                                if (data && data.have_internet == true) {
-                                    if (data.queue == true && data.queueAvailable == true && data.driverActiveStatus == true) {
-                                        this.setState({ searchDriverQueue: true })
-                                        this.setBookingDriver("waiting_queue_riders", this.state.currentBookingId, bookingData, this.driverUidSelected)
-                                    }
-                                    else if (data.queue == false && data.driverActiveStatus == true) {
-                                        this.setBookingDriver("waiting_riders_list", this.state.currentBookingId, bookingData, this.driverUidSelected)
-                                    }
-                                }
-                                else {
-                                    driverRef.update({
-                                        driverActiveStatus: false
-                                    }).then(() => {
-                                        this.sendPushNotification(this.driverUidSelected,
-                                            'Você recebeu um chamado mas verificamos que sua conexão está fraca ou inexistente. Seu status foi alterado para OFFLINE por conta disso. '
-                                        )
-                                    })
-                                    this.searchDriverQueue = !this.searchDriverQueue
 
-                                    this.driverUidSelected = 0
-                                    setTimeout(() => {
-                                        if (this.state.driverSearch)
-                                            this.searchDriver()
-                                    }, 500)
-                                }
-                            })
-                        }, 4000)
+                    driverRef.once('value', snap => {
+                        const data = snap.val()
+                        if (data.queue == true && data.queueAvailable == true && data.driverActiveStatus == true) {
+                            this.setState({ searchDriverQueue: true })
+                            this.setBookingDriver("waiting_queue_riders", this.state.currentBookingId, bookingData, this.driverUidSelected)
+                        }
+                        else if (data.queue == false && data.driverActiveStatus == true) {
+                            this.setState({ searchDriverQueue: false })
+                            this.setBookingDriver("waiting_riders_list", this.state.currentBookingId, bookingData, this.driverUidSelected)
+                        }
                     })
                 }
                 else {

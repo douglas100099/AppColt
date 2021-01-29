@@ -292,7 +292,7 @@ export default class FareScreen extends React.Component {
         else {
             var otp = false;
         }
-        let today = new Date().toString();
+        let today = new Date().toLocaleDateString('pt-BR') + ' - ' + new Date().toLocaleTimeString('pt-BR');
 
         var pagamentoObj = {
             estimate: this.state.estimateFare,
@@ -332,7 +332,6 @@ export default class FareScreen extends React.Component {
             trip_start_time: "00:00",
             tripdate: today,
             otp: otp,
-            bookingDate: today,
 
             have_waypoint: this.state.waypoint ? {
                 add: this.state.region.waypointText,
@@ -362,7 +361,6 @@ export default class FareScreen extends React.Component {
             tripdate: today,
             coords: this.state.coords,
             otp: otp,
-            bookingDate: today,
             pagamento: pagamentoObj,
             have_waypoint: this.state.waypoint ? {
                 add: this.state.region.waypointText,

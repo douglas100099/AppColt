@@ -1,18 +1,6 @@
 {
   "projects": {
-    "default": "app-colt"
-  },
-  "targets": {
-    "app-colt": {
-      "hosting": {
-        "admin": [
-          "app-colt"
-        ]
-        ,
-        "website": [
-          "coltdriver"
-        ]
-      }
-    }
+    "default": "colt-painel",
+    "colt-painel": "app-colt"
   }
 }

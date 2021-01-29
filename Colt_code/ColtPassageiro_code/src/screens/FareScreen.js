@@ -117,7 +117,7 @@ export default class FareScreen extends React.Component {
         }).then(() => {
             if (this._isMounted = true) {
                 let distance = distanceCalc([-22.224650, -43.867618], [this.state.region.wherelatitude, this.state.region.wherelongitude])
-                if (distance < 50) {
+                if (distance > 50) {
                     this.setState({ longDistance: true })
                 } else {
                     this.getDetailsRider()

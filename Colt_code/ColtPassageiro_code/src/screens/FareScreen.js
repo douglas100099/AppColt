@@ -117,7 +117,7 @@ export default class FareScreen extends React.Component {
         }).then(() => {
             if (this._isMounted = true) {
                 let distance = distanceCalc([-22.224650, -43.867618], [this.state.region.wherelatitude, this.state.region.wherelongitude])
-                if (distance > 50) {
+                if (distance < 50) {
                     this.setState({ longDistance: true })
                 } else {
                     this.getDetailsRider()
@@ -292,7 +292,7 @@ export default class FareScreen extends React.Component {
         else {
             var otp = false;
         }
-        let today = new Date().toLocaleDateString('pt-BR') + ' - ' + new Date().toLocaleTimeString('pt-BR');
+        let today = new Date().toString();
 
         var pagamentoObj = {
             estimate: this.state.estimateFare,
@@ -331,7 +331,6 @@ export default class FareScreen extends React.Component {
             trip_end_time: "00:00",
             trip_start_time: "00:00",
             tripdate: today,
-            otp: otp,
 
             have_waypoint: this.state.waypoint ? {
                 add: this.state.region.waypointText,

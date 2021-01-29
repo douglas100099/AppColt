@@ -377,15 +377,15 @@ export default class BookedCabScreen extends React.Component {
             if (curbookingData.val()) {
                 if (this.state.bookingStatus == 'ACCEPTED' || this.state.bookingStatus == 'EMBARQUE') {
                     firebase.database().ref('bookings/' + this.state.currentBookingId + '/').update({
-                        cancel_time: new Date().toLocaleDateString('pt-BR') + ' - ' + new Date().toLocaleTimeString('pt-BR'),
+                        cancel_time: new Date().toString(),
                         status: 'CANCELLED',
                     }).then(() => {
                         firebase.database().ref('users/' + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
-                            cancel_time: new Date().toLocaleDateString('pt-BR') + ' - ' + new Date().toLocaleTimeString('pt-BR'),
+                            cancel_time: new Date().toString(),
                             status: 'CANCELLED',
                         }).then(() => {
                             firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').update({
-                                cancel_time: new Date().toLocaleDateString('pt-BR') + ' - ' + new Date().toLocaleTimeString('pt-BR'),
+                                cancel_time: new Date().toString(),
                                 status: 'CANCELLED',
                             }).then(() => {
                                 firebase.database().ref('users/' + curbookingData.val().driver + '/rider_waiting_object/' + this.state.currentBookingId + '/').remove().then(() => {
@@ -410,7 +410,7 @@ export default class BookedCabScreen extends React.Component {
         if (params) {
             //Atualiza o status da corrida em "bookings" no firebase
             firebase.database().ref(`bookings/` + this.state.currentBookingId + '/').update({
-                cancel_time: new Date().toLocaleDateString('pt-BR') + ' - ' + new Date().toLocaleTimeString('pt-BR'),
+                cancel_time: new Date().toString(),
                 status: 'CANCELLED',
             })
         }
@@ -444,11 +444,11 @@ export default class BookedCabScreen extends React.Component {
             if (curbookingData.val()) {
                 if (curbookingData.val().status == 'ACCEPTED' || curbookingData.val().status == 'EMBARQUE') {
                     firebase.database().ref('bookings/' + this.state.currentBookingId + '/').update({
-                        cancel_time: new Date().toLocaleDateString('pt-BR') + ' - ' + new Date().toLocaleTimeString('pt-BR'),
+                        cancel_time: new Date().toString(),
                         status: 'CANCELLED',
                     }).then(() => {
                         firebase.database().ref('users/' + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
-                            cancel_time: new Date().toLocaleDateString('pt-BR') + ' - ' + new Date().toLocaleTimeString('pt-BR'),
+                            cancel_time: new Date().toString(),
                             status: 'CANCELLED',
                             reason: this.state.radio_props[this.state.value].label
                         }).then(() => {
@@ -465,7 +465,7 @@ export default class BookedCabScreen extends React.Component {
                             })
                         }).then(() => {
                             dataCustomer.update({
-                                cancel_time: new Date().toLocaleDateString('pt-BR') + ' - ' + new Date().toLocaleTimeString('pt-BR'),
+                                cancel_time: new Date().toString(),
                                 status: 'CANCELLED',
                                 reason: this.state.radio_props[this.state.value].label
                             })

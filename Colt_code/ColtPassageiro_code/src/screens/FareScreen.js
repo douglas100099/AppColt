@@ -331,8 +331,6 @@ export default class FareScreen extends React.Component {
             trip_end_time: "00:00",
             trip_start_time: "00:00",
             tripdate: today,
-            otp: otp,
-            bookingDate: today,
 
             have_waypoint: this.state.waypoint ? {
                 add: this.state.region.waypointText,
@@ -362,7 +360,6 @@ export default class FareScreen extends React.Component {
             tripdate: today,
             coords: this.state.coords,
             otp: otp,
-            bookingDate: today,
             pagamento: pagamentoObj,
             have_waypoint: this.state.waypoint ? {
                 add: this.state.region.waypointText,

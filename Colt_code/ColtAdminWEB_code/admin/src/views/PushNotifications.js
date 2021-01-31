@@ -22,17 +22,31 @@ export default function PushNotifications() {
         {
             title: 'Dispositivo',
             field: 'devicetype',
-            lookup: { All: 'All', ANDROID: 'Android', IOS: 'iOS' },
-            editComponent: props => (<Input type="select" value={props.value} name="select" onChange={e => props.onChange(e.target.value)} id="exampleSelect1"><option>Android</option><option>iOS</option></Input>)
+            lookup: { ANDROID: 'ANDROID', IOS: 'IOS' },
+            editComponent: props => (<Input type="select" value={props.value} name="select" onChange={e => props.onChange(e.target.value)} id="exampleSelect1">
+                <option value={"ANDROID"}>Android</option>
+                <option value={"IOS"}>IOS</option>
+            </Input>)
         },
         {
             title: 'Tipo de usuário',
             field: 'usertype',
-            lookup: { rider: 'Rider', driver: 'Driver' },
-            editComponent: props => (<Input type="select" value={props.value} name="select" onChange={e => props.onChange(e.target.value)} id="exampleSelect1"><option>Rider</option><option>Driver</option></Input>)
+            lookup: { rider: 'rider', driver: 'driver' },
+            editComponent: props => (<Input type="select" value={props.value} name="select2" onChange={e => props.onChange(e.target.value)} id="exampleSelect2">
+                <option value={"rider"}>Rider</option>
+                <option value={"driver"}>Driver</option>
+            </Input>)
         },
-        { title: 'Titúlo', field: 'title', editComponent: props => (<Input name="name" value={props.value} id="exampleNome" onChange={e => props.onChange(e.target.value)} placeholder="Titúlo" />) },
-        { title: 'Descrição', field: 'body', editComponent: props => (<Input name="name" value={props.value} id="exampleNome" onChange={e => props.onChange(e.target.value)} placeholder="Descrição" />) },
+        {
+            title: 'Titulo',
+            field: 'title',
+            editComponent: props => (<Input name="name" value={props.value || ""} id="Name" onChange={e => props.onChange(e.target.value)} placeholder="Titulo" />)
+        },
+        {
+            title: 'Descrição',
+            field: 'body',
+            editComponent: props => (<Input name="name" value={props.value || ""} id="Desc" onChange={e => props.onChange(e.target.value)} placeholder="Descrição" />)
+        },
     ];
 
     const [data, setData] = useState([]);
@@ -114,8 +128,8 @@ export default function PushNotifications() {
                                                         resolve();
                                                         const tblData = data;
                                                         tblData.push(newData);
-                                                        dispatch(sendNotification(newData));
                                                         dispatch(editNotifications(newData, "Add"));
+                                                        dispatch(sendNotification(newData));
                                                     }, 600);
                                                 }),
 

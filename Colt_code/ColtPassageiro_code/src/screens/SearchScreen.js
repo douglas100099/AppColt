@@ -306,163 +306,7 @@ export default class SearchScreen extends Component {
                             }}
                         />
 
-                        {/*
-                        <GooglePlacesAutocomplete
-                            ref={(ref) => { this.searchModal = ref; }}
-                            placeholder='Procurar'
-                            enablePoweredByContainer={false}
-                            minLength={2}
-                            autoFocus={true}
-                            returnKeyType={'search'} // Can be left out for default return key https://facebook.github.io/react-native/docs/textinput.html#returnkeytype
-                            listViewDisplayed={this.state.modalFocused}
-                            fetchDetails={true}
-                            numberOfLines={15}
-                            suppressDefaultStyles={true}
-
-                            textInputProps={{
-                                onFocus: () => { },
-                                onBlur: () => { },
-                                autoCapitalize: "none",
-                                autoCorrect: false,
-                            }}
-
-                            onPress={(data, details = null) => { // 'details' is provided when fetchDetails = true
-                                this.saveAddress(data, details);
-                            }}
-
-                            renderDescription={(row) => row.formatted_address || row.description || row.name}
-
-                            renderRightButton={() => {
-                                return (
-                                    Platform.OS == "android" ?
-                                        this.state.modalFocused ?
-                                            <TouchableOpacity style={{ position: 'absolute', alignItems: 'center', right: 10 }} onPress={() => { this.clearInput(this.searchModal) }}>
-                                                <Icon
-                                                    name='ios-close-circle'
-                                                    type='ionicon'
-                                                    size={20}
-                                                    containerStyle={{ opacity: 0.2 }}
-                                                />
-                                            </TouchableOpacity>
-                                            : null
-                                        : null
-                                )
-                            }
-                            }
-
-                            renderRow={(row) =>
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <Icon
-                                        name='ios-pin'
-                                        type='ionicon'
-                                        size={15}
-                                        containerStyle={{ marginLeft: 10, opacity: 0.5 }}
-                                    />
-                                    <View style={{ flexDirection: 'column' }}>
-                                        <Text numberOfLines={1} style={{ marginLeft: 8, fontFamily: 'Inter-Medium', fontSize: 18, color: colors.BLACK }}> {row.description.split("-")[0]} </Text>
-                                        <Text numberOfLines={1} style={{ marginLeft: 8, opacity: 0.5, fontFamily: 'Inter-Regular', fontSize: 14 }}> {row.description}</Text>
-                                    </View>
-                                </View>
-                            }
-
-                            getDefaultValue={() => this.state.locationCasa ? this.state.locationCasa.add : ''}
-                            query={{
-                                // available options: https://developers.google.com/places/web-service/autocomplete
-                                key: google_map_key,
-                                language: 'pt-BR', // language of the results
-                                type: ['(regions)'],
-                                components: "country:br", // country name
-                                location: this.state.locationUser.wherelatitude + ',' + this.state.locationUser.wherelongitude,
-                                //strictbounds : true,
-                                sessiontoken: this.sessionToken,
-                                radius: 15000
-                            }}
-                            //predefinedPlaces={[homePlace, workPlace]}
-                            //predefinedPlacesAlwaysVisible={false}
-
-                            styles={{
-                                container: {
-                                    width: width,
-                                },
-                                textInputContainer: {
-                                    backgroundColor: colors.GREY.background,
-                                    //backgroundColor: colors.RED,
-                                    marginRight: 45,
-                                    paddingLeft: 8,
-                                    fontSize: 18,
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    borderRadius: 5,
-                                    marginHorizontal: 40,
-                                    left: 20
-                                },
-                                textInput: {
-                                    //backgroundColor: colors.BLACK,
-                                    height: 35,
-                                    fontFamily: 'Inter-Medium',
-                                    fontSize: width < 375 ? 14 : 16,
-                                    paddingTop: 4,
-                                    paddingBottom: 4,
-                                    paddingRight: Platform.OS == "ios" ? 7 : 32,
-                                    flex: 1
-                                },
-                                listView: {
-                                    position: 'absolute',
-                                    top: Platform.OS == 'ios' ? 75 : 75,
-                                    backgroundColor: colors.WHITE,
-                                },
-                                description: {
-                                    paddingLeft: 20,
-                                    paddingRight: 20,
-                                },
-                                row: {
-
-                                    paddingLeft: 10,
-                                    paddingRight: 10,
-                                    height: 50,
-                                    justifyContent: 'center',
-                                    borderBottomWidth: 2,
-                                    borderBottomColor: colors.GREY.background,
-                                    opacity: 0.8,
-                                },
-                                loader: {
-                                    flexDirection: 'row',
-                                    justifyContent: 'flex-end',
-                                    height: 20,
-                                },
-                            }}
-
-                            //currentLocation={true} // Will add a 'Current location' button at the top of the predefined places list
-                            //currentLocationLabel="Localização atual"
-                            nearbyPlacesAPI='GooglePlacesSearch' // Which API to use: GoogleReverseGeocoding or GooglePlacesSearch
-                            GoogleReverseGeocodingQuery={{
-                                // available options for GoogleReverseGeocoding API : https://developers.google.com/maps/documentation/geocoding/intro
-                                key: google_map_key,
-                                language: 'pt-BR',
-                                region: '.br',
-                            }}
-                            GooglePlacesDetailsQuery={{
-                                region: '.br',
-                                sessiontoken: this.sessionToken,
-                            }}
-                            //filterReverseGeocodingByTypes={['locality', 'administrative_area_level_3']}
-                            GooglePlacesSearchQuery={{
-                                // available options for GooglePlacesSearch API : https://developers.google.com/places/web-service/search
-                                rankby: 'distance',
-                            }}
-
-                            debounce={50} // debounce the requests in ms. Set to 0 to remove debounce. By default 0ms.
-                        >
-                        </GooglePlacesAutocomplete>
-                        */}
                     </View>
-                    {/*
-                    {this.state.locationCasa != null ?
-                        <TouchableOpacity style={{ top: Platform.OS == 'ios' ? 30 : 25, alignSelf: 'center' }} onPress={() => { this.deleteSavedLocation() }}>
-                            <Text style={{ fontFamily: 'Inter-Bold', color: colors.RED, fontSize: width < 375 ? 15 : 16 }}> Excluir </Text>
-                        </TouchableOpacity>
-                        : null}
-                    */}
                 </View>
             </Modal>
         )
@@ -829,6 +673,7 @@ export default class SearchScreen extends Component {
                             }}
                         />
 
+                        {/*
                         <TouchableOpacity onPress={() => this.setState({ showBtnConfirmar: true, showBtnWaypoint: !this.state.showBtnWaypoint })} style={{ position: 'absolute', right: 20, top: Platform.OS == "ios" ? 152 : 130, }}>
                             <Icon
                                 name={this.state.showBtnWaypoint ? 'ios-close' : 'ios-add'}
@@ -838,7 +683,7 @@ export default class SearchScreen extends Component {
                                 containerStyle={{ left: 8 }}
                             />
                         </TouchableOpacity>
-                        
+                        */}
 
 
                         {!this.state.searchFocused && !this.state.searchFocused2 && !this.state.searchFocused3 && !this.state.showBtnWaypoint ?

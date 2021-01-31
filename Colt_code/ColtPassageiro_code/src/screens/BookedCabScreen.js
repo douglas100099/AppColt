@@ -80,7 +80,7 @@ export default class BookedCabScreen extends React.Component {
         this.state.bookingDataState == null ? this.getParamData = this.props.navigation.getParam('passData') : this.getParamData = this.state.bookingDataState
         let param = this.props.navigation.getParam('byMapScreen') ? this.props.navigation.getParam('byMapScreen') : null
         if (param == null) {
-            //this.searchDriver()
+            this.searchDriver()
             this.setState({ driverSearch: true, showBtnCancel: true })
         }
 

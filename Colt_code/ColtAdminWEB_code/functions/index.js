@@ -406,7 +406,7 @@ const searchDriver = (bookingId, carType) => {
         else {
             searchDriverQueue = !searchDriverQueue
             driverUidSelected = 0
-            searchDriver(bookingId)
+            searchDriver(bookingId, carType)
         }
         return true
     })

@@ -254,7 +254,7 @@ const checkPaymentAsaas = async (custumer) => {
 }
 
 
-const searchDriver = (bookingId, carType) => {
+/*const searchDriver = (bookingId, carType) => {
     const userData = admin.database().ref('users/').orderByChild("usertype").equalTo('driver')
     const bookingRef = admin.database().ref('bookings/' + bookingId + '/')
 
@@ -346,53 +346,56 @@ const searchDriver = (bookingId, carType) => {
                 const data = snap.val()
                 if (data) {
                     if (data.queue === true && data.queueAvailable === true && data.driverActiveStatus === true) {
-
                         bookingRef.once('value', bookingData => {
-                            admin.database().ref('users/' + driverUidSelected + '/' + "waiting_queue_riders" + '/' + bookingId + '/').set(bookingData.val())
-                                .then(() => {
-                                    admin.database().ref(`users/` + bookingData.val().customer + '/my-booking/' + bookingId).update({ status: "NEW" })
-                                        .then(() => {
-                                            admin.database().ref('bookings/' + bookingId + '/').update({
-                                                status: "NEW",
-                                                requestedDriver: driverUidSelected
+                            if (bookingData.val().status === 'NEW' || bookingData.val().status === 'REJECTED') {
+                                admin.database().ref('users/' + driverUidSelected + '/' + "waiting_queue_riders" + '/' + bookingId + '/').set(bookingData.val())
+                                    .then(() => {
+                                        admin.database().ref(`users/` + bookingData.val().customer + '/my-booking/' + bookingId).update({ status: "NEW" })
+                                            .then(() => {
+                                                admin.database().ref('bookings/' + bookingId + '/').update({
+                                                    status: "NEW",
+                                                    requestedDriver: driverUidSelected
+                                                })
+                                                RequestPushMsg(data.pushToken, "Você possui uma nova corrida!")
+                                                return true
                                             })
-                                            RequestPushMsg(data.pushToken, "Você possui uma nova corrida!")
-                                            return true
-                                        })
-                                        .catch(error => {
-                                            throw new Error("Erro setando status da corrida pra NEW e enviando notify")
-                                        })
-                                    return true
-                                })
-                                .catch(error => {
-                                    throw new Error("Erro depois do waiting queue riders")
-                                })
+                                            .catch(error => {
+                                                throw new Error("Erro setando status da corrida pra NEW e enviando notify")
+                                            })
+                                        return true
+                                    })
+                                    .catch(error => {
+                                        throw new Error("Erro depois do waiting queue riders")
+                                    })
+                            }
                         })
 
                         //this.setBookingDriver("waiting_queue_riders", bookingId, driverUidSelected)
                     }
                     else if (data.queue === false && data.driverActiveStatus === true) {
 
-                        bookingRef.once('value', bookingData => {
-                            admin.database().ref('users/' + driverUidSelected + '/' + "waiting_riders_list" + '/' + bookingId + '/').set(bookingData.val())
-                                .then(() => {
-                                    admin.database().ref('users/' + bookingData.val().customer + '/my-booking/' + bookingId + '/').update({ status: "NEW" })
-                                        .then(() => {
-                                            admin.database().ref('bookings/' + bookingId + '/').update({
-                                                status: "NEW",
-                                                requestedDriver: driverUidSelected
+                        bookingRef.on('value', bookingData => {
+                            if (bookingData.val().status === 'NEW' || bookingData.val().status === 'REJECTED') {
+                                admin.database().ref('users/' + driverUidSelected + '/' + "waiting_riders_list" + '/' + bookingId + '/').set(bookingData.val())
+                                    .then(() => {
+                                        admin.database().ref('users/' + bookingData.val().customer + '/my-booking/' + bookingId + '/').update({ status: "NEW" })
+                                            .then(() => {
+                                                admin.database().ref('bookings/' + bookingId + '/').update({
+                                                    status: "NEW",
+                                                    requestedDriver: driverUidSelected
+                                                })
+                                                RequestPushMsg(data.pushToken, "Você possui uma nova corrida!")
+                                                return true
                                             })
-                                            RequestPushMsg(data.pushToken, "Você possui uma nova corrida!")
-                                            return true
-                                        })
-                                        .catch(error => {
-                                            throw new Error("Erro setando status da corrida pra NEW e enviando notify")
-                                        })
-                                    return true
-                                })
-                                .catch(error => {
-                                    throw new Error("Erro depois do waiting riders list")
-                                })
+                                            .catch(error => {
+                                                throw new Error("Erro setando status da corrida pra NEW e enviando notify")
+                                            })
+                                        return true
+                                    })
+                                    .catch(error => {
+                                        throw new Error("Erro depois do waiting riders list")
+                                    })
+                            }
                         })
 
                         //this.setBookingDriver("waiting_riders_list", bookingId, driverUidSelected)
@@ -429,7 +432,7 @@ exports.newBooking = functions.region('southamerica-east1').database.ref('bookin
             return true
         }
     })
-})
+})*/
 
 
 exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.schedule('30 19 1 * *').timeZone('America/Sao_Paulo').onRun((context) => {

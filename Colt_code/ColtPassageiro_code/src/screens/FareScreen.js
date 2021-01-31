@@ -776,7 +776,22 @@ export default class FareScreen extends React.Component {
                 { cancelable: true },
             );
         } else {
-            this.confirmarCorrida()
+            Alert.alert(
+                'Alerta!',
+                'Por favor, não minimize o aplicativo enquanto buscamos um motorista pra você!',
+                [
+                    {
+                        style: 'default',
+                        text: 'Cancelar busca',
+                    },
+                    {
+                        style: 'destructive',
+                        text: 'Confirmar',
+                        onPress: () => this.confirmarCorrida()
+                    },
+                ],
+                { cancelable: true },
+            );
         }
     }
 

@@ -423,7 +423,7 @@ exports.newBooking = functions.region('southamerica-east1').database.ref('bookin
         searchDriver(bookingId, data.carType)
 
         if (data.status === 'REJECTED') {
-            searchDriver(bookingId)
+            searchDriver(bookingId, data.carType)
         }
         else if (data.status === 'ACCEPTED' || data.status === 'CANCELLED') {
             return true

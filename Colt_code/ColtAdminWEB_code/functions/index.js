@@ -253,7 +253,7 @@ const checkPaymentAsaas = async (custumer) => {
         })
 }
 
-/*
+
 const searchDriver = (bookingId, carType) => {
     const userData = admin.database().ref('users/').orderByChild("usertype").equalTo('driver')
     const bookingRef = admin.database().ref('bookings/' + bookingId + '/')
@@ -341,74 +341,63 @@ const searchDriver = (bookingId, carType) => {
     }).then(() => {
         if (driverUidSelected !== 0) {
             const driverRef = admin.database().ref('users/' + driverUidSelected + '/')
-            driverRef.update({
-                have_internet: false
-            }).then(() => {
-                setTimeout(() => {
-                    driverRef.once('value', snap => {
-                        const data = snap.val()
-                        if (data && data.have_internet === true) {
-                            if (data.queue === true && data.queueAvailable === true && data.driverActiveStatus === true) {
 
-                                bookingRef.once('value', bookingData => {
-                                    admin.database().ref('users/' + driverUidSelected + '/' + "waiting_queue_riders" + '/' + bookingId + '/').set(bookingData.val())
+            driverRef.once('value', snap => {
+                const data = snap.val()
+                if (data) {
+                    if (data.queue === true && data.queueAvailable === true && data.driverActiveStatus === true) {
+
+                        bookingRef.once('value', bookingData => {
+                            admin.database().ref('users/' + driverUidSelected + '/' + "waiting_queue_riders" + '/' + bookingId + '/').set(bookingData.val())
+                                .then(() => {
+                                    admin.database().ref(`users/` + bookingData.val().customer + '/my-booking/' + bookingId).update({ status: "NEW" })
                                         .then(() => {
-                                            admin.database().ref(`users/` + bookingData.val().customer + '/my-booking/' + bookingId).update({ status: "NEW" })
-                                                .then(() => {
-                                                    admin.database().ref('bookings/' + bookingId + '/').update({
-                                                        status: "NEW",
-                                                        requestedDriver: driverUidSelected
-                                                    })
-                                                    RequestPushMsg(data.pushToken, "Você possui uma nova corrida!")
-                                                    return true
-                                                })
-                                                .catch(error => {
-                                                    throw new Error("Erro setando status da corrida pra NEW e enviando notify")
-                                                })
+                                            admin.database().ref('bookings/' + bookingId + '/').update({
+                                                status: "NEW",
+                                                requestedDriver: driverUidSelected
+                                            })
+                                            RequestPushMsg(data.pushToken, "Você possui uma nova corrida!")
                                             return true
                                         })
                                         .catch(error => {
-                                            throw new Error("Erro depois do waiting queue riders")
+                                            throw new Error("Erro setando status da corrida pra NEW e enviando notify")
                                         })
+                                    return true
                                 })
+                                .catch(error => {
+                                    throw new Error("Erro depois do waiting queue riders")
+                                })
+                        })
 
-                                //this.setBookingDriver("waiting_queue_riders", bookingId, driverUidSelected)
-                            }
-                            else if (data.queue === false && data.driverActiveStatus === true) {
+                        //this.setBookingDriver("waiting_queue_riders", bookingId, driverUidSelected)
+                    }
+                    else if (data.queue === false && data.driverActiveStatus === true) {
 
-                                bookingRef.once('value', bookingData => {
-                                    admin.database().ref('users/' + driverUidSelected + '/' + "waiting_riders_list" + '/' + bookingId + '/').set(bookingData.val())
+                        bookingRef.once('value', bookingData => {
+                            admin.database().ref('users/' + driverUidSelected + '/' + "waiting_riders_list" + '/' + bookingId + '/').set(bookingData.val())
+                                .then(() => {
+                                    admin.database().ref('users/' + bookingData.val().customer + '/my-booking/' + bookingId + '/').update({ status: "NEW" })
                                         .then(() => {
-                                            admin.database().ref('users/' + bookingData.val().customer + '/my-booking/' + bookingId + '/').update({ status: "NEW" })
-                                                .then(() => {
-                                                    admin.database().ref('bookings/' + bookingId + '/').update({
-                                                        status: "NEW",
-                                                        requestedDriver: driverUidSelected
-                                                    })
-                                                    RequestPushMsg(data.pushToken, "Você possui uma nova corrida!")
-                                                    return true
-                                                })
-                                                .catch(error => {
-                                                    throw new Error("Erro setando status da corrida pra NEW e enviando notify")
-                                                })
+                                            admin.database().ref('bookings/' + bookingId + '/').update({
+                                                status: "NEW",
+                                                requestedDriver: driverUidSelected
+                                            })
+                                            RequestPushMsg(data.pushToken, "Você possui uma nova corrida!")
                                             return true
                                         })
                                         .catch(error => {
-                                            throw new Error("Erro depois do waiting riders list")
+                                            throw new Error("Erro setando status da corrida pra NEW e enviando notify")
                                         })
+                                    return true
                                 })
+                                .catch(error => {
+                                    throw new Error("Erro depois do waiting riders list")
+                                })
+                        })
 
-                                //this.setBookingDriver("waiting_riders_list", bookingId, driverUidSelected)
-                            }
-                        }
-                        else {
-                            searchDriverQueue = !searchDriverQueue
-                            driverUidSelected = 0
-                            searchDriver(bookingId)
-                        }
-                    })
-                }, 4000)
-                return true
+                        //this.setBookingDriver("waiting_riders_list", bookingId, driverUidSelected)
+                    }
+                }
             })
                 .catch(error => {
                     throw new Error("Erro ao setar corrida no perfil do motorista")
@@ -417,7 +406,7 @@ const searchDriver = (bookingId, carType) => {
         else {
             searchDriverQueue = !searchDriverQueue
             driverUidSelected = 0
-            searchDriver(bookingId)
+            searchDriver(bookingId, carType)
         }
         return true
     })
@@ -434,14 +423,14 @@ exports.newBooking = functions.region('southamerica-east1').database.ref('bookin
         searchDriver(bookingId, data.carType)
 
         if (data.status === 'REJECTED') {
-            searchDriver(bookingId)
+            searchDriver(bookingId, data.carType)
         }
         else if (data.status === 'ACCEPTED' || data.status === 'CANCELLED') {
             return true
         }
     })
 })
-*/
+
 
 exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.schedule('30 19 1 * *').timeZone('America/Sao_Paulo').onRun((context) => {
     //'30 19 15 * *'
@@ -483,7 +472,7 @@ exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.
                             //user n existe no Asaas
                             else {
                                 let newNumber = dataUsers[key].mobile
-                                if( newNumber.length > 11 ){
+                                if (newNumber.length > 11) {
                                     newNumber = newNumber.substring(3)
                                 }
                                 let body = {
@@ -567,7 +556,7 @@ exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub
                             //user n existe no Asaas
                             else {
                                 let newNumber = dataUsers[key].mobile
-                                if( newNumber.length > 11 ){
+                                if (newNumber.length > 11) {
                                     newNumber = newNumber.substring(3)
                                 }
                                 let body = {

@@ -17,6 +17,7 @@ import languageJSON from '../common/language';
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { colors } from '../common/theme';
 import * as firebase from 'firebase'
+import { Colors } from "react-native/Libraries/NewAppScreen";
 
 export default class IntroScreen extends Component {
     recaptchaVerifier = null;
@@ -57,9 +58,9 @@ export default class IntroScreen extends Component {
                         this.setState({ verificationId: verificationId, loaderBtn: true });
                     } catch (error) {
                         alert('Ops, tivemos um problema.');
-                   }
+                    }
                 } else {
-                    alert('Insira um número válido.');  
+                    alert('Insira um número válido.');
                 }
             } else {
                 alert('Insira um número de Celular');
@@ -67,7 +68,7 @@ export default class IntroScreen extends Component {
         } else {
             alert('Código do país inválido');
         }
-        this.setState({loaderBtn: false, btnLogin: false })
+        this.setState({ loaderBtn: false, btnLogin: false })
     }
 
     onSignIn = async () => {
@@ -131,6 +132,11 @@ export default class IntroScreen extends Component {
     render() {
         return (
             <View style={styles.container}>
+                <ImageBackground
+                    source={require("../../assets/images/fundo.png")}
+                    resizeMode={'center'}
+                    style={styles.imagebg2}
+                />
                 <View style={styles.viewMainImg}>
                     <View style={styles.viewImg}>
                         <FirebaseRecaptchaVerifierModal
@@ -139,29 +145,34 @@ export default class IntroScreen extends Component {
                         />
                     </View>
                     <View style={styles.txtWelcome}>
+                        <ImageBackground
+                            source={require("../../assets/images/LogoEscritaBRANCA.png")}
+                            resizeMode={'center'}
+                            style={styles.imagebg3}
+                        />
                         <Text style={styles.txtInput}>Seja bem vindo ao Colt</Text>
                         <Text style={styles.txtInput2}>Cadastre-se para se tornar um motorista parceiro</Text>
                     </View>
                 </View>
                 <View style={styles.viewMainInput}>
                     {this.state.verificationId && this.state.entrando === false ? null :
-                    <View style={styles.viewInput}>
-                        <Text style={styles.txtInput3}>Insira seu numero</Text>
-                        <View style={styles.inputMobile}>
-                            <Text style={{ position: 'absolute', marginLeft: 8, borderRightWidth: 1, paddingRight: 10, borderRightColor: colors.BLACK }}>+55</Text>
-                            <TextInput
-                                ref={(ref) => { this.mobileInput = ref }}
-                                style={styles.textInput}
-                                onChangeText={(value) => this.setState({ phoneNumber: value })}
-                                value={this.state.phoneNumber}
-                                editable={!!this.state.verificationId ? false : true}
-                                keyboardType="phone-pad"
-                                maxLength={11}
-                            />
+                        <View style={styles.viewInput}>
+                            <Text style={styles.txtInput3}>Insira seu numero</Text>
+                            <View style={styles.inputMobile}>
+                                <Text style={{ position: 'absolute', marginLeft: 8, borderRightWidth: 1, paddingRight: 10, borderRightColor: colors.BLACK }}>+55</Text>
+                                <TextInput
+                                    ref={(ref) => { this.mobileInput = ref }}
+                                    style={styles.textInput}
+                                    onChangeText={(value) => this.setState({ phoneNumber: value })}
+                                    value={this.state.phoneNumber}
+                                    editable={!!this.state.verificationId ? false : true}
+                                    keyboardType="phone-pad"
+                                    maxLength={11}
+                                />
+                            </View>
                         </View>
-                    </View>
                     }
-                    {!!this.state.verificationId  ?
+                    {!!this.state.verificationId ?
                         <View style={styles.viewInput}>
                             <Text style={styles.txtInput3}>Insira o código SMS</Text>
                             <View style={styles.inputMobile}>
@@ -183,8 +194,8 @@ export default class IntroScreen extends Component {
                         >
                             <Text style={styles.txtBtn}>Login ou Cadastrar</Text>
                             {this.state.btnLogin ?
-                            <ActivityIndicator size="large" color="#FFFF" />
-                            : null}
+                                <ActivityIndicator size="large" color="#FFFF" />
+                                : null}
                         </TouchableOpacity>
                     }
                     {!!this.state.verificationId ?
@@ -195,10 +206,10 @@ export default class IntroScreen extends Component {
                         >
                             <Text style={styles.txtBtn}>Continuar</Text>
                             {this.state.btnContinuar ?
-                            <ActivityIndicator size="large" color="#FFFF" />
-                            : null}
+                                <ActivityIndicator size="large" color="#FFFF" />
+                                : null}
                         </TouchableOpacity>
-                    : null }
+                        : null}
                     {this.state.verificationId ?
                         <TouchableOpacity
                             onPress={() => this.CancelLogin()}
@@ -207,7 +218,7 @@ export default class IntroScreen extends Component {
                         >
                             <Text style={styles.txtBtn}>Voltar</Text>
                         </TouchableOpacity>
-                    : null}
+                        : null}
                     <Text style={styles.txtTermos}>Ao se cadastrar você aceita todos os termos de uso</Text>
                 </View>
                 {this.loading()}
@@ -219,9 +230,9 @@ export default class IntroScreen extends Component {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        marginTop: Platform.select({ ios: 60, android: 50 }),
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: '#1818cc'
     },
 
     viewMainImg: {
@@ -243,6 +254,21 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 
+    imagebg2: {
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        width: Dimensions.get('window').width,
+        height: Dimensions.get('window').height,
+        alignItems: 'center'
+    },
+
+    imagebg3: {
+        alignItems: 'center',
+        width: 180,
+        height: 70,
+    },
+
     imagebg: {
         width: 180,
         height: 70,
@@ -257,7 +283,7 @@ const styles = StyleSheet.create({
         height: 40,
         width: width / 1.22,
         justifyContent: 'center',
-        backgroundColor: colors.GREY1,
+        backgroundColor: colors.WHITE,
         borderRadius: 10,
     },
 
@@ -265,18 +291,20 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter-Regular',
         marginLeft: 50,
         marginRight: 12,
+        backgroundColor: colors.WHITE
     },
 
     textInputSMS: {
         fontFamily: 'Inter-Regular',
         marginLeft: 12,
         marginRight: 12,
+        color: colors.BLACK
     },
 
     txtInput2: {
         fontFamily: 'Inter-Regular',
         fontSize: 12,
-        color: colors.BLACK,
+        color: colors.WHITE,
         marginLeft: 12,
         marginRight: 12,
         marginBottom: 25,
@@ -284,7 +312,7 @@ const styles = StyleSheet.create({
 
     txtInput3: {
         fontFamily: 'Inter-SemiBold',
-        color: colors.BLACK,
+        color: colors.WHITE,
         fontSize: 18,
         marginLeft: 12,
         marginRight: 12,
@@ -297,7 +325,7 @@ const styles = StyleSheet.create({
 
     txtInput: {
         fontFamily: 'Inter-ExtraBold',
-        color: colors.BLACK,
+        color: colors.WHITE,
         fontSize: 18,
     },
 
@@ -317,7 +345,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 20,
         borderRadius: 50,
-        backgroundColor: colors.DEEPBLUE,
+        backgroundColor: '#ffc809',
     },
 
     txtBtn: {
@@ -331,7 +359,7 @@ const styles = StyleSheet.create({
         bottom: 20,
         fontFamily: 'Inter-SemiBold',
         fontSize: 12,
-        color: colors.GREY2,
+        color: colors.WHITE,
         alignSelf: 'center',
     },
 

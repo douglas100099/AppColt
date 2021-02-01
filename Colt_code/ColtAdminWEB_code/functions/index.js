@@ -2,22 +2,15 @@ const functions = require('firebase-functions');
 const fetch = require("node-fetch");
 const admin = require('firebase-admin');
 
-const paypalcheckout = require('./providers/paypal/checkout');
 const stripecheckout = require('./providers/stripe/checkout');
-const braintreecheckout = require('./providers/braintree/checkout');
 const { user } = require('firebase-functions/lib/providers/auth');
 
 global.Headers = fetch.Headers;
 
 admin.initializeApp();
 
-//exports.paypal_link = functions.https.onRequest(paypalcheckout.render_checkout);
-
 exports.stripe_link = functions.https.onRequest(stripecheckout.render_checkout);
 exports.process_stripe_payment = functions.https.onRequest(stripecheckout.process_checkout);
-
-//exports.braintree_link = functions.https.onRequest(braintreecheckout.render_checkout);
-//exports.process_braintree_payment = functions.https.onRequest(braintreecheckout.process_checkout);
 
 exports.success = functions.https.onRequest((request, response) => {
     var amount_line = request.query.amount ? `<h3>Seu pagamento de R$<strong>${request.query.amount}</strong>,00 foi concluído com sucesso</h3>` : '';

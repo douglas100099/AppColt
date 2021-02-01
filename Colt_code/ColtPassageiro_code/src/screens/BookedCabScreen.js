@@ -65,6 +65,7 @@ export default class BookedCabScreen extends React.Component {
         this.searchDriverQueue = false
         this.currentRejected = false
         this.driverUidSelected = 0
+        this.driverFound = false
     }
 
     /*UNSAFE_componentWillMount() {
@@ -119,6 +120,7 @@ export default class BookedCabScreen extends React.Component {
 
                 //Checando o status da corrida 
                 if (currUserBooking.status == "ACCEPTED") {
+                    this.driverFound = false
                     this.setState({
                         data_accept: currUserBooking.data_accept ? currUserBooking.data_accept : null,
                         bookingStatus: currUserBooking.status,
@@ -126,9 +128,11 @@ export default class BookedCabScreen extends React.Component {
                     })
                 }
                 else if (currUserBooking.status == "CANCELLED") {
+                    this.driverFound = false
                     this.props.navigation.replace('FareDetails', { data: this.state.region })
                 }
                 else if (currUserBooking.status == "TIMEOUT") {
+                    this.driverFound = false
                     this.onCancellSearchBooking()
                 }
                 else if (currUserBooking.status == "EMBARQUE") {
@@ -141,6 +145,7 @@ export default class BookedCabScreen extends React.Component {
                     this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
                 }
                 else if (currUserBooking.status == "REJECTED") {
+                    this.driverFound = false
                     this.driverUidSelected = 0
                     this.searchDriver()
                 }
@@ -236,6 +241,7 @@ export default class BookedCabScreen extends React.Component {
                     coords: this.state.coords
                 }
                 if (this.driverUidSelected != 0) {
+                    this.driverFound = true
                     const driverRef = firebase.database().ref('users/' + this.driverUidSelected + '/')
 
                     driverRef.once('value', snap => {
@@ -660,7 +666,7 @@ export default class BookedCabScreen extends React.Component {
                                 size='large'
                                 color={colors.DEEPBLUE}
                             />
-                            <Text style={{ textAlign: 'center', fontFamily: 'Inter-Medium', fontSize: 16 }}> Buscando localização do motorista... </Text>
+
                         </View>
                     }
 

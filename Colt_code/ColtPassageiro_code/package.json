@@ -27,7 +27,7 @@
     "expo-permissions": "~9.3.0",
     "expo-task-manager": "~8.5.0",
     "expo-updates": "~0.3.3",
-    "firebase": "^8.2.2",
+    "firebase": "7.9.0",
     "haversine": "1.1.1",
     "react": "16.13.1",
     "react-native": "0.63.3",

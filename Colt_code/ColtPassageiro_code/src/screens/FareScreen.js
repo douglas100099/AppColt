@@ -782,12 +782,13 @@ export default class FareScreen extends React.Component {
                 [
                     {
                         style: 'default',
-                        text: 'Cancelar busca',
+                        text: 'Confirmar',
+                        onPress: () => this.confirmarCorrida()
                     },
                     {
                         style: 'destructive',
-                        text: 'Confirmar',
-                        onPress: () => this.confirmarCorrida()
+                        text: 'Cancelar busca',
+                        onPress: () => this.setState({ buttonDisabled: false })
                     },
                 ],
                 { cancelable: true },

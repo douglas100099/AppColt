@@ -26,6 +26,11 @@ import customMapStyle from "../../mapstyle.json";
 import customMapStyleDark from "../../mapstyleDark.json";
 import NetInfo from '@react-native-community/netinfo';
 import Constants from 'expo-constants'
+import * as Analytics from 'expo-firebase-analytics';
+
+// ANALYTICS //
+import { DriverOffline } from '../common/analytics';
+// //
 
 import IconMenuSVG from '../SVG/IconMenuSVG';
 import IconCloseSVG from '../SVG/IconCloseSVG';
@@ -199,6 +204,8 @@ export default class DriverTripAccept extends React.Component {
                                 driverActiveStatus: false
                             }).then(() => {
                                 this.checkingGps();
+                            }).then(() => {
+                                DriverOffline(this.state.curUid, "DriverTripAccept")
                             })
                         } else {
                             if (status === "granted") {
@@ -212,7 +219,12 @@ export default class DriverTripAccept extends React.Component {
                                         if (this._isMounted) {
                                             this.setState({ alertIsOpen: false, requestPermission: false });
                                         }
-                                        //clearInterval(this.state.intervalCheckGps);
+                                    }).then(async () => {
+                                        await Analytics.logEvent('driver_online', {
+                                            name: this.state.curUid,
+                                            screen: 'DriverTripAccept',
+                                            date: new Date().toLocaleString('pt-BR')
+                                        });
                                     })
                                 } else {
                                     if (this.state.intervalCheckGps == null) {

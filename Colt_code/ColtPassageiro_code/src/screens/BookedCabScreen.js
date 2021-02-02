@@ -182,8 +182,10 @@ export default class BookedCabScreen extends React.Component {
             let distTotal = 50;
 
             userData.once('value', driverData => {
+                console.log("ENTROU NO DRIVER DATA")
                 var allUsers = driverData.val();
                 for (let key in allUsers) {
+                    console.log("ENTROU NO 1 for")
                     if (allUsers[key].driverActiveStatus == true && allUsers[key].carType == this.state.carType && !allUsers[key].waiting_queue_riders && !allUsers[key].waiting_riders_list) {
                         //Verifica se o motorista rejeitou a corrida
                         firebase.database().ref('bookings/' + this.state.currentBookingId + '/rejectedDrivers').once('value', drivers => {
@@ -199,6 +201,7 @@ export default class BookedCabScreen extends React.Component {
                                 this.currentRejected = false
                             }
                         }).then(() => {
+                            console.log("ENTROU NO 1 then")
                             if (this.currentRejected == false) {
                                 if (this.searchDriverQueue ? allUsers[key].queue == true : allUsers[key].queue == false) {
                                     if (this.searchDriverQueue ? allUsers[key].queueAvailable == true : true) {
@@ -241,12 +244,14 @@ export default class BookedCabScreen extends React.Component {
                     }
                 }
             }).then(() => {
+                console.log("ENTROU NO 2 then")
                 this.getBookingData(this.state.currentBookingId)
                 let bookingData = {
                     bokkingId: this.state.currentBookingId,
                     coords: this.state.coords
                 }
                 if (this.driverUidSelected != 0) {
+                    console.log("ACHOU METORISTA")
                     this.driverFound = true
                     const driverRef = firebase.database().ref('users/' + this.driverUidSelected + '/')
 
@@ -264,7 +269,7 @@ export default class BookedCabScreen extends React.Component {
                 }
                 else {
                     this.searchDriverQueue = !this.searchDriverQueue
-
+                    console.log("NÃO ACHOU")
                     this.driverUidSelected = 0
                     setTimeout(() => {
                         if (this.state.driverSearch)
@@ -668,9 +673,10 @@ export default class BookedCabScreen extends React.Component {
                         <TrackNow setTimeEstimate={(timeEstimate) => { this.setState({ timeDriverEstimate: timeEstimate }) }} duid={this.state.driverUID} alldata={this.state.region} bookingStatus={this.state.bookingStatus} />
                         :
                         <BackgroundTask
-                            interval={1000}
-                            function={() => {
+                            interval={10000}
+                            function={async () => {
                                 console.log("My task " + Math.random())
+                                console.log("ENTROU NO SEARCH")
                                 this.setState({ driverSearch: true, showBtnCancel: true })
                                 this.searchDriver()
                             }}

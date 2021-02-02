@@ -252,7 +252,7 @@ export default class IntroScreen extends Component {
     }*/
 
     onPressLoginEmail = async () => {
-        if (false) {
+        if (this.state.dontCreateAccount == true) {
             Alert.alert(
                 'Ops!',
                 'No momento, atendemos a cidade de Valença-RJ. Certifique-se de criar sua conta nessa região!',
@@ -265,7 +265,7 @@ export default class IntroScreen extends Component {
                 { cancelable: true },
             );
         }
-        else if (false) {
+        else if (this.state.dontCreateAccount == null) {
             Alert.alert(
                 'Só mais um instante!',
                 'Estamos preparando o app pra você!',

@@ -49,7 +49,7 @@ export class AuthLoadingScreen extends React.Component {
       await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
         accuracy: Location.Accuracy.Highest,
         showsBackgroundLocationIndicator: true,
-        distanceInterval: 100,
+        distanceInterval: 1,
         foregroundService: {
           notificationTitle: 'Colt Motorista',
           notificationBody: 'Você está conectado',

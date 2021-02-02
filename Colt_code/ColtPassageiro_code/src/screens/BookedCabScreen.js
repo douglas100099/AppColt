@@ -24,6 +24,9 @@ import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import distanceCalc from '../common/distanceCalc';
 import { TrackNow } from '../components';
+import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
+import mapStyleAndroid from '../../mapStyleAndroid.json';
+
 
 import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
 import ColtConfortCar from '../../assets/svg/ColtConfortCar';
@@ -66,8 +69,12 @@ export default class BookedCabScreen extends React.Component {
             showBtnCancel: false
         }
         this.searchDriverQueue = false
-        this.currentRejected = false
-        this.driverUidSelected = 0
+        this.driverObj = {
+            driverUid: 0,
+            driverLat: 0,
+            driverLng: 0,
+            driverAngle: 0
+        }
         this.driverFound = false
     }
 
@@ -85,7 +92,7 @@ export default class BookedCabScreen extends React.Component {
         let param = this.props.navigation.getParam('byMapScreen') ? this.props.navigation.getParam('byMapScreen') : null
         if (param == null) {
             //this.searchDriver()
-            //this.setState({ driverSearch: true, showBtnCancel: true })
+            this.setState({ driverSearch: true, showBtnCancel: true })
         }
 
         let curuser = firebase.auth().currentUser;
@@ -102,6 +109,7 @@ export default class BookedCabScreen extends React.Component {
                     droptext: currUserBooking.drop.add
                 }
                 this.setState({
+                    waypoint: currUserBooking.have_waypoint != null ? true : false,
                     firstNameRider: currUserBooking.firstNameRider,
                     driver_firstName: currUserBooking.driver_firstName,
                     coords: this.getParamData.coords,
@@ -120,7 +128,33 @@ export default class BookedCabScreen extends React.Component {
                 }, () => {
                     this.getCancelReasons();
                 })
+            }
+        })
+        this._retrieveSettings
+    }
 
+    componentWillUnmount() {
+        this._isMounted = false
+    }
+
+    _retrieveSettings = async () => {
+        try {
+            const value = await AsyncStorage.getItem('settings');
+            if (value !== null) {
+                this.setState({ settings: JSON.parse(value) });
+            }
+        } catch (error) {
+            console.log("Asyncstorage issue 8 ")
+        }
+    }
+
+    listenerStatus() {
+        const bookingResponse = firebase.database().ref(`users/` + this.state.currentUser + '/my-booking/' + this.state.currentBookingId);
+        bookingResponse.on('value', currUserBookings => {
+
+            let currUserBooking = currUserBookings.val()
+
+            if (currUserBooking) {
                 //Checando o status da corrida 
                 if (currUserBooking.status == "ACCEPTED") {
                     this.driverFound = false
@@ -148,154 +182,185 @@ export default class BookedCabScreen extends React.Component {
                     this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
                 }
                 else if (currUserBooking.status == "REJECTED") {
+                    this.setState({ driverSearch: true, showBtnCancel: true })
                     this.driverFound = false
-                    this.driverUidSelected = 0
-                    this.searchDriver()
+                    this.driverObj.driverUid = 0
+                    this.selectNearbyDriver()
                 }
             }
         })
-        this._retrieveSettings
     }
 
-    componentWillUnmount() {
-        this._isMounted = false
+    checkRejected(bookingId, driverId) {
+        return new Promise(function (result, reject) {
+            firebase.database().ref('bookings/' + bookingId + '/rejectedDrivers').once('value', drivers => {
+                if (drivers.val()) {
+                    let rejectedDrivers = []
+                    rejectedDrivers = drivers.val();
+
+                    const check = Object.keys(rejectedDrivers).filter(i => rejectedDrivers[i] === driverId).map(i => {
+                        rejectedDrivers[i] === driverId
+                        return rejectedDrivers[i]
+                    })
+
+                    if (check.length == 0) {
+                        result(false)
+                    } else {
+                        result(true)
+                    }
+
+                } else {
+                    result(false)
+                }
+            })
+        })
     }
 
-    _retrieveSettings = async () => {
+    async selectNearbyDriver() {
         try {
-            const value = await AsyncStorage.getItem('settings');
-            if (value !== null) {
-                this.setState({ settings: JSON.parse(value) });
-            }
-        } catch (error) {
-            console.log("Asyncstorage issue 8 ")
-        }
-    }
+            if (this._isMounted) {
+                const userData = firebase.database().ref('users/').orderByChild("usertype").equalTo('driver');
+                let distanciaValue = 10;
+                let distTotal = 50;
 
+                userData.once('value', async driverData => {
+                    let allUsers = driverData.val();
 
+                    for (let key in allUsers) {
+                        if (allUsers[key].driverActiveStatus && allUsers[key].carType == this.state.carType && !allUsers[key].waiting_queue_riders && !allUsers[key].waiting_riders_list) {
 
-    async searchDriver() {
-        console.log("ENTROU NO SEARCH")
-        if (this._isMounted) {
-            const userData = firebase.database().ref('users/').orderByChild("usertype").equalTo('driver');
-            let distanciaValue = 10;
-            let distTotal = 50;
-
-            userData.once('value', driverData => {
-                console.log("ENTROU NO DRIVER DATA")
-                var allUsers = driverData.val();
-                for (let key in allUsers) {
-                    console.log("ENTROU NO 1 for")
-                    if (allUsers[key].driverActiveStatus == true && allUsers[key].carType == this.state.carType && !allUsers[key].waiting_queue_riders && !allUsers[key].waiting_riders_list) {
-                        //Verifica se o motorista rejeitou a corrida
-                        firebase.database().ref('bookings/' + this.state.currentBookingId + '/rejectedDrivers').once('value', drivers => {
-                            if (drivers.val()) {
-                                let rejectedDrivers = []
-                                rejectedDrivers = drivers.val();
-                                for (let i = 0; i < rejectedDrivers.length; i++) {
-                                    if (rejectedDrivers[i] == key) {
-                                        this.currentRejected = true
-                                    }
-                                }
-                            } else {
-                                this.currentRejected = false
-                            }
-                        }).then(() => {
-                            console.log("ENTROU NO 1 then")
-                            if (this.currentRejected == false) {
+                            //Verifica se o motorista rejeitou a corrida
+                            let result = await this.checkRejected(this.state.currentBookingId, key)
+                            if (result == false) {
                                 if (this.searchDriverQueue ? allUsers[key].queue == true : allUsers[key].queue == false) {
                                     if (this.searchDriverQueue ? allUsers[key].queueAvailable == true : true) {
-                                        var location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];    //Rider Lat and Lang
-                                        var location2 = null
-                                        var locationDriver = null
+                                        let location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];    //Rider Lat and Lang
+                                        let location2 = null
+                                        let locationDriver = null
 
                                         if (this.searchDriverQueue) {
                                             firebase.database().ref('bookings/' + allUsers[key].emCorrida + '/').once('value', snapshot => {
                                                 let dataBooking = snapshot.val()
                                                 location2 = [dataBooking.drop.lat, dataBooking.drop.lng]
                                                 locationDriver = [dataBooking.current.lat, dataBooking.current.lng]
-                                            }).then(() => {
-                                                var distanceDrop = distanceCalc(location1, location2)
-                                                var distanceTotal = distanceDrop + distanceCalc(location2, locationDriver)
-
-                                                if (distanceDrop <= 4 && distanceTotal < distTotal) {
-                                                    distTotal = distanceTotal
-                                                    this.driverUidSelected = key
-                                                }
                                             })
+                                                .then(() => {
+                                                    let distanceDrop = distanceCalc(location1, location2)
+                                                    let distanceTotal = distanceDrop + distanceCalc(location2, locationDriver)
+
+                                                    if (distanceDrop <= 4 && distanceTotal < distTotal) {
+                                                        distTotal = distanceTotal
+                                                        this.driverObj.driverUid = key
+                                                        this.driverObj.driverLat = allUsers[key].location.lat
+                                                        this.driverObj.driverLng = allUsers[key].location.lng
+                                                        this.driverObj.driverAngle = allUsers[key].location.angle
+                                                    }
+                                                })
+                                                .catch((err) => {
+                                                    console.log(err)
+                                                })
                                         }
                                         else {
                                             location2 = [allUsers[key].location.lat, allUsers[key].location.lng];   //Driver lat and lang
+
                                             //Calcula a distancia entre dois pontos
                                             var distance = distanceCalc(location1, location2);
                                             var originalDistance = distance
                                             if (originalDistance <= 4) { //4KM
+
                                                 //Salva sempre o mais proximo
                                                 if (distance < distanciaValue) {
                                                     distanciaValue = distance
-                                                    this.driverUidSelected = key
+                                                    this.driverObj.driverUid = key
+                                                    this.driverObj.driverLat = allUsers[key].location.lat
+                                                    this.driverObj.driverLng = allUsers[key].location.lng
+                                                    this.driverObj.driverAngle = allUsers[key].location.angle
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
-                        })
-                    }
-                }
-            }).then(() => {
-                console.log("ENTROU NO 2 then")
-                this.getBookingData(this.state.currentBookingId)
-                let bookingData = {
-                    bokkingId: this.state.currentBookingId,
-                    coords: this.state.coords
-                }
-                if (this.driverUidSelected != 0) {
-                    console.log("ACHOU METORISTA")
-                    this.driverFound = true
-                    const driverRef = firebase.database().ref('users/' + this.driverUidSelected + '/')
 
-                    driverRef.once('value', snap => {
-                        const data = snap.val()
-                        if (data.queue == true && data.queueAvailable == true && data.driverActiveStatus == true) {
-                            this.setState({ searchDriverQueue: true })
-                            this.setBookingDriver("waiting_queue_riders", this.state.currentBookingId, bookingData, this.driverUidSelected)
                         }
-                        else if (data.queue == false && data.driverActiveStatus == true) {
-                            this.setState({ searchDriverQueue: false })
-                            this.setBookingDriver("waiting_riders_list", this.state.currentBookingId, bookingData, this.driverUidSelected)
-                        }
-                    })
-                }
-                else {
-                    this.searchDriverQueue = !this.searchDriverQueue
-                    console.log("NÃO ACHOU")
-                    this.driverUidSelected = 0
-                    setTimeout(() => {
-                        if (this.state.driverSearch)
-                            this.searchDriver()
-                    }, 500)
-                }
-            })
+                    }
+                }).then(() => {
+                    this.selectBookingDriver()
+                })
+            }
+        }
+        catch (err) {
+            console.log(err)
         }
     }
 
-    setBookingDriver(name, bookingId, bookingData, driverUID) {
-        setTimeout(() => {
-            firebase.database().ref('users/' + driverUID + '/' + name + '/' + bookingId + '/').set(this.state.bookingdataDetails)
+    selectBookingDriver() {
+        try {
+            let bookingData = {
+                bokkingId: this.state.currentBookingId,
+                coords: this.state.coords
+            }
+            if (this.driverObj.driverUid != 0) {
+                this.driverFound = true
+                this.setState({ driverSearch: false })
+                this.sendPushNotification(this.state.currentUser, "Estamos conectando você ao motorista.")
+
+                const driverRef = firebase.database().ref('users/' + this.driverObj.driverUid + '/')
+                driverRef.once('value', snap => {
+                    const data = snap.val()
+                    if (data.queue == true && data.queueAvailable == true && data.driverActiveStatus == true) {
+                        this.setState({ searchDriverQueue: true })
+                        this.setBookingDriver("waiting_queue_riders", this.state.currentBookingId, bookingData, this.driverObj.driverUid)
+                    }
+                    else if (data.queue == false && data.driverActiveStatus == true) {
+                        this.setState({ searchDriverQueue: false })
+                        this.setBookingDriver("waiting_riders_list", this.state.currentBookingId, bookingData, this.driverObj.driverUid)
+                    }
+                })
+            }
+            else {
+                this.searchDriverQueue = !this.searchDriverQueue
+                this.driverObj.driverUid = 0
+
+                if (this.state.driverSearch)
+                    this.selectNearbyDriver()
+            }
+        }
+        catch (err) {
+            console.log(err)
+        }
+    }
+
+    async setBookingDriver(name, bookingId, bookingData, driverUID) {
+        let dataBooking = await this.getBookingData(bookingId)
+
+        if (dataBooking != null) {
+            firebase.database().ref('users/' + driverUID + '/' + name + '/' + bookingId + '/').set(dataBooking)
                 .then(() => {
                     firebase.database().ref(`users/` + this.state.currentUser + '/my-booking/' + this.getParamData.bokkingId).update({ status: "NEW" })
                         .then(() => {
                             firebase.database().ref('bookings/' + bookingId + '/').update({
                                 status: "NEW",
                                 requestedDriver: driverUID
-                            }).then(() => {
-                                this.setState({ bookingDataState: bookingData })
                             })
-                            this.sendPushNotification(driverUID, languageJSON.new_booking_request_push_notification)
+                                .then(() => {
+                                    this.setState({ bookingDataState: bookingData })
+                                    this.sendPushNotification(driverUID, languageJSON.new_booking_request_push_notification)
+                                })
+                                .catch((err) => {
+                                    console.log(err)
+                                })
+                        })
+                        .catch((err) => {
+                            console.log(err)
                         })
                 })
-        }, 500)
+                .catch((err) => {
+                    console.log(err)
+                })
+        } else {
+            this.selectNearbyDriver()
+        }
     }
 
     async getLocDrop(param) {
@@ -304,18 +369,24 @@ export default class BookedCabScreen extends React.Component {
             let dataBooking = snapshot.val();
             let coordsDrop = [dataBooking.drop.lat, dataBooking.drop.lng]
             return coordsDrop;
+        }).catch((err) => {
+            console.log(err)
+            return false
         })
     }
 
-    getBookingData(param) {
+    async getBookingData(param) {
         const ref = firebase.database().ref('bookings/' + param + '/');
-        ref.on('value', snapshot => {
-            let dataBooking = snapshot.val();
-            if (dataBooking.status == "REJECTED") {
-                dataBooking.status = "NEW"
-            }
-            this.setState({
-                bookingdataDetails: dataBooking
+
+        return new Promise(function (result, reject) {
+            ref.on('value', snapshot => {
+                let dataBooking = snapshot.val();
+                if (dataBooking.status == "REJECTED") {
+                    dataBooking.status = "NEW"
+                }
+                result(
+                    dataBooking
+                )
             })
         })
     }
@@ -450,7 +521,7 @@ export default class BookedCabScreen extends React.Component {
             })
 
         this.setState({ driverSearch: false })
-        this.props.navigation.replace('FareDetails', { data: this.state.region })
+        this.props.navigation.replace('FareDetails', { data: this.state.region, waypoint: this.state.waypoint ? true : false })
     }
 
     onCancelConfirm() {
@@ -626,7 +697,7 @@ export default class BookedCabScreen extends React.Component {
             >
                 <View style={{ flex: 1, backgroundColor: colors.WHITE, width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
                     <Text style={styles.textGif}> Procurando motoristas próximos </Text>
-                    <Text style={styles.textGif2}> Por favor, não minimize o aplicativo enquanto buscamos um motorista. </Text>
+
                     <View style={{ justifyContent: 'center', alignItems: 'center', alignSelf: 'center', }}>
                         <Pulse
                             size={350}
@@ -668,22 +739,84 @@ export default class BookedCabScreen extends React.Component {
     render() {
         return (
             <View style={styles.mainContainer}>
-                <View style={styles.mapcontainer}>
+                <View style={{
+                    flex: this.state.driverSearch == false && this.driverFound == false ? 7 : 1
+                }}>
                     {this.state.driverUID && this.state.region && this.state.bookingStatus && this.state.driverSearch == false ?
                         <TrackNow setTimeEstimate={(timeEstimate) => { this.setState({ timeDriverEstimate: timeEstimate }) }} duid={this.state.driverUID} alldata={this.state.region} bookingStatus={this.state.bookingStatus} />
                         :
-                        <BackgroundTask
-                            interval={10000}
-                            function={async () => {
-                                console.log("My task " + Math.random())
-                                console.log("ENTROU NO SEARCH")
-                                this.setState({ driverSearch: true, showBtnCancel: true })
-                                this.searchDriver()
-                            }}
-                        />
+                        <View style={{ flex: 1 }}>
+                            <View style={{ flex: 1, zIndex: 99 }}>
+
+                                <MapView
+                                    provider={PROVIDER_GOOGLE}
+                                    showsUserLocation={true}
+                                    ref={(ref) => this.mapView = ref}
+                                    loadingEnabled
+                                    showsMyLocationButton={false}
+                                    style={styles.map}
+                                    //initialRegion={this.state.region}
+                                    onRegionChange={() => { this.setState({ showsMyLocationBtn: true }) }}
+                                    enablePoweredByContainer={false}
+                                    zoomControlEnabled={false}
+                                    scrollEnabled={false}
+                                    showsCompass={false}
+                                    showsScale={false}
+                                    rotateEnabled={false}
+                                    customMapStyle={mapStyleAndroid}
+                                    region={{
+                                        latitude: this.driverObj.driverLat,
+                                        longitude: this.driverObj.driverLng,
+                                        latitudeDelta: 0.0043,
+                                        longitudeDelta: 0.0034,
+                                    }}
+                                >
+                                    {this.driverFound && this.driverObj.driverLat != 0 && this.driverObj.driverLng != 0 ?
+                                        <Marker
+                                            coordinate={{ latitude: this.driverObj.driverLat, longitude: this.driverObj.driverLng }}
+                                            centerOffset={{ x: 0.1, y: 0.1 }}
+                                            anchor={{ x: 0.1, y: 0.1 }}
+                                        >
+                                            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', }}>
+                                                {/*<Pulse
+                                                    size={350}
+                                                    color={colors.DEEPBLUE}
+                                                    style={{ position: 'absolute' }}
+                                                />*/}
+                                                <IconCarMap
+                                                    style={{
+                                                        transform: [{ rotate: this.driverObj.driverAngle + "deg" }],
+                                                        shadowColor: colors.BLACK,
+                                                        shadowOpacity: 0.2,
+                                                        shadowOffset: { x: 0.1, y: 0.1 },
+                                                        shadowRadius: 5,
+                                                        elevation: 3
+                                                    }}
+                                                />
+                                            </View>
+                                        </Marker>
+                                        : null}
+                                </MapView>
+                                <View style={styles.viewQueueBooking}>
+                                    <Text style={{ textAlign: 'center', paddingHorizontal: 5, fontFamily: 'Inter-Medium', fontSize: 15, color: colors.WHITE }}> Estamos conectando você ao motorista. </Text>
+                                </View>
+                            </View>
+                            <View style={{ backgroundColor: colors.DARK, height: 0, width: 0 }}>
+                                <BackgroundTask
+                                    style={{}}
+                                    interval={500}
+                                    function={async () => {
+                                        //console.log("My task " + Math.random())
+                                        //console.log("CHAMOU SEARCH")
+                                        this.selectNearbyDriver()
+                                        this.listenerStatus()
+                                    }}
+                                />
+                            </View>
+                        </View>
                     }
 
-                    {this.state.driverSearch == false ?
+                    {this.state.driverSearch == false && this.driverFound == false ?
                         <View>
                             <TouchableOpacity style={styles.btnChatMotorista} onPress={() => this.chat()}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -707,7 +840,7 @@ export default class BookedCabScreen extends React.Component {
                         : null}
                 </View>
 
-                {this.state.driverSearch == false ?
+                {this.state.driverSearch == false && this.driverFound == false ?
                     <View style={styles.viewInfo}>
                         <Text style={{ color: colors.WHITE, fontFamily: 'Inter-Bold', fontSize: 14, alignSelf: 'center' }}> Confira as informações e a placa do carro!</Text>
                     </View>
@@ -719,7 +852,7 @@ export default class BookedCabScreen extends React.Component {
                     </View>
                     : null}
 
-                {this.state.driverSearch == false ?
+                {this.state.driverSearch == false && this.driverFound == false ?
                     <View style={[styles.containerBottom, { flex: this.state.embarque ? 4.5 : width < 375 ? 4.5 : 4 }]}>
                         <View style={{ flex: 3 }}>
                             <View style={styles.containerFoto}>
@@ -838,10 +971,6 @@ const styles = StyleSheet.create({
     },
 
     ///////////////////////////
-    mapcontainer: {
-        flex: 7,
-        width: width,
-    },
     btnChatMotorista: {
         position: 'absolute',
         justifyContent: 'center',

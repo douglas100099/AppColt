@@ -194,6 +194,7 @@ export default class FareScreen extends React.Component {
 
     //Pega a direção e detalhes da corrida 
     async getDirections(startLoc, waypoint, destLoc) {
+        console.log("CHAMOU GET DIRECTIONS")
         try {
             if (waypoint) {
                 var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destLoc}&waypoints=${waypoint}&key=${google_map_key}`, { signal: this.myAbort.signal })
@@ -331,6 +332,7 @@ export default class FareScreen extends React.Component {
             trip_end_time: "00:00",
             trip_start_time: "00:00",
             tripdate: today,
+            otp: otp,
 
             have_waypoint: this.state.waypoint ? {
                 add: this.state.region.waypointText,
@@ -410,7 +412,7 @@ export default class FareScreen extends React.Component {
             userData.once('value', userData => {
                 if (userData.val()) {
                     let allUsers = userData.val();
-                    this.prepareDrivers(allUsers);
+                    //this.prepareDrivers(allUsers);
                 }
             })
         }
@@ -460,6 +462,7 @@ export default class FareScreen extends React.Component {
     }
 
     getDriverTime(startLoc, destLoc) {
+        console.log("CHAMOU GET DRIVERS TIME")
         return new Promise(function (resolve, reject) {
             fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=${startLoc}&destinations=${destLoc}&key=${google_map_key}`)
                 .then((response) => response.json())
@@ -776,23 +779,7 @@ export default class FareScreen extends React.Component {
                 { cancelable: true },
             );
         } else {
-            Alert.alert(
-                'Alerta!',
-                'Por favor, não minimize o aplicativo enquanto buscamos um motorista pra você!',
-                [
-                    {
-                        style: 'default',
-                        text: 'Confirmar',
-                        onPress: () => this.confirmarCorrida()
-                    },
-                    {
-                        style: 'destructive',
-                        text: 'Cancelar busca',
-                        onPress: () => this.setState({ buttonDisabled: false })
-                    },
-                ],
-                { cancelable: true },
-            );
+            this.confirmarCorrida()
         }
     }
 

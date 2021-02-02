@@ -82,7 +82,8 @@
         "projectId": "colt-desenvolvimento",
         "storageBucket": "colt-desenvolvimento.appspot.com",
         "messagingSenderId": "387918831955",
-        "appId": "1:387918831955:web:ab5e9a39a04c122cd681a6"
+        "appId": "1:387918831955:web:ab5e9a39a04c122cd681a6",
+        "measurementId": "G-B945J3F4S4"
       },
       "googlemapkey": "AIzaSyDALefKQ3xFjRRvw56_mRdPClMap41XAbM"
     }

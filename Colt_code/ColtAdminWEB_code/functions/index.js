@@ -248,6 +248,7 @@ const checkPaymentAsaas = async (custumer) => {
 
 
 /*const searchDriver = (bookingId, carType) => {
+    console.log("ENTROU NO SEARCHDRIVER")
     const userData = admin.database().ref('users/').orderByChild("usertype").equalTo('driver')
     const bookingRef = admin.database().ref('bookings/' + bookingId + '/')
 
@@ -419,9 +420,11 @@ exports.newBooking = functions.region('southamerica-east1').database.ref('bookin
         searchDriver(bookingId, data.carType)
 
         if (data.status === 'REJECTED') {
+            console.log("ENTROU NOO REJECTED")
             searchDriver(bookingId, data.carType)
         }
         else if (data.status === 'ACCEPTED' || data.status === 'CANCELLED') {
+            console.log("ENTROU NO ACCEPTED / CANCELLED")
             return true
         }
     })

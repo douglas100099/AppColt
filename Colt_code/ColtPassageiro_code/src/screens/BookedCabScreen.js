@@ -33,6 +33,9 @@ import { ScrollView } from 'react-native-gesture-handler';
 import { Pulse } from 'react-native-animated-spinkit'
 import IconCarMap from '../../assets/svg/IconCarMap';
 
+import BackgroundTask from "../common/BackgroundTask";
+
+
 export default class BookedCabScreen extends React.Component {
     _isMounted = false;
     getParamData;
@@ -81,8 +84,8 @@ export default class BookedCabScreen extends React.Component {
         this.state.bookingDataState == null ? this.getParamData = this.props.navigation.getParam('passData') : this.getParamData = this.state.bookingDataState
         let param = this.props.navigation.getParam('byMapScreen') ? this.props.navigation.getParam('byMapScreen') : null
         if (param == null) {
-            this.searchDriver()
-            this.setState({ driverSearch: true, showBtnCancel: true })
+            //this.searchDriver()
+            //this.setState({ driverSearch: true, showBtnCancel: true })
         }
 
         let curuser = firebase.auth().currentUser;
@@ -169,7 +172,10 @@ export default class BookedCabScreen extends React.Component {
         }
     }
 
+
+
     async searchDriver() {
+        console.log("ENTROU NO SEARCH")
         if (this._isMounted) {
             const userData = firebase.database().ref('users/').orderByChild("usertype").equalTo('driver');
             let distanciaValue = 10;
@@ -661,13 +667,14 @@ export default class BookedCabScreen extends React.Component {
                     {this.state.driverUID && this.state.region && this.state.bookingStatus && this.state.driverSearch == false ?
                         <TrackNow setTimeEstimate={(timeEstimate) => { this.setState({ timeDriverEstimate: timeEstimate }) }} duid={this.state.driverUID} alldata={this.state.region} bookingStatus={this.state.bookingStatus} />
                         :
-                        <View style={{ marginTop: Platform.OS == 'ios' ? 130 : 90, alignSelf: 'center', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            <ActivityIndicator
-                                size='large'
-                                color={colors.DEEPBLUE}
-                            />
-
-                        </View>
+                        <BackgroundTask
+                            interval={1000}
+                            function={() => {
+                                console.log("My task " + Math.random())
+                                this.setState({ driverSearch: true, showBtnCancel: true })
+                                this.searchDriver()
+                            }}
+                        />
                     }
 
                     {this.state.driverSearch == false ?

@@ -3476,6 +3476,13 @@ expo-av@~8.6.0:
     lodash "^4.17.15"
     nullthrows "^1.1.0"
 
+expo-background-fetch@~8.5.0:
+  version "8.5.0"
+  resolved "https://registry.yarnpkg.com/expo-background-fetch/-/expo-background-fetch-8.5.0.tgz#6f263d2b51bf168418e14c716dae87a2bbf3769a"
+  integrity sha512-4YQ60I8COmfCIanj0579QrloD2CZ7N7fOu5ZCC4BQ2wLnPrepv+/9NrElpWl+M9VaTicmmBt+w5KqEwVjTHg0g==
+  dependencies:
+    expo-task-manager "~8.5.0"
+
 expo-constants@9.2.0, expo-constants@~9.2.0:
   version "9.2.0"
   resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-9.2.0.tgz#e86a38793deaff9018878afac65bce2543c80a4c"

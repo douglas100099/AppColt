@@ -673,7 +673,7 @@ export default class SearchScreen extends Component {
                             }}
                         />
 
-                        {/*
+                        
                         <TouchableOpacity onPress={() => this.setState({ showBtnConfirmar: true, showBtnWaypoint: !this.state.showBtnWaypoint })} style={{ position: 'absolute', right: 20, top: Platform.OS == "ios" ? 152 : 130, }}>
                             <Icon
                                 name={this.state.showBtnWaypoint ? 'ios-close' : 'ios-add'}
@@ -683,7 +683,7 @@ export default class SearchScreen extends Component {
                                 containerStyle={{ left: 8 }}
                             />
                         </TouchableOpacity>
-                        */}
+                        
 
 
                         {!this.state.searchFocused && !this.state.searchFocused2 && !this.state.searchFocused3 && !this.state.showBtnWaypoint ?

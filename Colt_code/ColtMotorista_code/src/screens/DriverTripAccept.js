@@ -590,10 +590,6 @@ export default class DriverTripAccept extends React.Component {
             ref.on('value', (snapshot) => {
                 this.setState({ driverDetails: snapshot.val() })
                 var jobs = [];
-                /*if(snapshot.val().have_internet){
-                    console.log('ENTROU NO HAVE INTERNET')
-                    firebase.database().ref('users/' + curuid + '/have_internet/').set(true)
-                }*/
                 if (snapshot.val() && snapshot.val().waiting_riders_list) {
                     let waiting_riderData = snapshot.val().waiting_riders_list;
                     for (let key in waiting_riderData) {
@@ -610,7 +606,7 @@ export default class DriverTripAccept extends React.Component {
                     this.setState({ chegouCorrida: true })
                     if (this.state.isSound == false) {
                         this.playSound()
-                        //Linking.openURL('coltappmotorista://');
+                        Linking.openURL('coltappmotorista://');
                     }
                 } else if (this.state.chegouCorrida == true) {
                     if (this._isMounted) {
@@ -722,7 +718,7 @@ export default class DriverTripAccept extends React.Component {
                         firebase.database().ref('bookings/' + item.bookingId).once('value', (snap) => {
                             let requestedDriver = snap.val().requestedDriver;
                             if (requestedDriver) {
-                                firebase.database().ref('users/' + requestedDriver + '/waiting_riders_list/' + item.bookingId + '/').remove().then()
+                                firebase.database().ref('users/' + requestedDriver + '/waiting_riders_list/' + item.bookingId + '/').remove()
                                     .then(() => {
                                         this.setState({ loader: false, chegouCorrida: false })
                                         this.props.navigation.replace('DriverTripStart', { allDetails: item, regionUser: this.state.region })
@@ -821,9 +817,6 @@ export default class DriverTripAccept extends React.Component {
 
     centerFollowMap() {
         this.map.animateToRegion(this.state.region, 500)
-        setTimeout(() => {
-            this.setState({ onRegionChange: false })
-        }, 600)
     }
 
     iniciarTeste = async () => {
@@ -1279,9 +1272,7 @@ export default class DriverTripAccept extends React.Component {
                                 showsScale={false}
                                 customMapStyle={this.mapStyle()}
                                 showsMyLocationButton={false}
-                                onRegionChangeComplete={() => this.setState({ onRegionChange: true })}
-                                initialRegion={this.state.region ? this.state.region : null}
-                                region={this.state.region && !this.state.onRegionChange ? this.state.region : null}
+                                region={this.state.region ? this.state.region : null}
                             >
                                 {region ?
                                     <Marker.Animated
@@ -1334,7 +1325,7 @@ export default class DriverTripAccept extends React.Component {
                                     <Animatable.Image useNativeDriver={true} animation="fadeIn" source={this.state.photoDriver ? { uri: this.state.photoDriver } : require('../../assets/images/profilePic.png')} style={styles.imagemPerfil} />
                                 </TouchableOpacity>
                             </View>
-                            {region && this.state.onRegionChange ?
+                            {region ?
                                 <Animatable.View useNativeDriver={true} animation="fadeIn" style={styles.touchaVoltar2}>
                                     <TouchableOpacity onPress={() => { this.centerFollowMap() }}>
                                         <Icon

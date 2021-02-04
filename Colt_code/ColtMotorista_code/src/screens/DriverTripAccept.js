@@ -618,7 +618,7 @@ export default class DriverTripAccept extends React.Component {
                     this.setState({ chegouCorrida: true })
                     if (this.state.isSound == false) {
                         this.playSound()
-                        Linking.openURL('coltappmotorista://');
+                        //Linking.openURL('coltappmotorista://');
                     }
                 } else if (this.state.chegouCorrida == true) {
                     if (this._isMounted) {
@@ -680,8 +680,9 @@ export default class DriverTripAccept extends React.Component {
                 vehicleModelName: this.state.driverDetails.vehicleModel,
                 driverRating: this.state.driverDetails.ratings ? this.state.driverDetails.ratings.userrating : "5.0",
                 drop: item.drop,
-                ratingRider: item.ratingRider,
                 pickup: item.pickup,
+                waypoint: item.waypoint ? item.waypoint : null,
+                ratingRider: item.ratingRider,
                 imageRider: item.imageRider ? item.imageRider : null,
                 estimateDistance: item.estimateDistance,
                 serviceType: item.serviceType,
@@ -693,6 +694,7 @@ export default class DriverTripAccept extends React.Component {
                 tripdate: item.tripdate,
                 pagamento: pagamentoObj,
                 data_accept: new Date().getTime(),
+                corVeh: this.state.driverDetails.corVeh ? this.state.driverDetails.corVeh : null,
             }
 
             var riderData = {
@@ -707,11 +709,12 @@ export default class DriverTripAccept extends React.Component {
                 vehicle_number: this.state.driverDetails.vehicleNumber,
                 vehicleModelName: this.state.driverDetails.vehicleModel,
                 driverRating: this.state.driverDetails.ratings ? this.state.driverDetails.ratings.userrating : "5.0",
-                drop: item.drop,
                 firstNameRider: item.firstNameRider,
                 ratingRider: item.ratingRider,
                 otp: item.otp,
+                drop: item.drop,
                 pickup: item.pickup,
+                waypoint: item.waypoint ? item.waypoint : null,
                 estimateDistance: item.estimateDistance,
                 serviceType: item.serviceType,
                 status: "ACCEPTED",
@@ -721,6 +724,7 @@ export default class DriverTripAccept extends React.Component {
                 tripdate: item.tripdate,
                 pagamento: pagamentoObj,
                 data_accept: new Date().getTime(),
+                corVeh: this.state.driverDetails.corVeh ? this.state.driverDetails.corVeh : null,
             }
 
             if (this._isMounted) {
@@ -1216,6 +1220,18 @@ export default class DriverTripAccept extends React.Component {
                                                         />
                                                         <Text style={styles.txtPartida}>{item.pickup.add}</Text>
                                                     </View>
+                                                    {item.waypoint ?
+                                                    <View style={styles.enderecoPartida}>
+                                                        <Icon
+                                                            size={15}
+                                                            name='disc'
+                                                            type='feather'
+                                                            color={colors.DARK}
+                                                        />
+                                                        <Text style={styles.txtPartida}>{item.waypoint.add}</Text>
+                                                    </View>
+                                                    :
+                                                    null}
                                                     <View style={styles.enderecoDestino}>
                                                         <Icon
                                                             size={15}
@@ -1654,6 +1670,7 @@ const styles = StyleSheet.create({
         alignContent: 'center',
         alignItems: 'center',
         marginLeft: 15,
+        marginTop: 5,
         marginBottom: 5,
     },
 

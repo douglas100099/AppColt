@@ -82,6 +82,8 @@ export default class DriverCompleteTrip extends React.Component {
             objectQueue: false,
             timeoutCenter: null,
             statusConexao: false,
+            waypoint: "",
+            loaderWaypoint: false,
         }
     }
 
@@ -125,6 +127,7 @@ export default class DriverCompleteTrip extends React.Component {
             this.setState({ error: "Locations services needed" });
             this.openAlert()
         }
+        this.checkWaypoint();
     }
 
     getRidersQueue() {
@@ -382,17 +385,28 @@ export default class DriverCompleteTrip extends React.Component {
 
     checkDist(item) {
         if (this._isMounted) {
-            this.setState({ rideDetails: item },
-                () => {
-                    var location1 = [this.state.region.latitude, this.state.region.longitude];    //Rider Lat and Lang
-                    var location2 = [this.state.rideDetails.drop.lat, this.state.rideDetails.drop.lng];   //Driver lat and lang
+            this.setState({ rideDetails: item, loaderWaypoint: true },
+                async () => {
+                    var location1 = [this.state.region.latitude, this.state.region.longitude];   //Rider Lat and Lang
+                    var location2 = [this.state.rideDetails.drop.lat, this.state.rideDetails.drop.lng];
+                    var location3 = [this.state.rideDetails.waypoint.lat, this.state.rideDetails.waypoint.lng];   //Driver lat and lang
                     //calculate the distance of two locations
                     var distance = distanceCalc(location1, location2);
+                    var distance2 = distanceCalc(location1, location3);
                     var originalDistance = (distance);
-                    if (originalDistance <= 0.8) {
-                        this.onPressEndTrip(this.state.rideDetails)
+                    var originalDistance2 = (distance2);
+                    if (this.state.waypoint != "" && this.state.waypoint != "CONFIRMED") {
+                        if (originalDistance2 <= 0.8) {
+                            this.confirmedWaypoint()
+                        } else {
+                            this.showActionSheet()
+                        }
                     } else {
-                        this.showActionSheet()
+                        if (originalDistance <= 0.8) {
+                            this.onPressEndTrip(this.state.rideDetails)
+                        } else {
+                            this.showActionSheet()
+                        }
                     }
                 })
         }
@@ -406,8 +420,17 @@ export default class DriverCompleteTrip extends React.Component {
         this.RefActionSheet.show()
     }
 
+    confirmedWaypoint = async () => {
+        if (this.state.waypoint != "" && this.state.waypoint != "CONFIRMED") {
+            await AsyncStorage.setItem('waypoint', "CONFIRMED").then(() => {
+                this.setState({ waypoint: "CONFIRMED", loaderWaypoint: false })
+            })
+        }
+    }
+
     // checkar internet
     onPressEndTrip = async (item) => {
+        this.setState({ loaderWaypoint: false })
         let location = await Location.getCurrentPositionAsync({});
         var pos = {
             latitude: location.coords.latitude,
@@ -454,6 +477,23 @@ export default class DriverCompleteTrip extends React.Component {
                 })
             }
         })
+    }
+
+    checkWaypoint = async () => {
+        if (this.state.rideDetails.waypoint) {
+            console.log('EXISTE PARADA NESSA CORRIDA')
+            await AsyncStorage.getItem('waypoint', (err, result) => {
+                if (result) {
+                    if (result === 'CONFIRMED') {
+                        this.setState({ waypoint: "CONFIRMED" })
+                    } else {
+                        this.setState({ waypoint: "NOCONFIRMED" })
+                    }
+                } else {
+                    this.setState({ waypoint: "NOCONFIRMED" })
+                }
+            })
+        }
     }
 
     //End trip and fare calculation function
@@ -663,6 +703,7 @@ export default class DriverCompleteTrip extends React.Component {
                 drop: item.drop,
                 ratingRider: item.ratingRider,
                 pickup: item.pickup,
+                waypoint: item.waypoint ? item.waypoint : null,
                 imageRider: item.imageRider ? item.imageRider : null,
                 estimateDistance: item.estimateDistance,
                 serviceType: item.serviceType,
@@ -693,6 +734,7 @@ export default class DriverCompleteTrip extends React.Component {
                 ratingRider: item.ratingRider,
                 otp: item.otp,
                 pickup: item.pickup,
+                waypoint: item.waypoint ? item.waypoint : null,
                 estimateDistance: item.estimateDistance,
                 serviceType: item.serviceType,
                 status: "ACCEPTED",
@@ -820,33 +862,60 @@ export default class DriverCompleteTrip extends React.Component {
     }
 
     openWaze(allDetails) {
-        Linking.openURL('https://www.waze.com/ul?q=' + allDetails.drop.lat + ',' + allDetails.drop.lng + '&navigate=yes');
+        if (this.state.waypoint === "NOCONFIRMED") {
+            Linking.openURL('https://www.waze.com/ul?q=' + allDetails.drop.lat + ',' + allDetails.drop.lng + '&navigate=yes');
+        } else {
+            Linking.openURL('https://www.waze.com/ul?q=' + allDetails.waypoint.lat + ',' + allDetails.waypoint.lng + '&navigate=yes');
+        }
     }
 
     // google navigations now it not implemented in client side
     handleGetDirections(allDetails) {
-        const data = {
-            source: {
-                latitude: this.state.region.latitude,
-                longitude: this.state.region.longitude
-            },
-            destination: {
-                latitude: allDetails.drop.lat,
-                longitude: allDetails.drop.lng
-            },
-            params: [
-                {
-                    key: "travelmode",
-                    value: "driving"        // may be "walking", "bicycling" or "transit" as well
+        if (this.state.waypoint === "NOCONFIRMED") {
+            let data = {
+                source: {
+                    latitude: this.state.region.latitude,
+                    longitude: this.state.region.longitude
                 },
-                {
-                    key: "dir_action",
-                    value: "navigate"       // this instantly initializes navigation using the given travel mode
-                }
-            ],
+                destination: {
+                    latitude: allDetails.waypoint.lat,
+                    longitude: allDetails.waypoint.lng
+                },
+                params: [
+                    {
+                        key: "travelmode",
+                        value: "driving"        // may be "walking", "bicycling" or "transit" as well
+                    },
+                    {
+                        key: "dir_action",
+                        value: "navigate"       // this instantly initializes navigation using the given travel mode
+                    }
+                ],
+            }
+            getDirections(data)
+        } else {
+            let data = {
+                source: {
+                    latitude: this.state.region.latitude,
+                    longitude: this.state.region.longitude
+                },
+                destination: {
+                    latitude: allDetails.drop.lat,
+                    longitude: allDetails.drop.lng
+                },
+                params: [
+                    {
+                        key: "travelmode",
+                        value: "driving"        // may be "walking", "bicycling" or "transit" as well
+                    },
+                    {
+                        key: "dir_action",
+                        value: "navigate"       // this instantly initializes navigation using the given travel mode
+                    }
+                ],
+            }
+            getDirections(data)
         }
-
-        getDirections(data)
     }
 
     /*checkMap() {
@@ -872,7 +941,7 @@ export default class DriverCompleteTrip extends React.Component {
     animateToDestination() {
         this.setState({ fitCordinates: true, followMap: false })
         setTimeout(() => {
-            this.map.fitToCoordinates([{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }, { latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng }], {
+            this.map.fitToCoordinates([{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }, { latitude: this.state.waypoint === "NOCONFIRMED" ? this.state.rideDetails.waypoint.lat : this.state.rideDetails.drop.lat, longitude: this.state.waypoint === "NOCONFIRMED" ? this.state.rideDetails.waypoint.lng : this.state.rideDetails.drop.lng }], {
                 edgePadding: { top: 80, right: 65, bottom: 50, left: 50 },
                 animated: true,
             })
@@ -933,20 +1002,40 @@ export default class DriverCompleteTrip extends React.Component {
                                             height={40}
                                         />
                                     </Marker.Animated>
-                                    <Marker.Animated
-                                        coordinate={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng, }}
-                                        anchor={{ x: 0.5, y: 1 }}
-                                    >
-                                        <MarkerDropSVG
-                                            width={40}
-                                            height={40}
+                                    {this.state.waypoint === "NOCONFIRMED" ?
+                                        <Marker.Animated
+                                            coordinate={{ latitude: this.state.rideDetails.waypoint.lat, longitude: this.state.rideDetails.waypoint.lng, }}
+                                            anchor={{ x: 0.5, y: 1 }}
+                                        >
+                                            <MarkerPicSVG
+                                                width={40}
+                                                height={40}
+                                            />
+                                        </Marker.Animated>
+                                        :
+                                        <Marker.Animated
+                                            coordinate={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng, }}
+                                            anchor={{ x: 0.5, y: 1 }}
+                                        >
+                                            <MarkerDropSVG
+                                                width={40}
+                                                height={40}
+                                            />
+                                        </Marker.Animated>
+                                    }
+                                    {this.state.waypoint === "NOCONFIRMED" ?
+                                        <Directions
+                                            origin={{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }}
+                                            destination={{ latitude: this.state.rideDetails.waypoint.lat, longitude: this.state.rideDetails.waypoint.lng }}
+                                            onReady={result => { this.setState({ kmRestante: result.distance, tempoRestante: result.duration }) }}
                                         />
-                                    </Marker.Animated>
-                                    <Directions
-                                        origin={{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }}
-                                        destination={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng }}
-                                        onReady={result => { this.setState({ kmRestante: result.distance, tempoRestante: result.duration }) }}
-                                    />
+                                        :
+                                        <Directions
+                                            origin={{ latitude: this.state.region.latitude, longitude: this.state.region.longitude }}
+                                            destination={{ latitude: this.state.rideDetails.drop.lat, longitude: this.state.rideDetails.drop.lng }}
+                                            onReady={result => { this.setState({ kmRestante: result.distance, tempoRestante: result.duration }) }}
+                                        />
+                                    }
                                 </MapView>
                                 :
                                 null}
@@ -955,13 +1044,17 @@ export default class DriverCompleteTrip extends React.Component {
                                     ref={o => this.ActionSheet = o}
                                     style={styles}
                                     title={<Text style={{ color: colors.BLACK, fontSize: 20, fontFamily: 'Inter-Bold' }}>Longe do destino</Text>}
-                                    message={<Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Regular', textAlign: 'center' }}>Você está distante do ponto de destino, tem certeza que deseja finalizar a corrida?</Text>}
+                                    message={<Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Regular', textAlign: 'center' }}>Você está distante do ponto de destino, tem certeza que deseja continuar?</Text>}
                                     options={['Continuar', 'Voltar']}
                                     cancelButtonIndex={1}
                                     destructiveButtonIndex={0}
                                     onPress={(index) => {
                                         if (index == 0) {
-                                            this.onPressEndTrip(this.state.rideDetails)
+                                            if (this.state.waypoint != "" && this.state.waypoint != "CONFIRMED") {
+                                                this.confirmedWaypoint()
+                                            } else {
+                                                this.onPressEndTrip(this.state.rideDetails)
+                                            }
                                         } else {
                                             //console.log('actionsheet close')
                                         }
@@ -1016,7 +1109,11 @@ export default class DriverCompleteTrip extends React.Component {
                             <View style={{ position: 'absolute', alignSelf: 'center', top: Constants.statusBarHeight + 3, height: 70, width: width / 1.2, backgroundColor: colors.WHITE, elevation: 4, borderTopLeftRadius: 15, borderTopRightRadius: 15 }}>
                                 <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
                                     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                                        <Text style={{ textAlign: 'center', color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Regular' }}>{this.state.rideDetails.drop.add}</Text>
+                                        {this.state.waypoint === "NOCONFIRMED" ?
+                                            <Text style={{ textAlign: 'center', color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Regular' }}>{this.state.rideDetails.waypoint.add}</Text>
+                                            :
+                                            <Text style={{ textAlign: 'center', color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Regular' }}>{this.state.rideDetails.drop.add}</Text>
+                                        }
                                     </View>
                                     <View style={{ borderWidth: 0.6, borderColor: colors.GREY1, height: 70, width: 1 }}></View>
                                     <View style={{ flex: 0.2, justifyContent: 'center', alignItems: 'center' }}>
@@ -1054,12 +1151,19 @@ export default class DriverCompleteTrip extends React.Component {
                                 onPress={() => {
                                     this.checkDist(this.state.rideDetails)
                                 }}
+                                disabled={this.state.loaderWaypoint}
                                 style={styles.buttonStyleView}
                             >
                                 <View style={{ flexDirection: 'row' }}>
-                                    <View style={{ alignItems: 'center', justifyContent: 'center', marginRight: 5 }}>
-                                        <Text style={{ color: colors.WHITE, fontSize: 16, fontFamily: 'Inter-Bold' }}>Finalizar corrida</Text>
-                                    </View>
+                                    {this.state.waypoint != "" && this.state.waypoint != "CONFIRMED" ?
+                                        <View style={{ alignItems: 'center', justifyContent: 'center', marginRight: 5 }}>
+                                            <Text style={{ color: colors.WHITE, fontSize: 16, fontFamily: 'Inter-Bold' }}>Confirmar parada</Text>
+                                        </View>
+                                        :
+                                        <View style={{ alignItems: 'center', justifyContent: 'center', marginRight: 5 }}>
+                                            <Text style={{ color: colors.WHITE, fontSize: 16, fontFamily: 'Inter-Bold' }}>Finalizar corrida</Text>
+                                        </View>
+                                    }
                                     <View style={{ paddingHorizontal: 4, paddingVertical: 2, backgroundColor: colors.WHITE, borderRadius: 10 }}>
                                         {this.state.rideDetails.pagamento.payment_mode === 'Dinheiro' ?
                                             <Text style={{ color: colors.BLACK, fontSize: 14, fontFamily: 'Inter-Bold' }}>Dinheiro</Text>
@@ -1138,7 +1242,7 @@ export default class DriverCompleteTrip extends React.Component {
                                                     />
                                                 </Marker.Animated>
                                                 <Marker
-                                                    coordinate={{ latitude: item.drop.lat, longitude: item.drop.lng }}
+                                                    coordinate={{ latitude: item.waypoint ? item.waypoint.lat : item.drop.lat, longitude: item.waypoint ? item.waypoint.lng : item.drop.lng }}
                                                     anchor={{ x: 0.5, y: 1 }}
                                                 >
                                                     <MarkerDropSVG
@@ -1149,7 +1253,7 @@ export default class DriverCompleteTrip extends React.Component {
 
                                                 <Directions
                                                     origin={{ latitude: item.pickup.lat, longitude: item.pickup.lng }}
-                                                    destination={{ latitude: item.drop.lat, longitude: item.drop.lng }}
+                                                    destination={{ latitude: item.waypoint ? item.waypoint.lat : item.drop.lat, longitude: item.waypoint ? item.waypoint.lng : item.drop.lng }}
                                                     onReady={result => {
                                                         this.setState({ duration: Math.floor(result.duration) });
 
@@ -1220,6 +1324,18 @@ export default class DriverCompleteTrip extends React.Component {
                                                         />
                                                         <Text style={styles.txtPartida}>{item.pickup.add}</Text>
                                                     </View>
+                                                    {item.waypoint ?
+                                                        <View style={styles.enderecoPartida}>
+                                                            <Icon
+                                                                size={15}
+                                                                name='disc'
+                                                                type='feather'
+                                                                color={colors.DARK}
+                                                            />
+                                                            <Text style={styles.txtPartida}>{item.waypoint.add}</Text>
+                                                        </View>
+                                                        :
+                                                        null}
                                                     <View style={styles.enderecoDestino}>
                                                         <Icon
                                                             size={15}

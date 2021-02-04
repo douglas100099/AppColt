@@ -684,6 +684,13 @@ export default class DriverStartTrip extends React.Component {
                                 <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.DEEPBLUE, marginRight: 5, marginLeft: 5 }}></View>
                                 <Text style={styles.TxtEnderecoPartida}>{this.state.rideDetails.pickup.add}</Text>
                             </View>
+                            {this.state.rideDetails.waypoint ?
+                            <View style={styles.viewWaypointEndereco}>
+                                <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.DARK, marginRight: 5, marginLeft: 5 }}></View>
+                                <Text style={styles.TxtEnderecoPartida}>{this.state.rideDetails.waypoint.add}</Text>
+                            </View>
+                            :
+                            null}
                             <View style={styles.viewDestinoEndereco}>
                                 <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.RED, marginRight: 5, marginLeft: 5 }}></View>
                                 <Text style={styles.TxtEnderecoDestino}>{this.state.rideDetails.drop.add}</Text>
@@ -1125,6 +1132,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginTop: 15,
+        marginHorizontal: 10,
+    },
+
+    viewWaypointEndereco: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 5,
         marginHorizontal: 10,
     },
 

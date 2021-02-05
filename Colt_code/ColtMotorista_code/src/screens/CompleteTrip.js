@@ -389,7 +389,7 @@ export default class DriverCompleteTrip extends React.Component {
                 async () => {
                     var location1 = [this.state.region.latitude, this.state.region.longitude];   //Rider Lat and Lang
                     var location2 = [this.state.rideDetails.drop.lat, this.state.rideDetails.drop.lng];
-                    var location3 = [this.state.rideDetails.waypoint.lat, this.state.rideDetails.waypoint.lng];   //Driver lat and lang
+                    var location3 = [this.state.rideDetails.waypoint ? this.state.rideDetails.waypoint.lat : 0, this.state.rideDetails.waypoint ? this.state.rideDetails.waypoint.lng : 0];   //Driver lat and lang
                     //calculate the distance of two locations
                     var distance = distanceCalc(location1, location2);
                     var distance2 = distanceCalc(location1, location3);

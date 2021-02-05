@@ -334,7 +334,7 @@ export default class FareScreen extends React.Component {
             tripdate: today,
             otp: otp,
 
-            have_waypoint: this.state.waypoint ? {
+            waypoint: this.state.waypoint ? {
                 add: this.state.region.waypointText,
                 lat: this.state.region.waypointLat,
                 lng: this.state.region.waypointLng,
@@ -363,7 +363,7 @@ export default class FareScreen extends React.Component {
             coords: this.state.coords,
             otp: otp,
             pagamento: pagamentoObj,
-            have_waypoint: this.state.waypoint ? {
+            waypoint: this.state.waypoint ? {
                 add: this.state.region.waypointText,
                 lat: this.state.region.waypointLat,
                 lng: this.state.region.waypointLng,
@@ -1191,6 +1191,7 @@ const styles = StyleSheet.create({
     fadingContainer2: {
         position: 'absolute',
         left: 25,
+        right: 20,
         borderTopLeftRadius: 10,
         borderTopRightRadius: 10,
         borderBottomRightRadius: 10,
@@ -1379,7 +1380,6 @@ const styles = StyleSheet.create({
         position: 'absolute',
         left: 10,
         bottom: 70,
-
     },
     btnCancellRate: {
         justifyContent: 'center',

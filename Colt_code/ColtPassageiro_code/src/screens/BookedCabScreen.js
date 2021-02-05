@@ -112,6 +112,7 @@ export default class BookedCabScreen extends React.Component {
                     waypoint: currUserBooking.have_waypoint != null ? true : false,
                     firstNameRider: currUserBooking.firstNameRider,
                     driver_firstName: currUserBooking.driver_firstName,
+                    corVeiculo: currUserBooking.corVeh,
                     coords: this.getParamData.coords,
                     region: region,
                     currentBookingId: this.getParamData.bokkingId,
@@ -907,6 +908,7 @@ export default class BookedCabScreen extends React.Component {
                                 </View>
                                 <View style={styles.containerTxtCarro}>
                                     <Text style={styles.marcaCarro}> {this.state.carModel ? this.state.carModel : null} </Text>
+                                    <Text style={styles.corVeiculo}> • {this.state.corVeiculo ? this.state.corVeiculo : null} </Text>
                                 </View>
                             </View>
                         </View>
@@ -1294,9 +1296,10 @@ const styles = StyleSheet.create({
     },
     containerCarDetails: {
         position: 'absolute',
-        right: 40,
+        right: 15,
         top: 0,
         flexDirection: 'column',
+        //backgroundColor: colors.RED
     },
     containerBtn: {
         flex: 1.3,
@@ -1355,13 +1358,19 @@ const styles = StyleSheet.create({
     },
     containerTxtCarro: {
         marginTop: 7,
-        width: 150,
+        alignItems: 'center',
+        flexDirection: 'row'
+        //width: 150,
     },
     marcaCarro: {
         fontFamily: 'Inter-Regular',
-        color: colors.BLACK,
+        color: colors.DARK,
         fontSize: width < 375 ? 16 : 18,
-        position: 'absolute',
-        right: 0
+        //position: 'absolute',
+        //right: 0
     },
+    corVeiculo: {
+        fontFamily: 'Inter-ExtraBold',
+        fontSize: 11
+    }
 });

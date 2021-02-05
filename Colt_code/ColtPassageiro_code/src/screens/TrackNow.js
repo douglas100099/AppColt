@@ -38,6 +38,7 @@ import IconCarMap from '../../assets/svg/IconCarMap';
 import CircleLineTriangle from '../../assets/svg/CircleLineTriangle';
 
 export default class TrackNow extends React.Component {
+    myAbort = new AbortController()
 
     constructor(props) {
         super(props);
@@ -143,9 +144,9 @@ export default class TrackNow extends React.Component {
 
     async getDirections() {
         try {
-            if (this.state.allData.have_waypoint) {
-                let waypoint = '"' + this.state.allData.have_waypoint.lat + ',' + this.state.allData.waypoint.lng + '"'
-                var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destLoc}&waypoints=${waypoint}&key=${google_map_key}`, { signal: this.myAbort.signal })
+            if (this.state.allData.waypoint) {
+                let waypoint = '"' + this.state.allData.waypoint.lat + ',' + this.state.allData.waypoint.lng + '"'
+                var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${this.state.startLoc}&destination=${this.state.destinationLoc}&waypoints=${waypoint}&key=${google_map_key}`, { signal: this.myAbort.signal })
             } else {
                 var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${this.state.startLoc}&destination=${this.state.destinationLoc}&key=${google_map_key}`)
             }
@@ -162,7 +163,7 @@ export default class TrackNow extends React.Component {
                     this.setState({ fitCoord: false })
                     setTimeout(() => {
                         this.map.fitToCoordinates([{ latitude: this.state.allData.pickup.lat, longitude: this.state.allData.pickup.lng }, { latitude: this.state.allData.drop.lat, longitude: this.state.allData.drop.lng }], {
-                            edgePadding: { top: getPixelSize(40), right: getPixelSize(40), bottom: getPixelSize(40), left: getPixelSize(40) },
+                            edgePadding: { top: getPixelSize(60), right: getPixelSize(60), bottom: getPixelSize(60), left: getPixelSize(60) },
                             animated: true,
                         })
                     }, 500);
@@ -179,6 +180,25 @@ export default class TrackNow extends React.Component {
     fitCoordinates() {
         this.map.fitToCoordinates([{ latitude: this.state.latitudeDriver, longitude: this.state.longitudeDriver }, { latitude: this.state.allData.drop.lat, longitude: this.state.allData.drop.lng }], {
             edgePadding: { top: getPixelSize(60), right: getPixelSize(60), bottom: getPixelSize(60), left: getPixelSize(60) },
+            animated: true,
+        })
+    }
+
+    fitUser() {
+        let region = {
+            latitude: this.state.latitudeDriver,
+            longitude: this.state.longitudeDriver,
+            latitudeDelta: 0.0043,
+            longitudeDelta: 0.0034
+        }
+        if (this.map) {
+            this.map.animateToRegion(region, 500)
+        }
+    }
+
+    fitWaypoint() {
+        this.map.fitToCoordinates([{ latitude: this.state.latitudeDriver, longitude: this.state.longitudeDriver }, { latitude: this.state.allData.waypoint.lat, longitude: this.state.allData.waypoint.lng }], {
+            edgePadding: { top: getPixelSize(75), right: getPixelSize(75), bottom: getPixelSize(75), left: getPixelSize(75) },
             animated: true,
         })
     }
@@ -293,16 +313,16 @@ export default class TrackNow extends React.Component {
                                 : null}
 
                             {
-                                this.state.allData.have_waypoint ?
+                                this.state.allData.waypoint ?
                                     <Marker
-                                        coordinate={{ latitude: this.state.allData.have_waypoint.lat, longitude: this.state.allData.have_waypoint.lng }}
-                                        centerOffset={{ x: 0.5, y: 0.5 }}
-                                        anchor={{ x: 0.5, y: 0.5 }}
+                                        coordinate={{ latitude: this.state.allData.waypoint.lat, longitude: this.state.allData.waypoint.lng }}
+                                        centerOffset={{ x: 0.1, y: 0.1 }}
+                                        anchor={{ x: 0.1, y: 0.1 }}
                                     >
                                         <LocationWaypoint />
 
                                         <View style={styles.locationBoxDestino}>
-                                            <Text numberOfLines={1} style={styles.locationText}> {this.state.allData.have_waypoint.add} </Text>
+                                            <Text numberOfLines={1} style={styles.locationText}> {this.state.allData.waypoint.add} </Text>
                                         </View>
                                     </Marker>
                                     : null
@@ -314,7 +334,7 @@ export default class TrackNow extends React.Component {
                         <Icon
                             name="ios-sad"
                             type="ionicon"
-                            size={40}
+                            size={30}
                             color={colors.RED}
                             containerStyle={{ opacity: .7 }}
                         />
@@ -322,20 +342,42 @@ export default class TrackNow extends React.Component {
 
                     <TouchableOpacity style={styles.btnFitCoord} onPress={() => this.fitCoordinates()}>
                         <Icon
-                            name="ios-navigate"
-                            type="ionicon"
-                            size={30}
-                            color={colors.DEEPBLUE}
+                            name='git-pull-request'
+                            type='feather'
+                            size={25}
+                            color={colors.DARK}
                         />
                     </TouchableOpacity>
-                </View>
 
-                <View style={{ backgroundColor: colors.DEEPBLUE, height: 30, justifyContent: 'center', alignItems: 'center' }}>
-                    <Text style={{ color: colors.WHITE, fontSize: 17, fontFamily: 'Inter-Bold' }}> A caminho do seu destino </Text>
+                    <TouchableOpacity style={styles.btnFitLocation} onPress={() => this.fitUser()}>
+                        <Icon
+                            name="car"
+                            type="material-community"
+                            size={25}
+                            color={colors.DARK}
+                        />
+                    </TouchableOpacity>
+
+                    {this.state.allData.waypoint ?
+                        <TouchableOpacity style={styles.btnFitWaypoint} onPress={() => this.fitWaypoint()}>
+                            <Icon
+                                name="ios-navigate"
+                                type="ionicon"
+                                size={25}
+                                color={colors.YELLOW.primary}
+                            />
+                        </TouchableOpacity>
+                        : null}
+
+                    <View style={{ position: 'absolute', alignSelf: 'center', top: Platform.OS == 'ios' ? 50 : 35, borderColor: colors.DEEPBLUE, borderWidth: 2, borderRadius: 5, height: 30, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ color: colors.DEEPBLUE, fontSize: 17, paddingHorizontal: 10, fontFamily: 'Inter-ExtraBold' }}> A caminho do seu destino </Text>
+                    </View>
                 </View>
 
                 {/* Modal inferior */}
-                <View style={styles.containerBottom}>
+                <View style={[styles.containerBottom, {
+                    flex: this.state.allData.waypoint ? 4 : 3
+                }]}>
                     <View style={{ flex: 2, flexDirection: 'row' }}>
                         <View style={styles.containerFoto}>
                             <View style={{ borderWidth: 1.5, width: 80, height: 80, justifyContent: 'center', alignItems: 'center', borderColor: colors.GREY1, borderRadius: 100 }}>
@@ -374,32 +416,64 @@ export default class TrackNow extends React.Component {
                                 <Text style={{ fontSize: 18, fontFamily: 'Inter-Medium', fontWeight: "500", textAlign: 'center', marginBottom: 5 }}> {this.state.allData ? this.state.allData.carType : null} </Text>
                             </View>
 
-                            <View style={{ flex: 1 }}>
+                            <View style={{ flex: 1, paddingTop: 10 }}>
                                 <View style={styles.boxPlacaCarro}>
                                     <Text style={styles.placaCarro} > {this.state.allData ? this.state.allData.vehicle_number : null} </Text>
                                 </View>
                                 <View style={styles.containerTxtCarro}>
                                     <Text style={styles.marcaCarro}> {this.state.allData ? this.state.allData.vehicleModelName : null} </Text>
+                                    <Text style={styles.corVeiculo}> • {this.state.allData.corVeh ? this.state.allData.corVeh : null} </Text>
                                 </View>
                             </View>
                         </View>
 
                     </View>
-                    <View style={{ flex: 1.6, marginLeft: 15 }}>
-                        <View style={{ flexDirection: 'row', marginTop: 20 }}>
-                            <CircleLineTriangle style={{}} />
-                            <View style={{ justifyContent: 'space-around' }}>
-                                <Text style={{ fontFamily: 'Inter-Medium', paddingRight: 10 }}> {this.state.allData ?
-                                    this.state.allData.pickup.add.split(",")[0] + ',' + this.state.allData.pickup.add.split(",")[1]
-                                    : null}
-                                </Text>
-                                <Text style={{ fontFamily: 'Inter-Medium', paddingRight: 10 }}> {this.state.allData ?
-                                    this.state.allData.drop.add.split(',')[0] + ',' + this.state.allData.drop.add.split(',')[1]
-                                    : null}
-                                </Text>
+
+                    {this.state.allData.waypoint ?
+                        <View style={{ flex: 2.5, marginLeft: 15 }}>
+                            <View style={{ flexDirection: 'row', marginTop: 20 }}>
+                                <View style={{ flexDirection: 'column', alignItems: 'center' }}>
+
+                                    <LocationUser width={25} height={25} />
+                                    <View style={{ backgroundColor: colors.DEEPBLUE, height: 20, width: 2 }} />
+                                    <LocationWaypoint width={20} height={20} />
+                                    <View style={{ backgroundColor: colors.DARK, height: 20, width: 2 }} />
+                                    <LocationDrop width={25} height={25} />
+
+                                </View>
+                                <View style={{ justifyContent: 'center', width: '100%', flexDirection: 'column' }}>
+                                    <Text style={{ fontFamily: 'Inter-Medium', paddingRight: 10, position: 'absolute', top: 5 }}> {this.state.allData ?
+                                        this.state.allData.pickup.add.split(",")[0] + ',' + this.state.allData.pickup.add.split(",")[1]
+                                        : null}
+                                    </Text>
+                                    <Text style={{ fontFamily: 'Inter-Medium', paddingRight: 10, }}> {this.state.allData ?
+                                        this.state.allData.waypoint.add.split(',')[0]
+                                        : null}
+                                    </Text>
+                                    <Text style={{ fontFamily: 'Inter-Medium', position: 'absolute', bottom: 5, }}> {this.state.allData ?
+                                        this.state.allData.drop.add.split(',')[0] + ',' + this.state.allData.drop.add.split(',')[1]
+                                        : null}
+                                    </Text>
+                                </View>
                             </View>
                         </View>
-                    </View>
+                        :
+                        <View style={{ flex: 1.6, marginLeft: 15 }}>
+                            <View style={{ flexDirection: 'row', marginTop: 20 }}>
+                                <CircleLineTriangle style={{}} />
+                                <View style={{ justifyContent: 'space-around' }}>
+                                    <Text style={{ fontFamily: 'Inter-Medium', paddingRight: 10 }}> {this.state.allData ?
+                                        this.state.allData.pickup.add.split(",")[0] + ',' + this.state.allData.pickup.add.split(",")[1]
+                                        : null}
+                                    </Text>
+                                    <Text style={{ fontFamily: 'Inter-Medium', paddingRight: 10 }}> {this.state.allData ?
+                                        this.state.allData.drop.add.split(',')[0] + ',' + this.state.allData.drop.add.split(',')[1]
+                                        : null}
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
+                    }
 
                 </View>
 
@@ -449,10 +523,44 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 50,
-        bottom: 20,
-        right: 20,
+        bottom: 40,
+        left: 15,
         elevation: 5,
-        marginTop: 40,
+        marginTop: 45,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+    },
+    btnFitLocation: {
+        position: 'absolute',
+        backgroundColor: colors.WHITE,
+        width: 40,
+        height: 40,
+        borderRadius: 50,
+        bottom: 90,
+        left: 15,
+        elevation: 5,
+        marginTop: 45,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { x: 0, y: 5 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+    },
+    btnFitWaypoint: {
+        position: 'absolute',
+        backgroundColor: colors.WHITE,
+        width: 40,
+        height: 40,
+        borderRadius: 50,
+        bottom: 140,
+        left: 15,
+        elevation: 5,
+        marginTop: 45,
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',
@@ -471,13 +579,13 @@ const styles = StyleSheet.create({
     },
     btnPanico: {
         position: 'absolute',
-        backgroundColor: 'transparent',
-        borderWidth: 1,
+        backgroundColor: colors.WHITE,
+        borderWidth: 2,
         borderColor: colors.RED,
-        width: 45,
-        height: 45,
+        width: 40,
+        height: 40,
         borderRadius: 50,
-        bottom: 70,
+        bottom: 10,
         right: 17,
         elevation: 5,
         marginTop: 40,
@@ -497,7 +605,6 @@ const styles = StyleSheet.create({
         shadowRadius: 10,
         elevation: 5,
         backgroundColor: colors.WHITE,
-        flex: 4,
     },
     containerFoto: {
         alignItems: 'center',
@@ -560,12 +667,19 @@ const styles = StyleSheet.create({
     },
     containerTxtCarro: {
         marginTop: 7,
-        width: 150,
+        alignItems: 'center',
+        flexDirection: 'row'
+        //width: 150,
     },
     marcaCarro: {
         fontFamily: 'Inter-Regular',
-        color: colors.BLACK,
-        fontSize: 18,
-
+        color: colors.DARK,
+        fontSize: width < 375 ? 16 : 18,
+        //position: 'absolute',
+        //right: 0
     },
+    corVeiculo: {
+        fontFamily: 'Inter-ExtraBold',
+        fontSize: 11
+    }
 });

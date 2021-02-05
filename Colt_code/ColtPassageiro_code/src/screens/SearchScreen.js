@@ -10,8 +10,8 @@ import * as firebase from 'firebase'
 
 import LocationUser from '../../assets/svg/LocationUser';
 import LocationDrop from '../../assets/svg/LocationDrop';
-
 import IconWayPoint from '../../assets/svg/IconWayPoint';
+
 import SelectLocationPickup from '../../assets/svg/SelectLocationPickup';
 import SelectLocationDrop from '../../assets/svg/SelectLocationDrop';
 import SelectLocationWaypoint from '../../assets/svg/SelectLocationWaypoint';
@@ -674,7 +674,7 @@ export default class SearchScreen extends Component {
                         />
 
                         
-                        {/*<TouchableOpacity onPress={() => this.setState({ showBtnConfirmar: true, showBtnWaypoint: !this.state.showBtnWaypoint })} style={{ position: 'absolute', right: 20, top: Platform.OS == "ios" ? 152 : 130, }}>
+                        <TouchableOpacity onPress={() => this.setState({ showBtnConfirmar: true, showBtnWaypoint: !this.state.showBtnWaypoint })} style={{ position: 'absolute', right: 20, top: Platform.OS == "ios" ? 152 : 130, }}>
                             <Icon
                                 name={this.state.showBtnWaypoint ? 'ios-close' : 'ios-add'}
                                 type='ionicon'
@@ -682,7 +682,7 @@ export default class SearchScreen extends Component {
                                 size={40}
                                 containerStyle={{ left: 8 }}
                             />
-                        </TouchableOpacity>*/}
+                        </TouchableOpacity>
                         
 
 

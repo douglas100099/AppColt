@@ -52,7 +52,7 @@
     "react-native-svg": "12.1.0",
     "react-native-uuid-generator": "^6.1.1",
     "react-native-vector-icons": "^7.1.0",
-    "react-native-webview": "^11.0.2",
+    "react-native-webview": "10.7.0",
     "react-navigation": "^4.3.7",
     "react-navigation-drawer": "^2.4.11",
     "react-navigation-stack": "^2.3.11"

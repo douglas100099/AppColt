@@ -28,11 +28,14 @@ import { google_map_key } from '../common/key';
 import mapStyleJson from '../../mapStyle.json';
 import mapStyleAndroid from '../../mapStyleAndroid.json';
 import { NavigationActions, StackActions } from 'react-navigation';
-import LocationDrop from '../../assets/svg/LocationDrop';
 import CircleLineTriangle from '../../assets/svg/CircleLineTriangle';
 import AvatarUser from '../../assets/svg/AvatarUser';
 import { color } from 'react-native-reanimated';
 import { ActivityIndicator } from 'react-native';
+
+import LocationDrop from '../../assets/svg/LocationDrop';
+import LocationUser from '../../assets/svg/LocationUser';
+import LocationWaypoint from '../../assets/svg/LocationWaypoint';
 
 export default class RideDetails extends React.Component {
     _isMounted = false;
@@ -78,14 +81,7 @@ export default class RideDetails extends React.Component {
                 },
                 paramData: this.getRideDetails,
             }, () => {
-                setTimeout(() => {
-                    if (this._isMounted) {
-                        this.map.fitToCoordinates([{ latitude: this.state.paramData.pickup.lat, longitude: this.state.paramData.pickup.lng }, { latitude: this.state.paramData.drop.lat, longitude: this.state.paramData.drop.lng }], {
-                            edgePadding: { top: getPixelSize(30), right: getPixelSize(30), bottom: getPixelSize(30), left: getPixelSize(30) },
-                            animated: true,
-                        })
-                    }
-                }, 500);
+
                 /*if (this._isMounted) {
 
                     this.getDirections('"' + this.state.paramData.pickup.lat + ',' + this.state.paramData.pickup.lng + '"', '"' + this.state.paramData.drop.lat + ',' + this.state.paramData.drop.lng + '"');
@@ -117,7 +113,7 @@ export default class RideDetails extends React.Component {
                 setTimeout(() => {
                     if (this._isMounted) {
                         this.map.fitToCoordinates([{ latitude: this.state.paramData.pickup.lat, longitude: this.state.paramData.pickup.lng }, { latitude: this.state.paramData.drop.lat, longitude: this.state.paramData.drop.lng }], {
-                            edgePadding: { top: getPixelSize(30), right: getPixelSize(30), bottom: getPixelSize(30), left: getPixelSize(30) },
+                            edgePadding: { top: getPixelSize(100), right: getPixelSize(100), bottom: getPixelSize(100), left: getPixelSize(100) },
                             animated: true,
                         })
                     }
@@ -296,6 +292,20 @@ export default class RideDetails extends React.Component {
                                             />
                                         </Marker>
                                         : null}
+                                    {this.state.paramData && this.state.paramData.waypoint ?
+                                        <Marker
+                                            coordinate={{ latitude: (this.state.paramData.waypoint.lat), longitude: (this.state.paramData.waypoint.lng) }}
+                                            title={this.state.paramData.waypoint.add.split(',')[0]}
+                                            anchor={{ x: 0.5, y: 0.5 }}
+                                            description={this.state.paramData.waypoint.add}
+                                            pinColor={colors.GREEN.default}
+                                        >
+                                            <LocationWaypoint
+                                                width={20}
+                                                height={20}
+                                            />
+                                        </Marker>
+                                        : null}
                                     {this.state.coords ?
                                         <MapView.Polyline
                                             coordinates={this.state.coords}
@@ -312,18 +322,58 @@ export default class RideDetails extends React.Component {
 
                         <View style={styles.cardLocation}>
                             <View style={{ flexDirection: 'row', padding: 10, }}>
-                                <CircleLineTriangle />
+                                {this.state.paramData ?
+                                    this.state.paramData.waypoint ?
+                                        <View>
+                                            <View style={{ flexDirection: 'row' }}>
+                                                <View style={{ flexDirection: 'column', alignItems: 'center' }}>
 
-                                <View style={{ flexDirection: 'column', justifyContent: 'space-around' }}>
-                                    {this.state.paramData && this.state.paramData.pickup ?
-                                        <Text style={{ fontFamily: 'Inter-Medium', marginRight: 20 }}> {this.state.paramData.pickup.add.split(',')[0] + ', ' + this.state.paramData.pickup.add.split(',')[1]} </Text>
-                                        : null}
-                                    {this.state.paramData && this.state.paramData.drop ?
-                                        <Text style={{ fontFamily: 'Inter-Medium', marginRight: 20 }}> {this.state.paramData.drop.add.split(',')[0] + ', ' + this.state.paramData.drop.add.split(',')[1]} </Text>
-                                        : null}
-                                </View>
+                                                    <LocationUser width={25} height={25} />
+                                                    <View style={{ backgroundColor: colors.DEEPBLUE, height: 20, width: 2 }} />
+                                                    <LocationWaypoint width={20} height={20} />
+                                                    <View style={{ backgroundColor: colors.DARK, height: 20, width: 2 }} />
+                                                    <LocationDrop width={25} height={25} />
+
+                                                </View>
+                                                <View style={{ marginLeft: 5, justifyContent: 'center', width: '100%', flexDirection: 'column' }}>
+                                                    {this.state.paramData && this.state.paramData.pickup ?
+                                                        <Text style={{ position: 'absolute', top: 5, fontFamily: 'Inter-Medium', marginRight: 20 }}> {this.state.paramData.pickup.add.split(',')[0] + ', ' + this.state.paramData.pickup.add.split(',')[1]} </Text>
+                                                        : null}
+                                                    {this.state.paramData && this.state.paramData.waypoint ?
+                                                        <Text style={{ fontFamily: 'Inter-Medium', marginRight: 20 }}> {this.state.paramData.waypoint.add.split(',')[0]} </Text>
+                                                        : null}
+                                                    {this.state.paramData && this.state.paramData.drop ?
+                                                        <Text style={{ position: 'absolute', bottom: 5, fontFamily: 'Inter-Medium', marginRight: 20 }}> {this.state.paramData.drop.add.split(',')[0] + ', ' + this.state.paramData.drop.add.split(',')[1]} </Text>
+                                                        : null}
+                                                </View>
+                                            </View>
+                                        </View>
+                                        :
+                                        <View style={{ flexDirection: 'row', padding: 10, }}>
+                                            <CircleLineTriangle />
+                                            <View style={{ flexDirection: 'column', justifyContent: 'space-around' }}>
+                                                {this.state.paramData && this.state.paramData.pickup ?
+                                                    <Text style={{ fontFamily: 'Inter-Medium', marginRight: 20 }}> {this.state.paramData.pickup.add.split(',')[0] + ', ' + this.state.paramData.pickup.add.split(',')[1]} </Text>
+                                                    : null}
+                                                {this.state.paramData && this.state.paramData.drop ?
+                                                    <Text style={{ fontFamily: 'Inter-Medium', marginRight: 20 }}> {this.state.paramData.drop.add.split(',')[0] + ', ' + this.state.paramData.drop.add.split(',')[1]} </Text>
+                                                    : null}
+                                            </View>
+                                        </View>
+                                    : null
+                                }
                             </View>
                         </View>
+                        {this.state.paramData ?
+                            this.state.paramData.commentRider ?
+                                    <View style={{ paddingLeft: 20, paddingVertical: 10 }}>
+                                        <Text style={{ fontFamily: 'Inter-ExtraBold', fontSize: 16 }}> Seu comentário </Text>
+                                        <Text style={{ fontFamily: 'Inter-Medium', paddingTop: 5, paddingHorizontal: 20 }}>
+                                            - "{this.state.paramData.commentRider}"
+                                        </Text>
+                                    </View>
+                                    : null
+                            : null}
                         {this.state.paramData ?
                             this.state.paramData.pagamento.cancellValue > 0 ?
                                 <View style={{ marginHorizontal: 25, marginVertical: 15, flexDirection: 'row', alignItems: 'center' }}>

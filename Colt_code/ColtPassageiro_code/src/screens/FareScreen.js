@@ -289,13 +289,12 @@ export default class FareScreen extends React.Component {
 
         var pickUp = { lat: this.state.region.wherelatitude, lng: this.state.region.wherelongitude, add: this.state.region.whereText };
         var drop = { lat: this.state.region.droplatitude, lng: this.state.region.droplongitude, add: this.state.region.droptext };
+        var secureOtp = false;
 
         if (this.state.settings.otp_secure)
-            var otp = Math.floor(Math.random() * 90000) + 10000;
-        else {
-            var otp = false;
-        }
-        let today = new Date().toString();
+            secureOtp = Math.floor(Math.random() * 90000) + 10000
+
+        let today = new Date().toString()
 
         var pagamentoObj = {
             estimate: this.state.estimateFare,
@@ -334,7 +333,7 @@ export default class FareScreen extends React.Component {
             trip_end_time: "00:00",
             trip_start_time: "00:00",
             tripdate: today,
-            otp: otp,
+            otp: secureOtp,
 
             waypoint: this.state.waypoint ? {
                 add: this.state.region.waypointText,
@@ -363,7 +362,7 @@ export default class FareScreen extends React.Component {
             trip_start_time: "00:00",
             tripdate: today,
             coords: this.state.coords,
-            otp: otp,
+            otp: secureOtp,
             pagamento: pagamentoObj,
             waypoint: this.state.waypoint ? {
                 add: this.state.region.waypointText,

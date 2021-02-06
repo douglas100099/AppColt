@@ -313,7 +313,7 @@ export default class BookedCabScreen extends React.Component {
                         }
                     }
                 }).then(() => {
-                    this.selectBookingDriver()
+                    this.confirmBookingDriver()
                 })
             }
         }
@@ -322,7 +322,7 @@ export default class BookedCabScreen extends React.Component {
         }
     }
 
-    selectBookingDriver() {
+    confirmBookingDriver() {
         try {
             let bookingData = {
                 bokkingId: this.state.currentBookingId,

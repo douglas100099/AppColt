@@ -147,7 +147,44 @@ export default class BookedCabScreen extends React.Component {
 
             if (currUserBooking) {
                 //Checando o status da corrida 
-                if (currUserBooking.status == "ACCEPTED") {
+
+                switch (currUserBooking.status) {
+                    case "TIMEOUT": {
+                        this.driverFound = false
+                        this.onCancellSearchBooking()
+                    }
+                    case "REJECTED": {
+                        this.setState({ driverSearch: true, showBtnCancel: true })
+                        this.driverFound = false
+                        this.driverObj.driverUid = 0
+                        this.selectNearbyDriver()
+                    }
+                    case "CANCELLED": {
+                        this.driverFound = false
+                        this.props.navigation.replace('FareDetails', { data: this.state.region })
+                    }
+                    case "ACCEPTED": {
+                        this.driverFound = false
+                        this.setState({
+                            data_accept: currUserBooking.data_accept ? currUserBooking.data_accept : null,
+                            bookingStatus: currUserBooking.status,
+                            driverSearch: false,
+                        })
+                    }
+                    case "EMBARQUE": {
+                        this.setState({
+                            embarque: true,
+                            bookingStatus: currUserBooking.status
+                        })
+                    }
+                    case "START": {
+                        this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
+                    }
+                    default:
+                        break;
+                }
+
+                /*if (currUserBooking.status == "ACCEPTED") {
                     this.driverFound = false
                     this.setState({
                         data_accept: currUserBooking.data_accept ? currUserBooking.data_accept : null,
@@ -177,7 +214,7 @@ export default class BookedCabScreen extends React.Component {
                     this.driverFound = false
                     this.driverObj.driverUid = 0
                     this.selectNearbyDriver()
-                }
+                }*/
             }
         })
     }
@@ -361,7 +398,7 @@ export default class BookedCabScreen extends React.Component {
                 if (dataBooking.status == "REJECTED") {
                     dataBooking.status = "NEW"
                 }
-                if(dataBooking){
+                if (dataBooking) {
                     result(dataBooking)
                 } else {
                     reject(console.log("ERRO AO CARREGAR CORRIDA"))

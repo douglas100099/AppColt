@@ -40,6 +40,9 @@ import { TextInputMask } from 'react-native-masked-text'
 import { ScrollView } from 'react-native-gesture-handler';
 import { TouchableWithoutFeedback } from 'react-native';
 
+const COLT_ECONOMICO = "Colt econômico"
+const COLT_CONFORT = "Colt confort"
+
 export default class FareScreen extends React.Component {
     myAbort = new AbortController()
     constructor(props) {
@@ -286,7 +289,6 @@ export default class FareScreen extends React.Component {
 
         var pickUp = { lat: this.state.region.wherelatitude, lng: this.state.region.wherelongitude, add: this.state.region.whereText };
         var drop = { lat: this.state.region.droplatitude, lng: this.state.region.droplongitude, add: this.state.region.droptext };
-        var cashPayment = this.state.selected == 0 ? (this.state.estimatePrice1 - this.state.usedWalletMoney).toFixed(2) : (this.state.estimatePrice2 - this.state.usedWalletMoney).toFixed(2);
 
         if (this.state.settings.otp_secure)
             var otp = Math.floor(Math.random() * 90000) + 10000;
@@ -299,7 +301,7 @@ export default class FareScreen extends React.Component {
             estimate: this.state.estimateFare,
             trip_cost: 0,
             payment_mode: this.state.metodoPagamento,
-            cashPaymentAmount: cashPayment,
+            cashPaymentAmount: this.state.selected == 0 ? (this.state.estimatePrice1 - this.state.usedWalletMoney).toFixed(2) : (this.state.estimatePrice2 - this.state.usedWalletMoney).toFixed(2),
             usedWalletMoney: this.state.usedWalletMoney,
             discount_amount: this.state.payDetails ? this.state.payDetails.promo_details.promo_discount_value : 0,
             discount_type: this.state.payDetails ? this.state.payDetails.promo_details.discount_type : "",
@@ -383,7 +385,7 @@ export default class FareScreen extends React.Component {
                     this.setState({ buttonDisabled: false }, () => {
                         this.props.navigation.replace('BookedCab', { passData: bookingItens, riderName: data.customer_name });
                     })
-                }, 500)
+                }, 300)
             }).catch((res) => {
                 return res
             })
@@ -412,7 +414,7 @@ export default class FareScreen extends React.Component {
             userData.once('value', userData => {
                 if (userData.val()) {
                     let allUsers = userData.val();
-                    //this.prepareDrivers(allUsers);
+                    this.prepareDrivers(allUsers);
                 }
             })
         }
@@ -434,7 +436,7 @@ export default class FareScreen extends React.Component {
                         let carType = driver.carType;
                         driver.arriveTime = await this.getDriverTime(startLoc, destLoc);
 
-                        if (carType == "Colt econômico") {
+                        if (carType === COLT_ECONOMICO) {
                             if (this.state.minTimeEconomico == null) {
                                 this.setState({
                                     minTimeEconomico: driver.arriveTime.time_in_secs
@@ -444,7 +446,7 @@ export default class FareScreen extends React.Component {
                                     minTimeEconomico: driver.arriveTime.time_in_secs
                                 })
                             }
-                        } else {
+                        } else if (carType === COLT_CONFORT) {
                             if (this.state.minTimeConfort == null) {
                                 this.setState({
                                     minTimeConfort: driver.arriveTime.time_in_secs

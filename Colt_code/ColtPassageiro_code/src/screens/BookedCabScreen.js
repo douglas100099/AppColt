@@ -13,7 +13,7 @@ import {
     ActivityIndicator,
     Platform,
 } from 'react-native';
-import { Icon, Button } from 'react-native-elements';
+import { Icon } from 'react-native-elements';
 import RadioForm from 'react-native-simple-radio-button';
 import { colors } from '../common/theme';
 import * as firebase from 'firebase';
@@ -78,20 +78,11 @@ export default class BookedCabScreen extends React.Component {
         this.driverFound = false
     }
 
-    /*UNSAFE_componentWillMount() {
-        let param = this.props.navigation.getParam('byMapScreen')
-        if (!param) {
-            this.setState({ driverSearch: true })
-            this.searchDriver()
-        }
-    }*/
-
     componentDidMount() {
         this._isMounted = true;
         this.state.bookingDataState == null ? this.getParamData = this.props.navigation.getParam('passData') : this.getParamData = this.state.bookingDataState
         let param = this.props.navigation.getParam('byMapScreen') ? this.props.navigation.getParam('byMapScreen') : null
         if (param == null) {
-            //this.searchDriver()
             this.setState({ driverSearch: true, showBtnCancel: true })
         }
 
@@ -109,7 +100,7 @@ export default class BookedCabScreen extends React.Component {
                     droptext: currUserBooking.drop.add
                 }
                 this.setState({
-                    waypoint: currUserBooking.have_waypoint != null ? true : false,
+                    waypoint: currUserBooking.waypoint != null ? true : false,
                     firstNameRider: currUserBooking.firstNameRider,
                     driver_firstName: currUserBooking.driver_firstName,
                     corVeiculo: currUserBooking.corVeh,
@@ -152,7 +143,6 @@ export default class BookedCabScreen extends React.Component {
     listenerStatus() {
         const bookingResponse = firebase.database().ref(`users/` + this.state.currentUser + '/my-booking/' + this.state.currentBookingId);
         bookingResponse.on('value', currUserBookings => {
-
             let currUserBooking = currUserBookings.val()
 
             if (currUserBooking) {
@@ -359,9 +349,7 @@ export default class BookedCabScreen extends React.Component {
                 .catch((err) => {
                     console.log(err)
                 })
-        } else {
-            this.selectNearbyDriver()
-        }
+        } 
     }
 
     async getLocDrop(param) {
@@ -806,9 +794,7 @@ export default class BookedCabScreen extends React.Component {
                                 <BackgroundTask
                                     style={{}}
                                     interval={500}
-                                    function={async () => {
-                                        //console.log("My task " + Math.random())
-                                        //console.log("CHAMOU SEARCH")
+                                    function={() => {
                                         this.selectNearbyDriver()
                                         this.listenerStatus()
                                     }}

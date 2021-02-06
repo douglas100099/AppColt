@@ -11,7 +11,7 @@
     "notification": {
       "icon": "./assets/images/push_notification.png"
     },
-    "version": "1.1.1",
+    "version": "1.3.5",
     "orientation": "portrait",
     "icon": "./assets/images/appIcon.png",
     "splash": {
@@ -52,7 +52,7 @@
         }
       },
       "googleServicesFile": "./GoogleService-Info.plist",
-      "buildNumber": "1.1.1"
+      "buildNumber": "1.3.5"
     },
     "android": {
       "adaptiveIcon": {
@@ -60,7 +60,7 @@
         "backgroundColor": "#1152FD"
       },
       "package": "com.myth.appcolt",
-      "versionCode": 12,
+      "versionCode": 13,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
@@ -81,16 +81,16 @@
     },
     "extra": {
       "firebaseConfig": {
-        "apiKey": "AIzaSyA_ulfyKW-NDZzvix7jaCSgL-uqElZkq0k",
-        "authDomain": "app-colt.firebaseapp.com",
-        "databaseURL": "https://app-colt.firebaseio.com",
-        "projectId": "app-colt",
-        "storageBucket": "app-colt.appspot.com",
-        "messagingSenderId": "414404391933",
-        "appId": "1:414404391933:web:4fe2919a63807454fddf94"
+        "apiKey": "AIzaSyDNQ8XAoYqyYII9QoaSrhsH3a5h5k1K7sc",
+        "authDomain": "colt-desenvolvimento.firebaseapp.com",
+        "databaseURL": "https://colt-desenvolvimento-default-rtdb.firebaseio.com",
+        "projectId": "colt-desenvolvimento",
+        "storageBucket": "colt-desenvolvimento.appspot.com",
+        "messagingSenderId": "387918831955",
+        "appId": "1:387918831955:web:ab5e9a39a04c122cd681a6"
       },
       "googlemapkey": "AIzaSyDALefKQ3xFjRRvw56_mRdPClMap41XAbM",
-      "cloud_function_server_url": "https://us-central1-app-colt.cloudfunctions.net",
+      "cloud_function_server_url": "https://us-central1-colt-desenvolvimento.cloudfunctions.net",
       "iosStandaloneAppClientId": "414404391933-kvp9cfasn2kuklmgrdtiuqqqdnekprga.apps.googleusercontent.com",
       "androidStandaloneAppClientId": "414404391933-lp0qlvv14kdqrbt8e2vp6multat4155o.apps.googleusercontent.com"
     }

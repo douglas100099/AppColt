@@ -674,13 +674,12 @@ export default class SearchScreen extends Component {
                         />
 
                         
-                        <TouchableOpacity onPress={() => this.setState({ showBtnConfirmar: true, showBtnWaypoint: !this.state.showBtnWaypoint })} style={{ position: 'absolute', right: 20, top: Platform.OS == "ios" ? 152 : 130, }}>
+                        <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', position: 'absolute', right: 10, top: Platform.OS == "ios" ? 152 : 130, }} onPress={() => this.setState({ showBtnConfirmar: true, showBtnWaypoint: !this.state.showBtnWaypoint })} >
                             <Icon
                                 name={this.state.showBtnWaypoint ? 'ios-close' : 'ios-add'}
                                 type='ionicon'
                                 color={this.state.showBtnWaypoint ? colors.RED : colors.DEEPBLUE}
-                                size={40}
-                                containerStyle={{ left: 8 }}
+                                size={45}
                             />
                         </TouchableOpacity>
                         

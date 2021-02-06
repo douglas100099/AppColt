@@ -169,69 +169,81 @@ export default class BookedCabScreen extends React.Component {
         }
     }
 
+    checkRejected(bookingId, driverId) {
+        return new Promise(function (result, reject) {
+            firebase.database().ref('bookings/' + bookingId + '/rejectedDrivers').once('value', drivers => {
+                if (drivers.val()) {
+                    let rejectedDrivers = []
+                    rejectedDrivers = drivers.val();
+
+                    const check = Object.keys(rejectedDrivers).filter(i => rejectedDrivers[i] === driverId).map(i => {
+                        rejectedDrivers[i] === driverId
+                        return rejectedDrivers[i]
+                    })
+
+                    if (check.length == 0) {
+                        result(false)
+                    } else {
+                        result(true)
+                    }
+
+                } else {
+                    result(false)
+                }
+            })
+        })
+    }
+
     async searchDriver() {
         if (this._isMounted) {
             const userData = firebase.database().ref('users/').orderByChild("usertype").equalTo('driver');
             let distanciaValue = 10;
             let distTotal = 50;
 
-            userData.once('value', driverData => {
+            userData.once('value', async driverData => {
                 var allUsers = driverData.val();
                 for (let key in allUsers) {
                     if (allUsers[key].driverActiveStatus == true && allUsers[key].carType == this.state.carType && !allUsers[key].waiting_queue_riders && !allUsers[key].waiting_riders_list) {
-                        //Verifica se o motorista rejeitou a corrida
-                        firebase.database().ref('bookings/' + this.state.currentBookingId + '/rejectedDrivers').once('value', drivers => {
-                            if (drivers.val()) {
-                                let rejectedDrivers = []
-                                rejectedDrivers = drivers.val();
-                                for (let i = 0; i < rejectedDrivers.length; i++) {
-                                    if (rejectedDrivers[i] == key) {
-                                        this.currentRejected = true
+
+                        let result = await this.checkRejected(this.state.currentBookingId, key)
+                        if (result == false) {
+                            if (this.searchDriverQueue ? allUsers[key].queue == true : allUsers[key].queue == false) {
+                                if (this.searchDriverQueue ? allUsers[key].queueAvailable == true : true) {
+                                    var location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];    //Rider Lat and Lang
+                                    var location2 = null
+                                    var locationDriver = null
+
+                                    if (this.searchDriverQueue) {
+                                        firebase.database().ref('bookings/' + allUsers[key].emCorrida + '/').once('value', snapshot => {
+                                            let dataBooking = snapshot.val()
+                                            location2 = [dataBooking.drop.lat, dataBooking.drop.lng]
+                                            locationDriver = [dataBooking.current.lat, dataBooking.current.lng]
+                                        }).then(() => {
+                                            var distanceDrop = distanceCalc(location1, location2)
+                                            var distanceTotal = distanceDrop + distanceCalc(location2, locationDriver)
+
+                                            if (distanceDrop <= 4 && distanceTotal < distTotal) {
+                                                distTotal = distanceTotal
+                                                this.driverUidSelected = key
+                                            }
+                                        })
                                     }
-                                }
-                            } else {
-                                this.currentRejected = false
-                            }
-                        }).then(() => {
-                            if (this.currentRejected == false) {
-                                if (this.searchDriverQueue ? allUsers[key].queue == true : allUsers[key].queue == false) {
-                                    if (this.searchDriverQueue ? allUsers[key].queueAvailable == true : true) {
-                                        var location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];    //Rider Lat and Lang
-                                        var location2 = null
-                                        var locationDriver = null
-
-                                        if (this.searchDriverQueue) {
-                                            firebase.database().ref('bookings/' + allUsers[key].emCorrida + '/').once('value', snapshot => {
-                                                let dataBooking = snapshot.val()
-                                                location2 = [dataBooking.drop.lat, dataBooking.drop.lng]
-                                                locationDriver = [dataBooking.current.lat, dataBooking.current.lng]
-                                            }).then(() => {
-                                                var distanceDrop = distanceCalc(location1, location2)
-                                                var distanceTotal = distanceDrop + distanceCalc(location2, locationDriver)
-
-                                                if (distanceDrop <= 4 && distanceTotal < distTotal) {
-                                                    distTotal = distanceTotal
-                                                    this.driverUidSelected = key
-                                                }
-                                            })
-                                        }
-                                        else {
-                                            location2 = [allUsers[key].location.lat, allUsers[key].location.lng];   //Driver lat and lang
-                                            //Calcula a distancia entre dois pontos
-                                            var distance = distanceCalc(location1, location2);
-                                            var originalDistance = distance
-                                            if (originalDistance <= 4) { //4KM
-                                                //Salva sempre o mais proximo
-                                                if (distance < distanciaValue) {
-                                                    distanciaValue = distance
-                                                    this.driverUidSelected = key
-                                                }
+                                    else {
+                                        location2 = [allUsers[key].location.lat, allUsers[key].location.lng];   //Driver lat and lang
+                                        //Calcula a distancia entre dois pontos
+                                        var distance = distanceCalc(location1, location2);
+                                        var originalDistance = distance
+                                        if (originalDistance <= 4) { //4KM
+                                            //Salva sempre o mais proximo
+                                            if (distance < distanciaValue) {
+                                                distanciaValue = distance
+                                                this.driverUidSelected = key
                                             }
                                         }
                                     }
                                 }
                             }
-                        })
+                        }
                     }
                 }
             }).then(() => {

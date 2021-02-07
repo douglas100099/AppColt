@@ -269,7 +269,7 @@ export default class TrackNow extends React.Component {
                         loadingEnabled
                         customMapStyle={mapStyleAndroid}
                         showsCompass={false}
-                        onRegionChange={() => { this.setState({ showsMyLocationBtn: true }), this._onMapChange() }}
+                        onRegionChange={() => { this.setState({ showsMyLocationBtn: true })/*, this._onMapChange()*/ }}
                         showsScale={false}
                         rotateEnabled={false}
                         showsMyLocationButton={false}

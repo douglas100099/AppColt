@@ -531,7 +531,7 @@ export default class MapScreen extends React.Component {
                             showsMyLocationButton={false}
                             style={styles.map}
                             initialRegion={this.state.region}
-                            onRegionChange={() => { this.setState({ showsMyLocationBtn: true }), this._onMapChange() }}
+                            onRegionChange={() => { this.setState({ showsMyLocationBtn: true })/*, this._onMapChange()*/ }}
                             enablePoweredByContainer={false}
                             showsCompass={false}
                             showsScale={false}

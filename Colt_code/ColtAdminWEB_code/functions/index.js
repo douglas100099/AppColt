@@ -668,8 +668,9 @@ exports.verifyDriversPayment_21 = functions.region('southamerica-east1').pubsub.
     })
 })
 
-exports.manageMoney = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/manageMoney').onCreate((snap, context) => {
-    const bookingId = context.params.bookingsId;
+const manageMoney = async (bookingIdParam) => {
+
+    const bookingId = bookingIdParam
     admin.database().ref('bookings/' + bookingId).on("value", (data) => {
         let dataBooking = data.val();
         let paymentMode = dataBooking.pagamento.payment_mode
@@ -796,7 +797,8 @@ exports.manageMoney = functions.region('southamerica-east1').database.ref('booki
             }
         }
     })
-})
+}
+
 
 exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/finalCalcBooking').onCreate((snap, context) => {
     const bookingId = context.params.bookingsId
@@ -842,6 +844,13 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                                     date: new Date().toString(),
                                                     booking_ref: bookingId,
                                                 })
+
+                                                manageMoney(bookingId).then(() => {
+                                                    return true
+                                                })
+                                                    .catch(error => {
+                                                        throw new Error("Erro atualizar carteira Passageiro")
+                                                    })
                                                 return true
                                             }).catch(error => {
                                                 throw new Error("Erro atualizar carteira Passageiro")
@@ -894,6 +903,12 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                                     date: new Date().toString(),
                                                     booking_ref: bookingId,
                                                 })
+                                                manageMoney(bookingId).then(() => {
+                                                    return true
+                                                })
+                                                    .catch(error => {
+                                                        throw new Error("Erro atualizar carteira Passageiro")
+                                                    })
                                                 return true
                                             }).catch(error => {
                                                 throw new Error("Erro atualizar carteira Passageiro")
@@ -923,6 +938,12 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                     admin.database().ref('users/' + dataBooking.driver + '/my_bookings/' + bookingId + '/pagamento').update({
                                         payment_status: 'PAID'
                                     })
+                                    manageMoney(bookingId).then(() => {
+                                        return true
+                                    })
+                                        .catch(error => {
+                                            throw new Error("Erro atualizar carteira Passageiro")
+                                        })
                                     return true
                                 })
                                 .catch(error => {

@@ -176,7 +176,7 @@ export default class DriverTripComplete extends React.Component {
                                         :
                                         <View>
                                             <Text style={{ fontFamily: 'Inter-Bold' }}>{this.state.getDetails.pickup.add.split(',')[0] + ', ' + this.state.getDetails.pickup.add.split(',')[1]}</Text>
-                                            <Text style={{ fontFamily: 'Inter-Bold' }}>{this.state.getDetails.drop.add.split(',')[0] + ', ' + this.state.getDetails.dropdrop.add.split(',')[1]}</Text>
+                                            <Text style={{ fontFamily: 'Inter-Bold' }}>{this.state.getDetails.drop.add.split(',')[0] + ', ' + this.state.getDetails.drop.add.split(',')[1]}</Text>
                                         </View>
                                     :
                                     null

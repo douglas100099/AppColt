@@ -141,6 +141,7 @@ export default class BookedCabScreen extends React.Component {
     }
 
     listenerStatus() {
+        console.log("ENTROU NO LISTENER DO STATUS")
         const bookingResponse = firebase.database().ref(`users/` + this.state.currentUser + '/my-booking/' + this.state.currentBookingId);
         bookingResponse.on('value', currUserBookings => {
             let currUserBooking = currUserBookings.val()
@@ -148,43 +149,7 @@ export default class BookedCabScreen extends React.Component {
             if (currUserBooking) {
                 //Checando o status da corrida 
 
-                switch (currUserBooking.status) {
-                    case "TIMEOUT": {
-                        this.driverFound = false
-                        this.onCancellSearchBooking()
-                    }
-                    case "REJECTED": {
-                        this.setState({ driverSearch: true, showBtnCancel: true })
-                        this.driverFound = false
-                        this.driverObj.driverUid = 0
-                        this.selectNearbyDriver()
-                    }
-                    case "CANCELLED": {
-                        this.driverFound = false
-                        this.props.navigation.replace('FareDetails', { data: this.state.region })
-                    }
-                    case "ACCEPTED": {
-                        this.driverFound = false
-                        this.setState({
-                            data_accept: currUserBooking.data_accept ? currUserBooking.data_accept : null,
-                            bookingStatus: currUserBooking.status,
-                            driverSearch: false,
-                        })
-                    }
-                    case "EMBARQUE": {
-                        this.setState({
-                            embarque: true,
-                            bookingStatus: currUserBooking.status
-                        })
-                    }
-                    case "START": {
-                        this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
-                    }
-                    default:
-                        break;
-                }
-
-                /*if (currUserBooking.status == "ACCEPTED") {
+                if (currUserBooking.status == "ACCEPTED") {
                     this.driverFound = false
                     this.setState({
                         data_accept: currUserBooking.data_accept ? currUserBooking.data_accept : null,
@@ -214,7 +179,7 @@ export default class BookedCabScreen extends React.Component {
                     this.driverFound = false
                     this.driverObj.driverUid = 0
                     this.selectNearbyDriver()
-                }*/
+                }
             }
         })
     }
@@ -261,6 +226,7 @@ export default class BookedCabScreen extends React.Component {
     }
 
     async selectNearbyDriver() {
+        console.log("PROCURANDO MOTORISTA")
         try {
             if (this._isMounted) {
                 const userData = firebase.database().ref('users/').orderByChild("usertype").equalTo('driver');
@@ -821,6 +787,7 @@ export default class BookedCabScreen extends React.Component {
                                 <BackgroundTask
                                     interval={300}
                                     function={() => {
+                                        console.log("CHAMOU AS FUNÇOES DO BACKGROUND")
                                         this.selectNearbyDriver()
                                         this.listenerStatus()
                                     }}

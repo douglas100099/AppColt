@@ -2,22 +2,15 @@ const functions = require('firebase-functions');
 const fetch = require("node-fetch");
 const admin = require('firebase-admin');
 
-const paypalcheckout = require('./providers/paypal/checkout');
 const stripecheckout = require('./providers/stripe/checkout');
-const braintreecheckout = require('./providers/braintree/checkout');
 const { user } = require('firebase-functions/lib/providers/auth');
 
 global.Headers = fetch.Headers;
 
 admin.initializeApp();
 
-//exports.paypal_link = functions.https.onRequest(paypalcheckout.render_checkout);
-
 exports.stripe_link = functions.https.onRequest(stripecheckout.render_checkout);
 exports.process_stripe_payment = functions.https.onRequest(stripecheckout.process_checkout);
-
-//exports.braintree_link = functions.https.onRequest(braintreecheckout.render_checkout);
-//exports.process_braintree_payment = functions.https.onRequest(braintreecheckout.process_checkout);
 
 exports.success = functions.https.onRequest((request, response) => {
     var amount_line = request.query.amount ? `<h3>Seu pagamento de R$<strong>${request.query.amount}</strong>,00 foi concluído com sucesso</h3>` : '';
@@ -253,8 +246,140 @@ const checkPaymentAsaas = async (custumer) => {
         })
 }
 
+const manageMoney = async (bookingIdParam) => {
+
+    const bookingId = bookingIdParam
+    admin.database().ref('bookings/' + bookingId).on("value", (data) => {
+        let dataBooking = data.val();
+        let paymentMode = dataBooking.pagamento.payment_mode
+
+        if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'PAID') {
+            let driverShare = parseFloat(dataBooking.pagamento.trip_cost) - parseFloat(dataBooking.pagamento.convenience_fees)
+
+            if (paymentMode === 'Dinheiro') {
+                admin.database().ref('users/' + dataBooking.driver + '/ganhos/' + bookingId + '/').update({
+                    data: new Date().toString(),
+                    ganho: driverShare,
+                    hora: new Date().toLocaleTimeString('pt-BR'),
+                    taxa: dataBooking.pagamento.convenience_fees,
+                }).then(() => {
+                    admin.database().ref('users/' + dataBooking.driver + '/').once('value', driverData => {
+                        let saldoDriver = driverData.val().saldo
+                        if (saldoDriver) {
+                            let newSaldo = saldoDriver - dataBooking.pagamento.convenience_fees
+
+                            //Atualiza negativando o saldo do motorista no banco com a taxa da corrida atual
+                            admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                saldo: newSaldo
+                            })
+                        }
+                        else {
+                            let newSaldo = -dataBooking.pagamento.convenience_fees
+                            admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                saldo: newSaldo
+                            })
+                        }
+
+                        if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
+                            //admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
+                        }
+
+                    })
+                    return true
+                }).catch(error => {
+                    throw new Error("Erro executar função Dinheiro")
+                })
+            }
+            else if (paymentMode === 'Carteira') {
+                admin.database().ref('users/' + dataBooking.driver + '/ganhos/' + bookingId + '/').update({
+                    data: new Date().toString(),
+                    ganho: driverShare,
+                    hora: new Date().toLocaleTimeString('pt-BR'),
+                    taxa: dataBooking.pagamento.convenience_fees,
+                }).then(() => {
+                    admin.database().ref('users/' + dataBooking.driver + '/').once('value', driverData => {
+                        let saldoDriver = driverData.val().saldo
+                        if (saldoDriver) {
+                            let newValue = driverShare + saldoDriver
+
+                            //ATUALIZA O SALDO DO MOTORISTA
+                            admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                saldo: newValue
+                            })
+                        }
+                        else {
+                            //ATUALIZA O SALDO DO MOTORISTA
+                            admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                saldo: driverShare
+                            })
+                        }
+
+                        if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
+                            //admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
+                        }
+
+                    })
+                    return true
+                }).catch(error => {
+                    throw new Error("Erro executar função Carteira")
+                })
+            }
+            else if (paymentMode === 'Dinheiro/Carteira') {
+                admin.database().ref('users/' + dataBooking.driver + '/ganhos/' + bookingId + '/').update({
+                    data: new Date().toString(),
+                    ganho: driverShare,
+                    hora: new Date().toLocaleTimeString('pt-BR'),
+                    taxa: dataBooking.pagamento.convenience_fees,
+                }).then(() => {
+                    admin.database().ref('users/' + dataBooking.driver + '/').once('value', driverData => {
+                        let saldoDriver = driverData.val().saldo
+
+                        if (dataBooking.pagamento.usedWalletMoney >= dataBooking.pagamento.convenience_fees) {
+                            if (saldoDriver) {
+                                let newSaldo = saldoDriver + (dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees)
+                                admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                    saldo: newSaldo
+                                })
+                            }
+                            else {
+                                admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                    saldo: dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees
+                                })
+                            }
+                        } else {
+                            if (saldoDriver) {
+                                let newSaldo = saldoDriver + (dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees)
+
+                                admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                    saldo: newSaldo
+                                })
+                            }
+                            else {
+                                admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                    saldo: dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees
+                                })
+                            }
+                        }
+
+                        if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
+                            //admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
+                        }
+                    })
+                    return true
+                }).catch(error => {
+                    throw new Error("Erro executar função Dinheiro/Carteira")
+                })
+            }
+        }
+    })
+}
+
 
 /*const searchDriver = (bookingId, carType) => {
+    console.log("ENTROU NO SEARCHDRIVER")
     const userData = admin.database().ref('users/').orderByChild("usertype").equalTo('driver')
     const bookingRef = admin.database().ref('bookings/' + bookingId + '/')
 
@@ -426,9 +551,11 @@ exports.newBooking = functions.region('southamerica-east1').database.ref('bookin
         searchDriver(bookingId, data.carType)
 
         if (data.status === 'REJECTED') {
+            console.log("ENTROU NOO REJECTED")
             searchDriver(bookingId, data.carType)
         }
         else if (data.status === 'ACCEPTED' || data.status === 'CANCELLED') {
+            console.log("ENTROU NO ACCEPTED / CANCELLED")
             return true
         }
     })
@@ -672,136 +799,6 @@ exports.verifyDriversPayment_21 = functions.region('southamerica-east1').pubsub.
     })
 })
 
-exports.manageMoney = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/manageMoney').onCreate((snap, context) => {
-    const bookingId = context.params.bookingsId;
-    admin.database().ref('bookings/' + bookingId).on("value", (data) => {
-        let dataBooking = data.val();
-        let paymentMode = dataBooking.pagamento.payment_mode
-
-        if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'PAID') {
-            let driverShare = parseFloat(dataBooking.pagamento.trip_cost) - parseFloat(dataBooking.pagamento.convenience_fees)
-
-            if (paymentMode === 'Dinheiro') {
-                admin.database().ref('users/' + dataBooking.driver + '/ganhos/' + bookingId + '/').update({
-                    data: new Date().toString(),
-                    ganho: driverShare,
-                    hora: new Date().toLocaleTimeString('pt-BR'),
-                    taxa: dataBooking.pagamento.convenience_fees,
-                }).then(() => {
-                    admin.database().ref('users/' + dataBooking.driver + '/').once('value', driverData => {
-                        let saldoDriver = driverData.val().saldo
-                        if (saldoDriver) {
-                            let newSaldo = saldoDriver - dataBooking.pagamento.convenience_fees
-
-                            //Atualiza negativando o saldo do motorista no banco com a taxa da corrida atual
-                            admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                saldo: newSaldo
-                            })
-                        }
-                        else {
-                            let newSaldo = -dataBooking.pagamento.convenience_fees
-                            admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                saldo: newSaldo
-                            })
-                        }
-
-                        if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
-                            admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
-                            admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
-                        }
-
-                    })
-                    return true
-                }).catch(error => {
-                    throw new Error("Erro executar função Dinheiro")
-                })
-            }
-            else if (paymentMode === 'Carteira') {
-                admin.database().ref('users/' + dataBooking.driver + '/ganhos/' + bookingId + '/').update({
-                    data: new Date().toString(),
-                    ganho: driverShare,
-                    hora: new Date().toLocaleTimeString('pt-BR'),
-                    taxa: dataBooking.pagamento.convenience_fees,
-                }).then(() => {
-                    admin.database().ref('users/' + dataBooking.driver + '/').once('value', driverData => {
-                        let saldoDriver = driverData.val().saldo
-                        if (saldoDriver) {
-                            let newValue = driverShare + saldoDriver
-
-                            //ATUALIZA O SALDO DO MOTORISTA
-                            admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                saldo: newValue
-                            })
-                        }
-                        else {
-                            //ATUALIZA O SALDO DO MOTORISTA
-                            admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                saldo: driverShare
-                            })
-                        }
-
-                        if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
-                            admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
-                            admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
-                        }
-
-                    })
-                    return true
-                }).catch(error => {
-                    throw new Error("Erro executar função Carteira")
-                })
-            }
-            else if (paymentMode === 'Dinheiro/Carteira') {
-                admin.database().ref('users/' + dataBooking.driver + '/ganhos/' + bookingId + '/').update({
-                    data: new Date().toString(),
-                    ganho: driverShare,
-                    hora: new Date().toLocaleTimeString('pt-BR'),
-                    taxa: dataBooking.pagamento.convenience_fees,
-                }).then(() => {
-                    admin.database().ref('users/' + dataBooking.driver + '/').once('value', driverData => {
-                        let saldoDriver = driverData.val().saldo
-
-                        if (dataBooking.pagamento.usedWalletMoney >= dataBooking.pagamento.convenience_fees) {
-                            if (saldoDriver) {
-                                let newSaldo = saldoDriver + (dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees)
-                                admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                    saldo: newSaldo
-                                })
-                            }
-                            else {
-                                admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                    saldo: dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees
-                                })
-                            }
-                        } else {
-                            if (saldoDriver) {
-                                let newSaldo = saldoDriver + (dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees)
-
-                                admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                    saldo: newSaldo
-                                })
-                            }
-                            else {
-                                admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                    saldo: dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees
-                                })
-                            }
-                        }
-
-                        if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
-                            admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
-                            admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
-                        }
-                    })
-                    return true
-                }).catch(error => {
-                    throw new Error("Erro executar função Dinheiro/Carteira")
-                })
-            }
-        }
-    })
-})
-
 exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/finalCalcBooking').onCreate((snap, context) => {
     const bookingId = context.params.bookingsId
     admin.database().ref('bookings/' + bookingId).on("value", (data) => {
@@ -846,6 +843,13 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                                     date: new Date().toString(),
                                                     booking_ref: bookingId,
                                                 })
+
+                                                manageMoney(bookingId).then(() => {
+                                                    return true
+                                                })
+                                                    .catch(error => {
+                                                        throw new Error("Erro atualizar carteira Passageiro")
+                                                    })
                                                 return true
                                             }).catch(error => {
                                                 throw new Error("Erro atualizar carteira Passageiro")
@@ -898,6 +902,12 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                                     date: new Date().toString(),
                                                     booking_ref: bookingId,
                                                 })
+                                                manageMoney(bookingId).then(() => {
+                                                    return true
+                                                })
+                                                    .catch(error => {
+                                                        throw new Error("Erro atualizar carteira Passageiro")
+                                                    })
                                                 return true
                                             }).catch(error => {
                                                 throw new Error("Erro atualizar carteira Passageiro")
@@ -927,6 +937,12 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                     admin.database().ref('users/' + dataBooking.driver + '/my_bookings/' + bookingId + '/pagamento').update({
                                         payment_status: 'PAID'
                                     })
+                                    manageMoney(bookingId).then(() => {
+                                        return true
+                                    })
+                                        .catch(error => {
+                                            throw new Error("Erro atualizar carteira Passageiro")
+                                        })
                                     return true
                                 })
                                 .catch(error => {

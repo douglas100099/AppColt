@@ -282,7 +282,7 @@ const manageMoney = async (bookingIdParam) => {
 
                         if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
                             admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
-                            //admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
                         }
 
                     })
@@ -317,7 +317,7 @@ const manageMoney = async (bookingIdParam) => {
 
                         if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
                             admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
-                            //admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
                         }
 
                     })
@@ -365,7 +365,7 @@ const manageMoney = async (bookingIdParam) => {
 
                         if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
                             admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
-                            //admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
                         }
                     })
                     return true
@@ -376,190 +376,6 @@ const manageMoney = async (bookingIdParam) => {
         }
     })
 }
-
-
-/*const searchDriver = (bookingId, carType) => {
-    console.log("ENTROU NO SEARCHDRIVER")
-    const userData = admin.database().ref('users/').orderByChild("usertype").equalTo('driver')
-    const bookingRef = admin.database().ref('bookings/' + bookingId + '/')
-
-    let distanciaValue = 10
-    let distTotal = 50
-    let currentRejected = false
-    let searchDriverQueue = false
-    let driverUidSelected = 0
-
-    userData.once('value', driverData => {
-        let allUsers = driverData.val()
-        for (let key in allUsers) {
-            if (allUsers[key].driverActiveStatus === true && allUsers[key].carType === carType && !allUsers[key].waiting_queue_riders && !allUsers[key].waiting_riders_list) {
-                //Verifica se o motorista rejeitou a corrida
-                bookingRef.once('value', data => {
-                    if (data.val()) {
-                        let rejectedDrivers = []
-                        if (data.val().rejectedDrivers) {
-                            rejectedDrivers = data.val().rejectedDrivers
-                            for (let i = 0; i < rejectedDrivers.length; i++) {
-                                if (rejectedDrivers[i] === key) {
-                                    currentRejected = true
-                                }
-                            }
-                        }
-                    } else {
-                        currentRejected = false
-                    }
-                }).then(() => {
-                    if (currentRejected === false) {
-                        if (searchDriverQueue ? allUsers[key].queue === true : allUsers[key].queue === false) {
-                            if (searchDriverQueue ? allUsers[key].queueAvailable === true : true) {
-                                bookingRef.once('value', snap => {
-                                    const booking = snap.val()
-                                    if (booking) {
-                                        let location1 = [booking.pickup.lat, booking.pickup.lng];    //Rider Lat and Lang
-                                        let location2 = null
-                                        let locationDriver = null
-
-                                        if (searchDriverQueue) {
-                                            admin.database().ref('bookings/' + allUsers[key].emCorrida + '/').once('value', snapshot => {
-                                                let dataBooking = snapshot.val()
-                                                location2 = [dataBooking.drop.lat, dataBooking.drop.lng]
-                                                locationDriver = [dataBooking.current.lat, dataBooking.current.lng]
-                                            }).then(() => {
-                                                let distanceDrop = getDistance(location1, location2)
-                                                let distanceTotal = distanceDrop + getDistance(location2, locationDriver)
-
-                                                if (distanceDrop <= 4 && distanceTotal < distTotal) {
-                                                    distTotal = distanceTotal
-                                                    driverUidSelected = key
-                                                }
-                                                return true
-                                            })
-                                                .catch(error => {
-                                                    throw new Error("Erro ao chamar a funçao de calculo de distancia")
-                                                })
-                                        }
-                                        else {
-                                            location2 = [allUsers[key].location.lat, allUsers[key].location.lng]  //Driver lat and lang
-                                            //Calcula a distancia entre dois pontos
-                                            let distance = getDistance(location1, location2)
-                                            let originalDistance = distance
-                                            if (originalDistance <= 4) { //4KM
-                                                //Salva sempre o mais proximo
-                                                if (distance < distanciaValue) {
-                                                    distanciaValue = distance
-                                                    driverUidSelected = key
-                                                }
-                                            }
-                                        }
-                                    }
-                                })
-                            }
-                        }
-                    }
-                    return true
-                })
-                    .catch(error => {
-                        throw new Error("Erro ao fazer as verificaçoes de distancia")
-                    })
-            }
-        }
-    }).then(() => {
-        if (driverUidSelected !== 0) {
-            const driverRef = admin.database().ref('users/' + driverUidSelected + '/')
-
-            driverRef.once('value', snap => {
-                const data = snap.val()
-                if (data) {
-                    if (data.queue === true && data.queueAvailable === true && data.driverActiveStatus === true) {
-                        bookingRef.once('value', bookingData => {
-                            if (bookingData.val().status === 'NEW' || bookingData.val().status === 'REJECTED') {
-                                admin.database().ref('users/' + driverUidSelected + '/' + "waiting_queue_riders" + '/' + bookingId + '/').set(bookingData.val())
-                                    .then(() => {
-                                        admin.database().ref(`users/` + bookingData.val().customer + '/my-booking/' + bookingId).update({ status: "NEW" })
-                                            .then(() => {
-                                                admin.database().ref('bookings/' + bookingId + '/').update({
-                                                    status: "NEW",
-                                                    requestedDriver: driverUidSelected
-                                                })
-                                                RequestPushMsg(data.pushToken, "Você possui uma nova corrida!")
-                                                return true
-                                            })
-                                            .catch(error => {
-                                                throw new Error("Erro setando status da corrida pra NEW e enviando notify")
-                                            })
-                                        return true
-                                    })
-                                    .catch(error => {
-                                        throw new Error("Erro depois do waiting queue riders")
-                                    })
-                            }
-                        })
-
-                        //this.setBookingDriver("waiting_queue_riders", bookingId, driverUidSelected)
-                    }
-                    else if (data.queue === false && data.driverActiveStatus === true) {
-
-                        bookingRef.on('value', bookingData => {
-                            if (bookingData.val().status === 'NEW' || bookingData.val().status === 'REJECTED') {
-                                admin.database().ref('users/' + driverUidSelected + '/' + "waiting_riders_list" + '/' + bookingId + '/').set(bookingData.val())
-                                    .then(() => {
-                                        admin.database().ref('users/' + bookingData.val().customer + '/my-booking/' + bookingId + '/').update({ status: "NEW" })
-                                            .then(() => {
-                                                admin.database().ref('bookings/' + bookingId + '/').update({
-                                                    status: "NEW",
-                                                    requestedDriver: driverUidSelected
-                                                })
-                                                RequestPushMsg(data.pushToken, "Você possui uma nova corrida!")
-                                                return true
-                                            })
-                                            .catch(error => {
-                                                throw new Error("Erro setando status da corrida pra NEW e enviando notify")
-                                            })
-                                        return true
-                                    })
-                                    .catch(error => {
-                                        throw new Error("Erro depois do waiting riders list")
-                                    })
-                            }
-                        })
-
-                        //this.setBookingDriver("waiting_riders_list", bookingId, driverUidSelected)
-                    }
-                }
-            })
-                .catch(error => {
-                    throw new Error("Erro ao setar corrida no perfil do motorista")
-                })
-        }
-        else {
-            searchDriverQueue = !searchDriverQueue
-            driverUidSelected = 0
-            searchDriver(bookingId, carType)
-        }
-        return true
-    })
-        .catch(error => {
-            throw new Error("Erro ao preparar a setagem de corrida do motorista")
-        })
-}
-
-exports.newBooking = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}').onCreate((snap, context) => {
-    const bookingId = context.params.bookingsId
-
-    return admin.database().ref('bookings/' + bookingId + '/').on('value', snap => {
-        const data = snap.val()
-        searchDriver(bookingId, data.carType)
-
-        if (data.status === 'REJECTED') {
-            console.log("ENTROU NOO REJECTED")
-            searchDriver(bookingId, data.carType)
-        }
-        else if (data.status === 'ACCEPTED' || data.status === 'CANCELLED') {
-            console.log("ENTROU NO ACCEPTED / CANCELLED")
-            return true
-        }
-    })
-})*/
 
 
 exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.schedule('30 19 1 * *').timeZone('America/Sao_Paulo').onRun((context) => {

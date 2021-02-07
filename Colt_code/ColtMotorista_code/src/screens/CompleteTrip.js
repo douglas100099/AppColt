@@ -616,7 +616,8 @@ export default class DriverCompleteTrip extends React.Component {
             firebase.database().ref('users/' + item.customer + '/my-booking/' + item.bookingId + '/').update(riderData).then(() => {
                 let bookingDbRef = firebase.database().ref('bookings/' + item.bookingId + '/');
                 data.pagamento.finalCalcBooking = true
-                data.pagamento.manageMoney = true
+                //data.pagamento.manageMoney = true
+                console.log('CHAMOU A FUNCTION')
                 bookingDbRef.update(data).then(() => {
                     this.sendPushNotification(item.customer)
                     this.navegaFinal(item, data, riderData);

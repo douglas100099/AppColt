@@ -175,6 +175,7 @@ export default class BookedCabScreen extends React.Component {
                     this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
                 }
                 else if (currUserBooking.status == "REJECTED") {
+                    console.log("ENTROU NO REJECTED")
                     this.setState({ driverSearch: true, showBtnCancel: true })
                     this.driverFound = false
                     this.driverObj.driverUid = 0
@@ -419,10 +420,14 @@ export default class BookedCabScreen extends React.Component {
                             'Deseja cancelar a corrida atual?',
                             [
                                 {
-                                    style: 'destructive',
+                                    style: 'default',
                                     text: 'Voltar',
                                 },
-                                { text: 'Continuar', onPress: () => this.onCancelConfirm() },
+                                {
+                                    style: 'destructive',
+                                    text: 'Continuar',
+                                    onPress: () => this.onCancelConfirm()
+                                },
                             ],
                             { cancelable: true },
                         );

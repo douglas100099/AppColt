@@ -29,7 +29,7 @@ import Constants from 'expo-constants'
 import * as Analytics from 'expo-firebase-analytics';
 
 // ANALYTICS //
-import { DriverOffline } from '../common/analytics';
+import { DriverOffline, DriverBookingAccept, DriverOnline, DriverBookingAcceptErr, DriverBookingReject } from '../common/analytics';
 // //
 
 import IconMenuSVG from '../SVG/IconMenuSVG';
@@ -650,7 +650,8 @@ export default class DriverTripAccept extends React.Component {
     onPressAccept(item) {
         this.stopSound()
         this.setState({ loader: true })
-        if (this.state.status === 'CANCELLED') {
+        DriverBookingAccept(this.state.curUid, item.bookingId, "DriverTripAccept")
+        if (this.state.status === 'CANCELLED' && this.state.status === 'REJECTED') {
             Alert.alert('Ops, essa corrida foi cancelada pelo passageiro')
             this.setState({ loader: false })
         } else {
@@ -745,6 +746,16 @@ export default class DriverTripAccept extends React.Component {
                     this.sendPushNotification(item.customer, this.state.driverDetails.firstName + ' aceitou seu chamado, aguarde.')
                 }).catch((error) => {
                     console.log(error)
+                    this.setState({ loader: false })
+                    DriverBookingAcceptErr(this.state.curUid, item.bookingId, "DriverTripAccept")
+                    Alert.alert(
+                        "Falha ao aceitar corrida",
+                        "Corrida indisponível ou conexão lenta com a internet.",
+                        [
+                            { text: "OK", onPress: () => console.log("OK Pressed") }
+                        ],
+                        { cancelable: true }
+                    )
                 })
 
 
@@ -769,6 +780,7 @@ export default class DriverTripAccept extends React.Component {
         this.setState({ loader: true });
         var arr = [];
         this.stopSound()
+        DriverBookingReject(this.state.curUid, item.bookingId, "DriverTripAccept")
         if (this._isMounted) {
             firebase.database().ref('bookings/' + item.bookingId + '/').once('value', data => {
                 if (data.val()) {
@@ -1221,17 +1233,17 @@ export default class DriverTripAccept extends React.Component {
                                                         <Text style={styles.txtPartida}>{item.pickup.add}</Text>
                                                     </View>
                                                     {item.waypoint ?
-                                                    <View style={styles.enderecoPartida}>
-                                                        <Icon
-                                                            size={15}
-                                                            name='disc'
-                                                            type='feather'
-                                                            color={colors.DARK}
-                                                        />
-                                                        <Text style={styles.txtPartida}>{item.waypoint.add}</Text>
-                                                    </View>
-                                                    :
-                                                    null}
+                                                        <View style={styles.enderecoPartida}>
+                                                            <Icon
+                                                                size={15}
+                                                                name='disc'
+                                                                type='feather'
+                                                                color={colors.DARK}
+                                                            />
+                                                            <Text style={styles.txtPartida}>{item.waypoint.add}</Text>
+                                                        </View>
+                                                        :
+                                                        null}
                                                     <View style={styles.enderecoDestino}>
                                                         <Icon
                                                             size={15}

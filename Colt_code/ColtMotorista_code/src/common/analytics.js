@@ -37,3 +37,13 @@ export async function DriverBookingReject(id, idbooking, screen){
         date: new Date().toLocaleString('pt-BR')
     });
 }
+
+// REGISTRA O ERRO AO ACEITAR COPRRIDA
+export async function DriverBookingAcceptErr(id, idbooking, screen){
+    await Analytics.logEvent('driver_booking_accept_err', {
+        name: id,
+        bookingId: idbooking,
+        screen: screen,
+        date: new Date().toLocaleString('pt-BR')
+    });
+}

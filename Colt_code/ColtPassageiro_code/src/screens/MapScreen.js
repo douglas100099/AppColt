@@ -11,9 +11,7 @@ import {
     AsyncStorage,
 } from 'react-native';
 import { TouchableOpacity, TouchableWithoutFeedback } from 'react-native-gesture-handler';
-import { MapComponent } from '../components';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
-import mapStyleJson from '../../mapStyle.json';
 import mapStyleAndroid from '../../mapStyleAndroid.json';
 
 import { Icon, Button, Avatar } from 'react-native-elements';
@@ -27,7 +25,6 @@ import * as firebase from 'firebase'
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import Geocoder from 'react-native-geocoding';
-import distanceCalc from '../common/distanceCalc';
 import { NavigationActions, StackActions } from 'react-navigation';
 import { Chase, Pulse } from 'react-native-animated-spinkit'
 

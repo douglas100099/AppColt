@@ -9,9 +9,7 @@ export default class EditProfilePage extends React.Component {
         super(props);
     }
 
-    //register button click after all validation
     async clickRegister(fname, lname, mobile, email) {
-        // set data set for update user 
         let regData = {
             firstName:fname,
             lastName:lname,
@@ -23,7 +21,6 @@ export default class EditProfilePage extends React.Component {
         firebase.database().ref('users/'+curuser).update(regData).then(()=>{
           this.props.navigation.pop();
         })
-        
     }
 
     goBack = () => {

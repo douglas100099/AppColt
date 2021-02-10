@@ -147,8 +147,6 @@ export default class BookedCabScreen extends React.Component {
             let currUserBooking = currUserBookings.val()
 
             if (currUserBooking) {
-                //Checando o status da corrida 
-
                 if (currUserBooking.status == "ACCEPTED") {
                     this.driverFound = false
                     this.setState({

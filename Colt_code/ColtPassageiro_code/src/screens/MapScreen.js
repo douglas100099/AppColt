@@ -537,7 +537,7 @@ export default class MapScreen extends React.Component {
                             showsScale={false}
                             rotateEnabled={false}
                             customMapStyle={mapStyleAndroid}
-                        //region={() => this.getRegionMap()}
+                            //region={() => this.getRegionMap()}
                         >
                             {this.state.freeCars ? this.state.freeCars.map((item, index) => {
                                 return (

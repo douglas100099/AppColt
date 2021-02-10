@@ -151,13 +151,13 @@ export default class FareScreen extends React.Component {
                 toValue: 1,
                 duration: 500,
                 useNativeDriver: false,
-            }).start();
+            }).start()
         } else {
             Animated.timing(this.fadeAnim, {
                 toValue: 0,
                 duration: 500,
                 useNativeDriver: false,
-            }).start();
+            }).start()
         }
     }
 
@@ -168,13 +168,13 @@ export default class FareScreen extends React.Component {
                 toValue: 1,
                 duration: 500,
                 useNativeDriver: false,
-            }).start();
+            }).start()
         } else {
             Animated.timing(this.fadeAnimWaypoint, {
                 toValue: 0,
                 duration: 500,
                 useNativeDriver: false,
-            }).start();
+            }).start()
         }
     }
 

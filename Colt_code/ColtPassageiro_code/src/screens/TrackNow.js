@@ -466,8 +466,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 10,
     },
-
-    ////////////////////
     containerBottom: {
         shadowColor: '#000',
         shadowOffset: { x: 0, y: 5 },

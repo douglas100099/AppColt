@@ -474,13 +474,10 @@ export default class TrackNow extends React.Component {
                             </View>
                         </View>
                     }
-
                 </View>
-
             </View>
         );
     }
-
 }
 
 const styles = StyleSheet.create({

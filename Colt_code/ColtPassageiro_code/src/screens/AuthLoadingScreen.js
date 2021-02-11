@@ -22,6 +22,7 @@ export class AuthLoadingScreen extends React.Component {
     super(props);
     Geocoder.init(google_map_key);
     this.bootstrapAsync();
+    this.getAdd = false
   }
 
   _setSettings = async () => {
@@ -37,7 +38,7 @@ export class AuthLoadingScreen extends React.Component {
     }
   };
 
-  _getLocationAsync = async () => {
+  /*_getLocationAsync = async () => {
     let { status } = await Permissions.askAsync(Permissions.LOCATION);
     let gpsActived = await Location.hasServicesEnabledAsync()
 
@@ -75,24 +76,52 @@ export class AuthLoadingScreen extends React.Component {
         }
       }
     }
-  }
+  }*/
 
   _watchPosition = async () => {
-    await Location.watchPositionAsync({
-      accuracy: Location.Accuracy.Highest,
-      distanceInterval: 10,
-      timeInterval: 2000
-    },
-      newLocation => {
-        let { coords } = newLocation;
+    let { status } = await Permissions.askAsync(Permissions.LOCATION);
+    let gpsActived = await Location.hasServicesEnabledAsync()
+
+    if (status !== 'granted') {
+      alert("Para acessar sua localização, é necessária sua permissão!");
+    }
+    else if (!gpsActived) {
+      alert("Ative seu GPS para permitir que a Colt determine sua localização");
+    }
+    else {
+      await Location.watchPositionAsync({
+        accuracy: Location.Accuracy.Highest,
+        distanceInterval: 10,
+        timeInterval: 2000
+      },
+        newLocation => {
+          let { coords } = newLocation;
+
+          firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
+            lat: coords.latitude,
+            lng: coords.longitude
+          })
+
+          //verificação pra chamar somente uma vez a api que pega o address
+          if (!this.getAdd) {
+            this.getAdd = true
+            console.log(this.getAddress(coords.latitude + ',' + coords.longitude))
+          }
+        },
+        error => console.log(error)
+      );
+    }
+  }
+
+  getAddress(params) {
+    return fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + params + '&key=' + google_map_key)
+      .then((response) => response.json())
+      .then((responseJson) => {
 
         firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
-          lat: coords.latitude,
-          lng: coords.longitude
-        });
-      },
-      error => console.log(error)
-    );
+          add:responseJson.results[0].formatted_address
+        })
+      })
   }
 
   // Fetch the token from storage then navigate to our appropriate place
@@ -107,9 +136,10 @@ export class AuthLoadingScreen extends React.Component {
               if (userData.val().usertype == 'rider') {
                 GetPushToken();
                 //this.StartBackgroundLocation();
+                //this._getLocationAsync();
 
+                this._watchPosition()
                 this._setSettings();
-                this._getLocationAsync();
                 this.props.navigation.navigate('Root');
               }
               else {

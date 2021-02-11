@@ -78,12 +78,22 @@ export default class RideDetails extends React.Component {
                 },
                 paramData: this.getRideDetails,
             }, () => {
-                if (this._isMounted) {
-                    //this.getDirections('"' + this.state.paramData.pickup.lat + ',' + this.state.paramData.pickup.lng + '"', '"' + this.state.paramData.drop.lat + ',' + this.state.paramData.drop.lng + '"');
+                setTimeout(() => {
+                    if (this._isMounted) {
+                        this.map.fitToCoordinates([{ latitude: this.state.paramData.pickup.lat, longitude: this.state.paramData.pickup.lng }, { latitude: this.state.paramData.drop.lat, longitude: this.state.paramData.drop.lng }], {
+                            edgePadding: { top: getPixelSize(30), right: getPixelSize(30), bottom: getPixelSize(30), left: getPixelSize(30) },
+                            animated: true,
+                        })
+                    }
+                }, 500);
+                /*if (this._isMounted) {
+
+                    this.getDirections('"' + this.state.paramData.pickup.lat + ',' + this.state.paramData.pickup.lng + '"', '"' + this.state.paramData.drop.lat + ',' + this.state.paramData.drop.lng + '"');
                     this.forceUpdate();
-                }
+                }*/
             })
         }
+
         this._retrieveSettings();
     }
 

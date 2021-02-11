@@ -65,6 +65,7 @@ export default class BookedCabScreen extends React.Component {
         this.searchDriverQueue = false
         this.currentRejected = false
         this.driverUidSelected = 0
+        this.driverFound = false
     }
 
     /*UNSAFE_componentWillMount() {
@@ -119,6 +120,7 @@ export default class BookedCabScreen extends React.Component {
 
                 //Checando o status da corrida 
                 if (currUserBooking.status == "ACCEPTED") {
+                    this.driverFound = false
                     this.setState({
                         data_accept: currUserBooking.data_accept ? currUserBooking.data_accept : null,
                         bookingStatus: currUserBooking.status,
@@ -126,9 +128,11 @@ export default class BookedCabScreen extends React.Component {
                     })
                 }
                 else if (currUserBooking.status == "CANCELLED") {
+                    this.driverFound = false
                     this.props.navigation.replace('FareDetails', { data: this.state.region })
                 }
                 else if (currUserBooking.status == "TIMEOUT") {
+                    this.driverFound = false
                     this.onCancellSearchBooking()
                 }
                 else if (currUserBooking.status == "EMBARQUE") {
@@ -141,6 +145,7 @@ export default class BookedCabScreen extends React.Component {
                     this.props.navigation.replace('trackRide', { data: currUserBooking, bId: this.getParamData.bokkingId, });
                 }
                 else if (currUserBooking.status == "REJECTED") {
+                    this.driverFound = false
                     this.driverUidSelected = 0
                     this.searchDriver()
                 }
@@ -164,69 +169,81 @@ export default class BookedCabScreen extends React.Component {
         }
     }
 
+    checkRejected(bookingId, driverId) {
+        return new Promise(function (result, reject) {
+            firebase.database().ref('bookings/' + bookingId + '/rejectedDrivers').once('value', drivers => {
+                if (drivers.val()) {
+                    let rejectedDrivers = []
+                    rejectedDrivers = drivers.val();
+
+                    const check = Object.keys(rejectedDrivers).filter(i => rejectedDrivers[i] === driverId).map(i => {
+                        rejectedDrivers[i] === driverId
+                        return rejectedDrivers[i]
+                    })
+
+                    if (check.length == 0) {
+                        result(false)
+                    } else {
+                        result(true)
+                    }
+
+                } else {
+                    result(false)
+                }
+            })
+        })
+    }
+
     async searchDriver() {
         if (this._isMounted) {
             const userData = firebase.database().ref('users/').orderByChild("usertype").equalTo('driver');
             let distanciaValue = 10;
             let distTotal = 50;
 
-            userData.once('value', driverData => {
+            userData.once('value', async driverData => {
                 var allUsers = driverData.val();
                 for (let key in allUsers) {
                     if (allUsers[key].driverActiveStatus == true && allUsers[key].carType == this.state.carType && !allUsers[key].waiting_queue_riders && !allUsers[key].waiting_riders_list) {
-                        //Verifica se o motorista rejeitou a corrida
-                        firebase.database().ref('bookings/' + this.state.currentBookingId + '/rejectedDrivers').once('value', drivers => {
-                            if (drivers.val()) {
-                                let rejectedDrivers = []
-                                rejectedDrivers = drivers.val();
-                                for (let i = 0; i < rejectedDrivers.length; i++) {
-                                    if (rejectedDrivers[i] == key) {
-                                        this.currentRejected = true
+
+                        let result = await this.checkRejected(this.state.currentBookingId, key)
+                        if (result == false) {
+                            if (this.searchDriverQueue ? allUsers[key].queue == true : allUsers[key].queue == false) {
+                                if (this.searchDriverQueue ? allUsers[key].queueAvailable == true : true) {
+                                    var location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];    //Rider Lat and Lang
+                                    var location2 = null
+                                    var locationDriver = null
+
+                                    if (this.searchDriverQueue) {
+                                        firebase.database().ref('bookings/' + allUsers[key].emCorrida + '/').once('value', snapshot => {
+                                            let dataBooking = snapshot.val()
+                                            location2 = [dataBooking.drop.lat, dataBooking.drop.lng]
+                                            locationDriver = [dataBooking.current.lat, dataBooking.current.lng]
+                                        }).then(() => {
+                                            var distanceDrop = distanceCalc(location1, location2)
+                                            var distanceTotal = distanceDrop + distanceCalc(location2, locationDriver)
+
+                                            if (distanceDrop <= 4 && distanceTotal < distTotal) {
+                                                distTotal = distanceTotal
+                                                this.driverUidSelected = key
+                                            }
+                                        })
                                     }
-                                }
-                            } else {
-                                this.currentRejected = false
-                            }
-                        }).then(() => {
-                            if (this.currentRejected == false) {
-                                if (this.searchDriverQueue ? allUsers[key].queue == true : allUsers[key].queue == false) {
-                                    if (this.searchDriverQueue ? allUsers[key].queueAvailable == true : true) {
-                                        var location1 = [this.state.region.wherelatitude, this.state.region.wherelongitude];    //Rider Lat and Lang
-                                        var location2 = null
-                                        var locationDriver = null
-
-                                        if (this.searchDriverQueue) {
-                                            firebase.database().ref('bookings/' + allUsers[key].emCorrida + '/').once('value', snapshot => {
-                                                let dataBooking = snapshot.val()
-                                                location2 = [dataBooking.drop.lat, dataBooking.drop.lng]
-                                                locationDriver = [dataBooking.current.lat, dataBooking.current.lng]
-                                            }).then(() => {
-                                                var distanceDrop = distanceCalc(location1, location2)
-                                                var distanceTotal = distanceDrop + distanceCalc(location2, locationDriver)
-
-                                                if (distanceDrop <= 4 && distanceTotal < distTotal) {
-                                                    distTotal = distanceTotal
-                                                    this.driverUidSelected = key
-                                                }
-                                            })
-                                        }
-                                        else {
-                                            location2 = [allUsers[key].location.lat, allUsers[key].location.lng];   //Driver lat and lang
-                                            //Calcula a distancia entre dois pontos
-                                            var distance = distanceCalc(location1, location2);
-                                            var originalDistance = distance
-                                            if (originalDistance <= 4) { //4KM
-                                                //Salva sempre o mais proximo
-                                                if (distance < distanciaValue) {
-                                                    distanciaValue = distance
-                                                    this.driverUidSelected = key
-                                                }
+                                    else {
+                                        location2 = [allUsers[key].location.lat, allUsers[key].location.lng];   //Driver lat and lang
+                                        //Calcula a distancia entre dois pontos
+                                        var distance = distanceCalc(location1, location2);
+                                        var originalDistance = distance
+                                        if (originalDistance <= 4) { //4KM
+                                            //Salva sempre o mais proximo
+                                            if (distance < distanciaValue) {
+                                                distanciaValue = distance
+                                                this.driverUidSelected = key
                                             }
                                         }
                                     }
                                 }
                             }
-                        })
+                        }
                     }
                 }
             }).then(() => {
@@ -236,32 +253,19 @@ export default class BookedCabScreen extends React.Component {
                     coords: this.state.coords
                 }
                 if (this.driverUidSelected != 0) {
+                    this.driverFound = true
                     const driverRef = firebase.database().ref('users/' + this.driverUidSelected + '/')
-                    driverRef.update({
-                        have_internet: false
-                    }).then(() => {
-                        setTimeout(() => {
-                            driverRef.once('value', snap => {
-                                const data = snap.val()
-                                if (data && data.have_internet == true) {
-                                    if (data.queue == true && data.queueAvailable == true && data.driverActiveStatus == true) {
-                                        this.setBookingDriver("waiting_queue_riders", this.state.currentBookingId, bookingData, this.driverUidSelected)
-                                    }
-                                    else if (data.queue == false && data.driverActiveStatus == true) {
-                                        this.setBookingDriver("waiting_riders_list", this.state.currentBookingId, bookingData, this.driverUidSelected)
-                                    }
-                                }
-                                else {
-                                    this.searchDriverQueue = !this.searchDriverQueue
 
-                                    this.driverUidSelected = 0
-                                    setTimeout(() => {
-                                        if (this.state.driverSearch)
-                                            this.searchDriver()
-                                    }, 500)
-                                }
-                            })
-                        }, 4000)
+                    driverRef.once('value', snap => {
+                        const data = snap.val()
+                        if (data.queue == true && data.queueAvailable == true && data.driverActiveStatus == true) {
+                            this.setState({ searchDriverQueue: true })
+                            this.setBookingDriver("waiting_queue_riders", this.state.currentBookingId, bookingData, this.driverUidSelected)
+                        }
+                        else if (data.queue == false && data.driverActiveStatus == true) {
+                            this.setState({ searchDriverQueue: false })
+                            this.setBookingDriver("waiting_riders_list", this.state.currentBookingId, bookingData, this.driverUidSelected)
+                        }
                     })
                 }
                 else {
@@ -391,12 +395,15 @@ export default class BookedCabScreen extends React.Component {
             if (curbookingData.val()) {
                 if (this.state.bookingStatus == 'ACCEPTED' || this.state.bookingStatus == 'EMBARQUE') {
                     firebase.database().ref('bookings/' + this.state.currentBookingId + '/').update({
+                        cancel_time: new Date().toString(),
                         status: 'CANCELLED',
                     }).then(() => {
                         firebase.database().ref('users/' + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
+                            cancel_time: new Date().toString(),
                             status: 'CANCELLED',
                         }).then(() => {
                             firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').update({
+                                cancel_time: new Date().toString(),
                                 status: 'CANCELLED',
                             }).then(() => {
                                 firebase.database().ref('users/' + curbookingData.val().driver + '/rider_waiting_object/' + this.state.currentBookingId + '/').remove().then(() => {
@@ -421,6 +428,7 @@ export default class BookedCabScreen extends React.Component {
         if (params) {
             //Atualiza o status da corrida em "bookings" no firebase
             firebase.database().ref(`bookings/` + this.state.currentBookingId + '/').update({
+                cancel_time: new Date().toString(),
                 status: 'CANCELLED',
             })
         }
@@ -447,14 +455,18 @@ export default class BookedCabScreen extends React.Component {
     }
 
     onCancelConfirm() {
+        const dataCustomer = firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/')
+
         //Essa parte serve pra caso o motorista ter aceito a corrida e o passageiro cancelar em seguida
-        firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').on('value', curbookingData => {
+        dataCustomer.on('value', curbookingData => {
             if (curbookingData.val()) {
                 if (curbookingData.val().status == 'ACCEPTED' || curbookingData.val().status == 'EMBARQUE') {
                     firebase.database().ref('bookings/' + this.state.currentBookingId + '/').update({
+                        cancel_time: new Date().toString(),
                         status: 'CANCELLED',
                     }).then(() => {
                         firebase.database().ref('users/' + curbookingData.val().driver + '/my_bookings/' + this.state.currentBookingId + '/').update({
+                            cancel_time: new Date().toString(),
                             status: 'CANCELLED',
                             reason: this.state.radio_props[this.state.value].label
                         }).then(() => {
@@ -470,7 +482,8 @@ export default class BookedCabScreen extends React.Component {
                                 this.sendPushNotification(curbookingData.val().driver, this.state.firstNameRider + ' cancelou a corrida atual!')
                             })
                         }).then(() => {
-                            firebase.database().ref('users/' + this.state.currentUser + '/my-booking/' + this.state.currentBookingId + '/').update({
+                            dataCustomer.update({
+                                cancel_time: new Date().toString(),
                                 status: 'CANCELLED',
                                 reason: this.state.radio_props[this.state.value].label
                             })
@@ -665,7 +678,7 @@ export default class BookedCabScreen extends React.Component {
                                 size='large'
                                 color={colors.DEEPBLUE}
                             />
-                            <Text style={{ textAlign: 'center', fontFamily: 'Inter-Medium', fontSize: 16 }}> Buscando localização do motorista... </Text>
+
                         </View>
                     }
 

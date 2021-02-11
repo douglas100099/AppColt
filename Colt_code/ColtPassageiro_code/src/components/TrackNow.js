@@ -95,7 +95,7 @@ export default class TrackNow extends React.Component {
                     if (this._isMounted) {
                         this.updateBooking(duid, alldata, paramData, bookingStatus)
                     }
-                }, 7000)
+                }, 10000)
         })
     }
 

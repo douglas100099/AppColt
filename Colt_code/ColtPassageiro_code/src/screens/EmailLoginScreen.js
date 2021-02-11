@@ -35,7 +35,8 @@ export default class EmailLoginScreen extends Component {
         this.setState({ btnDisabled: true })
         const { email, password, confirmpassword, customStyleIndex } = this.state;
         if (customStyleIndex == 0) {
-            if (this.validateEmail(email)) {
+            console.log(email)
+            if (this.validateEmailOnLogin(email)) {
                 if (password != '') {
                     try {
                         await firebase.auth().signInWithEmailAndPassword(email, password)
@@ -80,9 +81,22 @@ export default class EmailLoginScreen extends Component {
         }
     }
 
+    validateEmailOnLogin(email) {
+        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+        const emailValid = re.test(email);
+        console.log(emailValid + "VALID")
+        if (!emailValid) {
+            this.emailInput.focus();
+            this.setState({ btnDisabled: false })
+            alert("Email inválido! Por favor, veirifique se há algum caractere especial ou espaço em branco.");
+        }
+        return emailValid;
+    }
+
     validateEmail(email) {
         const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
         const emailValid = re.test(email);
+        console.log(emailValid + "VALID")
         if (!emailValid) {
             this.emailInput.focus();
             this.setState({ btnDisabled: false })

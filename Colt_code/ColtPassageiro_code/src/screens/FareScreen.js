@@ -29,6 +29,7 @@ import languageJSON from '../common/language';
 
 import LocationUser from '../../assets/svg/LocationUser';
 import LocationDrop from '../../assets/svg/LocationDrop';
+import LocationWaypoint from '../../assets/svg/LocationWaypoint';
 import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
 import ColtConfortCar from '../../assets/svg/ColtConfortCar';
 import { VerifyCupom } from '../common/VerifyCupom';
@@ -37,6 +38,7 @@ import PromoModal from '../components/PromoModal';
 
 import { TextInputMask } from 'react-native-masked-text'
 import { ScrollView } from 'react-native-gesture-handler';
+import { TouchableWithoutFeedback } from 'react-native';
 
 export default class FareScreen extends React.Component {
     myAbort = new AbortController()
@@ -59,8 +61,6 @@ export default class FareScreen extends React.Component {
                 otp_secure: false
             },
             buttonDisabled: false,
-            carType: '',
-            carImage: '',
             metodoPagamento: 'Dinheiro',
             openModalPayment: false,
             walletBallance: null,
@@ -70,21 +70,25 @@ export default class FareScreen extends React.Component {
             usedWalletMoney: 0,
             infoModal: false,
             showViewInfo: true,
+            showInfoWaypoint: true,
             cpfModalVisible: false,
             dateInput: '',
             txtCPF: '',
             cancellValue: 0,
             longDistance: false,
         },
-        this.fadeAnim = new Animated.Value(0)
+            this.fadeAnim = new Animated.Value(0)
+        this.fadeAnimWaypoint = new Animated.Value(0)
     }
 
     async componentDidMount() {
-        this._isMounted = true;
-        var getCroods = await this.props.navigation.getParam('data') ? await this.props.navigation.getParam('data') : null;
-        var arrayRates = [];
+        this._isMounted = true
+        let getCroods = await this.props.navigation.getParam('data') ? await this.props.navigation.getParam('data') : null
+        let waypoint = this.props.navigation.getParam('waypoint') ? this.props.navigation.getParam('waypoint') : null
+        let arrayRates = []
 
         this.setState({
+            waypoint: waypoint,
             intervalDriversTime: setInterval(() => {
                 if (this._isMounted) {
                     this.getDrivers()
@@ -116,17 +120,25 @@ export default class FareScreen extends React.Component {
                 if (distance > 50) {
                     this.setState({ longDistance: true })
                 } else {
-                    this.getDetailsRider();
-                    this.getDirections('"' + this.state.region.wherelatitude + ', ' + this.state.region.wherelongitude + '"', '"' + this.state.region.droplatitude + ', ' + this.state.region.droplongitude + '"')
-                    const userData = firebase.database().ref('users/' + this.state.curUID.uid);
+                    this.getDetailsRider()
+
+                    if (waypoint == null) {
+                        this.getDirections('"' + this.state.region.wherelatitude + ',' + this.state.region.wherelongitude + '"', null, '"' + this.state.region.droplatitude + ',' + this.state.region.droplongitude + '"')
+                    } else {
+                        this.getDirections(
+                            '"' + this.state.region.wherelatitude + ',' + this.state.region.wherelongitude + '"',
+                            '"' + this.state.region.waypointLat + ',' + this.state.region.waypointLng + '"',
+                            '"' + this.state.region.droplatitude + ',' + this.state.region.droplongitude + '"')
+                    }
+                    const userData = firebase.database().ref('users/' + this.state.curUID.uid)
                     userData.once('value', userData => {
-                        this.setState({ userDetails: userData.val() });
+                        this.setState({ userDetails: userData.val() })
                     })
                 }
             }
         })
 
-        this._retrieveSettings();
+        this._retrieveSettings()
     }
 
     fadeIn(params) {
@@ -144,46 +156,80 @@ export default class FareScreen extends React.Component {
                 useNativeDriver: false,
             }).start();
         }
-    };
+    }
+
+    fadeInWaypoint(params) {
+        this.setState({ showInfoWaypoint: !this.state.showInfoWaypoint })
+        if (params) {
+            Animated.timing(this.fadeAnimWaypoint, {
+                toValue: 1,
+                duration: 500,
+                useNativeDriver: false,
+            }).start();
+        } else {
+            Animated.timing(this.fadeAnimWaypoint, {
+                toValue: 0,
+                duration: 500,
+                useNativeDriver: false,
+            }).start();
+        }
+    }
 
 
     _retrieveSettings = async () => {
         try {
-            const value = await AsyncStorage.getItem('settings');
+            const value = await AsyncStorage.getItem('settings')
             if (value !== null) {
-                this.setState({ settings: JSON.parse(value) });
+                this.setState({ settings: JSON.parse(value) })
             }
         } catch (error) {
-            console.log("Asyncstorage issue 8 ");
+            console.log("Asyncstorage issue 8 ")
         }
     };
 
     componentWillUnmount() {
         this.myAbort.abort()
-        this._isMounted = false;
+        this._isMounted = false
     }
 
     //Pega a direção e detalhes da corrida 
-    async getDirections(startLoc, destLoc) {
+    async getDirections(startLoc, waypoint, destLoc) {
         try {
-            var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destLoc}&key=${google_map_key}`, { signal: this.myAbort.signal })
-            var respJson = await resp.json();
-
+            if (waypoint) {
+                var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destLoc}&waypoints=${waypoint}&key=${google_map_key}`, { signal: this.myAbort.signal })
+            } else {
+                var resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destLoc}&key=${google_map_key}`, { signal: this.myAbort.signal })
+            }
+            var respJson = await resp.json()
             var arrayDetails = []
+
             for (let i = 0; i < this.state.rateDetailsObjects.length; i++) {
-                var fareCalculation = farehelper(respJson.routes[0].legs[0].distance.value, respJson.routes[0].legs[0].duration.value, this.state.rateDetailsObjects[i] ? this.state.rateDetailsObjects[i] : 1)
-                var detailsBooking = {
+                let fareCalculation = null
+                if (waypoint) {
+                    let newDistance = respJson.routes[0].legs[0].distance.value + respJson.routes[0].legs[1].distance.value
+                    let newDuration = respJson.routes[0].legs[0].duration.value + respJson.routes[0].legs[1].duration.value
+                    fareCalculation = farehelper(newDistance, newDuration, this.state.rateDetailsObjects[i] ? this.state.rateDetailsObjects[i] : 1)
+                    //Valor acrescentado ao valor total da corrida com parada - 1R$
+                    fareCalculation.grandTotal += 1
+                }
+                else {
+                    fareCalculation = farehelper(respJson.routes[0].legs[0].distance.value, respJson.routes[0].legs[0].duration.value, this.state.rateDetailsObjects[i] ? this.state.rateDetailsObjects[i] : 1)
+                }
+
+                let detailsBooking = {
                     distance: respJson.routes[0].legs[0].distance.value,
                     fareCost: fareCalculation ? parseFloat(fareCalculation.totalCost).toFixed(2) : 0,
                     estimateFare: fareCalculation ? parseFloat(fareCalculation.grandTotal).toFixed(2) : 0,
                     estimateTime: respJson.routes[0].legs[0].duration.value,
                     convenience_fees: fareCalculation ? parseFloat(fareCalculation.convenience_fees).toFixed(2) : 0
                 }
-                arrayDetails.push(detailsBooking);
-                i == 0 ? this.setState({ estimatePrice1: detailsBooking.estimateFare, estimatedTimeBooking: detailsBooking.estimateTime })
-                    : this.setState({ estimatePrice2: detailsBooking.estimateFare, estimatedTimeBooking: detailsBooking.estimateTime })
+                arrayDetails.push(detailsBooking)
             }
+
             this.setState({
+                estimatePrice1: arrayDetails[0].estimateFare,
+                estimatePrice2: arrayDetails[1].estimateFare,
+                estimatedTimeBooking: arrayDetails[0].estimateTime,
                 detailsBooking: arrayDetails,
                 selected: 0,
                 estimateFare: arrayDetails[0].estimateFare,
@@ -206,7 +252,7 @@ export default class FareScreen extends React.Component {
                         edgePadding: { top: getPixelSize(50), right: getPixelSize(50), bottom: getPixelSize(50), left: getPixelSize(50) },
                         animated: true,
                     })
-                }, 500);
+                }, 500)
             })
 
             return coords
@@ -228,7 +274,7 @@ export default class FareScreen extends React.Component {
     getDetailsRider() {
         const userData = firebase.database().ref('users/' + this.state.curUID.uid + "/");
         userData.once('value', userData => {
-            this.setState({ walletBallance: userData.val().walletBalance, deviceId: userData.val().deviceId  });
+            this.setState({ walletBallance: userData.val().walletBalance, deviceId: userData.val().deviceId });
         })
     }
 
@@ -240,12 +286,10 @@ export default class FareScreen extends React.Component {
         var pickUp = { lat: this.state.region.wherelatitude, lng: this.state.region.wherelongitude, add: this.state.region.whereText };
         var drop = { lat: this.state.region.droplatitude, lng: this.state.region.droplongitude, add: this.state.region.droptext };
         var cashPayment = this.state.selected == 0 ? (this.state.estimatePrice1 - this.state.usedWalletMoney).toFixed(2) : (this.state.estimatePrice2 - this.state.usedWalletMoney).toFixed(2);
+        var secureOtp = false
 
         if (this.state.settings.otp_secure)
-            var otp = Math.floor(Math.random() * 90000) + 10000;
-        else {
-            var otp = false;
-        }
+            secureOtp = Math.floor(Math.random() * 90000) + 10000;
         let today = new Date().toString();
 
         var pagamentoObj = {
@@ -278,6 +322,7 @@ export default class FareScreen extends React.Component {
             drop: drop,
             pickup: pickUp,
             pagamento: pagamentoObj,
+            otp: secureOtp,
             estimateDistance: this.state.distance,
             serviceType: 'pickUp',
             status: "NEW",
@@ -285,9 +330,13 @@ export default class FareScreen extends React.Component {
             trip_end_time: "00:00",
             trip_start_time: "00:00",
             tripdate: today,
-            otp: otp,
-            bookingDate: today,
 
+            have_waypoint: this.state.waypoint ? {
+                add: this.state.region.waypointText,
+                lat: this.state.region.waypointLat,
+                lng: this.state.region.waypointLng,
+            }
+                : null,
             imageRider: this.state.userDetails.profile_image ? this.state.userDetails.profile_image : null,
             ratingRider: this.state.userDetails.ratings ? this.state.userDetails.ratings.userrating : '5.0',
         }
@@ -309,9 +358,14 @@ export default class FareScreen extends React.Component {
             trip_start_time: "00:00",
             tripdate: today,
             coords: this.state.coords,
-            otp: otp,
-            bookingDate: today,
+            otp: secureOtp,
             pagamento: pagamentoObj,
+            have_waypoint: this.state.waypoint ? {
+                add: this.state.region.waypointText,
+                lat: this.state.region.waypointLat,
+                lng: this.state.region.waypointLng,
+            }
+                : null,
         }
 
         firebase.database().ref('bookings/').push(data).then((res) => {
@@ -417,8 +471,8 @@ export default class FareScreen extends React.Component {
                 )
                 .catch(error => {
                     reject(error);
-                });
-        });
+                })
+        })
     }
 
     //Seleciona o tipo de carro que vai ser a corrida
@@ -709,7 +763,7 @@ export default class FareScreen extends React.Component {
         if (!this.state.userDetails.cpfNum) {
             Alert.alert(
                 'Alerta!',
-                'Você ainda não possui cpf cadastrado, deseja adicionar?',
+                'Você ainda não possui cpf cadastrado, deseja adicionar agora?',
                 [
                     {
                         style: 'destructive',
@@ -721,7 +775,23 @@ export default class FareScreen extends React.Component {
                 { cancelable: true },
             );
         } else {
-            this.confirmarCorrida()
+            Alert.alert(
+                'Alerta!',
+                'Por favor, não minimize o aplicativo enquanto buscamos um motorista pra você!',
+                [
+                    {
+                        style: 'default',
+                        text: 'Confirmar',
+                        onPress: () => this.confirmarCorrida()
+                    },
+                    {
+                        style: 'destructive',
+                        text: 'Cancelar busca',
+                        onPress: () => this.setState({ buttonDisabled: false })
+                    },
+                ],
+                { cancelable: true },
+            );
         }
     }
 
@@ -793,11 +863,30 @@ export default class FareScreen extends React.Component {
                                 </View>
                             </Marker>
 
+                            {
+                                this.state.waypoint ?
+                                    <Marker
+                                        coordinate={{ latitude: this.state.region.waypointLat, longitude: this.state.region.waypointLng }}
+                                        centerOffset={{ x: 0.5, y: 0.5 }}
+                                        anchor={{ x: 0.5, y: 0.5 }}
+                                    //onPress={() => this.state.buttonDisabled ? null : this.props.navigation.replace('Search', { old: this.state.region })}
+                                    >
+                                        <LocationWaypoint
+                                            width={18}
+                                            height={17}
+                                        />
+                                        {/*<View style={styles.locationBoxDestino}>
+                                            <Text numberOfLines={1} style={styles.locationText}> {this.state.region.droptext.split(",", 2)} </Text>
+                                        </View>*/}
+                                    </Marker>
+                                    : null
+                            }
+
 
                             {this.state.coords ?
                                 <MapView.Polyline
                                     coordinates={this.state.coords}
-                                    strokeWidth={2.5}
+                                    strokeWidth={3}
                                     strokeColor={colors.DEEPBLUE}
                                 />
                                 : null}
@@ -851,6 +940,17 @@ export default class FareScreen extends React.Component {
                         <Text style={styles.fadingText}>Você está pagando R$ {this.state.settings.cancell_value},00 a mais por conta da taxa de cancelamento!</Text>
                     </Animated.View>
 
+                    <Animated.View
+                        style={[
+                            styles.fadingContainer2,
+                            {
+                                opacity: this.fadeAnimWaypoint
+                            }
+                        ]}
+                    >
+                        <Text style={styles.fadingText2}>Essa corrida possui um ponto de parada em {this.state.region ? this.state.region.waypointText : null}!</Text>
+                    </Animated.View>
+
                     {this.state.cancellValue != 0 ?
                         <TouchableOpacity style={styles.btnCancellRate} onPress={() => this.fadeIn(this.state.showViewInfo)}>
                             <Icon
@@ -872,6 +972,18 @@ export default class FareScreen extends React.Component {
                                 />
                             </TouchableOpacity>
                         </View>
+                        : null}
+
+                    {this.state.waypoint && this.state.region.wherelatitude ?
+                        <TouchableOpacity style={styles.btnWaypoint} onPress={() => this.fadeInWaypoint(this.state.showInfoWaypoint)}>
+                            <Icon
+                                name='ios-alarm'
+                                type='ionicon'
+                                size={25}
+                                color={colors.YELLOW.primary}
+                            //containerStyle={{alignSelf: 'center'}}
+                            />
+                        </TouchableOpacity>
                         : null}
 
                 </View>
@@ -1055,9 +1167,9 @@ export default class FareScreen extends React.Component {
                                     </TouchableOpacity>
                                 </View>
                                 {this.state.buttonDisabled ?
-                                <View style={{ alignSelf: 'center', position: 'absolute', bottom: width < 375 ? 5 : 30 }}>
-                                    <Text style={{ textAlign: 'center', fontFamily: 'Inter-SemiBold' }} > Preparando corrida... </Text>
-                                </View>
+                                    <View style={{ alignSelf: 'center', position: 'absolute', bottom: width < 375 ? 5 : 30 }}>
+                                        <Text style={{ textAlign: 'center', fontFamily: 'Inter-SemiBold' }} > Preparando corrida... </Text>
+                                    </View>
                                     : null}
                             </Fragment>
                         }
@@ -1088,11 +1200,28 @@ const styles = StyleSheet.create({
         backgroundColor: colors.REDCLEAN,
         opacity: 0.7
     },
+    fadingContainer2: {
+        position: 'absolute',
+        left: 25,
+        borderTopLeftRadius: 10,
+        borderTopRightRadius: 10,
+        borderBottomRightRadius: 10,
+        bottom: 115,
+        backgroundColor: colors.YELLOW.primary,
+        opacity: 0.7
+    },
     fadingText: {
         fontSize: 10,
         margin: 10,
         color: colors.WHITE,
         fontFamily: 'Inter-Bold'
+    },
+    fadingText2: {
+        fontSize: 10,
+        margin: 10,
+        color: colors.WHITE,
+        fontFamily: 'Inter-Bold',
+        paddingHorizontal: 5
     },
     container: {
         flex: 1,
@@ -1249,6 +1378,20 @@ const styles = StyleSheet.create({
         shadowRadius: 10,
         elevation: 5,
         opacity: 0.9,
+    },
+    btnWaypoint: {
+        backgroundColor: colors.WHITE,
+        borderWidth: 3,
+        borderColor: colors.YELLOW.primary,
+        width: 40,
+        height: 40,
+        borderRadius: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'absolute',
+        left: 10,
+        bottom: 70,
+
     },
     btnCancellRate: {
         justifyContent: 'center',

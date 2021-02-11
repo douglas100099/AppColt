@@ -2,22 +2,15 @@ const functions = require('firebase-functions');
 const fetch = require("node-fetch");
 const admin = require('firebase-admin');
 
-const paypalcheckout = require('./providers/paypal/checkout');
 const stripecheckout = require('./providers/stripe/checkout');
-const braintreecheckout = require('./providers/braintree/checkout');
 const { user } = require('firebase-functions/lib/providers/auth');
 
 global.Headers = fetch.Headers;
 
 admin.initializeApp();
 
-//exports.paypal_link = functions.https.onRequest(paypalcheckout.render_checkout);
-
 exports.stripe_link = functions.https.onRequest(stripecheckout.render_checkout);
 exports.process_stripe_payment = functions.https.onRequest(stripecheckout.process_checkout);
-
-//exports.braintree_link = functions.https.onRequest(braintreecheckout.render_checkout);
-//exports.process_braintree_payment = functions.https.onRequest(braintreecheckout.process_checkout);
 
 exports.success = functions.https.onRequest((request, response) => {
     var amount_line = request.query.amount ? `<h3>Seu pagamento de R$<strong>${request.query.amount}</strong>,00 foi concluído com sucesso</h3>` : '';
@@ -253,427 +246,9 @@ const checkPaymentAsaas = async (custumer) => {
         })
 }
 
-/*
-const searchDriver = (bookingId, carType) => {
-    const userData = admin.database().ref('users/').orderByChild("usertype").equalTo('driver')
-    const bookingRef = admin.database().ref('bookings/' + bookingId + '/')
+const manageMoney = async (bookingIdParam) => {
 
-    let distanciaValue = 10
-    let distTotal = 50
-    let currentRejected = false
-    let searchDriverQueue = false
-    let driverUidSelected = 0
-
-    userData.once('value', driverData => {
-        let allUsers = driverData.val()
-        for (let key in allUsers) {
-            if (allUsers[key].driverActiveStatus === true && allUsers[key].carType === carType && !allUsers[key].waiting_queue_riders && !allUsers[key].waiting_riders_list) {
-                //Verifica se o motorista rejeitou a corrida
-                bookingRef.once('value', data => {
-                    if (data.val()) {
-                        let rejectedDrivers = []
-                        if (data.val().rejectedDrivers) {
-                            rejectedDrivers = data.val().rejectedDrivers
-                            for (let i = 0; i < rejectedDrivers.length; i++) {
-                                if (rejectedDrivers[i] === key) {
-                                    currentRejected = true
-                                }
-                            }
-                        }
-                    } else {
-                        currentRejected = false
-                    }
-                }).then(() => {
-                    if (currentRejected === false) {
-                        if (searchDriverQueue ? allUsers[key].queue === true : allUsers[key].queue === false) {
-                            if (searchDriverQueue ? allUsers[key].queueAvailable === true : true) {
-                                bookingRef.once('value', snap => {
-                                    const booking = snap.val()
-                                    if (booking) {
-                                        let location1 = [booking.pickup.lat, booking.pickup.lng];    //Rider Lat and Lang
-                                        let location2 = null
-                                        let locationDriver = null
-
-                                        if (searchDriverQueue) {
-                                            admin.database().ref('bookings/' + allUsers[key].emCorrida + '/').once('value', snapshot => {
-                                                let dataBooking = snapshot.val()
-                                                location2 = [dataBooking.drop.lat, dataBooking.drop.lng]
-                                                locationDriver = [dataBooking.current.lat, dataBooking.current.lng]
-                                            }).then(() => {
-                                                let distanceDrop = getDistance(location1, location2)
-                                                let distanceTotal = distanceDrop + getDistance(location2, locationDriver)
-
-                                                if (distanceDrop <= 4 && distanceTotal < distTotal) {
-                                                    distTotal = distanceTotal
-                                                    driverUidSelected = key
-                                                }
-                                                return true
-                                            })
-                                                .catch(error => {
-                                                    throw new Error("Erro ao chamar a funçao de calculo de distancia")
-                                                })
-                                        }
-                                        else {
-                                            location2 = [allUsers[key].location.lat, allUsers[key].location.lng]  //Driver lat and lang
-                                            //Calcula a distancia entre dois pontos
-                                            let distance = getDistance(location1, location2)
-                                            let originalDistance = distance
-                                            if (originalDistance <= 4) { //4KM
-                                                //Salva sempre o mais proximo
-                                                if (distance < distanciaValue) {
-                                                    distanciaValue = distance
-                                                    driverUidSelected = key
-                                                }
-                                            }
-                                        }
-                                    }
-                                })
-                            }
-                        }
-                    }
-                    return true
-                })
-                    .catch(error => {
-                        throw new Error("Erro ao fazer as verificaçoes de distancia")
-                    })
-            }
-        }
-    }).then(() => {
-        if (driverUidSelected !== 0) {
-            const driverRef = admin.database().ref('users/' + driverUidSelected + '/')
-            driverRef.update({
-                have_internet: false
-            }).then(() => {
-                setTimeout(() => {
-                    driverRef.once('value', snap => {
-                        const data = snap.val()
-                        if (data && data.have_internet === true) {
-                            if (data.queue === true && data.queueAvailable === true && data.driverActiveStatus === true) {
-
-                                bookingRef.once('value', bookingData => {
-                                    admin.database().ref('users/' + driverUidSelected + '/' + "waiting_queue_riders" + '/' + bookingId + '/').set(bookingData.val())
-                                        .then(() => {
-                                            admin.database().ref(`users/` + bookingData.val().customer + '/my-booking/' + bookingId).update({ status: "NEW" })
-                                                .then(() => {
-                                                    admin.database().ref('bookings/' + bookingId + '/').update({
-                                                        status: "NEW",
-                                                        requestedDriver: driverUidSelected
-                                                    })
-                                                    RequestPushMsg(data.pushToken, "Você possui uma nova corrida!")
-                                                    return true
-                                                })
-                                                .catch(error => {
-                                                    throw new Error("Erro setando status da corrida pra NEW e enviando notify")
-                                                })
-                                            return true
-                                        })
-                                        .catch(error => {
-                                            throw new Error("Erro depois do waiting queue riders")
-                                        })
-                                })
-
-                                //this.setBookingDriver("waiting_queue_riders", bookingId, driverUidSelected)
-                            }
-                            else if (data.queue === false && data.driverActiveStatus === true) {
-
-                                bookingRef.once('value', bookingData => {
-                                    admin.database().ref('users/' + driverUidSelected + '/' + "waiting_riders_list" + '/' + bookingId + '/').set(bookingData.val())
-                                        .then(() => {
-                                            admin.database().ref('users/' + bookingData.val().customer + '/my-booking/' + bookingId + '/').update({ status: "NEW" })
-                                                .then(() => {
-                                                    admin.database().ref('bookings/' + bookingId + '/').update({
-                                                        status: "NEW",
-                                                        requestedDriver: driverUidSelected
-                                                    })
-                                                    RequestPushMsg(data.pushToken, "Você possui uma nova corrida!")
-                                                    return true
-                                                })
-                                                .catch(error => {
-                                                    throw new Error("Erro setando status da corrida pra NEW e enviando notify")
-                                                })
-                                            return true
-                                        })
-                                        .catch(error => {
-                                            throw new Error("Erro depois do waiting riders list")
-                                        })
-                                })
-
-                                //this.setBookingDriver("waiting_riders_list", bookingId, driverUidSelected)
-                            }
-                        }
-                        else {
-                            searchDriverQueue = !searchDriverQueue
-                            driverUidSelected = 0
-                            searchDriver(bookingId)
-                        }
-                    })
-                }, 4000)
-                return true
-            })
-                .catch(error => {
-                    throw new Error("Erro ao setar corrida no perfil do motorista")
-                })
-        }
-        else {
-            searchDriverQueue = !searchDriverQueue
-            driverUidSelected = 0
-            searchDriver(bookingId)
-        }
-        return true
-    })
-        .catch(error => {
-            throw new Error("Erro ao preparar a setagem de corrida do motorista")
-        })
-}
-
-exports.newBooking = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}').onCreate((snap, context) => {
-    const bookingId = context.params.bookingsId
-
-    return admin.database().ref('bookings/' + bookingId + '/').on('value', snap => {
-        const data = snap.val()
-        searchDriver(bookingId, data.carType)
-
-        if (data.status === 'REJECTED') {
-            searchDriver(bookingId)
-        }
-        else if (data.status === 'ACCEPTED' || data.status === 'CANCELLED') {
-            return true
-        }
-    })
-})
-*/
-
-exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.schedule('30 19 1 * *').timeZone('America/Sao_Paulo').onRun((context) => {
-    //'30 19 15 * *'
-    return admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
-        let dataUsers = data.val()
-        if (dataUsers) {
-            for (let key in dataUsers) {
-                if (dataUsers[key].saldo) {
-                    if (dataUsers[key].saldo <= -5) {
-                        checkUserAsaas(dataUsers[key].cpfNum).then((response) => {
-                            let value = dataUsers[key].saldo * (-1)
-                            let newValue = parseFloat(value).toFixed(2)
-
-                            //Pega a data atual e adiciona +5 pro vencimento do boleto
-                            var date = new Date()
-                            var dataG = new Date(date)
-                            var resulta = dataG.setDate(dataG.getDate() + 5)
-                            var resultt = new Date(resulta)
-                            let resultToAsaas = resultt.getFullYear() + '-' + (resultt.getMonth() + 1) + '-' + resultt.getDate()
-
-                            if (response.totalCount >= 1) {
-                                //user Asaas existe
-                                sendRequestPayment(response.data[0].id, resultToAsaas, newValue, key).then(() => {
-                                    admin.database().ref('users/' + key + '/').update({
-                                        saldo: 0,
-                                        payment_waiting: {
-                                            create_date: new Date().toLocaleDateString('pt-BR'),
-                                            asaas_id: response.data[0].id,
-                                            value: newValue,
-                                            vencimento_boleto: resultToAsaas
-                                        }
-                                    })
-                                    RequestPushMsg(dataUsers[key].pushToken, 'Seu boleto no valor de R$' + newValue + ' referente à taxa quinzenal do aplicativo Colt, já está disponível para pagamento!')
-                                    return null
-                                }).catch(error => {
-                                    throw new Error("Erro ao Enviar boleto Asaas - Função principal")
-                                })
-                            }
-                            //user n existe no Asaas
-                            else {
-                                let body = {
-                                    'name': dataUsers[key].firstName,
-                                    'email': dataUsers[key].email,
-                                    'mobilePhone': dataUsers[key].mobile,
-                                    'cpfCnpj': dataUsers[key].cpfNum,
-                                    'externalReference': key,
-                                    'notificationDisabled': false,
-                                }
-
-                                //Cria um novo usuario no Asaas
-                                createUserAsaas(body).then((response) => {
-
-                                    sendRequestPayment(response.id, resultToAsaas, newValue, key).then(() => {
-                                        admin.database().ref('users/' + key + '/').update({
-                                            saldo: 0,
-                                            payment_waiting: {
-                                                create_date: new Date().toLocaleDateString('pt-BR'),
-                                                asaas_id: response.id,
-                                                value: newValue,
-                                                vencimento_boleto: resultToAsaas
-                                            }
-                                        })
-                                        return null
-                                    }).catch(error => {
-                                        throw new Error("Erro ao criar usuario Asaas - Função principal")
-                                    })
-                                    return null
-                                }).catch(error => {
-                                    throw new Error("Erro ao criar usuario Asaas - Função principal")
-                                })
-                            }
-                            return null
-                        }).catch(error => {
-                            throw new Error("Erro ao checar usuario Asaas - Função principal")
-                        })
-                    }
-                }
-            }
-        }
-    })
-})
-
-exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub.schedule('30 19 16 * *').timeZone('America/Sao_Paulo').onRun((context) => {
-    //'30 19 15 * *'
-    return admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
-        let dataUsers = data.val()
-        if (dataUsers) {
-            for (let key in dataUsers) {
-                if (dataUsers[key].saldo) {
-                    if (dataUsers[key].saldo <= -5) {
-                        checkUserAsaas(dataUsers[key].cpfNum).then((response) => {
-                            let newValue = dataUsers[key].saldo * (-1)
-
-                            //Pega a data atual e adiciona +5 pro vencimento do boleto
-                            var date = new Date()
-                            var dataG = new Date(date)
-                            var resulta = dataG.setDate(dataG.getDate() + 5)
-                            var resultt = new Date(resulta)
-                            let resultToAsaas = resultt.getFullYear() + '-' + (resultt.getMonth() + 1) + '-' + resultt.getDate()
-
-                            if (response.totalCount >= 1) {
-                                //user Asaas existe
-                                sendRequestPayment(response.data[0].id, resultToAsaas, newValue, key).then(() => {
-                                    admin.database().ref('users/' + key + '/').update({
-                                        saldo: 0,
-                                        payment_waiting: {
-                                            create_date: new Date().toLocaleDateString('pt-BR'),
-                                            asaas_id: response.data[0].id,
-                                            value: newValue,
-                                            vencimento_boleto: resultToAsaas
-                                        }
-                                    })
-                                    RequestPushMsg(dataUsers[key].pushToken, 'Seu boleto no valor de R$' + newValue + ' referente à taxa quinzenal do aplicativo Colt, já está disponível para pagamento!')
-                                    return null
-                                }).catch(error => {
-                                    throw new Error("Erro ao Enviar boleto Asaas - Função principal")
-                                })
-                            }
-                            //user n existe no Asaas
-                            else {
-                                let body = {
-                                    'name': dataUsers[key].firstName,
-                                    'email': dataUsers[key].email,
-                                    'mobilePhone': dataUsers[key].mobile,
-                                    'cpfCnpj': dataUsers[key].cpfNum,
-                                    'externalReference': key,
-                                    'notificationDisabled': false,
-                                }
-
-                                //Cria um novo usuario no Asaas
-                                createUserAsaas(body).then((response) => {
-
-                                    sendRequestPayment(response.id, resultToAsaas, newValue, key).then(() => {
-                                        admin.database().ref('users/' + key + '/').update({
-                                            saldo: 0,
-                                            payment_waiting: {
-                                                create_date: new Date().toLocaleDateString('pt-BR'),
-                                                asaas_id: response.id,
-                                                value: newValue,
-                                                vencimento_boleto: resultToAsaas
-                                            }
-                                        })
-                                        return null
-                                    }).catch(error => {
-                                        throw new Error("Erro ao criar usuario Asaas - Função principal")
-                                    })
-                                    return null
-                                }).catch(error => {
-                                    throw new Error("Erro ao criar usuario Asaas - Função principal")
-                                })
-                            }
-                            return null
-                        }).catch(error => {
-                            throw new Error("Erro ao checar usuario Asaas - Função principal")
-                        })
-                    }
-                }
-            }
-        }
-    })
-})
-
-exports.verifyDriversPayment_6 = functions.region('southamerica-east1').pubsub.schedule('00 21 6 * *').timeZone('America/Sao_Paulo').onRun((context) => {
-
-    return admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
-        let dataUsers = data.val()
-        if (dataUsers) {
-            for (let key in dataUsers) {
-                if (dataUsers[key].payment_waiting) {
-                    checkPaymentAsaas(dataUsers[key].payment_waiting.asaas_id).then((response) => {
-
-                        if (response.totalCount >= 1) {
-                            if (response.data[0].status !== 'RECEIVED' || response.data[0].status !== 'CONFIRMED') {
-
-                                //Bloqueia o motorista 
-                                admin.database().ref('users/' + key + '/').update({
-                                    blocked_by_payment: {
-                                        date_blocked: new Date().toLocaleDateString('pt-BR'),
-                                        reason: 'Pagamento não confirmado 5 dias após a emissão do boleto.',
-                                        id_asaas: response.data[0].customer
-                                    }
-                                })
-                            } else {
-                                return admin.database().ref('users/' + key + '/' + payment_waiting + '/').remove()
-                            }
-                        }
-                        return true
-                    }).catch(error => {
-                        throw new Error("Erro ao verificar pagamento motorista - Principal")
-                    })
-                }
-            }
-        }
-    })
-})
-
-exports.verifyDriversPayment_21 = functions.region('southamerica-east1').pubsub.schedule('00 21 21 * *').timeZone('America/Sao_Paulo').onRun((context) => {
-
-    return admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
-        let dataUsers = data.val()
-        if (dataUsers) {
-            for (let key in dataUsers) {
-                if (dataUsers[key].payment_waiting) {
-                    checkPaymentAsaas(dataUsers[key].payment_waiting.asaas_id).then((response) => {
-
-                        if (response.totalCount >= 1) {
-                            if (response.data[0].status !== 'RECEIVED' || response.data[0].status !== 'CONFIRMED') {
-
-                                //Bloqueia o motorista 
-                                admin.database().ref('users/' + key + '/').update({
-                                    blocked_by_payment: {
-                                        date_blocked: new Date().toLocaleDateString('pt-BR'),
-                                        reason: 'Pagamento não confirmado 5 dias após a emissão do boleto.',
-                                        id_asaas: response.data[0].customer
-                                    }
-                                })
-                            } else {
-                                return admin.database().ref('users/' + key + '/' + payment_waiting + '/').remove()
-                            }
-                        }
-                        return true
-                    }).catch(error => {
-                        throw new Error("Erro ao verificar pagamento motorista - Principal")
-                    })
-                }
-            }
-        }
-    })
-})
-
-exports.manageMoney = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/manageMoney').onCreate((snap, context) => {
-    const bookingId = context.params.bookingsId;
+    const bookingId = bookingIdParam
     admin.database().ref('bookings/' + bookingId).on("value", (data) => {
         let dataBooking = data.val();
         let paymentMode = dataBooking.pagamento.payment_mode
@@ -800,6 +375,244 @@ exports.manageMoney = functions.region('southamerica-east1').database.ref('booki
             }
         }
     })
+}
+
+
+exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.schedule('30 19 1 * *').timeZone('America/Sao_Paulo').onRun((context) => {
+    //'30 19 15 * *'
+    return admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
+        let dataUsers = data.val()
+        if (dataUsers) {
+            for (let key in dataUsers) {
+                if (dataUsers[key].saldo) {
+                    if (dataUsers[key].saldo <= -5) {
+                        checkUserAsaas(dataUsers[key].cpfNum).then((response) => {
+                            let value = dataUsers[key].saldo * (-1)
+                            let newValue = parseFloat(value).toFixed(2)
+
+                            //Pega a data atual e adiciona +5 pro vencimento do boleto
+                            var date = new Date()
+                            var dataG = new Date(date)
+                            var resulta = dataG.setDate(dataG.getDate() + 5)
+                            var resultt = new Date(resulta)
+                            let resultToAsaas = resultt.getFullYear() + '-' + (resultt.getMonth() + 1) + '-' + resultt.getDate()
+
+                            if (response.totalCount >= 1) {
+                                //user Asaas existe
+                                sendRequestPayment(response.data[0].id, resultToAsaas, newValue, key).then(() => {
+                                    admin.database().ref('users/' + key + '/').update({
+                                        saldo: 0,
+                                        payment_waiting: {
+                                            create_date: new Date().toLocaleDateString('pt-BR'),
+                                            asaas_id: response.data[0].id,
+                                            value: newValue,
+                                            vencimento_boleto: resultToAsaas
+                                        }
+                                    })
+                                    RequestPushMsg(dataUsers[key].pushToken, 'Seu boleto no valor de R$' + newValue + ' referente à taxa quinzenal do aplicativo Colt, já está disponível para pagamento!')
+                                    return null
+                                }).catch(error => {
+                                    throw new Error("Erro ao Enviar boleto Asaas - Função principal")
+                                })
+                            }
+                            //user n existe no Asaas
+                            else {
+                                let newNumber = dataUsers[key].mobile
+                                if (newNumber.length > 11) {
+                                    newNumber = newNumber.substring(3)
+                                }
+                                let body = {
+                                    'name': dataUsers[key].firstName,
+                                    'email': dataUsers[key].email,
+                                    'mobilePhone': newNumber,
+                                    'cpfCnpj': dataUsers[key].cpfNum,
+                                    'externalReference': key,
+                                    'notificationDisabled': false,
+                                }
+
+                                //Cria um novo usuario no Asaas
+                                createUserAsaas(body).then((response) => {
+
+                                    sendRequestPayment(response.id, resultToAsaas, newValue, key).then(() => {
+                                        admin.database().ref('users/' + key + '/').update({
+                                            saldo: 0,
+                                            payment_waiting: {
+                                                create_date: new Date().toLocaleDateString('pt-BR'),
+                                                asaas_id: response.id,
+                                                value: newValue,
+                                                vencimento_boleto: resultToAsaas
+                                            }
+                                        })
+                                        return null
+                                    }).catch(error => {
+                                        throw new Error("Erro ao criar usuario Asaas - Função principal")
+                                    })
+                                    return null
+                                }).catch(error => {
+                                    throw new Error("Erro ao criar usuario Asaas - Função principal")
+                                })
+                            }
+                            return null
+                        }).catch(error => {
+                            throw new Error("Erro ao checar usuario Asaas - Função principal")
+                        })
+                    }
+                }
+            }
+        }
+    })
+})
+
+exports.requestPaymentDrivers_16 = functions.region('southamerica-east1').pubsub.schedule('30 19 16 * *').timeZone('America/Sao_Paulo').onRun((context) => {
+    //'30 19 15 * *'
+    return admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
+        let dataUsers = data.val()
+        if (dataUsers) {
+            for (let key in dataUsers) {
+                if (dataUsers[key].saldo) {
+                    if (dataUsers[key].saldo <= -5) {
+                        checkUserAsaas(dataUsers[key].cpfNum).then((response) => {
+                            let newValue = dataUsers[key].saldo * (-1)
+
+                            //Pega a data atual e adiciona +5 pro vencimento do boleto
+                            var date = new Date()
+                            var dataG = new Date(date)
+                            var resulta = dataG.setDate(dataG.getDate() + 5)
+                            var resultt = new Date(resulta)
+                            let resultToAsaas = resultt.getFullYear() + '-' + (resultt.getMonth() + 1) + '-' + resultt.getDate()
+
+                            if (response.totalCount >= 1) {
+                                //user Asaas existe
+                                sendRequestPayment(response.data[0].id, resultToAsaas, newValue, key).then(() => {
+                                    admin.database().ref('users/' + key + '/').update({
+                                        saldo: 0,
+                                        payment_waiting: {
+                                            create_date: new Date().toLocaleDateString('pt-BR'),
+                                            asaas_id: response.data[0].id,
+                                            value: newValue,
+                                            vencimento_boleto: resultToAsaas
+                                        }
+                                    })
+                                    RequestPushMsg(dataUsers[key].pushToken, 'Seu boleto no valor de R$' + newValue + ' referente à taxa quinzenal do aplicativo Colt, já está disponível para pagamento!')
+                                    return null
+                                }).catch(error => {
+                                    throw new Error("Erro ao Enviar boleto Asaas - Função principal")
+                                })
+                            }
+                            //user n existe no Asaas
+                            else {
+                                let newNumber = dataUsers[key].mobile
+                                if (newNumber.length > 11) {
+                                    newNumber = newNumber.substring(3)
+                                }
+                                let body = {
+                                    'name': dataUsers[key].firstName,
+                                    'email': dataUsers[key].email,
+                                    'mobilePhone': newNumber,
+                                    'cpfCnpj': dataUsers[key].cpfNum,
+                                    'externalReference': key,
+                                    'notificationDisabled': false,
+                                }
+
+                                //Cria um novo usuario no Asaas
+                                createUserAsaas(body).then((response) => {
+
+                                    sendRequestPayment(response.id, resultToAsaas, newValue, key).then(() => {
+                                        admin.database().ref('users/' + key + '/').update({
+                                            saldo: 0,
+                                            payment_waiting: {
+                                                create_date: new Date().toLocaleDateString('pt-BR'),
+                                                asaas_id: response.id,
+                                                value: newValue,
+                                                vencimento_boleto: resultToAsaas
+                                            }
+                                        })
+                                        return null
+                                    }).catch(error => {
+                                        throw new Error("Erro ao criar usuario Asaas - Função principal")
+                                    })
+                                    return null
+                                }).catch(error => {
+                                    throw new Error("Erro ao criar usuario Asaas - Função principal")
+                                })
+                            }
+                            return null
+                        }).catch(error => {
+                            throw new Error("Erro ao checar usuario Asaas - Função principal")
+                        })
+                    }
+                }
+            }
+        }
+    })
+})
+
+exports.verifyDriversPayment_6 = functions.region('southamerica-east1').pubsub.schedule('00 21 6 * *').timeZone('America/Sao_Paulo').onRun((context) => {
+
+    return admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
+        let dataUsers = data.val()
+        if (dataUsers) {
+            for (let key in dataUsers) {
+                if (dataUsers[key].payment_waiting) {
+                    checkPaymentAsaas(dataUsers[key].payment_waiting.asaas_id).then((response) => {
+
+                        if (response.totalCount >= 1) {
+                            if (response.data[0].status !== 'RECEIVED' || response.data[0].status !== 'CONFIRMED') {
+
+                                //Bloqueia o motorista 
+                                admin.database().ref('users/' + key + '/').update({
+                                    blocked_by_payment: {
+                                        date_blocked: new Date().toLocaleDateString('pt-BR'),
+                                        reason: 'Pagamento não confirmado 5 dias após a emissão do boleto.',
+                                        id_asaas: response.data[0].customer
+                                    }
+                                })
+                            } else {
+                                return admin.database().ref('users/' + key + '/' + payment_waiting + '/').remove()
+                            }
+                        }
+                        return true
+                    }).catch(error => {
+                        throw new Error("Erro ao verificar pagamento motorista - Principal")
+                    })
+                }
+            }
+        }
+    })
+})
+
+exports.verifyDriversPayment_21 = functions.region('southamerica-east1').pubsub.schedule('00 21 21 * *').timeZone('America/Sao_Paulo').onRun((context) => {
+
+    return admin.database().ref('/users').orderByChild("usertype").equalTo('driver').once("value", (data) => {
+        let dataUsers = data.val()
+        if (dataUsers) {
+            for (let key in dataUsers) {
+                if (dataUsers[key].payment_waiting) {
+                    checkPaymentAsaas(dataUsers[key].payment_waiting.asaas_id).then((response) => {
+
+                        if (response.totalCount >= 1) {
+                            if (response.data[0].status !== 'RECEIVED' || response.data[0].status !== 'CONFIRMED') {
+
+                                //Bloqueia o motorista 
+                                admin.database().ref('users/' + key + '/').update({
+                                    blocked_by_payment: {
+                                        date_blocked: new Date().toLocaleDateString('pt-BR'),
+                                        reason: 'Pagamento não confirmado 5 dias após a emissão do boleto.',
+                                        id_asaas: response.data[0].customer
+                                    }
+                                })
+                            } else {
+                                return admin.database().ref('users/' + key + '/' + payment_waiting + '/').remove()
+                            }
+                        }
+                        return true
+                    }).catch(error => {
+                        throw new Error("Erro ao verificar pagamento motorista - Principal")
+                    })
+                }
+            }
+        }
+    })
 })
 
 exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/finalCalcBooking').onCreate((snap, context) => {
@@ -846,6 +659,13 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                                     date: new Date().toString(),
                                                     booking_ref: bookingId,
                                                 })
+
+                                                manageMoney(bookingId).then(() => {
+                                                    return true
+                                                })
+                                                    .catch(error => {
+                                                        throw new Error("Erro atualizar carteira Passageiro")
+                                                    })
                                                 return true
                                             }).catch(error => {
                                                 throw new Error("Erro atualizar carteira Passageiro")
@@ -898,6 +718,12 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                                     date: new Date().toString(),
                                                     booking_ref: bookingId,
                                                 })
+                                                manageMoney(bookingId).then(() => {
+                                                    return true
+                                                })
+                                                    .catch(error => {
+                                                        throw new Error("Erro atualizar carteira Passageiro")
+                                                    })
                                                 return true
                                             }).catch(error => {
                                                 throw new Error("Erro atualizar carteira Passageiro")
@@ -927,6 +753,12 @@ exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('
                                     admin.database().ref('users/' + dataBooking.driver + '/my_bookings/' + bookingId + '/pagamento').update({
                                         payment_status: 'PAID'
                                     })
+                                    manageMoney(bookingId).then(() => {
+                                        return true
+                                    })
+                                        .catch(error => {
+                                            throw new Error("Erro atualizar carteira Passageiro")
+                                        })
                                     return true
                                 })
                                 .catch(error => {
@@ -1086,7 +918,7 @@ exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref
                 }
             }
         })
-    }, 60000)
+    }, 18000)
 })
 
 /*exports.bookingScheduler = functions.pubsub.schedule('every 5 minutes').onRun((context) => {

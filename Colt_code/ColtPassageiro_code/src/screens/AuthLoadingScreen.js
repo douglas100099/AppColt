@@ -105,7 +105,7 @@ export class AuthLoadingScreen extends React.Component {
           //verificação pra chamar somente uma vez a api que pega o address
           if (!this.getAdd) {
             this.getAdd = true
-            console.log(this.getAddress(coords.latitude + ',' + coords.longitude))
+            this.getAddress(coords.latitude + ',' + coords.longitude)
           }
         },
         error => console.log(error)
@@ -114,12 +114,12 @@ export class AuthLoadingScreen extends React.Component {
   }
 
   getAddress(params) {
-    return fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + params + '&key=' + google_map_key)
+    fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + params + '&key=' + google_map_key)
       .then((response) => response.json())
       .then((responseJson) => {
 
         firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
-          add:responseJson.results[0].formatted_address
+          add: responseJson.results[0].formatted_address
         })
       })
   }
@@ -134,20 +134,20 @@ export class AuthLoadingScreen extends React.Component {
           userData.once('value', userData => {
             if (userData.val()) {
               if (userData.val().usertype == 'rider') {
-                GetPushToken();
+                GetPushToken()
                 //this.StartBackgroundLocation();
                 //this._getLocationAsync();
 
                 this._watchPosition()
-                this._setSettings();
-                this.props.navigation.navigate('Root');
+                this._setSettings()
+                this.props.navigation.navigate('Root')
               }
               else {
-                firebase.auth().signOut();
-                alert(languageJSON.valid_rider);
+                firebase.auth().signOut()
+                alert(languageJSON.valid_rider)
               }
             } else {
-              var data = {};
+              var data = {}
               data.profile = {
                 name: user.name ? user.name : '',
                 last_name: user.last_name ? user.last_name : '',
@@ -160,7 +160,7 @@ export class AuthLoadingScreen extends React.Component {
           })
         } else {
           firebase.database().ref("settings").once("value", settingdata => {
-            let settings = settingdata.val();
+            let settings = settingdata.val()
             if ((user.providerData[0].providerId === "password" && settings.email_verify && user.emailVerified) || !settings.email_verify || user.providerData[0].providerId !== "password") {
               var data = {};
               data.profile = {
@@ -174,14 +174,14 @@ export class AuthLoadingScreen extends React.Component {
             }
             else {
               alert(languageJSON.email_verify_message);
-              user.sendEmailVerification();
-              firebase.auth().signOut();
-              this.props.navigation.navigate('Intro');
+              user.sendEmailVerification()
+              firebase.auth().signOut()
+              this.props.navigation.navigate('Intro')
             }
           });
         }
       } else {
-        this.props.navigation.navigate('Intro');
+        this.props.navigation.navigate('Intro')
       }
     })
 

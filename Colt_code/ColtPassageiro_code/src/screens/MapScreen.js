@@ -433,6 +433,9 @@ export default class MapScreen extends React.Component {
         }
         else if (this.state.statusCorrida == 'START') {
             this.props.navigation.replace('trackRide', { data: this.state.bookingParam, bId: this.state.keyBooking });
+        } 
+        else {
+            alert("Essa corrida não está mais disponível!")
         }
     }
 
@@ -465,6 +468,12 @@ export default class MapScreen extends React.Component {
                                 statusCorrida: "START",
                                 bookingParam: bookingData[key],
                                 keyBooking: key
+                            })
+                        } else if(bookingData[key].status == "CANCELLED"){
+                            this.setState({
+                                statusCorrida: "",
+                                bookingParam: null,
+                                keyBooking: null
                             })
                         }
                     }

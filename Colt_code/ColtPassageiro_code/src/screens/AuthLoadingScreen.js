@@ -105,7 +105,7 @@ export class AuthLoadingScreen extends React.Component {
           //verificação pra chamar somente uma vez a api que pega o address
           if (!this.getAdd) {
             this.getAdd = true
-            console.log(this.getAddress(coords.latitude + ',' + coords.longitude))
+            this.getAddress(coords.latitude + ',' + coords.longitude)
           }
         },
         error => console.log(error)
@@ -114,7 +114,7 @@ export class AuthLoadingScreen extends React.Component {
   }
 
   getAddress(params) {
-    return fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + params + '&key=' + google_map_key)
+    fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + params + '&key=' + google_map_key)
       .then((response) => response.json())
       .then((responseJson) => {
 

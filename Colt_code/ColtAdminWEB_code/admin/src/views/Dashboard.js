@@ -122,7 +122,7 @@ const Dashboard = () => {
             }
           }
         }
-      }
+      } 
       setDataEst(dataEst);
       setDataOnline(driverOnlineN);
       setDriverEmCorrida(driverEmCorrida);

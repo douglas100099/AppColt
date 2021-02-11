@@ -256,8 +256,8 @@ export default class RideDetails extends React.Component {
                                     ref={(ref) => this.map = ref}
                                     provider={PROVIDER_GOOGLE}
                                     region={{
-                                        latitude: (this.state.intialregion.latitude),
-                                        longitude: (this.state.intialregion.longitude),
+                                        latitude: this.state.intialregion.latitude ? this.state.intialregion.latitude : 0,
+                                        longitude: this.state.intialregion.longitude ? this.state.intialregion.longitude : 0,
                                         latitudeDelta: 0.0143,
                                         longitudeDelta: 1.9421
                                     }}
@@ -340,7 +340,7 @@ export default class RideDetails extends React.Component {
                                                         <Text style={{ position: 'absolute', top: 5, fontFamily: 'Inter-Medium', marginRight: 20 }}> {this.state.paramData.pickup.add.split(',')[0] + ', ' + this.state.paramData.pickup.add.split(',')[1]} </Text>
                                                         : null}
                                                     {this.state.paramData && this.state.paramData.waypoint ?
-                                                        <Text style={{ fontFamily: 'Inter-Medium', marginRight: 20 }}> {this.state.paramData.waypoint.add.split(',')[0]} </Text>
+                                                        <Text style={{ fontSize: 13, paddingRight: 25, fontFamily: 'Inter-Medium', marginRight: 20 }}> {this.state.paramData.waypoint.add.split(',')[0]} </Text>
                                                         : null}
                                                     {this.state.paramData && this.state.paramData.drop ?
                                                         <Text style={{ position: 'absolute', bottom: 5, fontFamily: 'Inter-Medium', marginRight: 20 }}> {this.state.paramData.drop.add.split(',')[0] + ', ' + this.state.paramData.drop.add.split(',')[1]} </Text>
@@ -366,13 +366,13 @@ export default class RideDetails extends React.Component {
                         </View>
                         {this.state.paramData ?
                             this.state.paramData.commentRider ?
-                                    <View style={{ paddingLeft: 20, paddingVertical: 10 }}>
-                                        <Text style={{ fontFamily: 'Inter-ExtraBold', fontSize: 16 }}> Seu comentário </Text>
-                                        <Text style={{ fontFamily: 'Inter-Medium', paddingTop: 5, paddingHorizontal: 20 }}>
-                                            - "{this.state.paramData.commentRider}"
+                                <View style={{ paddingLeft: 20, paddingVertical: 10 }}>
+                                    <Text style={{ fontFamily: 'Inter-ExtraBold', fontSize: 16 }}> Seu comentário </Text>
+                                    <Text style={{ fontFamily: 'Inter-Medium', paddingTop: 5, paddingHorizontal: 20 }}>
+                                        - "{this.state.paramData.commentRider}"
                                         </Text>
-                                    </View>
-                                    : null
+                                </View>
+                                : null
                             : null}
                         {this.state.paramData ?
                             this.state.paramData.pagamento.cancellValue > 0 ?
@@ -418,7 +418,7 @@ export default class RideDetails extends React.Component {
                                     </View>
                                     : null}
 
-                                <TouchableOpacity style={{ position: 'absolute', right: 30 }} onPress={() => { this.onPressCall('tel: ' + this.state.paramData.driver_contact) }}>
+                                {/*<TouchableOpacity style={{ position: 'absolute', right: 30 }} onPress={() => { this.onPressCall('tel: ' + this.state.paramData.driver_contact) }}>
                                     <Icon
                                         name='ios-call'
                                         type='ionicon'
@@ -426,7 +426,7 @@ export default class RideDetails extends React.Component {
                                         size={30}
                                     //containerStyle={{ opacity: .5 }}
                                     />
-                                </TouchableOpacity>
+                                </TouchableOpacity>*/}
                             </View>
                         </View>
 
@@ -442,7 +442,7 @@ export default class RideDetails extends React.Component {
                                             color={colors.DEEPBLUE}
                                             size={22}
                                         />
-                                        <Text style={{ color: colors.DEEPBLUE, fontFamily: 'Inter-Medium', marginLeft: 5, paddingVertical: 10, fontSize: width < 375 ? 13 : 15 }}>Você usou um cupom de desconto nessa corrida!</Text>
+                                        <Text style={{ paddingHorizontal: 10, color: colors.DEEPBLUE, fontFamily: 'Inter-Medium', marginLeft: 5, paddingVertical: 10, fontSize: width < 375 ? 13 : 15 }}>Você usou um cupom de desconto nessa corrida!</Text>
                                     </View>
                                     : null}
                                 <View>
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.GREY2,
         borderRadius: 10,
-        marginHorizontal: 20
+        marginHorizontal: 10
     },
     cardDriver: {
         borderRadius: 15,
@@ -561,6 +561,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         height: 60,
         marginTop: 15,
+        marginBottom: Platform.OS == "ios" ? 30 : 10,
         marginHorizontal: 15,
         justifyContent: 'center',
         alignItems: 'center',

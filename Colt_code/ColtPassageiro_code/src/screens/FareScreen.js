@@ -272,16 +272,16 @@ export default class FareScreen extends React.Component {
 
     //Carrega o valor que o usuario tem na carteira e o id do dispositivo dele
     getDetailsRider() {
-        const userData = firebase.database().ref('users/' + this.state.curUID.uid + "/");
+        const userData = firebase.database().ref('users/' + this.state.curUID.uid + "/")
         userData.once('value', userData => {
-            this.setState({ walletBallance: userData.val().walletBalance, deviceId: userData.val().deviceId });
+            this.setState({ walletBallance: userData.val().walletBalance, deviceId: userData.val().deviceId })
         })
     }
 
     //Confirma corrida e começa a procurar motorista
     confirmarCorrida() {
-        clearInterval(this.state.intervalDriversTime);
-        var curuser = this.state.curUID.uid;
+        clearInterval(this.state.intervalDriversTime)
+        var curuser = this.state.curUID.uid
 
         var pickUp = { lat: this.state.region.wherelatitude, lng: this.state.region.wherelongitude, add: this.state.region.whereText };
         var drop = { lat: this.state.region.droplatitude, lng: this.state.region.droplongitude, add: this.state.region.droptext };
@@ -290,7 +290,7 @@ export default class FareScreen extends React.Component {
 
         if (this.state.settings.otp_secure)
             secureOtp = Math.floor(Math.random() * 90000) + 10000;
-        let today = new Date().toString();
+        let today = new Date().toString()
 
         var pagamentoObj = {
             estimate: this.state.estimateFare,
@@ -369,7 +369,7 @@ export default class FareScreen extends React.Component {
         }
 
         firebase.database().ref('bookings/').push(data).then((res) => {
-            var bookingKey = res.key;
+            var bookingKey = res.key
             firebase.database().ref('users/' + curuser + '/my-booking/' + bookingKey + '/').set(MyBooking).then((res) => {
 
                 let bookingItens = {
@@ -408,8 +408,8 @@ export default class FareScreen extends React.Component {
             const userData = firebase.database().ref('users/').orderByChild("usertype").equalTo('driver');
             userData.once('value', userData => {
                 if (userData.val()) {
-                    let allUsers = userData.val();
-                    this.prepareDrivers(allUsers);
+                    let allUsers = userData.val()
+                    this.prepareDrivers(allUsers)
                 }
             })
         }
@@ -555,7 +555,7 @@ export default class FareScreen extends React.Component {
     //Abre o modal de escolha de pagamento
     openModal = () => {
         this.state.openModalPayment ? setTimeout(() => { this.setState({ openModalPayment: false }) }, 100) :
-            this.setState({ openModalPayment: true });
+            this.setState({ openModalPayment: true })
     }
 
     //Modal de escolha do metodo de pagamento

@@ -5,16 +5,12 @@ import {
     StyleSheet,
     View,
     Text,
-    TouchableWithoutFeedback,
     Dimensions,
-    TouchableOpacity,
-    Modal,
     Platform,
 } from 'react-native';
 import BtnVoltar from '../components/BtnVoltar';
 var { width, height } = Dimensions.get('window');
 import * as firebase from 'firebase';
-import languageJSON from '../common/language';
 import { ScrollView } from 'react-native-gesture-handler';
 
 export default class AboutPage extends React.Component {
@@ -23,7 +19,7 @@ export default class AboutPage extends React.Component {
         super(props);
         this.state = {
             open: false,
-        };
+        }
     }
 
     componentDidMount() {
@@ -31,7 +27,7 @@ export default class AboutPage extends React.Component {
         about.once('value', aboutData => {
             if (aboutData.val()) {
                 let data = aboutData.val()
-                this.setState({ data: data });
+                this.setState({ data: data })
             }
         })
     }

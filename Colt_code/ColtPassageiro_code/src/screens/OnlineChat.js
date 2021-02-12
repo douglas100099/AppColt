@@ -10,7 +10,6 @@ import {
   Image,
   Keyboard,
   TextInput,
-  TouchableWithoutFeedback,
   Platform
 } from "react-native";
 import { colors } from "../common/theme";

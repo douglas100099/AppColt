@@ -21,7 +21,7 @@ export default class EditProfilePage extends React.Component {
 
         let curuser = firebase.auth().currentUser.uid;
         firebase.database().ref('users/'+curuser).update(regData).then(()=>{
-          this.props.navigation.pop();
+          this.props.navigation.pop()
         })
         
     }

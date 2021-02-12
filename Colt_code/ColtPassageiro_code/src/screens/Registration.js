@@ -29,8 +29,8 @@ export default class RegistrationPage extends React.Component {
     }).then(() => {
       firebase.database().ref('users/').child(firebase.auth().currentUser.uid).set(regData).then(() => {
         this.props.navigation.navigate('Root');
-      });
-    });
+      })
+    })
   }
 
   render() {

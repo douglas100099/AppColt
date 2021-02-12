@@ -4,6 +4,7 @@
     "description": "Aplicativo de transporte",
     "slug": "Colt",
     "privacy": "public",
+    "scheme": "coltpassageiro",
     "platforms": [
       "ios",
       "android"

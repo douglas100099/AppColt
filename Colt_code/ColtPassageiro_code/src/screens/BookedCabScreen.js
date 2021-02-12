@@ -297,6 +297,7 @@ export default class BookedCabScreen extends React.Component {
                 this.driverFound = true
                 this.setState({ driverSearch: false })
                 this.sendPushNotification(this.state.currentUser, "Estamos conectando você ao motorista.")
+                //Linking.openURL("coltpassageiro://")
 
                 const driverRef = firebase.database().ref('users/' + this.driverObj.driverUid + '/')
                 driverRef.once('value', snap => {

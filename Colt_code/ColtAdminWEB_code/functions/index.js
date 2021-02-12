@@ -1044,62 +1044,95 @@ exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref
                     admin.database().ref("users/" + requested + "/").once('value', snap => {
                         const data = snap.val()
                         if (data.waiting_queue_riders) {
+                            let arrayRejected = []
 
                             //Corrida em espera
                             admin.database().ref("users/" + requested + "/waiting_queue_riders/" + bookingId).remove()
-                            admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove()
+                                .then(() => {
 
-                            let arrayRejected = []
-                            if (dataBooking.rejectedDrivers) {
-                                for (let key in dataBooking.rejectedDrivers) {
-                                    arrayRejected.push(dataBooking.rejectedDrivers[key])
-                                }
-                                arrayRejected.push(requested)
-                                admin.database().ref('bookings/' + bookingId).update({
-                                    rejectedDrivers: arrayRejected,
-                                    status: 'REJECTED'
+                                    if (dataBooking.rejectedDrivers) {
+                                        for (let key in dataBooking.rejectedDrivers) {
+                                            arrayRejected.push(dataBooking.rejectedDrivers[key])
+                                        }
+                                        arrayRejected.push(requested)
+                                        admin.database().ref('bookings/' + bookingId).update({
+                                            rejectedDrivers: arrayRejected,
+                                            status: 'REJECTED'
+                                        })
+                                            .then(() => {
+                                                return admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + bookingId + '/').update({ status: 'REJECTED' })
+                                            })
+                                            .catch(error => {
+                                                throw new Error("Erro ao atualizar motorista")
+                                            })
+
+                                    }
+                                    else {
+                                        arrayRejected.push(requested)
+                                        admin.database().ref('bookings/' + bookingId).update({
+                                            rejectedDrivers: arrayRejected,
+                                            status: 'REJECTED'
+                                        }).then(() => {
+                                            return admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + bookingId + '/').update({ status: 'REJECTED' })
+                                        })
+                                            .catch(error => {
+                                                throw new Error("Erro ao atualizar motorista")
+                                            })
+                                    }
+                                    return true
                                 })
-                            } else {
-                                arrayRejected.push(requested)
-                                admin.database().ref('bookings/' + bookingId).update({
-                                    rejectedDrivers: arrayRejected,
-                                    status: 'REJECTED'
+                                .catch(error => {
+                                    throw new Error("Erro ao atualizar motorista")
                                 })
-                            }
                         }
                         else if (data.waiting_riders_list) {
-                            admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove()
-                            admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove()
-
-                            /*admin.database().ref("users/" + requested + "/in_reject_progress").update({
-                                punido: false
-                            });*/
-                            admin.database().ref("users/" + requested + '/').update({
-                                driverActiveStatus: false,
-                                queue: false
-                            });
-
                             let arrayRejected = []
-                            if (dataBooking.rejectedDrivers) {
-                                for (let key in dataBooking.rejectedDrivers) {
-                                    arrayRejected.push(dataBooking.rejectedDrivers[key])
-                                }
-                                arrayRejected.push(requested)
-                                admin.database().ref('bookings/' + bookingId).update({
-                                    rejectedDrivers: arrayRejected,
-                                    status: 'REJECTED'
+
+                            admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove()
+                                .then(() => {
+                                    admin.database().ref("users/" + requested + '/').update({
+                                        driverActiveStatus: false,
+                                        queue: false
+                                    })
+                                        .then(() => {
+                                            if (dataBooking.rejectedDrivers) {
+                                                for (let key in dataBooking.rejectedDrivers) {
+                                                    arrayRejected.push(dataBooking.rejectedDrivers[key])
+                                                }
+                                                arrayRejected.push(requested)
+                                                admin.database().ref('bookings/' + bookingId).update({
+                                                    rejectedDrivers: arrayRejected,
+                                                    status: 'REJECTED'
+                                                }).then(() => {
+                                                    return admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + bookingId + '/').update({ status: 'REJECTED' })
+                                                })
+                                                    .catch(error => {
+                                                        throw new Error("Erro ao atualizar motorista")
+                                                    })
+                                            } else {
+                                                arrayRejected.push(requested)
+                                                admin.database().ref('bookings/' + bookingId).update({
+                                                    rejectedDrivers: arrayRejected,
+                                                    status: 'REJECTED'
+                                                }).then(() => {
+                                                    return admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + bookingId + '/').update({ status: 'REJECTED' })
+                                                })
+                                                    .catch(error => {
+                                                        throw new Error("Erro ao atualizar motorista")
+                                                    })
+                                            }
+                                            return true
+                                        })
+                                        .catch(error => {
+                                            throw new Error("Erro ao atualizar motorista")
+                                        })
+                                    return true
                                 })
-                            } else {
-                                arrayRejected.push(requested)
-                                admin.database().ref('bookings/' + bookingId).update({
-                                    rejectedDrivers: arrayRejected,
-                                    status: 'REJECTED'
+                                .catch(error => {
+                                    throw new Error("Erro ao remover requested")
                                 })
-                            }
                         }
                     })
-
-                    admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + bookingId + '/').update({ status: 'REJECTED' })
                 }
             }
         })

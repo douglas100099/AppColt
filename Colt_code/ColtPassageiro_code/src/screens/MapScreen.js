@@ -726,7 +726,6 @@ const styles = StyleSheet.create({
     },
     viewStyleTop: {
         backgroundColor: colors.WHITE,
-        //top: Platform.select({ ios: 60, android: 40 }),
         width: width,
     },
     viewCorrida: {

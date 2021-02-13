@@ -26,6 +26,7 @@ import distanceCalc from '../common/distanceCalc';
 import { TrackNow } from '../components';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import mapStyleAndroid from '../../mapStyleAndroid.json';
+import { getPixelSize } from '../common/utils';
 
 
 import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
@@ -297,7 +298,8 @@ export default class BookedCabScreen extends React.Component {
                 this.driverFound = true
                 this.setState({ driverSearch: false })
                 this.sendPushNotification(this.state.currentUser, "Estamos conectando você ao motorista.")
-                //Linking.openURL("coltpassageiro://")
+                this.fitDriverUser()
+                Linking.openURL("coltpassageiro://")
 
                 const driverRef = firebase.database().ref('users/' + this.driverObj.driverUid + '/')
                 driverRef.once('value', snap => {
@@ -715,11 +717,13 @@ export default class BookedCabScreen extends React.Component {
         this.props.navigation.navigate("onlineChat", { passData: this.getParamData, firstNameRider: this.state.firstNameRider })
     }
 
-    animateToUser() {
-        this.mapView.animateToRegion(this.state.region, 500)
-        setTimeout(() => {
-            this.setState({ showsMyLocationBtn: false })
-        }, 600)
+    fitDriverUser() {
+        if (this.driverObj.driverLat && this.driverObj.driverLng) {
+            this.mapView.fitToCoordinates([{ latitude: this.driverObj.driverLat, longitude: this.driverObj.driverLng }, { latitude: this.state.region.wherelatitude, longitude: this.state.region.wherelongitude }], {
+                edgePadding: { top: getPixelSize(50), right: getPixelSize(50), bottom: getPixelSize(50), left: getPixelSize(50) },
+                animated: true,
+            })
+        }
     }
 
     render() {
@@ -770,6 +774,8 @@ export default class BookedCabScreen extends React.Component {
                                                     style={{ position: 'absolute' }}
                                                 />*/}
                                                 <IconCarMap
+                                                    width={40}
+                                                    height={40}
                                                     style={{
                                                         transform: [{ rotate: this.driverObj.driverAngle + "deg" }],
                                                         shadowColor: colors.BLACK,

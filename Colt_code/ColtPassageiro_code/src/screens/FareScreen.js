@@ -482,10 +482,14 @@ export default class FareScreen extends React.Component {
 
     //Seleciona o tipo de carro que vai ser a corrida
     selectCarType(type) {
-        if (type == 0) {
-            this.setState({ selected: 0, estimateFare: this.state.detailsBooking[0].estimateFare, distance: this.state.detailsBooking[0].distance, carType: this.state.rateDetailsObjects[0].name, carImage: this.state.rateDetailsObjects[0].image })
-        } else if (type == 1) {
-            this.setState({ selected: 1, estimateFare: this.state.detailsBooking[1].estimateFare, distance: this.state.detailsBooking[1].distance, carType: this.state.rateDetailsObjects[1].name, carImage: this.state.rateDetailsObjects[1].image })
+        if(this.state.detailsBooking[0] && this.state.detailsBooking[1]){
+            if (type == 0) {
+                this.setState({ selected: 0, estimateFare: this.state.detailsBooking[0].estimateFare, distance: this.state.detailsBooking[0].distance, carType: this.state.rateDetailsObjects[0].name, carImage: this.state.rateDetailsObjects[0].image })
+            } else if (type == 1) {
+                this.setState({ selected: 1, estimateFare: this.state.detailsBooking[1].estimateFare, distance: this.state.detailsBooking[1].distance, carType: this.state.rateDetailsObjects[1].name, carImage: this.state.rateDetailsObjects[1].image })
+            }
+        } else {
+            alert("Estamos calculando os preços!")
         }
     }
 

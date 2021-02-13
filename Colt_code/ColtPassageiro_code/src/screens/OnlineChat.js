@@ -10,7 +10,6 @@ import {
   Image,
   Keyboard,
   TextInput,
-  TouchableWithoutFeedback,
   Platform
 } from "react-native";
 import { colors } from "../common/theme";
@@ -131,9 +130,9 @@ export default class OnlineChat extends Component {
 
 
   componentWillUnmount() {
-    this._isMounted = false;
-    this.keyboardDidShowListener.remove();
-    this.keyboardDidHideListener.remove();
+    this._isMounted = false
+    this.keyboardDidShowListener.remove()
+    this.keyboardDidHideListener.remove()
     // DOOUG LARGOU UM PIN CASH ONGUEIME
     if (this.sound && this.state.isloaded) {
       this.sound.unloadAsync()
@@ -149,7 +148,7 @@ export default class OnlineChat extends Component {
   // AQUI SE O CARA APERTAR CHAMA ESSA FUNÇÃO PARA PREPARAR E INICIAR A GRAVAÇÃO COM O DEDO APERTADO E CLARO
   startRecording = async () => {
     if (this.state.statusPermi) {
-      this.recording = new Audio.Recording();
+      this.recording = new Audio.Recording()
 
       if (this._isMounted) {
         this.setState({ isRecording: true, isRecord: false });
@@ -210,7 +209,7 @@ export default class OnlineChat extends Component {
 
       this.sound.loadAsync({ uri: audio }, status, false).then((result) => {
         duration = result.durationMillis;
-        this.setState({ isloaded: result.isLoaded });
+        this.setState({ isloaded: result.isLoaded })
       }).then(() => {
         if (this._isMounted) {
           this.setState({ timeTimeout: setTimeout(() => { this.setState({ isPlaying: false }), this.sound.stopAsync() }, duration) })
@@ -227,7 +226,7 @@ export default class OnlineChat extends Component {
     if (this.state.timeTimeout != null) {
       console.log('REMOVEU')
       clearTimeout(this.state.timeTimeout)
-      this.sound.stopAsync();
+      this.sound.stopAsync()
       if (this._isMounted) {
         this.setState({ isPlaying: false })
       }
@@ -252,17 +251,17 @@ export default class OnlineChat extends Component {
     const blob = await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.onload = function () {
-        resolve(xhr.response); // when BlobModule finishes reading, resolve with the blob
-      };
+        resolve(xhr.response) // when BlobModule finishes reading, resolve with the blob
+      }
       xhr.onerror = function () {
         reject(new TypeError('Erro na conversão do áudio'));
         //this.setState({ loading: false });
-        alert("ERROR 1");
+        alert("ERROR 1")
       };
       let audioURI = this.recording.getURI()
-      xhr.responseType = 'blob'; // use BlobModule's UriHandler
+      xhr.responseType = 'blob' // use BlobModule's UriHandler
       xhr.open('GET', audioURI, true); // fetch the blob from uri in async mode
-      xhr.send(null); // no initial data
+      xhr.send(null) // no initial data
     });
 
     if ((blob.size / 1000000) > 3) {
@@ -276,10 +275,10 @@ export default class OnlineChat extends Component {
         this.setState({ isRecord: false, isRecording: false })
         return audioRef.getDownloadURL()
       }).then((audioURL) => {
-        this.verifyMessage(null, audioURL);
+        this.verifyMessage(null, audioURL)
       }).catch(error => {
-        console.log(error);
-        alert('Ops, tivemos um problema.');
+        console.log(error)
+        alert('Ops, tivemos um problema.')
       });
     }
   }
@@ -293,7 +292,7 @@ export default class OnlineChat extends Component {
         this.sendMessege(null, audio)
         console.log('POSSUI AUDIO E NÃO MSG')
       } else {
-        alert("Por favor, digite algo...");
+        alert("Por favor, digite algo...")
       }
     } else {
       this.sendMessege(inputmessage, null)
@@ -342,12 +341,12 @@ export default class OnlineChat extends Component {
   // DOOUG
   // FIZ ALTERAÇÕES AQUI RECEBENDO UM SEGUNDO PARAMS, QUE NO CASO E O AUDIO NE CLARO COM CERTEZA
   sendMessege(inputmessage, audioURL) {
-    var today = new Date();
+    var today = new Date()
     var time = today.toLocaleTimeString('pt-BR').split(':')[0] + ':' + today.toLocaleTimeString('pt-BR').split(':')[1];
-    var dd = String(today.getDate()).padStart(2, '0');
-    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
-    var yyyy = today.getFullYear();
-    today = dd + '/' + mm + '/' + yyyy;
+    var dd = String(today.getDate()).padStart(2, '0')
+    var mm = String(today.getMonth() + 1).padStart(2, '0') //January is 0!
+    var yyyy = today.getFullYear()
+    today = dd + '/' + mm + '/' + yyyy
 
     let totalId = this.state.carbookedInfo.customer + ',' + this.state.carbookedInfo.driver
     this.setState({ id: totalId })

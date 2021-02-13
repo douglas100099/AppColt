@@ -72,9 +72,9 @@ export default class ProfileScreen extends React.Component {
                 if (userData.val()) {
                     this.setState({ userImage: userData.val().profile_image, 
                     savedLocation: userData.val().savedLocations ? userData.val().savedLocations.add.split(',')[0] + userData.val().savedLocations.add.split(',')[1]
-                    : null });
+                    : null })
                     this.setState(userData.val(), (res) => {
-                    });
+                    })
                 }
             })
         })
@@ -134,15 +134,15 @@ export default class ProfileScreen extends React.Component {
 
     async uploadmultimedia(url) {
         const blob = await new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
+            const xhr = new XMLHttpRequest()
             xhr.onload = function () {
-                resolve(xhr.response); // when BlobModule finishes reading, resolve with the blob
+                resolve(xhr.response) // when BlobModule finishes reading, resolve with the blob
             };
             xhr.onerror = function () {
                 reject(new TypeError(languageJSON.network_request_failed)); // error occurred, rejecting
             };
-            xhr.responseType = 'blob'; // use BlobModule's UriHandler
-            xhr.open('GET', url, true); // fetch the blob from uri in async mode
+            xhr.responseType = 'blob' // use BlobModule's UriHandler
+            xhr.open('GET', url, true) // fetch the blob from uri in async mode
             xhr.send(null); // no initial data
         });
 
@@ -259,7 +259,7 @@ export default class ProfileScreen extends React.Component {
     }
 
     goWallet() {
-        this.props.navigation.navigate('wallet');
+        this.props.navigation.navigate('wallet')
     }
 
     goBack = () => {

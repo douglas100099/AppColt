@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import {
     StyleSheet,
     View,
-    Image,
     Text,
     Platform,
     Dimensions,
@@ -88,7 +87,7 @@ export default class MobileLoginScreen extends Component {
             });
         } catch (err) {
             this.setState({ btnConfirmar: false })
-            alert(languageJSON.otp_error);
+            alert(languageJSON.otp_error)
         }
     }
     

@@ -36,17 +36,17 @@ export default class WalletDetails extends React.Component {
 
   _retrieveSettings = async () => {
     try {
-      const value = await AsyncStorage.getItem('settings');
+      const value = await AsyncStorage.getItem('settings')
       if (value !== null) {
-        this.setState({ settings: JSON.parse(value) });
+        this.setState({ settings: JSON.parse(value) })
       }
     } catch (error) {
-      console.log("Asyncstorage issue 12");
+      console.log("Asyncstorage issue 12")
     }
   };
 
   componentDidMount() {
-    const root = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/');
+    const root = firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/')
     root.on('value', walletData => {
       if (walletData.val()) {
         let udata = walletData.val()
@@ -76,7 +76,7 @@ export default class WalletDetails extends React.Component {
         }
       })
       .catch((error) => {
-        console.log(error);
+        console.log(error)
       });
   }
 

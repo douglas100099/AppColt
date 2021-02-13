@@ -44,16 +44,18 @@ export default class RideListPage extends React.Component {
 
     //Fetching My Rides
     getMyRides() {
-        const ridesListPath = firebase.database().ref('/users/' + this.state.currentUser.uid + '/my-booking/');
+        const ridesListPath = firebase.database().ref('/users/' + this.state.currentUser.uid + '/my-booking/')
         ridesListPath.on('value', myRidesData => {
             if (myRidesData.val()) {
-                var ridesOBJ = myRidesData.val();
-                var allRides = [];
+                var ridesOBJ = myRidesData.val()
+                var allRides = []
                 for (let key in ridesOBJ) {
-                    ridesOBJ[key].bookingId = key;
-                    var Bdate = new Date(ridesOBJ[key].tripdate);
-                    ridesOBJ[key].bookingDate = Bdate.toLocaleString(dateStyle);
-                    allRides.push(ridesOBJ[key]);
+                    ridesOBJ[key].bookingId = key
+                    var Bdate = new Date(ridesOBJ[key].tripdate)
+                    ridesOBJ[key].bookingDate = Bdate.toLocaleString(dateStyle)
+                    if (ridesOBJ[key].status != "NEW") {
+                        allRides.push(ridesOBJ[key])
+                    }
                 }
                 if (allRides) {
                     this.setState({

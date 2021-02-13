@@ -38,12 +38,6 @@ export default class RideList extends React.Component {
         this._retrieveSettings();
     }
 
-
-    onPressButton(item, index) {
-        const { onPressButton } = this.props;
-        onPressButton(item, index)
-    }
-
     dataAtualFormatada(item) {
         var data = new Date(item.tripdate),
             dia = data.getDate().toString().padStart(2, '0'),
@@ -56,7 +50,7 @@ export default class RideList extends React.Component {
     newData = ({ item, index }) => {
         const { onPressButton } = this.props;
         return (
-            <TouchableOpacity style={styles.iconClickStyle} onPress={() => this.onPressButton(item, index)}>
+            <TouchableOpacity style={styles.iconClickStyle} onPress={() => onPressButton(item, index)}>
                 <View style={styles.flexViewStyle}>
                     <View style={{ flexDirection: 'row' }}>
                         <View style={styles.textView1}>
@@ -69,22 +63,19 @@ export default class RideList extends React.Component {
                                         : ''
                                     }
                                 </Text>
-                                {
-                                    item.status == 'CANCELLED' ?
-                                        <Text style={styles.dateStyle2}>CANCELADO</Text>
-                                        :
-                                        null
-                                }
+                                
+                                <Text style={styles.dateStyleTimeout}>{item.status == 'TIMEOUT' ? "Tempo esgotado" : null}</Text>
+                                <Text style={styles.dateStyleCancelled}>{item.status == 'CANCELLED' ? "Cancelada" : null}</Text>
+
+                                <Text style={[styles.dateStyleAccepted, { fontSize: 16, color: colors.DEEPBLUE }]}>{item.status == 'ACCEPTED' ? "Em andamento" : null}</Text>
+                                <Text style={[styles.dateStyleAccepted, { fontSize: 16, color: colors.DEEPBLUE }]}>{item.status == 'START' ? "Em andamento" : null}</Text>
+
+                                <Text style={styles.dateStyleEndPaid}>{item.status == 'END' && item.pagamento.payment_status == 'PAID' ? item.pagamento.customer_paid ? this.state.settings.symbol + parseFloat(item.pagamento.customer_paid).toFixed(2) : this.state.settings.symbol + parseFloat(item.pagamento.estimate).toFixed(2) : null}</Text>
+                                
+                                <Text style={styles.dateStyleEndProgress}>{item.status == 'END' && item.pagamento.payment_status == 'IN_PROGRESS' ? "Processando" : null}</Text>
+
                             </View>
                             <Text style={[styles.textStyle, styles.carNoStyle]}>{item.carType ? item.carType : null} - {item.vehicle_number ? item.vehicle_number : null}</Text>
-                        </View>
-
-                        <View style={styles.textView2}>
-                            <Text style={styles.dateStyleNew}>{item.status == 'NEW' ? item.status : null}</Text>
-                            <Text style={[styles.dateStyleAccepted, {fontSize: 16, color: colors.DEEPBLUE}]}>{item.status == 'ACCEPTED' ? "Em andamento" : null}</Text>
-                            <Text style={[styles.dateStyleAccepted, {fontSize: 16, color: colors.DEEPBLUE}]}>{item.status == 'START' ? "Em andamento" : null}</Text>
-                            <Text style={styles.dateStyleEndPaid}>{item.status == 'END' && item.pagamento.payment_status == 'PAID' ? item.pagamento.customer_paid ? this.state.settings.symbol + parseFloat(item.pagamento.customer_paid).toFixed(2) : this.state.settings.symbol + parseFloat(item.pagamento.estimate).toFixed(2) : null}</Text>
-                            <Text style={styles.dateStyleEndProgress}>{item.status == 'END' && item.pagamento.payment_status == 'IN_PROGRESS' ? "Processando" : null}</Text>
                         </View>
                     </View>
                     <View style={{ backgroundColor: colors.GREY1, height: 1, marginHorizontal: 15 }} />
@@ -177,48 +168,53 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 10,
     },
-    
+
     dateStyleEndProgress: {
         fontFamily: 'Inter-Bold',
         color: colors.BLACK,
         marginLeft: 20,
         fontSize: 16,
-        bottom: 10
+        right: 10,
+        top: 5,
     },
     dateStyleEndPaid: {
         fontFamily: 'Inter-Bold',
         color: colors.BLACK,
-        marginLeft: 20,
-        marginTop: 0,
         fontSize: 20,
+        right: 10,
+        top: 5,
+        position: 'absolute',
     },
     dateStyleAccepted: {
         fontFamily: 'Inter-Bold',
         color: colors.BLACK,
-        marginLeft: 20,
-        marginTop: 0,
         fontSize: 20,
+        right: 10,
+        top: 5,
+        position: 'absolute',
     },
-    dateStyleNew: {
+    dateStyleTimeout: {
         fontFamily: 'Inter-Bold',
-        color: colors.BLACK,
-        marginLeft: 20,
-        marginTop: 0,
-        fontSize: 20,
+        color: colors.REDCLEAN,
+        right: 10,
+        top: 5,
+        position: 'absolute',
+        fontSize: 16,
     },
     dateRide: {
         fontFamily: 'Inter-Bold',
         color: colors.BLACK,
         marginLeft: 20,
         marginTop: 5,
-        fontSize: width < 375 ?  16 : 18,
+        fontSize: width < 375 ? 16 : 18,
     },
-    dateStyle2: {
+    dateStyleCancelled: {
         fontFamily: 'Inter-Bold',
-        color: colors.RED,
-        marginLeft: 30,
+        color: colors.REDCLEAN,
+        right: 10,
+        top: 5,
+        position: 'absolute',
         fontSize: 15,
-        marginTop: 10,
     },
     carNoStyle: {
         fontFamily: 'Inter-Light',
@@ -257,7 +253,8 @@ const styles = StyleSheet.create({
         backgroundColor: colors.TRANSPARENT,
         paddingRight: 20,
         alignItems: 'center',
-         justifyContent: 'center'
+        justifyContent: 'center',
+        backgroundColor: colors.DEEP_SKY
     },
     textView3: {
         flex: 6,

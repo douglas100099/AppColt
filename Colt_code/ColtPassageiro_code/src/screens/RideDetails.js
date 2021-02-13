@@ -22,7 +22,7 @@ import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import { Icon } from 'react-native-elements';
 import { colors } from '../common/theme';
 var { width } = Dimensions.get('window');
-import * as firebase from 'firebase'; 
+import * as firebase from 'firebase';
 import { getPixelSize } from '../common/utils';
 import { google_map_key } from '../common/key';
 import mapStyleAndroid from '../../mapStyleAndroid.json';
@@ -326,11 +326,11 @@ export default class RideDetails extends React.Component {
                                             <View style={{ flexDirection: 'row' }}>
                                                 <View style={{ flexDirection: 'column', alignItems: 'center' }}>
 
-                                                    <LocationUser width={25} height={25} />
+                                                    <LocationUser width={20} height={20} />
                                                     <View style={{ backgroundColor: colors.DEEPBLUE, height: 20, width: 2 }} />
-                                                    <LocationWaypoint width={20} height={20} />
+                                                    <LocationWaypoint width={10} height={10} />
                                                     <View style={{ backgroundColor: colors.DARK, height: 20, width: 2 }} />
-                                                    <LocationDrop width={25} height={25} />
+                                                    <LocationDrop width={20} height={20} />
 
                                                 </View>
                                                 <View style={{ marginLeft: 5, justifyContent: 'center', width: '100%', flexDirection: 'column' }}>
@@ -346,8 +346,8 @@ export default class RideDetails extends React.Component {
                                                 </View>
                                             </View>
                                         </View>
-                                        :
-                                        <View style={{ flexDirection: 'row', padding: 10, }}>
+                                    :
+                                        <View style={{ backgroundColor: colors.transparent, flexDirection: 'row', paddingVertical: 5, }}>
                                             <CircleLineTriangle />
                                             <View style={{ flexDirection: 'column', justifyContent: 'space-around' }}>
                                                 {this.state.paramData && this.state.paramData.pickup ?
@@ -358,7 +358,8 @@ export default class RideDetails extends React.Component {
                                                     : null}
                                             </View>
                                         </View>
-                                    : null
+                                : 
+                                null
                                 }
                             </View>
                         </View>
@@ -528,7 +529,7 @@ const styles = StyleSheet.create({
     cardLocation: {
         borderWidth: 1,
         borderColor: colors.GREY2,
-        borderRadius: 10,
+        borderRadius: 5,
         marginHorizontal: 10
     },
     cardDriver: {

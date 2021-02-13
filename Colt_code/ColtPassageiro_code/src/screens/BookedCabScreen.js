@@ -77,7 +77,7 @@ export default class BookedCabScreen extends React.Component {
             driverLng: 0,
             driverAngle: 0
         }
-        this.driverFound = false
+        this.driverFound = true
     }
 
     componentDidMount() {
@@ -85,7 +85,7 @@ export default class BookedCabScreen extends React.Component {
         this.state.bookingDataState == null ? this.getParamData = this.props.navigation.getParam('passData') : this.getParamData = this.state.bookingDataState
         let param = this.props.navigation.getParam('byMapScreen') ? this.props.navigation.getParam('byMapScreen') : null
         if (param == null) {
-            this.setState({ driverSearch: true, showBtnCancel: true })
+            this.setState({ driverSearch: false, showBtnCancel: true })
         }
 
         let curuser = firebase.auth().currentUser;
@@ -747,6 +747,7 @@ export default class BookedCabScreen extends React.Component {
                                     showsMyLocationButton={false}
                                     style={styles.map}
                                     //initialRegion={this.state.region}
+                                    region={this.state.region ? this.state.region : null}
                                     onRegionChange={() => { this.setState({ showsMyLocationBtn: true }) }}
                                     enablePoweredByContainer={false}
                                     zoomControlEnabled={false}
@@ -755,12 +756,12 @@ export default class BookedCabScreen extends React.Component {
                                     showsScale={false}
                                     rotateEnabled={false}
                                     customMapStyle={mapStyleAndroid}
-                                    region={{
-                                        latitude: this.driverObj.driverLat,
-                                        longitude: this.driverObj.driverLng,
-                                        latitudeDelta: 0.0043,
-                                        longitudeDelta: 0.0034,
-                                    }}
+                                /*region={{
+                                    latitude: this.driverObj.driverLat,
+                                    longitude: this.driverObj.driverLng,
+                                    latitudeDelta: 0.0043,
+                                    longitudeDelta: 0.0034,
+                                }}*/
                                 >
                                     {this.driverFound && this.driverObj.driverLat != 0 && this.driverObj.driverLng != 0 ?
                                         <Marker
@@ -799,8 +800,8 @@ export default class BookedCabScreen extends React.Component {
                                     interval={300}
                                     function={() => {
                                         console.log("CHAMOU AS FUNÇOES DO BACKGROUND")
-                                        this.selectNearbyDriver()
-                                        this.listenerStatus()
+                                        //this.selectNearbyDriver()
+                                        //this.listenerStatus()
                                     }}
                                 />
                             </View>

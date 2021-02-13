@@ -37,8 +37,8 @@ import mapStyleAndroid from '../../mapStyleAndroid.json';
 import PromoModal from '../components/PromoModal';
 
 import { TextInputMask } from 'react-native-masked-text'
-import { ScrollView } from 'react-native-gesture-handler';
-import { TouchableWithoutFeedback } from 'react-native';
+import Reanimated from 'react-native-reanimated';
+import BottomSheet from 'reanimated-bottom-sheet';
 
 const COLT_ECONOMICO = "Colt econômico"
 const COLT_CONFORT = "Colt confort"
@@ -483,7 +483,7 @@ export default class FareScreen extends React.Component {
 
     //Seleciona o tipo de carro que vai ser a corrida
     selectCarType(type) {
-        if(this.state.detailsBooking[0] && this.state.detailsBooking[1]){
+        if (this.state.detailsBooking[0] && this.state.detailsBooking[1]) {
             if (type == 0) {
                 this.setState({ selected: 0, estimateFare: this.state.detailsBooking[0].estimateFare, distance: this.state.detailsBooking[0].distance, carType: this.state.rateDetailsObjects[0].name, carImage: this.state.rateDetailsObjects[0].image })
             } else if (type == 1) {
@@ -1159,12 +1159,10 @@ export default class FareScreen extends React.Component {
                                             <Text style={styles.buttonText}> Confirmar corrida </Text>
                                         }
                                     </TouchableOpacity>
-                                </View>
-                                {this.state.buttonDisabled ?
-                                    <View style={{ alignSelf: 'center', position: 'absolute', bottom: width < 375 ? 5 : 30 }}>
+                                    {this.state.buttonDisabled ?
                                         <Text style={{ textAlign: 'center', fontFamily: 'Inter-SemiBold' }} > Preparando corrida... </Text>
-                                    </View>
-                                    : null}
+                                        : null}
+                                </View>
                             </Fragment>
                         }
                     </View>
@@ -1462,7 +1460,7 @@ const styles = StyleSheet.create({
         paddingBottom: 10,
         paddingTop: 20,
         flexDirection: 'row',
-        marginHorizontal: 45,
+        marginHorizontal: 30,
         justifyContent: 'space-between',
     },
     containerTempo: {
@@ -1496,6 +1494,7 @@ const styles = StyleSheet.create({
     },
     estimatedTimeNumber: {
         fontSize: 17,
+        left: 3,
         fontFamily: 'Inter-Bold',
         color: colors.DEEPBLUE
     },

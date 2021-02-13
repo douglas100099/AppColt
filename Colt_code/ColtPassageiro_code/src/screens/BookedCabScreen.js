@@ -38,7 +38,8 @@ import { Pulse } from 'react-native-animated-spinkit'
 import IconCarMap from '../../assets/svg/IconCarMap';
 
 import BackgroundTask from "../common/BackgroundTask";
-
+import Animated from 'react-native-reanimated';
+import BottomSheet from 'reanimated-bottom-sheet';
 
 export default class BookedCabScreen extends React.Component {
     _isMounted = false;
@@ -298,7 +299,7 @@ export default class BookedCabScreen extends React.Component {
                 this.driverFound = true
                 this.setState({ driverSearch: false })
                 this.sendPushNotification(this.state.currentUser, "Estamos conectando você ao motorista.")
-                this.fitDriverUser()
+                //this.fitDriverUser()
                 Linking.openURL("coltpassageiro://")
 
                 const driverRef = firebase.database().ref('users/' + this.driverObj.driverUid + '/')

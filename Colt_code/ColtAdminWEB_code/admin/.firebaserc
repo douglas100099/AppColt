@@ -1,6 +1,0 @@
-{
-  "projects": {
-    "default": "colt-painel",
-    "colt-painel": "app-colt"
-  }
-}

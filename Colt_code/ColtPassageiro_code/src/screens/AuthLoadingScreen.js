@@ -119,7 +119,7 @@ export class AuthLoadingScreen extends React.Component {
       .then((responseJson) => {
 
         firebase.database().ref('users/' + firebase.auth().currentUser.uid + '/location').update({
-          add: responseJson.results[0].formatted_address
+          add:responseJson.results[0].formatted_address
         })
       })
   }
@@ -139,8 +139,8 @@ export class AuthLoadingScreen extends React.Component {
                 //this._getLocationAsync();
 
                 this._watchPosition()
-                this._setSettings()
-                this.props.navigation.navigate('Root')
+                this._setSettings();
+                this.props.navigation.navigate('Root');
               }
               else {
                 firebase.auth().signOut()

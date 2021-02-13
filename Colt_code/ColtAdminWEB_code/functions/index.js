@@ -246,136 +246,189 @@ const checkPaymentAsaas = async (custumer) => {
         })
 }
 
-const manageMoney = async (bookingIdParam) => {
 
-    const bookingId = bookingIdParam
-    admin.database().ref('bookings/' + bookingId).on("value", (data) => {
-        let dataBooking = data.val();
-        let paymentMode = dataBooking.pagamento.payment_mode
+/*const searchDriver = (bookingId, carType) => {
+    console.log("ENTROU NO SEARCHDRIVER")
+    const userData = admin.database().ref('users/').orderByChild("usertype").equalTo('driver')
+    const bookingRef = admin.database().ref('bookings/' + bookingId + '/')
 
-        if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'PAID') {
-            let driverShare = parseFloat(dataBooking.pagamento.trip_cost) - parseFloat(dataBooking.pagamento.convenience_fees)
+    let distanciaValue = 10
+    let distTotal = 50
+    let currentRejected = false
+    let searchDriverQueue = false
+    let driverUidSelected = 0
 
-            if (paymentMode === 'Dinheiro') {
-                admin.database().ref('users/' + dataBooking.driver + '/ganhos/' + bookingId + '/').update({
-                    data: new Date().toString(),
-                    ganho: driverShare,
-                    hora: new Date().toLocaleTimeString('pt-BR'),
-                    taxa: dataBooking.pagamento.convenience_fees,
+    userData.once('value', driverData => {
+        let allUsers = driverData.val()
+        for (let key in allUsers) {
+            if (allUsers[key].driverActiveStatus === true && allUsers[key].carType === carType && !allUsers[key].waiting_queue_riders && !allUsers[key].waiting_riders_list) {
+                //Verifica se o motorista rejeitou a corrida
+                bookingRef.once('value', data => {
+                    if (data.val()) {
+                        let rejectedDrivers = []
+                        if (data.val().rejectedDrivers) {
+                            rejectedDrivers = data.val().rejectedDrivers
+                            for (let i = 0; i < rejectedDrivers.length; i++) {
+                                if (rejectedDrivers[i] === key) {
+                                    currentRejected = true
+                                }
+                            }
+                        }
+                    } else {
+                        currentRejected = false
+                    }
                 }).then(() => {
-                    admin.database().ref('users/' + dataBooking.driver + '/').once('value', driverData => {
-                        let saldoDriver = driverData.val().saldo
-                        if (saldoDriver) {
-                            let newSaldo = saldoDriver - dataBooking.pagamento.convenience_fees
+                    if (currentRejected === false) {
+                        if (searchDriverQueue ? allUsers[key].queue === true : allUsers[key].queue === false) {
+                            if (searchDriverQueue ? allUsers[key].queueAvailable === true : true) {
+                                bookingRef.once('value', snap => {
+                                    const booking = snap.val()
+                                    if (booking) {
+                                        let location1 = [booking.pickup.lat, booking.pickup.lng];    //Rider Lat and Lang
+                                        let location2 = null
+                                        let locationDriver = null
 
-                            //Atualiza negativando o saldo do motorista no banco com a taxa da corrida atual
-                            admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                saldo: newSaldo
-                            })
-                        }
-                        else {
-                            let newSaldo = -dataBooking.pagamento.convenience_fees
-                            admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                saldo: newSaldo
-                            })
-                        }
+                                        if (searchDriverQueue) {
+                                            admin.database().ref('bookings/' + allUsers[key].emCorrida + '/').once('value', snapshot => {
+                                                let dataBooking = snapshot.val()
+                                                location2 = [dataBooking.drop.lat, dataBooking.drop.lng]
+                                                locationDriver = [dataBooking.current.lat, dataBooking.current.lng]
+                                            }).then(() => {
+                                                let distanceDrop = getDistance(location1, location2)
+                                                let distanceTotal = distanceDrop + getDistance(location2, locationDriver)
 
-                        if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
-                            admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
-                            admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
+                                                if (distanceDrop <= 4 && distanceTotal < distTotal) {
+                                                    distTotal = distanceTotal
+                                                    driverUidSelected = key
+                                                }
+                                                return true
+                                            })
+                                                .catch(error => {
+                                                    throw new Error("Erro ao chamar a funçao de calculo de distancia")
+                                                })
+                                        }
+                                        else {
+                                            location2 = [allUsers[key].location.lat, allUsers[key].location.lng]  //Driver lat and lang
+                                            //Calcula a distancia entre dois pontos
+                                            let distance = getDistance(location1, location2)
+                                            let originalDistance = distance
+                                            if (originalDistance <= 4) { //4KM
+                                                //Salva sempre o mais proximo
+                                                if (distance < distanciaValue) {
+                                                    distanciaValue = distance
+                                                    driverUidSelected = key
+                                                }
+                                            }
+                                        }
+                                    }
+                                })
+                            }
                         }
-
-                    })
+                    }
                     return true
-                }).catch(error => {
-                    throw new Error("Erro executar função Dinheiro")
                 })
-            }
-            else if (paymentMode === 'Carteira') {
-                admin.database().ref('users/' + dataBooking.driver + '/ganhos/' + bookingId + '/').update({
-                    data: new Date().toString(),
-                    ganho: driverShare,
-                    hora: new Date().toLocaleTimeString('pt-BR'),
-                    taxa: dataBooking.pagamento.convenience_fees,
-                }).then(() => {
-                    admin.database().ref('users/' + dataBooking.driver + '/').once('value', driverData => {
-                        let saldoDriver = driverData.val().saldo
-                        if (saldoDriver) {
-                            let newValue = driverShare + saldoDriver
-
-                            //ATUALIZA O SALDO DO MOTORISTA
-                            admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                saldo: newValue
-                            })
-                        }
-                        else {
-                            //ATUALIZA O SALDO DO MOTORISTA
-                            admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                saldo: driverShare
-                            })
-                        }
-
-                        if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
-                            admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
-                            admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
-                        }
-
+                    .catch(error => {
+                        throw new Error("Erro ao fazer as verificaçoes de distancia")
                     })
-                    return true
-                }).catch(error => {
-                    throw new Error("Erro executar função Carteira")
-                })
-            }
-            else if (paymentMode === 'Dinheiro/Carteira') {
-                admin.database().ref('users/' + dataBooking.driver + '/ganhos/' + bookingId + '/').update({
-                    data: new Date().toString(),
-                    ganho: driverShare,
-                    hora: new Date().toLocaleTimeString('pt-BR'),
-                    taxa: dataBooking.pagamento.convenience_fees,
-                }).then(() => {
-                    admin.database().ref('users/' + dataBooking.driver + '/').once('value', driverData => {
-                        let saldoDriver = driverData.val().saldo
-
-                        if (dataBooking.pagamento.usedWalletMoney >= dataBooking.pagamento.convenience_fees) {
-                            if (saldoDriver) {
-                                let newSaldo = saldoDriver + (dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees)
-                                admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                    saldo: newSaldo
-                                })
-                            }
-                            else {
-                                admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                    saldo: dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees
-                                })
-                            }
-                        } else {
-                            if (saldoDriver) {
-                                let newSaldo = saldoDriver + (dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees)
-
-                                admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                    saldo: newSaldo
-                                })
-                            }
-                            else {
-                                admin.database().ref('users/' + dataBooking.driver + '/').update({
-                                    saldo: dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees
-                                })
-                            }
-                        }
-
-                        if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
-                            admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
-                            admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
-                        }
-                    })
-                    return true
-                }).catch(error => {
-                    throw new Error("Erro executar função Dinheiro/Carteira")
-                })
             }
         }
+    }).then(() => {
+        if (driverUidSelected !== 0) {
+            const driverRef = admin.database().ref('users/' + driverUidSelected + '/')
+
+            driverRef.once('value', snap => {
+                const data = snap.val()
+                if (data) {
+                    if (data.queue === true && data.queueAvailable === true && data.driverActiveStatus === true) {
+                        bookingRef.once('value', bookingData => {
+                            if (bookingData.val().status === 'NEW' || bookingData.val().status === 'REJECTED') {
+                                admin.database().ref('users/' + driverUidSelected + '/' + "waiting_queue_riders" + '/' + bookingId + '/').set(bookingData.val())
+                                    .then(() => {
+                                        admin.database().ref(`users/` + bookingData.val().customer + '/my-booking/' + bookingId).update({ status: "NEW" })
+                                            .then(() => {
+                                                admin.database().ref('bookings/' + bookingId + '/').update({
+                                                    status: "NEW",
+                                                    requestedDriver: driverUidSelected
+                                                })
+                                                RequestPushMsg(data.pushToken, "Você possui uma nova corrida!")
+                                                return true
+                                            })
+                                            .catch(error => {
+                                                throw new Error("Erro setando status da corrida pra NEW e enviando notify")
+                                            })
+                                        return true
+                                    })
+                                    .catch(error => {
+                                        throw new Error("Erro depois do waiting queue riders")
+                                    })
+                            }
+                        })
+
+                        //this.setBookingDriver("waiting_queue_riders", bookingId, driverUidSelected)
+                    }
+                    else if (data.queue === false && data.driverActiveStatus === true) {
+
+                        bookingRef.on('value', bookingData => {
+                            if (bookingData.val().status === 'NEW' || bookingData.val().status === 'REJECTED') {
+                                admin.database().ref('users/' + driverUidSelected + '/' + "waiting_riders_list" + '/' + bookingId + '/').set(bookingData.val())
+                                    .then(() => {
+                                        admin.database().ref('users/' + bookingData.val().customer + '/my-booking/' + bookingId + '/').update({ status: "NEW" })
+                                            .then(() => {
+                                                admin.database().ref('bookings/' + bookingId + '/').update({
+                                                    status: "NEW",
+                                                    requestedDriver: driverUidSelected
+                                                })
+                                                RequestPushMsg(data.pushToken, "Você possui uma nova corrida!")
+                                                return true
+                                            })
+                                            .catch(error => {
+                                                throw new Error("Erro setando status da corrida pra NEW e enviando notify")
+                                            })
+                                        return true
+                                    })
+                                    .catch(error => {
+                                        throw new Error("Erro depois do waiting riders list")
+                                    })
+                            }
+                        })
+
+                        //this.setBookingDriver("waiting_riders_list", bookingId, driverUidSelected)
+                    }
+                }
+            })
+                .catch(error => {
+                    throw new Error("Erro ao setar corrida no perfil do motorista")
+                })
+        }
+        else {
+            searchDriverQueue = !searchDriverQueue
+            driverUidSelected = 0
+            searchDriver(bookingId, carType)
+        }
+        return true
     })
+        .catch(error => {
+            throw new Error("Erro ao preparar a setagem de corrida do motorista")
+        })
 }
+
+exports.newBooking = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}').onCreate((snap, context) => {
+    const bookingId = context.params.bookingsId
+
+    return admin.database().ref('bookings/' + bookingId + '/').on('value', snap => {
+        const data = snap.val()
+        searchDriver(bookingId, data.carType)
+
+        if (data.status === 'REJECTED') {
+            console.log("ENTROU NOO REJECTED")
+            searchDriver(bookingId, data.carType)
+        }
+        else if (data.status === 'ACCEPTED' || data.status === 'CANCELLED') {
+            console.log("ENTROU NO ACCEPTED / CANCELLED")
+            return true
+        }
+    })
+})*/
 
 
 exports.requestPaymentDrivers_1 = functions.region('southamerica-east1').pubsub.schedule('30 19 1 * *').timeZone('America/Sao_Paulo').onRun((context) => {
@@ -614,6 +667,138 @@ exports.verifyDriversPayment_21 = functions.region('southamerica-east1').pubsub.
         }
     })
 })
+
+const manageMoney = async (bookingIdParam) => {
+
+    const bookingId = bookingIdParam
+    admin.database().ref('bookings/' + bookingId).on("value", (data) => {
+        let dataBooking = data.val();
+        let paymentMode = dataBooking.pagamento.payment_mode
+
+        if (dataBooking.status === 'END' && dataBooking.pagamento.payment_status === 'PAID') {
+            let driverShare = parseFloat(dataBooking.pagamento.trip_cost) - parseFloat(dataBooking.pagamento.convenience_fees)
+
+            if (paymentMode === 'Dinheiro') {
+                admin.database().ref('users/' + dataBooking.driver + '/ganhos/' + bookingId + '/').update({
+                    data: new Date().toString(),
+                    ganho: driverShare,
+                    hora: new Date().toLocaleTimeString('pt-BR'),
+                    taxa: dataBooking.pagamento.convenience_fees,
+                }).then(() => {
+                    admin.database().ref('users/' + dataBooking.driver + '/').once('value', driverData => {
+                        let saldoDriver = driverData.val().saldo
+                        if (saldoDriver) {
+                            let newSaldo = saldoDriver - dataBooking.pagamento.convenience_fees
+
+                            //Atualiza negativando o saldo do motorista no banco com a taxa da corrida atual
+                            admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                saldo: newSaldo
+                            })
+                        }
+                        else {
+                            let newSaldo = -dataBooking.pagamento.convenience_fees
+                            admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                saldo: newSaldo
+                            })
+                        }
+
+                        if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
+                        }
+
+                    })
+                    return true
+                }).catch(error => {
+                    throw new Error("Erro executar função Dinheiro")
+                })
+            }
+            else if (paymentMode === 'Carteira') {
+                admin.database().ref('users/' + dataBooking.driver + '/ganhos/' + bookingId + '/').update({
+                    data: new Date().toString(),
+                    ganho: driverShare,
+                    hora: new Date().toLocaleTimeString('pt-BR'),
+                    taxa: dataBooking.pagamento.convenience_fees,
+                }).then(() => {
+                    admin.database().ref('users/' + dataBooking.driver + '/').once('value', driverData => {
+                        let saldoDriver = driverData.val().saldo
+                        if (saldoDriver) {
+                            let newValue = driverShare + saldoDriver
+
+                            //ATUALIZA O SALDO DO MOTORISTA
+                            admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                saldo: newValue
+                            })
+                        }
+                        else {
+                            //ATUALIZA O SALDO DO MOTORISTA
+                            admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                saldo: driverShare
+                            })
+                        }
+
+                        if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
+                        }
+
+                    })
+                    return true
+                }).catch(error => {
+                    throw new Error("Erro executar função Carteira")
+                })
+            }
+            else if (paymentMode === 'Dinheiro/Carteira') {
+                admin.database().ref('users/' + dataBooking.driver + '/ganhos/' + bookingId + '/').update({
+                    data: new Date().toString(),
+                    ganho: driverShare,
+                    hora: new Date().toLocaleTimeString('pt-BR'),
+                    taxa: dataBooking.pagamento.convenience_fees,
+                }).then(() => {
+                    admin.database().ref('users/' + dataBooking.driver + '/').once('value', driverData => {
+                        let saldoDriver = driverData.val().saldo
+
+                        if (dataBooking.pagamento.usedWalletMoney >= dataBooking.pagamento.convenience_fees) {
+                            if (saldoDriver) {
+                                let newSaldo = saldoDriver + (dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees)
+                                admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                    saldo: newSaldo
+                                })
+                            }
+                            else {
+                                admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                    saldo: dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees
+                                })
+                            }
+                        } else {
+                            if (saldoDriver) {
+                                let newSaldo = saldoDriver + (dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees)
+
+                                admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                    saldo: newSaldo
+                                })
+                            }
+                            else {
+                                admin.database().ref('users/' + dataBooking.driver + '/').update({
+                                    saldo: dataBooking.pagamento.usedWalletMoney - dataBooking.pagamento.convenience_fees
+                                })
+                            }
+                        }
+
+                        if (dataBooking.pagamento.finalCalcBooking && dataBooking.pagamento.manageMoney) {
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/finalCalcBooking').remove()
+                            admin.database().ref('bookings/' + bookingId + '/pagamento/manageMoney').remove()
+                        }
+                    })
+                    return true
+                }).catch(error => {
+                    throw new Error("Erro executar função Dinheiro/Carteira")
+                })
+            }
+        }
+    })
+}
+
 
 exports.finalCalcBooking = functions.region('southamerica-east1').database.ref('bookings/{bookingsId}/pagamento/finalCalcBooking').onCreate((snap, context) => {
     const bookingId = context.params.bookingsId
@@ -859,62 +1044,95 @@ exports.timerIgnoreBooking = functions.region('southamerica-east1').database.ref
                     admin.database().ref("users/" + requested + "/").once('value', snap => {
                         const data = snap.val()
                         if (data.waiting_queue_riders) {
+                            let arrayRejected = []
 
                             //Corrida em espera
                             admin.database().ref("users/" + requested + "/waiting_queue_riders/" + bookingId).remove()
-                            admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove()
+                                .then(() => {
 
-                            let arrayRejected = []
-                            if (dataBooking.rejectedDrivers) {
-                                for (let key in dataBooking.rejectedDrivers) {
-                                    arrayRejected.push(dataBooking.rejectedDrivers[key])
-                                }
-                                arrayRejected.push(requested)
-                                admin.database().ref('bookings/' + bookingId).update({
-                                    rejectedDrivers: arrayRejected,
-                                    status: 'REJECTED'
+                                    if (dataBooking.rejectedDrivers) {
+                                        for (let key in dataBooking.rejectedDrivers) {
+                                            arrayRejected.push(dataBooking.rejectedDrivers[key])
+                                        }
+                                        arrayRejected.push(requested)
+                                        admin.database().ref('bookings/' + bookingId).update({
+                                            rejectedDrivers: arrayRejected,
+                                            status: 'REJECTED'
+                                        })
+                                            .then(() => {
+                                                return admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + bookingId + '/').update({ status: 'REJECTED' })
+                                            })
+                                            .catch(error => {
+                                                throw new Error("Erro ao atualizar motorista")
+                                            })
+
+                                    }
+                                    else {
+                                        arrayRejected.push(requested)
+                                        admin.database().ref('bookings/' + bookingId).update({
+                                            rejectedDrivers: arrayRejected,
+                                            status: 'REJECTED'
+                                        }).then(() => {
+                                            return admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + bookingId + '/').update({ status: 'REJECTED' })
+                                        })
+                                            .catch(error => {
+                                                throw new Error("Erro ao atualizar motorista")
+                                            })
+                                    }
+                                    return true
                                 })
-                            } else {
-                                arrayRejected.push(requested)
-                                admin.database().ref('bookings/' + bookingId).update({
-                                    rejectedDrivers: arrayRejected,
-                                    status: 'REJECTED'
+                                .catch(error => {
+                                    throw new Error("Erro ao atualizar motorista")
                                 })
-                            }
                         }
                         else if (data.waiting_riders_list) {
-                            admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove()
-                            admin.database().ref("bookings/" + bookingId + "/requestedDriver").remove()
-
-                            /*admin.database().ref("users/" + requested + "/in_reject_progress").update({
-                                punido: false
-                            });*/
-                            admin.database().ref("users/" + requested + '/').update({
-                                driverActiveStatus: false,
-                                queue: false
-                            });
-
                             let arrayRejected = []
-                            if (dataBooking.rejectedDrivers) {
-                                for (let key in dataBooking.rejectedDrivers) {
-                                    arrayRejected.push(dataBooking.rejectedDrivers[key])
-                                }
-                                arrayRejected.push(requested)
-                                admin.database().ref('bookings/' + bookingId).update({
-                                    rejectedDrivers: arrayRejected,
-                                    status: 'REJECTED'
+
+                            admin.database().ref("users/" + requested + "/waiting_riders_list/" + bookingId).remove()
+                                .then(() => {
+                                    admin.database().ref("users/" + requested + '/').update({
+                                        driverActiveStatus: false,
+                                        queue: false
+                                    })
+                                        .then(() => {
+                                            if (dataBooking.rejectedDrivers) {
+                                                for (let key in dataBooking.rejectedDrivers) {
+                                                    arrayRejected.push(dataBooking.rejectedDrivers[key])
+                                                }
+                                                arrayRejected.push(requested)
+                                                admin.database().ref('bookings/' + bookingId).update({
+                                                    rejectedDrivers: arrayRejected,
+                                                    status: 'REJECTED'
+                                                }).then(() => {
+                                                    return admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + bookingId + '/').update({ status: 'REJECTED' })
+                                                })
+                                                    .catch(error => {
+                                                        throw new Error("Erro ao atualizar motorista")
+                                                    })
+                                            } else {
+                                                arrayRejected.push(requested)
+                                                admin.database().ref('bookings/' + bookingId).update({
+                                                    rejectedDrivers: arrayRejected,
+                                                    status: 'REJECTED'
+                                                }).then(() => {
+                                                    return admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + bookingId + '/').update({ status: 'REJECTED' })
+                                                })
+                                                    .catch(error => {
+                                                        throw new Error("Erro ao atualizar motorista")
+                                                    })
+                                            }
+                                            return true
+                                        })
+                                        .catch(error => {
+                                            throw new Error("Erro ao atualizar motorista")
+                                        })
+                                    return true
                                 })
-                            } else {
-                                arrayRejected.push(requested)
-                                admin.database().ref('bookings/' + bookingId).update({
-                                    rejectedDrivers: arrayRejected,
-                                    status: 'REJECTED'
+                                .catch(error => {
+                                    throw new Error("Erro ao remover requested")
                                 })
-                            }
                         }
                     })
-
-                    admin.database().ref('users/' + dataBooking.customer + '/my-booking/' + bookingId + '/').update({ status: 'REJECTED' })
                 }
             }
         })

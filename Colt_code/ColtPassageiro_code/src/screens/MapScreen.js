@@ -11,9 +11,7 @@ import {
     AsyncStorage,
 } from 'react-native';
 import { TouchableOpacity, TouchableWithoutFeedback } from 'react-native-gesture-handler';
-import { MapComponent } from '../components';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
-import mapStyleJson from '../../mapStyle.json';
 import mapStyleAndroid from '../../mapStyleAndroid.json';
 
 import { Icon, Button, Avatar } from 'react-native-elements';
@@ -27,7 +25,6 @@ import * as firebase from 'firebase'
 import { google_map_key } from '../common/key';
 import languageJSON from '../common/language';
 import Geocoder from 'react-native-geocoding';
-import distanceCalc from '../common/distanceCalc';
 import { NavigationActions, StackActions } from 'react-navigation';
 import { Chase, Pulse } from 'react-native-animated-spinkit'
 
@@ -436,6 +433,9 @@ export default class MapScreen extends React.Component {
         }
         else if (this.state.statusCorrida == 'START') {
             this.props.navigation.replace('trackRide', { data: this.state.bookingParam, bId: this.state.keyBooking });
+        } 
+        else {
+            alert("Essa corrida não está mais disponível!")
         }
     }
 
@@ -468,6 +468,12 @@ export default class MapScreen extends React.Component {
                                 statusCorrida: "START",
                                 bookingParam: bookingData[key],
                                 keyBooking: key
+                            })
+                        } else if(bookingData[key].status == "CANCELLED"){
+                            this.setState({
+                                statusCorrida: "",
+                                bookingParam: null,
+                                keyBooking: null
                             })
                         }
                     }
@@ -531,13 +537,13 @@ export default class MapScreen extends React.Component {
                             showsMyLocationButton={false}
                             style={styles.map}
                             initialRegion={this.state.region}
-                            onRegionChange={() => { this.setState({ showsMyLocationBtn: true }), this._onMapChange() }}
+                            onRegionChange={() => { this.setState({ showsMyLocationBtn: true })/*, this._onMapChange()*/ }}
                             enablePoweredByContainer={false}
                             showsCompass={false}
                             showsScale={false}
                             rotateEnabled={false}
                             customMapStyle={mapStyleAndroid}
-                        //region={() => this.getRegionMap()}
+                            //region={() => this.getRegionMap()}
                         >
                             {this.state.freeCars ? this.state.freeCars.map((item, index) => {
                                 return (

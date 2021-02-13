@@ -3476,6 +3476,13 @@ expo-av@~8.6.0:
     lodash "^4.17.15"
     nullthrows "^1.1.0"
 
+expo-background-fetch@~8.5.0:
+  version "8.5.0"
+  resolved "https://registry.yarnpkg.com/expo-background-fetch/-/expo-background-fetch-8.5.0.tgz#6f263d2b51bf168418e14c716dae87a2bbf3769a"
+  integrity sha512-4YQ60I8COmfCIanj0579QrloD2CZ7N7fOu5ZCC4BQ2wLnPrepv+/9NrElpWl+M9VaTicmmBt+w5KqEwVjTHg0g==
+  dependencies:
+    expo-task-manager "~8.5.0"
+
 expo-constants@9.2.0, expo-constants@~9.2.0:
   version "9.2.0"
   resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-9.2.0.tgz#e86a38793deaff9018878afac65bce2543c80a4c"
@@ -6481,10 +6488,10 @@ react-native-vector-icons@^7.1.0:
     prop-types "^15.7.2"
     yargs "^15.0.2"
 
-react-native-webview@^11.0.2:
-  version "11.2.1"
-  resolved "https://registry.yarnpkg.com/react-native-webview/-/react-native-webview-11.2.1.tgz#abe68c38808f34aeed0a10740b2efba74ac610b8"
-  integrity sha512-dfChyqqWVJe0kdCuDZ4mJt+RgOYNie+rCjCrZ55OW6X7f/rvNVd3Mbnv/1mbYjU8wm5C3/1/oqVJoTB/7GAGjQ==
+react-native-webview@10.7.0:
+  version "10.7.0"
+  resolved "https://registry.yarnpkg.com/react-native-webview/-/react-native-webview-10.7.0.tgz#b96e152ffdae4eeffaa74f43671a35733885b52d"
+  integrity sha512-4TSYwJqMBUTKB9+xqGbPwx+eLXbp6RRD7lQ2BumT8eSTfuuqr2rXNqcrlKU1VRla7QGGYowmYmxl2aXIx5k9wA==
   dependencies:
     escape-string-regexp "2.0.0"
     invariant "2.2.4"

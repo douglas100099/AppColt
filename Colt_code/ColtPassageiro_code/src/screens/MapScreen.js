@@ -398,23 +398,7 @@ export default class MapScreen extends React.Component {
 
     redirectRider() {
         this.getNameUser();
-        if (this.state.statusCorrida == 'ACCEPTED') {
-            let obj = {
-                bokkingId: this.state.bookingParam.bookingKey,
-                coords: this.state.bookingParam.coords,
-            }
-            this.props
-                .navigation
-                .dispatch(StackActions.reset({
-                    index: 0,
-                    actions: [
-                        NavigationActions.navigate({
-                            routeName: 'BookedCab',
-                            params: { passData: obj, byMapScreen: true },
-                        }),
-                    ],
-                }))
-        } else if (this.state.statusCorrida == 'EMBARQUE') {
+        if (this.state.statusCorrida === 'ACCEPTED') {
             let obj = {
                 bokkingId: this.state.bookingParam.bookingKey,
                 coords: this.state.bookingParam.coords,
@@ -431,9 +415,43 @@ export default class MapScreen extends React.Component {
                     ],
                 }))
         }
-        else if (this.state.statusCorrida == 'START') {
+        else if (this.state.statusCorrida === 'EMBARQUE') {
+            let obj = {
+                bokkingId: this.state.bookingParam.bookingKey,
+                coords: this.state.bookingParam.coords,
+            }
+            this.props
+                .navigation
+                .dispatch(StackActions.reset({
+                    index: 0,
+                    actions: [
+                        NavigationActions.navigate({
+                            routeName: 'BookedCab',
+                            params: { passData: obj, byMapScreen: true },
+                        }),
+                    ],
+                }))
+        }
+        else if (this.state.statusCorrida === 'NEW') {
+            let obj = {
+                bokkingId: this.state.bookingParam.bookingKey,
+                coords: this.state.bookingParam.coords,
+            }
+            this.props
+                .navigation
+                .dispatch(StackActions.reset({
+                    index: 0,
+                    actions: [
+                        NavigationActions.navigate({
+                            routeName: 'BookedCab',
+                            params: { passData: obj, byMapScreen: true },
+                        }),
+                    ],
+                }))
+        }
+        else if (this.state.statusCorrida === 'START') {
             this.props.navigation.replace('trackRide', { data: this.state.bookingParam, bId: this.state.keyBooking });
-        } 
+        }
         else {
             alert("Essa corrida não está mais disponível!")
         }
@@ -449,31 +467,39 @@ export default class MapScreen extends React.Component {
                     for (let key in bookingData) {
                         bookingData[key].bookingKey = key
 
-                        if (bookingData[key].status == "ACCEPTED") {
+                        if (bookingData[key].status === "ACCEPTED") {
                             this.setState({
                                 statusCorrida: "ACCEPTED",
                                 bookingParam: bookingData[key],
                                 keyBooking: key
                             })
                         }
-                        else if (bookingData[key].status == "EMBARQUE") {
+                        else if (bookingData[key].status === "EMBARQUE") {
                             this.setState({
                                 statusCorrida: "EMBARQUE",
                                 bookingParam: bookingData[key],
                                 keyBooking: key
                             })
                         }
-                        else if (bookingData[key].status == "START") {
+                        else if (bookingData[key].status === "START") {
                             this.setState({
                                 statusCorrida: "START",
                                 bookingParam: bookingData[key],
                                 keyBooking: key
                             })
-                        } else if(bookingData[key].status == "CANCELLED"){
+                        }
+                        else if (bookingData[key].status === "CANCELLED") {
                             this.setState({
                                 statusCorrida: "",
                                 bookingParam: null,
                                 keyBooking: null
+                            })
+                        }
+                        else if (bookingData[key].status === "NEW") {
+                            this.setState({
+                                statusCorrida: "NEW",
+                                bookingParam: bookingData[key],
+                                keyBooking: key
                             })
                         }
                     }
@@ -543,7 +569,7 @@ export default class MapScreen extends React.Component {
                             showsScale={false}
                             rotateEnabled={false}
                             customMapStyle={mapStyleAndroid}
-                            //region={() => this.getRegionMap()}
+                        //region={() => this.getRegionMap()}
                         >
                             {this.state.freeCars ? this.state.freeCars.map((item, index) => {
                                 return (
@@ -607,7 +633,12 @@ export default class MapScreen extends React.Component {
                                     size={35}
                                     containerStyle={{ left: 10, opacity: 0.8 }}
                                 />
-                                <Text style={{ fontFamily: 'Inter-Bold', paddingEnd: 10, paddingStart: 15 }}> Você possui uma corrida em andamento </Text>
+                                {
+                                    this.state.statusCorrida === 'NEW' ?
+                                        <Text style={{ fontFamily: 'Inter-Bold', paddingEnd: 10, paddingStart: 15 }}> Você está buscando um motorista </Text>
+                                        :
+                                        <Text style={{ fontFamily: 'Inter-Bold', paddingEnd: 10, paddingStart: 15 }}> Você possui uma corrida em andamento </Text>
+                                }
                             </TouchableOpacity>
                         </View>
                         : null}

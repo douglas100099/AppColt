@@ -80,9 +80,11 @@ export default class FareScreen extends React.Component {
             cancellValue: 0,
             longDistance: false,
         },
-            this.fadeAnim = new Animated.Value(0)
+        this.fadeAnim = new Animated.Value(0)
         this.fadeAnimWaypoint = new Animated.Value(0)
+        this.bookingInProgress = false
     }
+
 
     async componentDidMount() {
         this._isMounted = true
@@ -135,7 +137,16 @@ export default class FareScreen extends React.Component {
                     }
                     const userData = firebase.database().ref('users/' + this.state.curUID.uid)
                     userData.once('value', userData => {
-                        this.setState({ userDetails: userData.val() })
+                        const data = userData.val()
+                        this.setState({ userDetails: data })
+
+                        if (data["my-booking"]) {
+                            const checkBookings = Object.keys(data["my-booking"]).filter(booking => data["my-booking"][booking].status == "NEW").length
+
+                            if (checkBookings > 0) {
+                                this.bookingInProgress = true
+                            }
+                        }
                     })
                 }
             }
@@ -498,7 +509,7 @@ export default class FareScreen extends React.Component {
         this.setState({ promodalVisible: false })
     }
 
-
+    // Adiciona CPF ao perfil do passageiro
     addCpf() {
         return (
             <Modal
@@ -562,13 +573,13 @@ export default class FareScreen extends React.Component {
         )
     }
 
-    //Abre o modal de escolha de pagamento
+    // Abre o modal de escolha de pagamento
     openModal = () => {
         this.state.openModalPayment ? setTimeout(() => { this.setState({ openModalPayment: false }) }, 100) :
             this.setState({ openModalPayment: true })
     }
 
-    //Modal de escolha do metodo de pagamento
+    // Modal de escolha do metodo de pagamento
     ModalPayment() {
         return (
             <Modal
@@ -631,7 +642,7 @@ export default class FareScreen extends React.Component {
         )
     }
 
-    //Escolhe o metodo de pagamento
+    // Escolhe o metodo de pagamento
     onPressPayment(param) {
         if (param === "Dinheiro") {
             this.setState({ metodoPagamento: "Dinheiro", openModalPayment: false, usedWalletMoney: 0, })
@@ -640,7 +651,7 @@ export default class FareScreen extends React.Component {
         }
     }
 
-    //Verifica se o valor da carteira cobre a corrida
+    // Verifica se o valor da carteira cobre a corrida
     checkWalletBalance() {
         if (this.state.walletBallance > 0) {
             if (this.state.selected == 0) {
@@ -673,7 +684,7 @@ export default class FareScreen extends React.Component {
         }
     }
 
-    //Alerta de dinheiro insuficiente na carteira
+    // Alerta de dinheiro insuficiente na carteira
     alertWalletBalance(params) {
         Alert.alert(
             "Alerta!",
@@ -713,6 +724,7 @@ export default class FareScreen extends React.Component {
         )
     }
 
+    // Promoção aplicada com sucesso
     onSucessPromo(newValue1, newValue2, payDetails, payment_mode) {
         if (newValue1 != null && newValue2 != null) {
             this.setState({ promodalVisible: false, estimatePrice1: newValue1, estimatePrice2: newValue2, payDetails: payDetails, metodoPagamento: payment_mode })
@@ -721,7 +733,7 @@ export default class FareScreen extends React.Component {
         }
     }
 
-    //Enviar notificaçao
+    // Enviar notificaçao
     sendPushNotification(customerUID, msg) {
         const customerRoot = firebase.database().ref('users/' + customerUID);
         customerRoot.once('value', customerData => {
@@ -732,6 +744,7 @@ export default class FareScreen extends React.Component {
         })
     }
 
+    // Vaidação do input CPF
     isValidCpf() {
         const unmaskedCpf = this.cpfInputRef.getRawValue()
         const unmaskedDate = new Date(this.dateInputRef.getRawValue())
@@ -783,8 +796,22 @@ export default class FareScreen extends React.Component {
                     { text: 'Adicionar', onPress: () => this.setState({ cpfModalVisible: true }) },
                 ],
                 { cancelable: true },
-            );
-        } else {
+            )
+        }
+        else if (this.bookingInProgress) {
+            Alert.alert(
+                'Alerta!',
+                'Você já está buscando um motorista!',
+                [
+                    {
+                        text: 'Confirmar',
+                        onPress: () => this.setState({ buttonDisabled: false })
+                    },
+                ],
+                { cancelable: false },
+            )
+        }
+        else {
             this.confirmarCorrida()
         }
     }

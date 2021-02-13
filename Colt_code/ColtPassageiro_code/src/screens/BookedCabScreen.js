@@ -11,6 +11,7 @@ import {
     Alert,
     Linking,
     ActivityIndicator,
+    Animated,
     Platform,
 } from 'react-native';
 import { Icon } from 'react-native-elements';
@@ -27,18 +28,16 @@ import { TrackNow } from '../components';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import mapStyleAndroid from '../../mapStyleAndroid.json';
 import { getPixelSize } from '../common/utils';
-
-
 import ColtEconomicoCar from '../../assets/svg/ColtEconomicoCar';
 import ColtConfortCar from '../../assets/svg/ColtConfortCar';
 import AvatarUser from '../../assets/svg/AvatarUser';
 import { NavigationActions, StackActions } from 'react-navigation';
 import { ScrollView } from 'react-native-gesture-handler';
-import { Pulse } from 'react-native-animated-spinkit'
+import { Pulse, Wander } from 'react-native-animated-spinkit'
 import IconCarMap from '../../assets/svg/IconCarMap';
 
 import BackgroundTask from "../common/BackgroundTask";
-import Animated from 'react-native-reanimated';
+import Reanimated from 'react-native-reanimated';
 import BottomSheet from 'reanimated-bottom-sheet';
 
 export default class BookedCabScreen extends React.Component {
@@ -78,7 +77,9 @@ export default class BookedCabScreen extends React.Component {
             driverAngle: 0
         }
         this.driverFound = true
+        this.fadeAnim = new Animated.Value(0)
     }
+
 
     componentDidMount() {
         this._isMounted = true;
@@ -88,8 +89,8 @@ export default class BookedCabScreen extends React.Component {
             this.setState({ driverSearch: false, showBtnCancel: true })
         }
 
-        let curuser = firebase.auth().currentUser;
-        const bookingResponse = firebase.database().ref(`users/` + curuser.uid + '/my-booking/' + this.getParamData.bokkingId);
+        let curuser = firebase.auth().currentUser
+        const bookingResponse = firebase.database().ref(`users/` + curuser.uid + '/my-booking/' + this.getParamData.bokkingId)
         bookingResponse.on('value', currUserBookings => {
             if (currUserBookings.val()) {
                 let currUserBooking = currUserBookings.val()
@@ -133,9 +134,9 @@ export default class BookedCabScreen extends React.Component {
 
     _retrieveSettings = async () => {
         try {
-            const value = await AsyncStorage.getItem('settings');
+            const value = await AsyncStorage.getItem('settings')
             if (value !== null) {
-                this.setState({ settings: JSON.parse(value) });
+                this.setState({ settings: JSON.parse(value) })
             }
         } catch (error) {
             console.log("Asyncstorage issue 8 ")
@@ -190,7 +191,7 @@ export default class BookedCabScreen extends React.Component {
             firebase.database().ref('bookings/' + bookingId + '/rejectedDrivers').once('value', drivers => {
                 if (drivers.val()) {
                     let rejectedDrivers = []
-                    rejectedDrivers = drivers.val();
+                    rejectedDrivers = drivers.val()
 
                     const check = Object.keys(rejectedDrivers).filter(i => rejectedDrivers[i] === driverId).map(i => {
                         rejectedDrivers[i] === driverId
@@ -230,9 +231,9 @@ export default class BookedCabScreen extends React.Component {
         console.log("PROCURANDO MOTORISTA")
         try {
             if (this._isMounted) {
-                const userData = firebase.database().ref('users/').orderByChild("usertype").equalTo('driver');
-                let distanciaValue = 10;
-                let distTotal = 50;
+                const userData = firebase.database().ref('users/').orderByChild("usertype").equalTo('driver')
+                let distanciaValue = 10
+                let distTotal = 50
 
                 userData.once('value', async driverData => {
                     let drivers = driverData.val();
@@ -727,6 +728,47 @@ export default class BookedCabScreen extends React.Component {
         }
     }
 
+    renderContent = () => (
+        <View
+            style={{
+                backgroundColor: 'white',
+                padding: 16,
+                height: 400,
+                elevation: 5,
+                shadowColor: '#000',
+                shadowOpacity: 0.2,
+                shadowOffset: { x: 1, y: 1 },
+                shadowRadius: 10,
+            }}
+        >
+            <TouchableOpacity style={{ width: 65, alignSelf: 'center', height: 6, backgroundColor: colors.GREY1, borderRadius: 50 }} />
+            <View style={styles.viewQueueBooking}>
+                <Wander
+                    size={40}
+                    color={colors.DEEPBLUE}
+                />
+
+                <Text style={{ textAlign: 'center', paddingHorizontal: 5, fontFamily: 'Inter-ExtraBold', fontSize: 15, color: colors.DEEPBLUE }}> Estamos conectando você ao motorista. </Text>
+            </View>
+        </View>
+    )
+
+    fadeIn() {
+        Animated.timing(this.fadeAnim, {
+            toValue: .3,
+            duration: 250,
+            useNativeDriver: false,
+        }).start()
+    }
+
+    fadeOut() {
+        Animated.timing(this.fadeAnim, {
+            toValue: 0,
+            duration: 250,
+            useNativeDriver: false,
+        }).start()
+    }
+
     render() {
         return (
             <View style={styles.mainContainer}>
@@ -747,21 +789,20 @@ export default class BookedCabScreen extends React.Component {
                                     showsMyLocationButton={false}
                                     style={styles.map}
                                     //initialRegion={this.state.region}
-                                    region={this.state.region ? this.state.region : null}
-                                    onRegionChange={() => { this.setState({ showsMyLocationBtn: true }) }}
+                                    //onRegionChange={() => { this.setState({ showsMyLocationBtn: true }) }}
                                     enablePoweredByContainer={false}
-                                    zoomControlEnabled={false}
+                                    //zoomControlEnabled={false}
                                     scrollEnabled={false}
                                     showsCompass={false}
                                     showsScale={false}
                                     rotateEnabled={false}
                                     customMapStyle={mapStyleAndroid}
-                                /*region={{
-                                    latitude: this.driverObj.driverLat,
-                                    longitude: this.driverObj.driverLng,
-                                    latitudeDelta: 0.0043,
-                                    longitudeDelta: 0.0034,
-                                }}*/
+                                    region={{
+                                        latitude: this.state.region ? this.state.region.wherelatitude : 0,
+                                        longitude: this.state.region ? this.state.region.wherelongitude : 0,
+                                        latitudeDelta: 0.0043,
+                                        longitudeDelta: 0.0034,
+                                    }}
                                 >
                                     {this.driverFound && this.driverObj.driverLat != 0 && this.driverObj.driverLng != 0 ?
                                         <Marker
@@ -791,9 +832,29 @@ export default class BookedCabScreen extends React.Component {
                                         </Marker>
                                         : null}
                                 </MapView>
-                                <View style={styles.viewQueueBooking}>
-                                    <Text style={{ textAlign: 'center', paddingHorizontal: 5, fontFamily: 'Inter-Medium', fontSize: 15, color: colors.WHITE }}> Estamos conectando você ao motorista. </Text>
-                                </View>
+                                                    
+                                <Animated.View
+                                    style={
+                                        {
+                                            width: '100%',
+                                            height: '100%',
+                                            backgroundColor: colors.DARK,
+                                            opacity: this.fadeAnim
+                                        }
+                                    }
+                                >
+                                </Animated.View>
+
+                                <BottomSheet
+                                    //ref={ref => sheetRef}
+                                    //onOpenEnd={() => console.log("TETSE")}
+                                    onCloseEnd={() => this.fadeOut()}
+                                    onOpenEnd={() => this.fadeIn()}
+                                    snapPoints={[100, '50%', 100]}
+                                    borderRadius={20}
+                                    renderContent={this.renderContent}
+                                />
+
                             </View>
                             <View style={{ backgroundColor: colors.DARK, height: 0, width: 0 }}>
                                 <BackgroundTask
@@ -1200,13 +1261,14 @@ const styles = StyleSheet.create({
         borderRadius: 30
     },
     viewQueueBooking: {
-        marginBottom: 50,
-        backgroundColor: colors.DEEPBLUE,
+        backgroundColor: colors.transparent,
         position: 'absolute',
-        bottom: 0,
+        top: 20,
         height: 45,
+        width: '100%',
+        alignSelf: 'center',
         borderRadius: 10,
-        marginHorizontal: 20,
+        flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',

@@ -134,7 +134,7 @@ export class AuthLoadingScreen extends React.Component {
           userData.once('value', userData => {
             if (userData.val()) {
               if (userData.val().usertype == 'rider') {
-                GetPushToken();
+                GetPushToken()
                 //this.StartBackgroundLocation();
                 //this._getLocationAsync();
 
@@ -143,11 +143,11 @@ export class AuthLoadingScreen extends React.Component {
                 this.props.navigation.navigate('Root');
               }
               else {
-                firebase.auth().signOut();
-                alert(languageJSON.valid_rider);
+                firebase.auth().signOut()
+                alert(languageJSON.valid_rider)
               }
             } else {
-              var data = {};
+              var data = {}
               data.profile = {
                 name: user.name ? user.name : '',
                 last_name: user.last_name ? user.last_name : '',
@@ -160,7 +160,7 @@ export class AuthLoadingScreen extends React.Component {
           })
         } else {
           firebase.database().ref("settings").once("value", settingdata => {
-            let settings = settingdata.val();
+            let settings = settingdata.val()
             if ((user.providerData[0].providerId === "password" && settings.email_verify && user.emailVerified) || !settings.email_verify || user.providerData[0].providerId !== "password") {
               var data = {};
               data.profile = {
@@ -174,14 +174,14 @@ export class AuthLoadingScreen extends React.Component {
             }
             else {
               alert(languageJSON.email_verify_message);
-              user.sendEmailVerification();
-              firebase.auth().signOut();
-              this.props.navigation.navigate('Intro');
+              user.sendEmailVerification()
+              firebase.auth().signOut()
+              this.props.navigation.navigate('Intro')
             }
           });
         }
       } else {
-        this.props.navigation.navigate('Intro');
+        this.props.navigation.navigate('Intro')
       }
     })
 

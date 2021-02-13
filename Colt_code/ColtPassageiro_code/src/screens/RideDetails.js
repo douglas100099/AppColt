@@ -19,18 +19,16 @@ import {
 } from 'react-native';
 import Polyline from '@mapbox/polyline';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
-import { Header, Icon, Input } from 'react-native-elements';
+import { Icon } from 'react-native-elements';
 import { colors } from '../common/theme';
 var { width } = Dimensions.get('window');
-import * as firebase from 'firebase'; //Database
+import * as firebase from 'firebase'; 
 import { getPixelSize } from '../common/utils';
 import { google_map_key } from '../common/key';
-import mapStyleJson from '../../mapStyle.json';
 import mapStyleAndroid from '../../mapStyleAndroid.json';
 import { NavigationActions, StackActions } from 'react-navigation';
 import CircleLineTriangle from '../../assets/svg/CircleLineTriangle';
 import AvatarUser from '../../assets/svg/AvatarUser';
-import { color } from 'react-native-reanimated';
 import { ActivityIndicator } from 'react-native';
 
 import LocationDrop from '../../assets/svg/LocationDrop';
@@ -38,8 +36,8 @@ import LocationUser from '../../assets/svg/LocationUser';
 import LocationWaypoint from '../../assets/svg/LocationWaypoint';
 
 export default class RideDetails extends React.Component {
-    _isMounted = false;
-    getRideDetails;
+    _isMounted = false
+    getRideDetails
     constructor(props) {
         super(props);
         this.state = {
@@ -55,17 +53,17 @@ export default class RideDetails extends React.Component {
             loaderTick: false
         }
         this.refInput
-        this.getRideDetails = this.props.navigation.getParam('data');
+        this.getRideDetails = this.props.navigation.getParam('data')
     }
 
     _retrieveSettings = async () => {
         try {
-            const value = await AsyncStorage.getItem('settings');
+            const value = await AsyncStorage.getItem('settings')
             if (value !== null) {
-                this.setState({ settings: JSON.parse(value) });
+                this.setState({ settings: JSON.parse(value) })
             }
         } catch (error) {
-            console.log("Asyncstorage issue 11");
+            console.log("Asyncstorage issue 11")
         }
     };
 

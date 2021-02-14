@@ -85,7 +85,7 @@ export default class BookedCabScreen extends React.Component {
             driverLng: 0,
             driverAngle: 0
         }
-        this.driverFound = true
+        this.driverFound = false
         this.fadeAnim = new Animated.Value(0)
     }
 
@@ -95,7 +95,7 @@ export default class BookedCabScreen extends React.Component {
         this.state.bookingDataState == null ? this.getParamData = this.props.navigation.getParam('passData') : this.getParamData = this.state.bookingDataState
         let param = this.props.navigation.getParam('byMapScreen') ? this.props.navigation.getParam('byMapScreen') : null
         if (param == null) {
-            this.setState({ driverSearch: false, showBtnCancel: true })
+            this.setState({ driverSearch: true, showBtnCancel: true })
         }
 
         let curuser = firebase.auth().currentUser
@@ -854,8 +854,8 @@ export default class BookedCabScreen extends React.Component {
                                     interval={300}
                                     function={() => {
                                         console.log("CHAMOU AS FUNÇOES DO BACKGROUND")
-                                        //this.selectNearbyDriver()
-                                        //this.listenerStatus()
+                                        this.selectNearbyDriver()
+                                        this.listenerStatus()
                                     }}
                                 />
                             </View>
